@@ -1,0 +1,77 @@
+ram.o ram.o: ram.c ../common/include/skyeye_config.h \
+  ../common/include/skyeye_types.h /usr/include/stdint.h \
+  /usr/include/features.h /usr/include/sys/cdefs.h \
+  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+  /usr/include/gnu/stubs-64.h /usr/include/bits/wchar.h \
+  ../device/skyeye_device.h ../utils/main/skyeye.h /usr/include/string.h \
+  /usr/lib64/gcc/x86_64-suse-linux/4.2.1/include/stddef.h \
+  /usr/include/bits/string.h /usr/include/bits/string2.h \
+  /usr/include/endian.h /usr/include/bits/endian.h \
+  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+  /usr/include/stdlib.h /usr/include/stdio.h /usr/include/libio.h \
+  /usr/include/_G_config.h /usr/include/wchar.h /usr/include/gconv.h \
+  /usr/lib64/gcc/x86_64-suse-linux/4.2.1/include/stdarg.h \
+  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+  /usr/include/bits/stdio.h bank_defs.h ram.h
+
+../common/include/skyeye_config.h:
+
+../common/include/skyeye_types.h:
+
+/usr/include/stdint.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/bits/wchar.h:
+
+../device/skyeye_device.h:
+
+../utils/main/skyeye.h:
+
+/usr/include/string.h:
+
+/usr/lib64/gcc/x86_64-suse-linux/4.2.1/include/stddef.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/stdio.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/wchar.h:
+
+/usr/include/gconv.h:
+
+/usr/lib64/gcc/x86_64-suse-linux/4.2.1/include/stdarg.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/bits/sys_errlist.h:
+
+/usr/include/bits/stdio.h:
+
+bank_defs.h:
+
+ram.h:

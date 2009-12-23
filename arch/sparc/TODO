@@ -1,0 +1,8 @@
+* Add peripheral support for LEON2
+    - General purpose timer and Real Time clock support
+    - Parallel I/O port
+    - Power Down interface
+    - Interrupt controller
+    - Secondary interrupt controller
+
+* Add Energy Awareness

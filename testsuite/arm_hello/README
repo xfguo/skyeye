@@ -1,0 +1,96 @@
+		  HelloForSkyeye
+			
+			Version: 0.0.1
+			Author: SU Hang
+			Date:   2004-08-28
+
+Introduction:
+	To the freshmen of skyeye and embedded system development, besides 
+reading books, it would be better to have a simple example to exercise. 
+"Hello world" program is often the first one we learn at the beginning of 
+learning a language or tool. Therefore, I tried to use the least codes to 
+print "hello world" on skyeye with reference to ucos-ii codes. Please note: 
+"HelloForSkyeye" is different from the existed "helloworld" program on skyeye. 
+It needs not operation system. It isn't an application. It sends characters 
+to UART directly. "HelloForSkyeye" has a few lines of codes and little value 
+for practice. It is only written as exercise. 
+
+Compilation and Run:
+	"HelloForSkyeye" is developed on Redhat9.0 and Skyeye0.7.4. Before 
+compilation, please ensure skyeye and arm-elf-tools have been installed.
+
+1.	Download HelloForSkyeye.tar to your home directory on linux.
+2.	tar -xf HelloForSkyeye.tar
+3.	cd HelloForSkyeye
+4.	make
+5.	skyeye hello 
+6.	tar sim
+7.	load
+8.	run
+
+After these steps, you should see the following results:
+***************************************************************
+**** ****
+**** SkyEye Simulator Ver 0.7.4 with GDB 5.3 Interface ****
+**** ****
+***************************************************************
+GNU gdb 5.3
+Copyright 2002 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB. Type "show warranty" for details.
+This SkyEye was configured as "--host=i686-pc-linux-gnu --target=arm-elf"...
+(no debugging symbols found)...
+(SkyEye) tar s
+cpu info: armv3, arm7tdmi, 41007700, fff8ff00, 0 
+mach info: name at91, mach_init addr 0x813dae4
+log_info: log is off.
+log_info:log file is /tmp/sk1.log, fd is 0x829e0e0
+log_info: log start clock 0
+log_info: log end clock 200000
+SKYEYE: use arm7100 mmu ops
+Connected to the simulator.
+(SkyEye) load 
+Loading section .text, size 0x98 vma 0x1000000
+Loading section .data, size 0x1000 vma 0x1002000
+Start address 0x1000000
+Transfer rate: 33984 bits in <1 sec.
+(SkyEye) run
+Starting program: /home/shang/HelloForSkyeye/hello 
+helloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworld
+helloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworld    
+
+Source Files:
+	After using command 'make clean' to delete binary files, you will find 
+there are only five source files in "HelloForSkyeye". They are hello.c, hello.lds, 
+makefile, skyeye.conf and start.S. I shall introduce them one by one.
+
+makefile:		
+	As the input file of 'make', makefile describes how to compile the whole 
+"HelloForSkyeye" project. Some compilation parameters are strange, such as -mapcs,
+-march. You can find their meaning in "as.info->Machine Dependencies->ARM-Dependent
+->ARM Options"
+
+start.S:
+	Initial assemble codes are placed in this file to make irq mode with all irqs 
+disabled,  set sp_irq and call "hello" fuction to print "helloworld" string. You may 
+find the syntax of comments, constants and symbols is different from what described 
+in textbook about ARM. Don't worry about it, because the GNU assembler has a 
+machine-independent syntax. You can refer to the Syntax chapter of as.info to get more 
+information.
+
+hello.c:	
+	This is a common C source file which has only one function "hello". The "Hello" 
+function output the "helloworld" string to UART. On AT91, the base address of UART0 is 
+0xfffd0000 and the offset of US_THR is 0x1c so that when we write character to 0xfffd001c 
+address, it means send character to UART. And skyeye will print the character to the 
+screen. 
+
+hello.lds	
+	This is ld script file in which program entry and every place of section are 
+regulated. The script chapter of ld.info describes the syntax of lds file. We also can 
+use command "objdump -x" to check the binary file.
+
+skyeye.conf	Configure file of skyeye. 
+

@@ -1,0 +1,405 @@
+/*
+
+		THIS SOFTWARE IS NOT COPYRIGHTED
+
+   Cygnus offers the following for use in the public domain.  Cygnus
+   makes no warranty with regard to the software or it's performance
+   and the user accepts the software "AS IS" with all faults.
+
+   CYGNUS DISCLAIMS ANY WARRANTIES, EXPRESS OR IMPLIED, WITH REGARD TO
+   THIS SOFTWARE INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+*/
+/*
+ *  written by Michael.Kang in 20090510
+ */
+
+#ifdef __MINGW32__
+#include <windows.h>
+#endif
+
+#include <signal.h>
+#include <stdio.h>
+
+#define NEED_CPU_REG_SHORTCUTS 1
+#include "bochs.h"
+#include "cpu.h"
+#define LOG_THIS BX_CPU_THIS_PTR
+
+#include "skyeye_types.h"
+#include "skyeye_config.h"
+#include "skyeye_options.h"
+#include "skyeye_arch.h"
+#include "x86_regformat.h"
+//#include "x86_defs.h"
+#define InstrumentICACHE 0
+
+#if InstrumentICACHE
+static unsigned iCacheLookups=0;
+static unsigned iCacheMisses=0;
+
+#define InstrICache_StatsMask 0xffffff
+
+#define InstrICache_Stats() {\
+  if ((iCacheLookups & InstrICache_StatsMask) == 0) { \
+    BX_INFO(("ICACHE lookups: %u, misses: %u, hit rate = %6.2f%% ", \
+          iCacheLookups, \
+          iCacheMisses,  \
+          (iCacheLookups-iCacheMisses) * 100.0 / iCacheLookups)); \
+    iCacheLookups = iCacheMisses = 0; \
+  } \
+}
+#define InstrICache_Increment(v) (v)++
+#else
+#define InstrICache_Stats()
+#define InstrICache_Increment(v)
+#endif
+
+// Make code more tidy with a few macros.
+#if BX_SUPPORT_X86_64==0
+#define RIP EIP
+#define RCX ECX
+#endif
+
+// The CHECK_MAX_INSTRUCTIONS macro allows cpu_loop to execute a few
+// instructions and then return so that the other processors have a chance to
+// run.  This is used by bochs internal debugger or when simulating
+// multiple processors.
+//
+// If maximum instructions have been executed, return. The zero-count
+// means run forever.
+#if BX_SUPPORT_SMP || BX_DEBUGGER
+  #define CHECK_MAX_INSTRUCTIONS(count) \
+    if ((count) > 0) {                  \
+      (count)--;                        \
+      if ((count) == 0) return;         \
+    }
+#else
+  #define CHECK_MAX_INSTRUCTIONS(count)
+#endif
+
+
+#define NONCACHE  0
+
+#if BX_PROVIDE_DEVICE_MODELS
+bx_pc_system_c bx_pc_system;
+#endif
+#if BX_PROVIDE_CPU_MEMORY==1
+BOCHSAPI BX_MEM_C bx_mem;
+#endif
+
+BX_CPU_C bx_cpu;
+
+static unsigned int cycles;
+static char * arch_name = "i386";
+static void
+sim_size ()
+{
+}
+
+
+void
+x86_init_state ()
+{
+	/*malloc memory */
+	Bit32u memSize = 64 * 1024*1024;
+	BX_MEM(0)->init_memory(memSize);
+	//sim_size ();
+#if BX_DEBUGGER
+	BX_CPU_THIS_PTR break_point = 0;
+	BX_CPU_THIS_PTR magic_break = 0;
+	BX_CPU_THIS_PTR stop_reason = STOP_NO_REASON;
+#endif
+	if (setjmp(BX_CPU_THIS_PTR jmp_buf_env)) {
+		// only from exception function we can get here ...
+		BX_INSTR_NEW_INSTRUCTION(BX_CPU_ID);
+		BX_TICK1_IF_SINGLE_PROCESSOR();
+#if BX_DEBUGGER || BX_GDBSTUB
+		if (dbg_instruction_epilog()) return;
+#endif
+		CHECK_MAX_INSTRUCTIONS(max_instr_count);
+#if BX_GDBSTUB
+		if (bx_dbg.gdbstub_enabled) return;
+#endif
+  	}
+
+  // If the exception() routine has encountered a nasty fault scenario,
+  // the debugger may request that control is returned to it so that
+  // the situation may be examined.
+#if BX_DEBUGGER
+  if (bx_guard.interrupt_requested) return;
+#endif
+
+  // We get here either by a normal function call, or by a longjmp
+  // back from an exception() call.  In either case, commit the
+  // new EIP/ESP, and set up other environmental fields.  This code
+  // mirrors similar code below, after the interrupt() call.
+	BX_CPU_THIS_PTR prev_rip = RIP; // commit new EIP
+	BX_CPU_THIS_PTR speculative_rsp = 0;
+	BX_CPU_THIS_PTR EXT = 0;
+	BX_CPU_THIS_PTR errorno = 0;
+
+
+	/*mach init */
+        //skyeye_config.mach->mach_init (&saved_state, skyeye_config.mach);
+
+	//saved_state.p_mach = p_mach;
+	BX_CPU(0)->initialize();
+	BX_CPU(0)->sanity_checks();
+	BX_CPU(0)->register_state();
+	BX_INSTR_INITIALIZE(0);
+	DEV_init_devices();
+}
+void
+x86_reset_state ()
+{
+	/*fixme */
+	BX_CPU(0)->reset(BX_RESET_HARDWARE);
+	cycles = 0;
+}
+
+/* Execute a single instruction.  */
+static void
+x86_step_once ()
+{
+	cycles++;
+//	while (1) {
+
+    // check on events which occurred for previous instructions (traps)
+    // and ones which are asynchronous to the CPU (hardware interrupts)
+	if (BX_CPU_THIS_PTR async_event) {
+		if (BX_CPU_THIS_PTR handleAsyncEvent()) {
+		// If request to return to caller ASAP.
+		return;
+		}
+	}
+
+no_async_event:
+
+	bx_address eipBiased = RIP + BX_CPU_THIS_PTR eipPageBias;
+
+	if (eipBiased >= BX_CPU_THIS_PTR eipPageWindowSize) {
+		BX_CPU_THIS_PTR prefetch();
+		eipBiased = RIP + BX_CPU_THIS_PTR eipPageBias;
+	}
+
+	bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrPage + eipBiased;
+	bxICacheEntry_c *entry = BX_CPU_THIS_PTR iCache.get_entry(pAddr, BX_CPU_THIS_PTR fetchModeMask);
+	bxInstruction_c *i = entry->i;
+
+	InstrICache_Increment(iCacheLookups);
+	InstrICache_Stats();
+
+	if ((entry->pAddr == pAddr) &&
+        (entry->writeStamp == *(BX_CPU_THIS_PTR currPageWriteStampPtr)))
+	{
+      // iCache hit. An instruction was found in the iCache
+	}
+	else {
+      // iCache miss. No validated instruction with matching fetch parameters
+      // is in the iCache.
+		InstrICache_Increment(iCacheMisses);
+		BX_CPU_THIS_PTR serveICacheMiss(entry, (Bit32u) eipBiased, pAddr);
+		i = entry->i;
+	}
+
+	BxExecutePtr_tR execute = i->execute;
+
+#if BX_SUPPORT_TRACE_CACHE
+	bxInstruction_c *last = i + (entry->ilen);
+
+	for(;;) {
+#endif
+
+#if BX_INSTRUMENTATION
+		BX_INSTR_OPCODE(BX_CPU_ID, BX_CPU_THIS_PTR eipFetchPtr + (RIP + BX_CPU_THIS_PTR eipPageBias),
+		i->ilen(), BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.d_b, Is64BitMode());
+#endif
+
+#if BX_DISASM
+      if (BX_CPU_THIS_PTR trace) {
+        // print the instruction that is about to be executed
+        //BX_CPU_THIS_PTR debug_disasm_instruction(BX_CPU_THIS_PTR prev_rip);
+      }
+#endif
+
+      // decoding instruction compeleted -> continue with execution
+      BX_INSTR_BEFORE_EXECUTION(BX_CPU_ID, i);
+	printf("DEBUG:RIP=0x%x\n", RIP);
+      RIP += i->ilen();
+      BX_CPU_CALL_METHOD(execute, (i)); // might iterate repeat instruction
+      BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
+      BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
+      BX_TICK1_IF_SINGLE_PROCESSOR();
+
+      // inform instrumentation about new instruction
+      BX_INSTR_NEW_INSTRUCTION(BX_CPU_ID);
+
+#if BX_SUPPORT_TRACE_CACHE
+      execute = (++i)->execute;
+#endif
+
+      // note instructions generating exceptions never reach this point
+#if BX_DEBUGGER || BX_GDBSTUB
+      if (dbg_instruction_epilog()) return;
+#endif
+
+      CHECK_MAX_INSTRUCTIONS(max_instr_count);
+
+#if BX_SUPPORT_TRACE_CACHE
+      if (BX_CPU_THIS_PTR async_event) {
+        // clear stop trace magic indication that probably was set by repeat or branch32/64
+        BX_CPU_THIS_PTR async_event &= ~BX_ASYNC_EVENT_STOP_TRACE;
+        break;
+      }
+
+      if (i == last) goto no_async_event;
+    }
+#endif
+//  }  // while (1)
+}
+static void
+x86_set_pc (WORD addr)
+{
+	//EIP = addr;
+	EIP = 0xFFF0;
+}
+static WORD x86_get_pc(){
+	return EIP;
+}
+cpu_config_t x86_cpu[] = {
+	{NULL,NULL,0,0,0}
+};
+//chy 2006-04-15
+static int 
+x86_ICE_write_byte (WORD addr, uint8_t v)
+{
+	return 0;
+}
+static int
+x86_ICE_read_byte(WORD addr, uint8_t * pv){
+	return 0;
+}
+static int
+x86_parse_cpu (cpu_config_t * cpu, const char *param[])
+{
+}
+extern void pc_mach_init (void * arch_instance, machine_config_t * this_mach);
+machine_config_t x86_machines[] = {
+	{"pc", pc_mach_init, NULL, NULL, NULL},
+	{NULL, NULL, NULL, NULL, NULL},
+};
+
+#if 0
+static int
+x86_parse_mach (machine_config_t * cpu, const char *params[])
+{
+	int i;
+	for (i = 0; i < (sizeof (x86_machines) / sizeof (machine_config_t));
+	     i++) {
+		if (!strncmp
+		    (params[0], x86_machines[i].machine_name,
+		     MAX_PARAM_NAME)) {
+			skyeye_config.mach = &x86_machines[i];
+			SKYEYE_INFO
+				("mach info: name %s, mach_init addr %p\n",
+				 skyeye_config.mach->machine_name,
+				 skyeye_config.mach->mach_init);
+			return 0;
+		}
+	}
+	SKYEYE_ERR ("Error: Unkonw mach name \"%s\"\n", params[0]);
+
+	return -1;
+
+}
+#endif
+
+static uint32 x86_get_step(){
+        return cycles;
+}
+static char* x86_get_regname_by_id(int id){
+        return x86_regstr[id];
+}
+static uint32 x86_get_regval_by_id(int id){
+        //return state->Reg[id];
+	uint32 ret;
+	switch(id){
+		case Eax:
+			ret = EAX;
+			break;
+		case Ebx:
+			ret = EBX;
+			break;
+		case Ecx:
+			ret = ECX;
+			break;
+		case Edx:
+                        ret = EDX;
+                        break;
+		case Esp:
+                        ret = ESP;
+                        break;
+		case Ebp:
+                        ret = EBP;
+                        break;
+		case Esi:
+                        ret = ESI;
+                        break;
+		case Edi:
+                        ret = EDI;
+                        break;
+		case Eip:
+                        ret = EIP;
+                        break;
+		case Cs:
+			ret = BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value;
+                        break;
+		case Ds:
+			ret = BX_CPU_THIS_PTR sregs[BX_SEG_REG_DS].selector.value;
+			break;
+		case Es:
+                        ret = BX_CPU_THIS_PTR sregs[BX_SEG_REG_ES].selector.value;
+                        break;
+		case Ss:
+                        ret = BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].selector.value;
+                        break;
+		case Fs:
+                        ret = BX_CPU_THIS_PTR sregs[BX_SEG_REG_FS].selector.value;
+			break;
+		case Gs:
+                        ret = BX_CPU_THIS_PTR sregs[BX_SEG_REG_GS].selector.value;
+                        break;
+		default:
+			ret = 0;
+			fprintf(stderr, "Can not find register for id %d.\n", id);
+			break;
+	}
+	return ret;
+}
+static exception_t x86_set_register_by_id(int id, uint32 value){
+        //state->Reg[id] = value;
+        return No_exp;
+}
+
+void
+init_x86_arch ()
+{
+	static arch_config_t x86_arch;
+
+	x86_arch.arch_name = arch_name;
+	x86_arch.init = x86_init_state;
+	x86_arch.reset = x86_reset_state;
+	x86_arch.step_once = x86_step_once;
+	x86_arch.set_pc = x86_set_pc;
+	x86_arch.get_pc = x86_get_pc;
+	x86_arch.ICE_write_byte = x86_ICE_write_byte;
+	x86_arch.ICE_read_byte = x86_ICE_read_byte;
+	//x86_arch.parse_cpu = x86_parse_cpu;
+	//x86_arch.parse_mach = x86_parse_mach;
+	x86_arch.get_regval_by_id = x86_get_regval_by_id;
+	x86_arch.get_regname_by_id = x86_get_regname_by_id;
+	x86_arch.get_step = x86_get_step;
+	register_arch (&x86_arch);
+}
