@@ -89,11 +89,12 @@ void SIM_init(){
 	SKY_load_all_modules(pref->module_search_dir, NULL);
 	//skyeye_config_t *config;
 	//config = malloc(sizeof(skyeye_config_t));
-	if(try_init() == No_exp){
-		if(pref->autoboot == True){
-			SIM_run();
-		}
+	/*	
+	if(pref->autoboot == True){
+		SIM_start();
+		SIM_run();
 	}
+	*/
 	/*
 	 * if we run simulator in GUI or external IDE, we do not need to
 	 * launch our CLI.
@@ -101,8 +102,11 @@ void SIM_init(){
 	if(pref->interactive_mode == True){
 		SIM_cli();		
 	}
+	else{
+		SIM_start();
+		SIM_run();
+	}
 }
-
 
 void SIM_start(void){
 	sky_pref_t *pref;
@@ -157,7 +161,6 @@ void SIM_start(void){
 
 	pthread_t id;
 	create_thread(skyeye_loop, arch_instance, &id);
-
 	
 	/* 
 	 * At this time, if we set conf file, then we parse it

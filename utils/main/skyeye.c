@@ -297,6 +297,8 @@ usage ()
 	printf (
 		 "-e exec-file        the (ELF executable format)kernel file name.\n");
 	printf (
+		 "-n         non-interactive mode, means we do not have available command line .\n");
+	printf (
 		 "-l load_address,load_address_mask\n");
 	printf (
 		 "                    Load ELF file to another address, not its entry.\n");
@@ -352,7 +354,8 @@ void sigint_handler (int signum)
 int init_option(int argc, char** argv, sky_pref_t* pref){
 	int c;
 	int index;
-	int interactive_mode = 0;
+	bool_t interactive_mode = True;
+	bool_t autoboot_mode = False;
 	int remote_debugmode = 0;
 	int big_endian = 0;
 	
@@ -367,7 +370,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	//char *exec_file = NULL;
 	int ret = 0;
 	opterr = 0;
-	while ((c = getopt (argc, argv, "be:dc:il:h")) != -1)
+	while ((c = getopt (argc, argv, "be:dc:nl:h")) != -1)
 		switch (c) {
 		case 'e':
 			exec_file = optarg;
@@ -382,8 +385,13 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 		case 'c':
 			skyeye_config_filename = optarg;
 			break;
-		case 'i':
-			interactive_mode = 1;
+		case 'n':
+			interactive_mode = False;
+			/* 
+			 * Under non-interactive mode, we should 
+			 * autoboot the simulator
+			 */
+			autoboot_mode = True;
 			break;
 		case 'l':
 		{
@@ -441,7 +449,8 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	else
 		pref->interactive_mode = False;
 	*/
-	pref->interactive_mode = True;
+	pref->interactive_mode = interactive_mode;
+	pref->autoboot = autoboot_mode;
 
 	if(exec_file){
 		pref->exec_file = strdup(exec_file);
@@ -491,8 +500,8 @@ main (int argc, char **argv)
 	ret = init_option(argc, argv, pref);
 	/* set the current preference for skyeye */
 	//update_skyeye_pref(pref);
-
-	SIM_init();
+	if(ret == 0)
+		SIM_init();
 #if 0
 	if(ret < 0)
 		goto exit_skyeye;
