@@ -52,40 +52,47 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 pkglibLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
+libbus_log_la_LIBADD =
+am__objects_1 = bus_log.lo bus_log_module.lo
+am_libbus_log_la_OBJECTS = $(am__objects_1)
+libbus_log_la_OBJECTS = $(am_libbus_log_la_OBJECTS)
+libbus_log_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libbus_log_la_LDFLAGS) $(LDFLAGS) -o $@
 libcodecov_la_LIBADD =
-am__objects_1 = code_cov.lo code_cov_module.lo
-am_libcodecov_la_OBJECTS = $(am__objects_1)
+am__objects_2 = code_cov.lo code_cov_module.lo
+am_libcodecov_la_OBJECTS = $(am__objects_2)
 libcodecov_la_OBJECTS = $(am_libcodecov_la_OBJECTS)
 libcodecov_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libcodecov_la_LDFLAGS) $(LDFLAGS) -o $@
 libdisasm_la_LIBADD =
-am__objects_2 = dis_asm.lo dis_asm_module.lo
-am_libdisasm_la_OBJECTS = $(am__objects_2)
+am__objects_3 = dis_asm.lo dis_asm_module.lo
+am_libdisasm_la_OBJECTS = $(am__objects_3)
 libdisasm_la_OBJECTS = $(am_libdisasm_la_OBJECTS)
 libdisasm_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libdisasm_la_LDFLAGS) $(LDFLAGS) -o $@
 libgdbserver_la_LIBADD =
-am__objects_3 = arch_regdefs.lo gdbserver.lo gdb_tracepoint.lo \
+am__objects_4 = arch_regdefs.lo gdbserver.lo gdb_tracepoint.lo \
 	skyeye2gdb.lo gdbserver_module.lo arm_regdefs.lo \
 	bfin_regdefs.lo cf_regdefs.lo mips_regdefs.lo ppc_regdefs.lo \
 	sparc_regdefs.lo
-am_libgdbserver_la_OBJECTS = $(am__objects_3)
+am_libgdbserver_la_OBJECTS = $(am__objects_4)
 libgdbserver_la_OBJECTS = $(am_libgdbserver_la_OBJECTS)
 libgdbserver_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libgdbserver_la_LDFLAGS) $(LDFLAGS) -o $@
 liblog_la_LIBADD =
-am__objects_4 = log.lo log_module.lo
-am_liblog_la_OBJECTS = $(am__objects_4)
+am__objects_5 = log.lo log_module.lo
+am_liblog_la_OBJECTS = $(am__objects_5)
 liblog_la_OBJECTS = $(am_liblog_la_OBJECTS)
 liblog_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(liblog_la_LDFLAGS) $(LDFLAGS) -o $@
 libpmon_la_LIBADD =
-am__objects_5 = pmon.lo pmon_module.lo
-am_libpmon_la_OBJECTS = $(am__objects_5)
+am__objects_6 = pmon.lo pmon_module.lo
+am_libpmon_la_OBJECTS = $(am__objects_6)
 libpmon_la_OBJECTS = $(am_libpmon_la_OBJECTS)
 libpmon_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -102,12 +109,12 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libcodecov_la_SOURCES) $(libdisasm_la_SOURCES) \
-	$(libgdbserver_la_SOURCES) $(liblog_la_SOURCES) \
-	$(libpmon_la_SOURCES)
-DIST_SOURCES = $(libcodecov_la_SOURCES) $(libdisasm_la_SOURCES) \
-	$(libgdbserver_la_SOURCES) $(liblog_la_SOURCES) \
-	$(libpmon_la_SOURCES)
+SOURCES = $(libbus_log_la_SOURCES) $(libcodecov_la_SOURCES) \
+	$(libdisasm_la_SOURCES) $(libgdbserver_la_SOURCES) \
+	$(liblog_la_SOURCES) $(libpmon_la_SOURCES)
+DIST_SOURCES = $(libbus_log_la_SOURCES) $(libcodecov_la_SOURCES) \
+	$(libdisasm_la_SOURCES) $(libgdbserver_la_SOURCES) \
+	$(liblog_la_SOURCES) $(libpmon_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -265,6 +272,7 @@ utils_debugger = debugger/arch_regdefs.c debugger/gdbserver.c debugger/gdb_trace
 utils_disassembler = disassembler/dis_asm.c disassembler/dis_asm_module.c
 utils_code_cov = code_cov/code_cov.c code_cov/code_cov_module.c
 utils_log = log/log.c log/log_module.c
+utils_bus_log = bus_log/bus_log.c bus_log/bus_log_module.c
 utils_pmon = perf_monitor/pmon.c perf_monitor/pmon_module.c
 libgdbserver_la_SOURCES = $(utils_debugger)
 libgdbserver_la_LDFLAGS = -module
@@ -274,9 +282,11 @@ liblog_la_SOURCES = $(utils_log)
 liblog_la_LDFLAGS = -module
 libpmon_la_SOURCES = $(utils_pmon)   
 libpmon_la_LDFLAGS = -module
+libbus_log_la_SOURCES = $(utils_bus_log)   
+libbus_log_la_LDFLAGS = -module
 libdisasm_la_SOURCES = $(utils_disassembler)
 libdisasm_la_LDFLAGS = -module -L$(top_srcdir)/third-party/opcodes/.libs/ -L$(top_srcdir)/third-party/bfd/.libs/ -L$(top_srcdir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
-pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la
+pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la
 INCLUDES = -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_srcdir)/common @COMMON_INCLUDES@ 
 all: all-am
 
@@ -338,6 +348,8 @@ clean-pkglibLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+libbus_log.la: $(libbus_log_la_OBJECTS) $(libbus_log_la_DEPENDENCIES) 
+	$(libbus_log_la_LINK) -rpath $(pkglibdir) $(libbus_log_la_OBJECTS) $(libbus_log_la_LIBADD) $(LIBS)
 libcodecov.la: $(libcodecov_la_OBJECTS) $(libcodecov_la_DEPENDENCIES) 
 	$(libcodecov_la_LINK) -rpath $(pkglibdir) $(libcodecov_la_OBJECTS) $(libcodecov_la_LIBADD) $(LIBS)
 libdisasm.la: $(libdisasm_la_OBJECTS) $(libdisasm_la_DEPENDENCIES) 
@@ -358,6 +370,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arch_regdefs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_regdefs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bfin_regdefs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bus_log.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bus_log_module.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cf_regdefs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/code_cov.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/code_cov_module.Plo@am__quote@
@@ -395,6 +409,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+bus_log.lo: bus_log/bus_log.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bus_log.lo -MD -MP -MF $(DEPDIR)/bus_log.Tpo -c -o bus_log.lo `test -f 'bus_log/bus_log.c' || echo '$(srcdir)/'`bus_log/bus_log.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/bus_log.Tpo $(DEPDIR)/bus_log.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='bus_log/bus_log.c' object='bus_log.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bus_log.lo `test -f 'bus_log/bus_log.c' || echo '$(srcdir)/'`bus_log/bus_log.c
+
+bus_log_module.lo: bus_log/bus_log_module.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bus_log_module.lo -MD -MP -MF $(DEPDIR)/bus_log_module.Tpo -c -o bus_log_module.lo `test -f 'bus_log/bus_log_module.c' || echo '$(srcdir)/'`bus_log/bus_log_module.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/bus_log_module.Tpo $(DEPDIR)/bus_log_module.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='bus_log/bus_log_module.c' object='bus_log_module.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bus_log_module.lo `test -f 'bus_log/bus_log_module.c' || echo '$(srcdir)/'`bus_log/bus_log_module.c
 
 code_cov.lo: code_cov/code_cov.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT code_cov.lo -MD -MP -MF $(DEPDIR)/code_cov.Tpo -c -o code_cov.lo `test -f 'code_cov/code_cov.c' || echo '$(srcdir)/'`code_cov/code_cov.c

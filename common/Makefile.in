@@ -71,7 +71,8 @@ am__objects_10 = skyeye_command.lo skyeye_cli.lo default_command.lo
 am__objects_11 = skyeye_mm.lo
 am__objects_12 = skyeye_mach.lo
 am__objects_13 = skyeye_device.lo pen_buffer.lo skyeye_uart_ops.lo
-am__objects_14 = bank_ops.lo io.lo ram.lo flash.lo skyeye_bus.lo
+am__objects_14 = bank_ops.lo io.lo ram.lo flash.lo skyeye_bus.lo \
+	bus_recoder.lo
 am__objects_15 = loader_elf.lo loader_file.lo
 am__objects_16 = callback.lo
 am_libcommon_la_OBJECTS = $(am__objects_1) $(am__objects_2) \
@@ -262,7 +263,7 @@ common_mm = mm/skyeye_mm.c
 common_cli = cli/skyeye_command.c cli/skyeye_cli.c cli/default_command.c
 common_portable = portable/mman.c portable/usleep.c portable/gettimeofday.c
 common_preference = preference/skyeye_pref.c
-common_memory = bus/bank_ops.c  bus/io.c  bus/ram.c bus/flash.c bus/skyeye_bus.c
+common_memory = bus/bank_ops.c  bus/io.c  bus/ram.c bus/flash.c bus/skyeye_bus.c bus/bus_recoder.c
 common_core = core/skyeye_arch.c
 common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c
 common_mach = mach/skyeye_mach.c
@@ -356,6 +357,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bank_ops.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/breakpoint.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bus_recoder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/callback.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/default_command.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flash.Plo@am__quote@
@@ -602,6 +604,13 @@ skyeye_bus.lo: bus/skyeye_bus.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='bus/skyeye_bus.c' object='skyeye_bus.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o skyeye_bus.lo `test -f 'bus/skyeye_bus.c' || echo '$(srcdir)/'`bus/skyeye_bus.c
+
+bus_recoder.lo: bus/bus_recoder.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bus_recoder.lo -MD -MP -MF $(DEPDIR)/bus_recoder.Tpo -c -o bus_recoder.lo `test -f 'bus/bus_recoder.c' || echo '$(srcdir)/'`bus/bus_recoder.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/bus_recoder.Tpo $(DEPDIR)/bus_recoder.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='bus/bus_recoder.c' object='bus_recoder.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bus_recoder.lo `test -f 'bus/bus_recoder.c' || echo '$(srcdir)/'`bus/bus_recoder.c
 
 loader_elf.lo: loader/loader_elf.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT loader_elf.lo -MD -MP -MF $(DEPDIR)/loader_elf.Tpo -c -o loader_elf.lo `test -f 'loader/loader_elf.c' || echo '$(srcdir)/'`loader/loader_elf.c
