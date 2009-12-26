@@ -29,6 +29,8 @@ typedef enum{
 	Step_callback = 0, /* called when step running of core */
 	Mem_read_callback, /* called when memory write */
 	Mem_write_callback, /* called when memory read */
+	Bus_read_callback, /* called when memory write */
+	Bus_write_callback, /* called when memory read */
 	Exception_callback, /* called when some exceptions are triggered. */
 	Bootmach_callback, /* called when hard reset of machine */
 	Max_callback

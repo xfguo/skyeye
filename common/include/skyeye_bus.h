@@ -1,5 +1,5 @@
 /*
-        bank_defs.h - necessary definition for skyeye bank
+        skyeye_bus.h - necessary definition for skyeye bus
         Copyright (C) 2003-2007 Skyeye Develop Group
         for help please send mail to <skyeye-developer@lists.sf.linuxforum.net>
 
@@ -21,43 +21,31 @@
 /*
  * 12/16/2006   Michael.Kang  <blackfin.kang@gmail.com>
  */
-#ifndef __BANK_DEF_H__
-#define __BANK_DEF_H__
+#ifndef __SKYEYE_BUS_H__
+#define __SKYEYE_BUS_H__
 
-#include <stdint.h>
-#define MAX_BANK 8
-#define MAX_STR  1024
-typedef struct mem_bank
-{
-	unsigned int addr, len;
-	char (*bank_write)(short size, int offset, unsigned int value);
-	char (*bank_read)(short size, int offset, unsigned int *result);
-	char filename[MAX_STR];
-	unsigned type;
-} mem_bank_t;
+#include "breakpoint.h"
 
-typedef struct
-{
-	int bank_num;
-	int current_num;	/* current num of bank */
-	mem_bank_t mem_banks[MAX_BANK];
-} mem_config_t;
-
-/**
- *  The interface of read data from bus
+/*
+ * The type for before action or after action.
  */
-int bus_read(short size, int addr, uint32_t * value);
+typedef enum{
+	Before_act = 0,
+	After_act
+}before_after_t;
 
-/**
- * The interface of write data from bus
- */
-int bus_write(short size, int addr, uint32_t value);
+typedef struct bus_recorder_s{
+	access_t rw;
+	short size;
+	int addr;
+	uint32_t* value;
+	before_after_t when;
+}bus_recorder_t;
 
-mem_bank_t * bank_ptr(uint32_t addr);
+/* snooping the bus activities and record it */
+void bus_snoop(access_t rw, short size, int addr, uint32_t value, before_after_t when);
 
-/* fill the zero for global_memmap */
-void reset_global_memmap();
+/* get the bus access information */
+bus_recorder_t* get_last_bus_access();
 
-/* Get the global memmap */
-mem_config_t * get_global_memmap();
 #endif

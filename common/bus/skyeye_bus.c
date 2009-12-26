@@ -1,4 +1,3 @@
-
 /*
         skyeye_bus.c - parse memory map from skyeye.conf
         Copyright (C) 2003-2007 Skyeye Develop Group
