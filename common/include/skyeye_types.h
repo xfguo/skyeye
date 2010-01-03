@@ -79,6 +79,9 @@ typedef enum{
 	Conf_format_exp,
 	/* some reference excess the predefiend range. Such as the index out of array range */
 	Excess_range_exp,
+	/* Can not find the desirable result */
+	Not_found_exp,
+
 	/* Unknown exception */
 	Unknown_exp
 }exception_t;
