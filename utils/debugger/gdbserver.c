@@ -161,7 +161,7 @@ remote_open (char *name)
 	disable_async_io ();
 #endif /* FASYNC */
 #endif //chy 20050729-------------------
-	fprintf (stderr, "Remote debugging using %s\n", name);
+	printf ("Remote debugging using %s\n", name);
 }
 
 extern register_defs_t *register_types[8];
@@ -177,7 +177,9 @@ void com_remote_gdb(){
 		fprintf(stderr, " Can not find register type for current arch!\n");
 		return -1;
 	}
-	//sim_debug();
+	/* run gdbserver in a single thread */
+	pthread_t id;
+	create_thread(sim_debug, arch_instance, &id);
 }
 
 void
@@ -951,7 +953,7 @@ sim_debug ()
 	while (1) {
 		remote_open ("host:12345");
 
-	      restart:
+		restart:
 		setjmp (toplevel);
 		while (getpkt (own_buf) > 0) {
 			unsigned char sig;

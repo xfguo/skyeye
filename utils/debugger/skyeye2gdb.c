@@ -25,6 +25,8 @@
 //#include "armdefs.h"
 
 #include "skyeye_types.h"
+#include "skyeye_arch.h"
+#include "breakpoint.h"
 //#include "memory.h"
 //#include "armemu.h"
 //#include "arch_regdefs.h"
@@ -34,14 +36,14 @@
 #if 0
 extern struct ARMul_State * state;
 extern struct _memory_core memory_core;
-extern register_defs_t * current_reg_type;
 extern generic_arch_t * arch_instance;
-int bigendSig;
+#endif
 int
 frommem (unsigned char *memory)
 {
-	bigendSig = current_reg_type->endian_flag;
-	if (bigendSig == HIGH) {
+	generic_arch_t* arch_instance = get_arch_instance("");
+
+	if (arch_instance->endianess == Big_endian) {
 		return (memory[0] << 24)
 			| (memory[1] << 16) | (memory[2] << 8) | (memory[3] <<
 								  0);
@@ -57,8 +59,8 @@ frommem (unsigned char *memory)
 void
 tomem (unsigned char *memory, int val)
 {
-	bigendSig = current_reg_type->endian_flag;
-	if (bigendSig == HIGH) {
+	generic_arch_t* arch_instance = get_arch_instance("");
+	if (arch_instance->endianess == Big_endian) {
 		memory[0] = val >> 24;
 		memory[1] = val >> 16;
 		memory[2] = val >> 8;
@@ -71,7 +73,6 @@ tomem (unsigned char *memory, int val)
 		memory[0] = val >> 0;
 	}
 }
-#endif
 #if 0
 ARMword
 ARMul_Debug (ARMul_State * state, ARMword pc ATTRIBUTE_UNUSED,
@@ -89,7 +90,7 @@ sim_write (generic_address_t addr, unsigned char *buffer, int size)
 	int i;
 	int fault=0;
 	for (i = 0; i < size; i++) {
-		fault = SIM_write_byte(NULL, addr + i, buffer[i]); 
+		fault = bus_write(8, addr + i, buffer[i]);
 		if(fault) return -1; 
 	}
 	return size;
@@ -102,7 +103,7 @@ sim_read (generic_address_t addr, unsigned char *buffer, int size)
 	int fault = 0;
 	unsigned char v;
 	for (i = 0; i < size; i++) {
-		fault = SIM_read_byte(NULL, addr + i, &v);
+		fault = bus_read(8, addr+i, &v);
 		if(fault) 
 			return -1; 
 		buffer[i]=v;
@@ -123,6 +124,7 @@ void gdbserver_cont(){
 	SIM_continue(0);
 }
 void gdbserver_step(){
+	skyeye_stepi(1);
 #if 0
          if(!strcmp(skyeye_config.arch->arch_name,"arm")){
                 //chy 2006004-12
@@ -132,5 +134,19 @@ void gdbserver_step(){
 	else
 		sim_resume(1);
 #endif
-	SIM_continue(1);
+}
+
+int sim_ice_breakpoint_remove(generic_address_t addr){
+	if(skyeye_remove_bp_by_addr(addr) != No_exp)
+		return -1;
+	else
+		return 0;
+}
+
+int sim_ice_breakpoint_insert(generic_address_t addr){
+	int ret = skyeye_insert_bp(SIM_access_execute, SIM_Break_Physical, addr);
+	if(ret != 0)
+		return -1;
+	else
+		return 0;
 }

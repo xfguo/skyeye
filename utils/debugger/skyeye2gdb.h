@@ -63,5 +63,6 @@ typedef struct register_defs{
 } register_defs_t;
 
 #define MAX_SUPP_ARCH 8
+int sim_debug();
 //typedef struct register_defs register_defs_t;
 #endif
