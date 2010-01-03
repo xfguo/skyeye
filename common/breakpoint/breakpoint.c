@@ -37,11 +37,19 @@ static breakpoint_t* get_bp_by_id(breakpoint_id_t id){
 	return NULL;
 }
 
-static breakpoint_t* get_bp_by_addr(generic_address_t addr){
+static bool_t valid_bp(breakpoint_t* bp){
+	if(bp->id != 0)
+		return True;
+	else 
+		return False;
+}
+
+breakpoint_t* get_bp_by_addr(generic_address_t addr){
 	int i;
 	/* scan the breakpoint if the breakpoint exists */
         for(i = 0; i < breakpoint_mgt.bp_number; i++) {
-                if (breakpoint_mgt.breakpoint[i].address == addr)
+                if (breakpoint_mgt.breakpoint[i].address == addr && 
+		valid_bp(&breakpoint_mgt.breakpoint[i]))
                         return &breakpoint_mgt.breakpoint[i];
         }
 	return NULL;
@@ -73,6 +81,7 @@ exception_t skyeye_insert_bp(access_t access_type, breakpoint_kind_t address_typ
 	return No_exp;
 }
 
+
 exception_t skyeye_remove_bp(breakpoint_id_t id)
 {
 	int i;
@@ -81,7 +90,9 @@ exception_t skyeye_remove_bp(breakpoint_id_t id)
 	if(bp){
 		bp->id = 0;
 		bp->hits = 0;
+		return No_exp;
 	}
+	return Not_found_exp; 
 #if 0
   for(i = 0; i < skyeye_ice.num_bps; i++) {
         if (skyeye_ice.bps[i] == addr)
@@ -93,7 +104,14 @@ found:
   if (i < skyeye_ice.num_bps)
           skyeye_ice.bps[i] = skyeye_ice.bps[skyeye_ice.num_bps];
 #endif
-	return No_exp;
+}
+
+exception_t skyeye_remove_bp_by_addr(generic_address_t addr){
+	breakpoint_t* bp = get_bp_by_addr(addr);
+	if(bp != NULL)
+		return skyeye_remove_bp(bp->id);
+	else
+		return Not_found_exp; 
 }
 
 #if 0

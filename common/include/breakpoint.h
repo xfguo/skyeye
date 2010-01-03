@@ -50,7 +50,19 @@ exception_t skyeye_insert_bp(access_t access_type, breakpoint_kind_t address_typ
 /*
  * delete one breakpoint with id
  */
-exception_t skyeye_remove_bp(breakpoint_id_t id);
+//exception_t skyeye_remove_bp(breakpoint_id_t id);
+
+/*
+ * Delete one breakoint by its address. Maybe match multiple
+ * addresses.
+ */
+exception_t skyeye_remove_bp_by_addr(generic_address_t addr);
+
+/*
+ * Get a breakpoint by its address.
+ */
+//breakpoint_t* get_bp_by_addr(generic_address_t addr);
+
 
 /*
  * delete the breakpoint in a memory range
