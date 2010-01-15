@@ -15,8 +15,10 @@ static void check_steps(generic_arch_t* arch_instance){
 		return;
 	if(!stopped_step)
 		return;
-	if(current_step == stopped_step)
+	if(current_step == stopped_step){
 		SIM_stop();
+		stopped_step = 0;
+	}
 	return;
 }
 
@@ -45,10 +47,10 @@ void skyeye_stepi(int steps){
 		return;
 	}
 	if(arch_instance->get_step == NULL){
-		//printf();
+		printf(Warnning_log, __FUNCTION__, "The arch have not implemented get_step.\n");
 		return;
 	}
 	stopped_step  = arch_instance->get_step() + steps;
 	skyeye_log(Debug_log, __FUNCTION__, "stopped_step=%d\n", stopped_step);
-	skyeye_start();
+	SIM_continue();
 }
