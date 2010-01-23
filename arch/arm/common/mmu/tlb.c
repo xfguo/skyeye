@@ -126,9 +126,12 @@ translate (ARMul_State * state, ARMword virt_addr, tlb_t * tlb_t,
 		bus_read(32, l1addr, &l1desc);
 		switch (l1desc & 3) {
 		case 0:
-			//SBZ
+			/* 
+			 * according to Figure 3-9 Sequence for checking faults in arm manual,
+			 * section translation fault should be returned here. 
+			 */
 			{
-				return PAGE_TRANSLATION_FAULT;
+				return SECTION_TRANSLATION_FAULT;
 			}
 		case 3:
 			/* fine page table */
