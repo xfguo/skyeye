@@ -104,8 +104,10 @@ mem_write_byte (uint32_t addr, uint32_t data)
 			       memmap->mem_banks][(addr -
 							    global_mbp->
 							    addr) >> 2];
-	generic_arch_t* arch_instance = get_arch_instance(NULL);
-	offset = (((uint32_t) arch_instance->endianess * 3) ^ (addr & 3)) << 3;
+	//generic_arch_t* arch_instance = get_arch_instance(NULL);
+	sky_pref_t* pref = get_skyeye_pref();
+	endian_t endian = pref->endian;
+	offset = (((uint32_t) endian * 3) ^ (addr & 3)) << 3;
 	/* bit offset into the word */
 	//printf("In %s, temp=0x%x,data=0x%x\n", __FUNCTION__, temp, *temp);
 	//printf("In %s, temp=0x%x\n", __FUNCTION__, temp);
