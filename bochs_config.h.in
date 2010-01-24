@@ -113,8 +113,8 @@
 // level of some instructions, so they can be tested before
 // the rest of the emulation is up to that level.
 
-#define BX_CPU_LEVEL 5
-#define BX_CPU_LEVEL_HACKED 5
+#define BX_CPU_LEVEL 6
+#define BX_CPU_LEVEL_HACKED 6
 
 // emulate x86-64 instruction set?
 #define BX_SUPPORT_X86_64 0
