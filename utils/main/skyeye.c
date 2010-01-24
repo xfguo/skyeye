@@ -501,6 +501,9 @@ main (int argc, char **argv)
 	//update_skyeye_pref(pref);
 	if(ret == 0)
 		SIM_init();
+	/* Do anything you want to do , or just deadloop here. */
+	while(1)
+	;
 #if 0
 	if(ret < 0)
 		goto exit_skyeye;
