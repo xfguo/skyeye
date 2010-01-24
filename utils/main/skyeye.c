@@ -357,7 +357,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	bool_t interactive_mode = True;
 	bool_t autoboot_mode = False;
 	int remote_debugmode = 0;
-	int big_endian = 0;
+	endian_t endian = Little_endian;
 	
 	char* exec_file = NULL;
 	generic_address_t elf_load_base = 0x0;
@@ -403,7 +403,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 		}
 			break;
 		case 'b':
-			big_endian = 1;
+			endian = Big_endian;
 			break;
 		case '?':
 			if (isprint (optopt))
@@ -461,8 +461,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	}
 	pref->exec_load_base = elf_load_base;
        	pref->exec_load_mask = elf_load_mask;
-	if(big_endian)
-		pref->endian = Big_endian;
+	pref->endian = endian;
 	return ret;
 }
 
