@@ -138,9 +138,10 @@ s3c2410x_update_intr (void *mach)
 }
 
 static void
-s3c2410x_io_reset (ARMul_State * state)
+s3c2410x_io_reset (void* arch_instance)
 {
 	int i;
+	extern ARMul_State * state;
 
 	memset (&s3c2410x_io, 0, sizeof (s3c2410x_io));
 
@@ -409,7 +410,7 @@ s3c2410x_timer_write (ARMul_State * state, u32 offset, u32 data)
 }
 
 static ARMword
-s3c2410x_io_read_word (ARMul_State * state, ARMword addr)
+s3c2410x_io_read_word (void* arch_instance, ARMword addr)
 {
 	ARMword data = -1;
 	int i;
@@ -567,15 +568,15 @@ s3c2410x_io_read_word (ARMul_State * state, ARMword addr)
 }
 
 static ARMword
-s3c2410x_io_read_byte (ARMul_State * state, ARMword addr)
+s3c2410x_io_read_byte (void* arch_instance, ARMword addr)
 {
-	s3c2410x_io_read_word (state, addr);
+	s3c2410x_io_read_word (arch_instance, addr);
 }
 
 static ARMword
-s3c2410x_io_read_halfword (ARMul_State * state, ARMword addr)
+s3c2410x_io_read_halfword (void* arch_instance, ARMword addr)
 {
-	s3c2410x_io_read_word (state, addr);
+	s3c2410x_io_read_word (arch_instance, addr);
 }
 
 static void

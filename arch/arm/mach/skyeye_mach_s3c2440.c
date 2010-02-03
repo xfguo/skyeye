@@ -84,9 +84,10 @@ s3c2440_update_subsrcint ()
 		io.srcpnd |= INT_ADC;
 }
 static void
-s3c2440_update_int (ARMul_State * state)
+s3c2440_update_int (void* arch_instance)
 {
 	ARMword requests;
+	extern ARMul_State *state;	
 	assert(state != NULL);
 	s3c2440_update_subsrcint ();
 	requests = io.srcpnd & (~io.intmsk & INT_MASK_INIT);
@@ -95,8 +96,9 @@ s3c2440_update_int (ARMul_State * state)
 }
 
 static void
-s3c2440_io_reset (ARMul_State * state)
+s3c2440_io_reset (void* arch_instance)
 {
+	extern ARMul_State *state;	
 	memset (&s3c2440_io, 0, sizeof (s3c2440_io));
 	io.tc_prescale = TC_DIVISOR;
 	io.uart0.ulcon = UART_ULCON_INIT;
@@ -112,6 +114,7 @@ s3c2440_io_reset (ARMul_State * state)
 
 	io.intmsk = INT_MASK_INIT;
 	io.intpnd = 0x0;
+	state->Reg[1] = 0x16a;	//ARCH_S3C2440
 }
 
 
@@ -455,7 +458,7 @@ s3c2440_io_read_halfword (ARMul_State * state, ARMword addr)
 }
 
 static void
-s3c2440_io_write_word (ARMul_State * mstate, ARMword addr, ARMword data)
+s3c2440_io_write_word (void* arch_instance, ARMword addr, ARMword data)
 {
 	extern ARMul_State *state;	
 	if ((addr >= UART_CTL_BASE0)
@@ -515,13 +518,13 @@ s3c2440_io_write_halfword (ARMul_State * state, ARMword addr, ARMword data)
 
 
 void
-s3c2440_mach_init (ARMul_State * state, machine_config_t * this_mach)
+s3c2440_mach_init (void* arch_instance, machine_config_t * this_mach)
 {
+	extern ARMul_State *state;	
 	ARMul_SelectProcessor (state, ARM_v4_Prop);
 	/* ARM920T uses LOW */
 	state->lateabtSig = LOW;
 
-	state->Reg[1] = 0x16a;	//ARCH_S3C2440
 	this_mach->mach_io_do_cycle = s3c2440_io_do_cycle;
 	this_mach->mach_io_reset = s3c2440_io_reset;
 	this_mach->mach_io_read_byte = s3c2440_io_read_byte;
@@ -532,5 +535,4 @@ s3c2440_mach_init (ARMul_State * state, machine_config_t * this_mach)
 	this_mach->mach_io_write_word = s3c2440_io_write_word;
 
 	this_mach->mach_update_int = s3c2440_update_int;
-
 }

@@ -54,7 +54,7 @@ arm_reset_state ()
 
 	// add step disassemble code here :teawater
 	//state->disassemble = skyeye_config.can_step_disassemble;
-	io_reset (state);	/*from ARMul_Reset. */
+	//io_reset (state);	/*from ARMul_Reset. */
 	/* set some register value */
 	if(preset_regfile[1])
 		state->Reg[1] = preset_regfile[1];

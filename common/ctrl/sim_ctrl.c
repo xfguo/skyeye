@@ -136,7 +136,7 @@ void SIM_start(void){
 	/* reset current arch_instanc */
 	arch_instance->reset();
 	/* reset all the values of mach */
-	config->mach->mach_io_reset(arch_instance);
+	io_reset(arch_instance);
 	
 	if(pref->exec_file){
 		exception_t ret;
