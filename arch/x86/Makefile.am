@@ -71,4 +71,4 @@ libx86_la_SOURCES =  $(x86_cpu) $(x86_fpu) $(x86_common) $(x86_memory) $(x86_mac
 libx86_la_LDFLAGS = -lXpm -lstdc++ -module
 pkglib_LTLIBRARIES = libx86.la
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0
-INCLUDES = -I./common -I./cpu -I./include -I./fpu -I./ -I./memory -I./instrument/stubs -I./iodev/  @COMMON_INCLUDES@
+INCLUDES = -I$(srcdir)/common -I$(srcdir)/cpu -I$(srcdir)/include -I$(srcdir)/fpu -I$(srcdir)/ -I$(srcdir)/memory -I$(srcdir)/instrument/stubs -I$(srcdir)/iodev/  @COMMON_INCLUDES@
