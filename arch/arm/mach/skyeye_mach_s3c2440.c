@@ -111,6 +111,7 @@ s3c2440_io_reset (void* arch_instance)
 	io.clkpower.upllcon = 0x00028080;
 	io.clkpower.clkcon = 0x7FFF0;
 	io.clkpower.clkslow = 0x4;
+	io.clkpower.clkdivn = 0x3;
 
 	io.intmsk = INT_MASK_INIT;
 	io.intpnd = 0x0;
@@ -340,7 +341,7 @@ s3c2440_timer_write (ARMul_State * state, u32 offset, u32 data)
 		{
 			int n = (offset - 0xC) / 0xC;
 			//io.timer.tcntb[n] = data;
-			io.timer.tcntb[n] = 25350;
+			io.timer.tcntb[n] = 25350 / 20;
 		}
 		break;
 	case TCMPB0:
