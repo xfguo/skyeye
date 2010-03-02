@@ -421,7 +421,7 @@ s3c2440_io_read_word (ARMul_State * state, ARMword addr)
 		break;
 		/* GPIO Register */
 	case GSTATUS1:
-		data = 0x32410000;
+		data = 0x32440000;
 		break;
 		/* Clock and Power Management Registers */
 	case LOCKTIME:
@@ -474,6 +474,7 @@ s3c2440_io_write_word (void* arch_instance, ARMword addr, ARMword data)
 	switch (addr) {
 	case SRCPND:
 		io.srcpnd &= (~data & INT_MASK_INIT);
+		s3c2440_update_int(state);
 		break;
 	case INTMOD:
 		io.intmod = data;
