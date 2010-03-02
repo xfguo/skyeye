@@ -154,6 +154,7 @@ s3c2440_io_do_cycle (ARMul_State * mstate)
 				/* Receiver Ready
 				 * */
 				io.uart0.utrstat |= (0x1);
+				io.uart0.ufstat |= (0x1);
 				/* pending usart0 interrupt
 				 * */
 				s3c2440_set_subsrcint (UART_INT_RXD <<
@@ -201,6 +202,7 @@ s3c2440_uart_read (u32 offset, u32 * data)
 		 * */
 		*data = io.uart0.urxh;
 		io.uart0.utrstat &= (~0x1);	/* clear strstat register bit[0] */
+		io.uart0.ufstat &= ~(0x1);
 		break;
 	case UBRDIV:
 		*data = io.uart0.ubrdiv;
