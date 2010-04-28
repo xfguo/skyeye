@@ -298,10 +298,12 @@ ppc_parse_cpu (const char *params[])
 
 extern void mpc8560_mach_init();
 extern void mpc8572_mach_init();
+extern void mpc8641d_mach_init();
 machine_config_t ppc_machines[] = {
         /* machine define for MPC8560 */
         {"mpc8560", mpc8560_mach_init, NULL, NULL, NULL},
 	{"mpc8572", mpc8572_mach_init, NULL, NULL, NULL},
+	{"mpc8641d", mpc8641d_mach_init, NULL, NULL, NULL},
 	{NULL,	NULL,			NULL,NULL, NULL},
 };
 #if 0
