@@ -41,8 +41,8 @@ static const int bootcmd_start= 9 * 1024 * 1024;
 static char * bootcmd = "root=/dev/ram0 console=ttyS0 mem=64M";
 
 //const int OFF_DT_STRUCT = 0x200000;
-const int DT_STRUCT_SIZE = 8 * 1024;
-const char * dtb_filename = "mpc8572ds.dtb";
+static const int DT_STRUCT_SIZE = 8 * 1024;
+static const char * dtb_filename = "mpc8572ds.dtb";
 
 static void load_initrd(){
 	//load_file(initrd_filename, initrd_start);
