@@ -68,7 +68,9 @@ static bool ppc_cpu_init()
 	}
 	else if(!strcmp(mach->machine_name, "mpc8572"))
 		gCPU.core_num = 2;
-	else
+	else if(!strcmp(mach->machine_name, "mpc8641d"))
+                gCPU.core_num = 2;
+        else
 		gCPU.core_num = 0;
 
 	if(!gCPU.core_num){
