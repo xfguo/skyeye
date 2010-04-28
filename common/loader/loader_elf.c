@@ -68,6 +68,10 @@ write_virt (uint32 addr, uint8_t * buffer, int size)
 	skyeye_config_t* config = get_current_config();
 	generic_arch_t *arch_instance = get_arch_instance(config->arch->arch_name);
 
+	sky_pref_t* pref = get_skyeye_pref();
+	unsigned long load_base = pref->exec_load_base;
+	unsigned long load_mask = pref->exec_load_mask;
+	addr = (addr & load_mask)|load_base;
 	for (i = 0; i < size; i++) {
 		/*
 		if(arch_instance->ICE_write_byte)
