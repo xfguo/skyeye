@@ -168,9 +168,13 @@ static int ppc_fetch_register(int rn, unsigned char * memory){
 				regval = arch_instance->get_regval_by_id(32);
 				break;
 			default:
-				regval = 0x0;
-				//fprintf(stderr,"Wrong reg number 0x%d in %s\n", rn, __FUNCTION__);
-				//return -1;
+				if(rn > 64 && rn <= 70)
+					regval = arch_instance->get_regval_by_id(rn);
+				else{
+					regval = 0x0;
+					//fprintf(stderr,"Wrong reg number 0x%d in %s\n", rn, __FUNCTION__);
+					//return -1;
+				}
 		}
 	}
 	tomem (memory, regval);

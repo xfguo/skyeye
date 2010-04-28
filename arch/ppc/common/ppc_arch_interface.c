@@ -339,9 +339,29 @@ static char* ppc_get_regname_by_id(int id){
         //return NULL;
 }
 static uint32 ppc_get_regval_by_id(int id){
-        if(id == PC)
-                return gCPU.core[0].pc;
-        return gCPU.core[0].gpr[id];
+	/* we return the reg value of core 0 by default */
+	int core_id = 0;
+	if(id >= 0 && id < 32)
+        	return gCPU.core[0].gpr[id];
+	switch(id){
+		case PC:
+			return gCPU.core[core_id].pc;
+		case MSR:
+			return gCPU.core[core_id].msr;
+		case CR:
+			return gCPU.core[core_id].cr;
+		case LR:
+			return gCPU.core[core_id].lr;
+		case CTR:
+			return gCPU.core[core_id].ctr;
+		case XER:
+			return gCPU.core[core_id].xer;
+		case FPSCR:
+			return gCPU.core[core_id].fpscr;
+		default:
+			/* can not find any corrsponding register */
+			return 0;
+	}
 }
 
 static exception_t ppc_mmu_read(short size, generic_address_t addr, uint32_t * value){

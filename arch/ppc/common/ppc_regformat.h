@@ -35,6 +35,12 @@ enum ppc_regno{
 	R30,
 	R31,
 	PC, //PC,
+	MSR = 65,
+	CR,
+	LR,
+	CTR,
+	XER,
+	FPSCR,
 };
 const char* ppc_regstr[] = {
 	"R0",
