@@ -185,7 +185,7 @@ static void per_cpu_step(e500_core_t * running_core){
 	core->step++;
 	core->npc = core->pc + 4;
 
-	switch(	ppc_effective_to_physical(core, core->pc, 0, &real_addr))
+	switch(	ppc_effective_to_physical(core, core->pc, PPC_MMU_CODE, &real_addr))
 	{
 		case PPC_MMU_OK:
 			break;

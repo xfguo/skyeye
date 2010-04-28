@@ -60,21 +60,20 @@ IVOR15 Debug
 #define ST (1 << 24)
 
 
-#if 0
-bool FASTCALL ppc_exception(uint32 type, uint32 flags, uint32 a)
+#if 1
+bool FASTCALL e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
 {
 	if (type != PPC_EXC_DEC) PPC_EXC_TRACE("@%08x: type = %08x (%08x, %08x)\n", gCPU.pc, type, flags, a);
 	switch (type) {
 	case PPC_EXC_DSI: { // .271
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = gCPU.msr;
-		gCPU.esr |= ST;  
-		gCPU.dear = a /* save the data address accessed by exception instruction */
-
-		gCPU.msr &= 0x21200;
-		gCPU.npc = (gCPU.IVPR & 0xFFFF0000) | (IVOR[2] & 0xFFF0); 
-		break;
+		core->srr[0] = core->pc;
+                core->srr[1] = core->msr & 0x87c0ffff;
+                core->dar = a;
+                core->dsisr = flags;
+		printf("In %s, addr=0x%x, pc=0x%x DSI exception.\n", __FUNCTION__, a, core->pc);
+                break;
 	}
+#if 0
 	case PPC_EXC_ISI: { // .274
 		if (gCPU.pc == 0) {
 			PPC_EXC_WARN("pc == 0 in ISI\n");
@@ -136,13 +135,14 @@ bool FASTCALL ppc_exception(uint32 type, uint32 flags, uint32 a)
 		gCPU.srr[1] = gCPU.msr & 0x87c0ffff;
 		break;
 	}
+#endif
 	default:
 		PPC_EXC_ERR("unknown\n");
 		return false;
 	}
 	ppc_mmu_tlb_invalidate();
-	gCPU.msr = 0;
-	gCPU.npc = type;
+	core->msr = 0;
+	core->npc = type;
 	return true;
 }
 #endif
