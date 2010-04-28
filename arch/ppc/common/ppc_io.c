@@ -36,10 +36,15 @@
 
 extern byte * ddr_ram;
 
-#define DEFAULT_CCSR_MEM 0xFF700000
-#define CCSR_MEM_SIZE 0x100000
-#define GET_CCSR_BASE(reg)(((reg >> 8)&0xFFF) << 20)
+/* For e500 */
+//#define DEFAULT_CCSR_MEM 0xFF700000
+//#define CCSR_MEM_SIZE 0x100000
+//#define GET_CCSR_BASE(reg)(((reg >> 8)&0xFFF) << 20)
 
+/* For e600 */
+#define DEFAULT_CCSR_MEM 0xF8000000
+#define CCSR_MEM_SIZE 0x100000
+#define GET_CCSR_BASE(reg)(((reg >> 8)&0xFFFF) << 16)
 
 int FASTCALL ppc_read_effective_word(uint32 addr, uint32 *result)
 {
