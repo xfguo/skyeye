@@ -145,7 +145,7 @@ exception_t SKY_load_module(const char* module_filename){
 }
 void SKY_load_all_modules(char* lib_dir, char* suffix){
 	/* we assume the length of dirname + filename does not over 1024 */
-	char* full_filename[1024];
+	char full_filename[1024];
 	char* lib_suffix;
 	/* Find all the module under lib_dir */
 	DIR *module_dir = opendir(lib_dir);
@@ -175,7 +175,7 @@ void SKY_load_all_modules(char* lib_dir, char* suffix){
 
 		/* contruct the full filename for module */
 		int lib_dir_len = strlen(lib_dir);
-		memset(&full_filename, '\0', 1024);
+		memset(&full_filename[0], '\0', 1024);
 		strncpy(&full_filename[0], lib_dir, lib_dir_len);	
 		full_filename[lib_dir_len] = Dir_splitter;
 		full_filename[lib_dir_len + 1] = '\0';
