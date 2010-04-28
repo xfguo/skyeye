@@ -1106,6 +1106,19 @@ sim_debug ()
 				prepare_resume_reply (own_buf, status,
 						      signal);
 				break;
+			/* get a register value by its number */
+			case 'p':
+				p=&(own_buf[1]);
+				/* Get the register number */
+                                addr = strtoul(p, (char **)&p, 16);
+				// printf("addr=0x%x\n", addr);
+
+				fetch_inferior_registers (addr, registers);
+				//printf("registers[0x40 * 4]=0x%x\n", *(unsigned long*)&registers[0x40 * 4]);
+                                convert_int_to_ascii (&registers[current_reg_type->register_byte(addr)], own_buf,
+                                                      current_reg_type->register_raw_size(addr));
+                                break;
+
 			case 'z':
 				{
 					p=&(own_buf[1]);
@@ -1246,8 +1259,6 @@ sim_debug ()
 		/* We come here when getpkt fails.
 
 		   For the extended remote protocol we exit (and this is the only
-		   way we gracefully exit!).
-
 		   For the traditional remote protocol close the connection,
 		   and re-open it at the top of the loop.  */
 		if (extended_protocol) {

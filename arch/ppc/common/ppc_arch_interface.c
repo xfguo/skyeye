@@ -347,6 +347,13 @@ static uint32 ppc_get_regval_by_id(int id){
 
 static exception_t ppc_mmu_read(short size, generic_address_t addr, uint32_t * value){
 	uint32 result;
+
+	/**
+         *  work around for ppc gdb remote debugger
+         */
+        if ((addr & 0xFFFFF000) == 0xBFFFF000)
+                return 0;
+
 	switch(size){
                 case 8:
                         ppc_read_effective_byte (addr, &result);

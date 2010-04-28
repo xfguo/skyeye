@@ -157,7 +157,22 @@ static int ppc_fetch_register(int rn, unsigned char * memory){
 #endif
 	uint32 regval;
 	generic_arch_t* arch_instance = get_arch_instance("");
-	regval = arch_instance->get_regval_by_id(rn);
+	if(rn < 32)
+		regval = arch_instance->get_regval_by_id(rn);
+	else if(rn > 31 && rn < 64){
+		regval = 0;
+	}
+	else{
+		switch(rn){
+			case 64: /* PC */
+				regval = arch_instance->get_regval_by_id(32);
+				break;
+			default:
+				regval = 0x0;
+				//fprintf(stderr,"Wrong reg number 0x%d in %s\n", rn, __FUNCTION__);
+				//return -1;
+		}
+	}
 	tomem (memory, regval);
 	return 0;
 }

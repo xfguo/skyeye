@@ -19,7 +19,7 @@
 
 */
 /*
- * 12/04/2005   ksh  <blacfin.kang@gmail.com>
+ * 12/04/2005   ksh  <blackfin.kang@gmail.com>
  * */
 
 //#include "armdefs.h"
@@ -38,12 +38,13 @@ extern struct ARMul_State * state;
 extern struct _memory_core memory_core;
 extern generic_arch_t * arch_instance;
 #endif
+#include "skyeye_pref.h"
 int
 frommem (unsigned char *memory)
 {
-	generic_arch_t* arch_instance = get_arch_instance("");
-
-	if (arch_instance->endianess == Big_endian) {
+	sky_pref_t* pref = get_skyeye_pref();
+	pref->endian = Big_endian;
+	if (pref->endian == Big_endian) {
 		return (memory[0] << 24)
 			| (memory[1] << 16) | (memory[2] << 8) | (memory[3] <<
 								  0);
@@ -59,8 +60,9 @@ frommem (unsigned char *memory)
 void
 tomem (unsigned char *memory, int val)
 {
-	generic_arch_t* arch_instance = get_arch_instance("");
-	if (arch_instance->endianess == Big_endian) {
+	sky_pref_t* pref = get_skyeye_pref();
+	pref->endian = Big_endian;
+	if (pref->endian == Big_endian) {
 		memory[0] = val >> 24;
 		memory[1] = val >> 16;
 		memory[2] = val >> 8;
@@ -89,8 +91,10 @@ sim_write (generic_address_t addr, unsigned char *buffer, int size)
 {
 	int i;
 	int fault=0;
+	skyeye_config_t* config = get_current_config();
+	generic_arch_t *arch_instance = get_arch_instance(config->arch->arch_name);
 	for (i = 0; i < size; i++) {
-		fault = bus_write(8, addr + i, buffer[i]);
+		fault = arch_instance->mmu_write(8, addr + i, buffer[i]);
 		if(fault) return -1; 
 	}
 	return size;
@@ -102,8 +106,10 @@ sim_read (generic_address_t addr, unsigned char *buffer, int size)
 	int i;
 	int fault = 0;
 	unsigned char v;
+	skyeye_config_t* config = get_current_config();
+	generic_arch_t *arch_instance = get_arch_instance(config->arch->arch_name);
 	for (i = 0; i < size; i++) {
-		fault = bus_read(8, addr+i, &v);
+		fault = arch_instance->mmu_read(8, addr+i, &v);
 		if(fault) 
 			return -1; 
 		buffer[i]=v;
@@ -122,6 +128,9 @@ void gdbserver_cont(){
 		sim_resume(0);
 #endif
 	SIM_continue(0);
+	while(skyeye_is_running())
+		;
+	return;
 }
 void gdbserver_step(){
 	skyeye_stepi(1);
