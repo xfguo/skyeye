@@ -39,7 +39,9 @@ endif
 # we will link the common module with main
 #libcommon_la_LDFLAGS = -module
 
-DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
+skyeye_module_dir = \"$(prefix)/lib/skyeye\"
+
+DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_MODULE_DIR=$(skyeye_module_dir)
 
 INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_srcdir)/third-party @INCLTDL@
 

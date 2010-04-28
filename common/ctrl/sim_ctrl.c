@@ -7,7 +7,12 @@
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
 /* FIXME, we should get it from prefix varaible after ./configure */
+#ifndef SKYEYE_MODULE_DIR
 const char* default_lib_dir = "/opt/skyeye/lib/skyeye/";
+#else
+const char* default_lib_dir = SKYEYE_MODULE_DIR;
+#endif
+
 void SIM_init_command_line(void){
 }
 
