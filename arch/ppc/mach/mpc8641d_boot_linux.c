@@ -30,7 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "ppc_mmu.h"
 #include "sysendian.h"
 
-extern byte * ddr_ram; /* 64M DDR SDRAM */
+extern byte * ddr_ram; /* 512M DDR SDRAM */
 
 static const int initrd_start  = 32 * 1024 * 1024, initrd_size = 1 * 1024 * 1024;
 static const char * initrd_filename = "initrd.img";
@@ -38,7 +38,7 @@ static const int bd_start = 8 * 1024 * 1024;
 static const int boot_param_start = 8 * 1024 * 1024;
 static const int bootcmd_start= 9 * 1024 * 1024;
 //static char * bootcmd = "root=/dev/ram0 console=ttyCPM0 mem=64M";
-static char * bootcmd = "root=/dev/ram0 console=ttyS0 mem=64M";
+static char * bootcmd = "root=/dev/ram0 console=ttyS0 mem=512M";
 
 //const int OFF_DT_STRUCT = 0x200000;
 static const int DT_STRUCT_SIZE = 8 * 1024;
@@ -116,6 +116,7 @@ static void set_bootcmd(){
 }
 #endif
 static void set_boot_param(e500_core_t * core){
+	core->gpr[1] = 0x00FF0000;
 	core->gpr[3] = bd_start;
 
 /*
@@ -124,7 +125,8 @@ static void set_boot_param(e500_core_t * core){
  */
 
 	core->gpr[4] = initrd_start;
-	core->gpr[5] = initrd_start + initrd_size;
+	//core->gpr[5] = initrd_start + initrd_size;
+	core->gpr[5] = 0x0;
 
 	core->gpr[6] = bootcmd_start;
 	core->gpr[7] = bootcmd_start + strlen(bootcmd) + 1;
@@ -160,5 +162,6 @@ void mpc8641d_boot_linux(){
 		setup_boot_map(&core->mmu);
 	}
 	//gCPU.ccsr.ccsr = 0xE0000; /* Only for boot linux MPC8560 */
-	gCPU.ccsr = 0xFFE00; /* Only for boot MPC8572 linux */ 
+	//gCPU.ccsr = 0xFFE00; /* Only for boot MPC8572 linux */ 
+	gCPU.ccsr = 0xF80000; /* Only for boot MPC8641d linux */ 
 }
