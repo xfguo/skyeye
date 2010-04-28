@@ -332,8 +332,7 @@ ppc_parse_mach (machine_config_t * mach, const char *params[])
 }
 #endif
 static uint32 ppc_get_step(){
-        uint32 step = current_core->step;
-        return step;
+	return gCPU.core[0].step;
 }
 static char* ppc_get_regname_by_id(int id){
         return ppc_regstr[id];
@@ -341,8 +340,8 @@ static char* ppc_get_regname_by_id(int id){
 }
 static uint32 ppc_get_regval_by_id(int id){
         if(id == PC)
-                return current_core->pc;
-        return current_core->gpr[id];
+                return gCPU.core[0].pc;
+        return gCPU.core[0].gpr[id];
 }
 
 static exception_t ppc_mmu_read(short size, generic_address_t addr, uint32_t * value){
