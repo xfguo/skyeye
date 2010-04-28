@@ -455,6 +455,27 @@ void ppc_opc_mfspr()
 		case 31: current_core->gpr[rD] = current_core->dbatl[3]; return;
 		}
 		break;
+	case 17://LCH
+		switch (spr1) {
+		case 16: current_core->gpr[rD] = current_core->e600_ibatu[0]; return;
+		case 17: current_core->gpr[rD] = current_core->e600_ibatl[0]; return;
+		case 18: current_core->gpr[rD] = current_core->e600_ibatu[1]; return;
+		case 19: current_core->gpr[rD] = current_core->e600_ibatl[1]; return;
+		case 20: current_core->gpr[rD] = current_core->e600_ibatu[2]; return;
+		case 21: current_core->gpr[rD] = current_core->e600_ibatl[2]; return;
+		case 22: current_core->gpr[rD] = current_core->e600_ibatu[3]; return;
+		case 23: current_core->gpr[rD] = current_core->e600_ibatl[3]; return;
+		case 24: current_core->gpr[rD] = current_core->e600_dbatu[0]; return;
+		case 25: current_core->gpr[rD] = current_core->e600_dbatl[0]; return;
+		case 26: current_core->gpr[rD] = current_core->e600_dbatu[1]; return;
+		case 27: current_core->gpr[rD] = current_core->e600_dbatl[1]; return;
+		case 28: current_core->gpr[rD] = current_core->e600_dbatu[2]; return;
+		case 29: current_core->gpr[rD] = current_core->e600_dbatl[2]; return;
+		case 30: current_core->gpr[rD] = current_core->e600_dbatu[3]; return;
+		case 31: current_core->gpr[rD] = current_core->e600_dbatl[3]; return;
+
+		}
+		break;
 	case 19:
                 switch(spr1) {
 			case 16:
@@ -536,10 +557,10 @@ void ppc_opc_mfspr()
 			current_core->gpr[rD] = 0;
 			return;
 		case 19:
-			current_core->gpr[rD] = current_core->l1csr[1];
+			current_core->gpr[rD] = current_core->e600_ictrl;
 			return;
 		case 20:
-			current_core->gpr[rD] = current_core->iac[0];
+			current_core->gpr[rD] = current_core->e600_ldstdb;
 			return;
 		case 21:
 			current_core->gpr[rD] = 0;
@@ -548,6 +569,9 @@ void ppc_opc_mfspr()
 			current_core->gpr[rD] = 0;
 			return;
 		case 23:
+			current_core->gpr[rD] = 0;
+			return;
+		case 24:
 			current_core->gpr[rD] = 0;
 			return;
 		case 25:
@@ -925,6 +949,61 @@ void ppc_opc_mtspr()
 		break;
 	case 17:
 		switch(spr1){
+		printf("YUAN:func=%s,line=%d, write_e600_BAT", __func__, __LINE__);
+		case 16://LCH
+			current_core->e600_ibatu[0] = current_core->gpr[rS];
+			return;
+		case 17://LCH
+			current_core->e600_ibatl[0] = current_core->gpr[rS];
+			return;
+		case 18://LCH
+			current_core->e600_ibatu[1] = current_core->gpr[rS];
+			return;
+		case 19://LCH
+			current_core->e600_ibatl[1] = current_core->gpr[rS];
+			return;
+		case 20://LCH
+			current_core->e600_ibatu[2] = current_core->gpr[rS];
+			return;
+		case 21://LCH
+			current_core->e600_ibatl[2] = current_core->gpr[rS];
+			return;
+		case 22://LCH
+			current_core->e600_ibatu[3] = current_core->gpr[rS];
+			return;
+		case 23://LCH
+			current_core->e600_ibatl[3] = current_core->gpr[rS];
+			return;
+		case 24://LCH
+			current_core->e600_dbatu[0] = current_core->gpr[rS];
+			return;
+		case 25://LCH
+			current_core->e600_dbatl[0] = current_core->gpr[rS];
+			return;
+		case 26://LCH
+			current_core->e600_dbatu[1] = current_core->gpr[rS];
+			return;
+		case 27://LCH
+			current_core->e600_dbatl[1] = current_core->gpr[rS];
+			return;
+		case 28://LCH
+			current_core->e600_dbatu[2] = current_core->gpr[rS];
+			return;
+		case 29://LCH
+			current_core->e600_dbatl[2] = current_core->gpr[rS];
+			return;
+		case 30://LCH
+			current_core->e600_dbatu[3] = current_core->gpr[rS];
+			return;
+		case 31://LCH
+			current_core->e600_dbatl[3] = current_core->gpr[rS];
+			return;
+
+
+
+
+
+			/*
 		case 26:
 			current_core->mcsrr[0] = current_core->gpr[rS];
 			return;
@@ -934,6 +1013,7 @@ void ppc_opc_mtspr()
 		case 28:
 			current_core->mcsr = current_core->gpr[rS];
 			return;
+			*/
 		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
 		}
 
@@ -976,11 +1056,25 @@ void ppc_opc_mtspr()
 		case 25: return;
 		case 26: return;
 		}
+	case 30://LCH
+		switch(spr1) {
+		case 20: 
+			current_core->e600_tlbmiss = current_core->gpr[rS];
+			return;
+		case 21: 
+			current_core->e600_pte[0] = current_core->gpr[rS];
+			return;
+		case 22: 
+			current_core->e600_pte[1] = current_core->gpr[rS];
+			return;
+		}
+		return;
 	case 31:
 		switch (spr1) {
 		case 16:
 //			PPC_OPC_WARN("write(%08x) to spr %d:%d (HID0) not supported! @%08x\n", current_core->gpr[rS], spr1, spr2, current_core->pc);
 			current_core->hid[0] = current_core->gpr[rS];
+			//printf("YUAN:func=%s, line=%d, current_core->hid[0]=0x%x\n", __func__, __LINE__, current_core->hid[0]);
 			return;
 		case 17: return;
 		case 18:
