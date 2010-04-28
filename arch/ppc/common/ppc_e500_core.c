@@ -73,7 +73,8 @@ void ppc_core_init(e500_core_t * core, int core_id){
 		core->sr[j] = 0x2aa*j;
 	}
 	//core->pvr = 0x8020000; /* PVR for mpc8560 */
-	core->pvr = 0x80210030;	/* PVR for mpc8572 */
+	//core->pvr = 0x80210030;	/* PVR for mpc8572 */
+	core->pvr = 0x80040010; /* PVR for mpc8641D */
 	core->pir = core_id;
 
 	e500_mmu_init(&core->mmu);

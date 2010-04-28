@@ -140,6 +140,31 @@ typedef struct e500_core_s{
 	uint64 pdec;	// more precise version of dec
 	uint64 ptb;	// more precise version of tb
 
+/* e600 specific register */
+ 	uint32 e600_ibatu[4];	// spr 560, 562, 564, 566
+ 	uint32 e600_ibatl[4];	// spr 561, 563, 565, 567
+ 	uint32 e600_dbatu[4];	// spr 568, 570, 572, 574
+ 	uint32 e600_dbatl[4];	// spr 569, 571, 573, 575
+ 	uint32 e600_pte[2];	    // spr 981, spr 982 
+ 	uint32 e600_tlbmiss;	// spr 980 
+ 	uint32 e600_ictc[2];	// spr 1019 
+ 	uint32 e600_hid[2];		// spr 1008, 1009 
+ 	uint32 e600_upmc[6];	// spr 937, 938, 941, 942, 929, 930 
+ 	uint32 e600_usiar;		// spr 939 
+ 	uint32 e600_ummcr[3];	// spr 936, 940, 928 
+ 	uint32 e600_sprg[4]; 	// spr 276-279
+ 
+ 	uint32 e600_ldstcr;		// spr 1016 
+ 	uint32 e600_ldstdb;		// spr 1012 
+ 	uint32 e600_msscr0; 	// spr 1014 
+ 	uint32 e600_msssr0; 	// spr 1015 
+ 	uint32 e600_ictrl; 		// spr 1011 
+ 	uint32 e600_l2cr; 		// spr 1017 
+ 	uint32 e600_mmcr2; 		// spr 944 
+ 	uint32 e600_bamr; 		// spr 951 
+ 
+ 	/* end e600 specific register */
+
 	// for altivec
 	uint32 vscr;
 	uint32 vrsave;	// spr 256
