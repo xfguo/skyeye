@@ -65,7 +65,7 @@ for all TLB entries
 	endfor
 	end translation tlb miss
 */
-int ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result){
+int e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result){
 	int i,j;
 	uint32 mask;
 	ppc_tlb_entry_t *entry;
@@ -157,6 +157,289 @@ int ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32
 	return PPC_MMU_FATAL;
 	
 }
+
+int e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result)
+{
+	
+	int i;
+	if (flags & PPC_MMU_CODE) {
+		if (!(core->msr & MSR_IR)) {
+			*result = addr;
+			return PPC_MMU_OK;
+		}
+		/*
+		 * BAT translation .329
+		 */
+
+		uint32 batu = (core->msr & MSR_PR ? BATU_Vp : BATU_Vs);		
+
+		for (i=0; i<4; i++) {
+			uint32 bl17 = core->ibat_bl17[i];
+			uint32 addr2 = addr & (bl17 | 0xf001ffff);
+			if (BATU_BEPI(addr2) == BATU_BEPI(core->ibatu[i])) {
+				// bat applies to this address
+				if (core->ibatu[i] & batu) {
+					// bat entry valid
+					uint32 offset = BAT_EA_OFFSET(addr);
+					uint32 page = BAT_EA_11(addr);
+					page &= ~bl17;
+					page |= BATL_BRPN(core->ibatl[i]);
+					// fixme: check access rights
+					*result = page | offset;
+					return PPC_MMU_OK;
+				}
+			}
+		}
+	} else {
+		if (!(core->msr & MSR_DR)) {
+			*result = addr;
+			return PPC_MMU_OK;
+		}
+		/*
+		 * BAT translation .329
+		 */
+
+		uint32 batu = (core->msr & MSR_PR ? BATU_Vp : BATU_Vs);
+
+		for (i=0; i<4; i++) {
+			uint32 bl17 = core->dbat_bl17[i];
+			uint32 addr2 = addr & (bl17 | 0xf001ffff);
+			if (BATU_BEPI(addr2) == BATU_BEPI(core->dbatu[i])) {
+				// bat applies to this address
+				if (core->dbatu[i] & batu) {
+					// bat entry valid
+					uint32 offset = BAT_EA_OFFSET(addr);
+					uint32 page = BAT_EA_11(addr);
+					page &= ~bl17;
+					page |= BATL_BRPN(core->dbatl[i]);
+					// fixme: check access rights
+					*result = page | offset;
+					return PPC_MMU_OK;
+				}
+			}
+		}
+	}
+	
+	/*
+	 * Address translation with segment register
+	 */
+	uint32 sr = core->sr[EA_SR(addr)];
+
+	if (sr & SR_T) {
+		// woea
+		// FIXME: implement me
+		PPC_MMU_ERR("sr & T\n");
+	} else {
+
+#ifdef TLB	
+		for (i=0; i<4; i++) {
+			if ((addr & ~0xfff) == (core->tlb_va[i])) {
+				core->tlb_last = i;
+//				ht_printf("TLB: %d: %08x -> %08x\n", i, addr, core->tlb_pa[i] | (addr & 0xfff));
+				*result = core->tlb_pa[i] | (addr & 0xfff);
+				return PPC_MMU_OK;
+			}
+		}
+#endif
+		// page address translation
+		if ((flags & PPC_MMU_CODE) && (sr & SR_N)) {
+			// segment isnt executable
+			if (!(flags & PPC_MMU_NO_EXC)) {
+				//ppc_exception(PPC_EXC_ISI, PPC_EXC_SRR1_GUARD);         /////////////////////////////////del by yuan
+				return PPC_MMU_EXC;
+			}
+			return PPC_MMU_FATAL;
+		}
+		uint32 offset = EA_Offset(addr);         // 12 bit
+		uint32 page_index = EA_PageIndex(addr);  // 16 bit
+		uint32 VSID = SR_VSID(sr);               // 24 bit
+		uint32 api = EA_API(addr);               //  6 bit (part of page_index)
+		// VSID.page_index = Virtual Page Number (VPN)
+		// Hashfunction no 1 "xor" .360
+		uint32 hash1 = (VSID ^ page_index);
+
+
+		uint32 pteg_addr = ((hash1 & core->pagetable_hashmask)<<6) | core->pagetable_base;
+		int key;
+		if (core->msr & MSR_PR) {
+			key = (sr & SR_Kp) ? 4 : 0;
+		} else {
+			key = (sr & SR_Ks) ? 4 : 0;
+		}
+
+
+		uint32 pte_protection_offset = ((flags&PPC_MMU_WRITE) ? 8:0) + key;
+
+		for (i=0; i<8; i++) {
+			uint32 pte;
+
+			if (ppc_read_physical_word(pteg_addr, &pte)) {
+				if (!(flags & PPC_MMU_NO_EXC)) {
+					PPC_MMU_ERR("read physical in address translate failed\n");
+					return PPC_MMU_EXC;
+				}
+				return PPC_MMU_FATAL;
+			}
+	//		printf("YUAN:func=%s, line=%d, pte=0x%x\n", __func__, __LINE__, pte);
+
+			if ((pte & PTE1_V) && (!(pte & PTE1_H))) {
+				if (VSID == PTE1_VSID(pte) && (api == PTE1_API(pte))) {
+					// page found
+					if (ppc_read_physical_word(pteg_addr+4, &pte)) {
+						if (!(flags & PPC_MMU_NO_EXC)) {
+							PPC_MMU_ERR("read physical in address translate failed\n");
+							return PPC_MMU_EXC;
+						}
+						return PPC_MMU_FATAL;
+					}
+					// check accessmode .346
+/*
+					if (!ppc_pte_protection[pte_protection_offset + PTE2_PP(pte)]) {
+						if (!(flags & PPC_MMU_NO_EXC)) {
+							if (flags & PPC_MMU_CODE) {
+								PPC_MMU_WARN("correct impl? code + read protection\n");
+								ppc_exception(PPC_EXC_ISI, PPC_EXC_SRR1_PROT, addr);
+								return PPC_MMU_EXC;
+							} else {
+								if (flags & PPC_MMU_WRITE) {
+									ppc_exception(PPC_EXC_DSI, PPC_EXC_DSISR_PROT | PPC_EXC_DSISR_STORE, addr);
+								} else {
+									ppc_exception(PPC_EXC_DSI, PPC_EXC_DSISR_PROT, addr);
+								}
+								return PPC_MMU_EXC;
+							}
+						}
+						return PPC_MMU_FATAL;
+					}
+	*/
+					// ok..
+					uint32 pap = PTE2_RPN(pte);
+					*result = pap | offset;
+#ifdef TLB
+					core->tlb_last++;
+					core->tlb_last &= 3;
+					core->tlb_pa[core->tlb_last] = pap;
+					core->tlb_va[core->tlb_last] = addr & ~0xfff;					
+//					ht_printf("TLB: STORE %d: %08x -> %08x\n", core->tlb_last, addr, pap);
+#endif
+					// update access bits
+					if (flags & PPC_MMU_WRITE) {
+						pte |= PTE2_C | PTE2_R;
+					} else {
+						pte |= PTE2_R;
+					}
+					ppc_write_physical_word(pteg_addr+4, pte);
+					return PPC_MMU_OK;
+				}
+			}
+			pteg_addr+=8;
+		}
+		
+		// Hashfunction no 2 "not" .360
+		hash1 = ~hash1;
+		pteg_addr = ((hash1 & core->pagetable_hashmask)<<6) | core->pagetable_base;
+		for (i=0; i<8; i++) {
+			uint32 pte;
+			if (ppc_read_physical_word(pteg_addr, &pte)) {
+				if (!(flags & PPC_MMU_NO_EXC)) {
+					PPC_MMU_ERR("read physical in address translate failed\n");
+					return PPC_MMU_EXC;
+				}
+				return PPC_MMU_FATAL;
+			}
+			if ((pte & PTE1_V) && (pte & PTE1_H)) {
+				if (VSID == PTE1_VSID(pte) && (api == PTE1_API(pte))) {
+					// page found
+					if (ppc_read_physical_word(pteg_addr+4, &pte)) {
+						if (!(flags & PPC_MMU_NO_EXC)) {
+							PPC_MMU_ERR("read physical in address translate failed\n");
+							return PPC_MMU_EXC;
+						}
+						return PPC_MMU_FATAL;
+					}
+					// check accessmode
+					int key;
+					if (core->msr & MSR_PR) {
+						key = (sr & SR_Kp) ? 4 : 0;
+					} else {
+						key = (sr & SR_Ks) ? 4 : 0;
+					}
+/*
+					if (!ppc_pte_protection[((flags&PPC_MMU_WRITE)?8:0) + key + PTE2_PP(pte)]) {
+						if (!(flags & PPC_MMU_NO_EXC)) {
+							if (flags & PPC_MMU_CODE) {
+								PPC_MMU_WARN("correct impl? code + read protection\n");
+								ppc_exception(PPC_EXC_ISI, PPC_EXC_SRR1_PROT, addr);
+								return PPC_MMU_EXC;
+							} else {
+								if (flags & PPC_MMU_WRITE) {
+									ppc_exception(PPC_EXC_DSI, PPC_EXC_DSISR_PROT | PPC_EXC_DSISR_STORE, addr);
+								} else {
+									ppc_exception(PPC_EXC_DSI, PPC_EXC_DSISR_PROT, addr);
+								}
+								return PPC_MMU_EXC;
+							}
+						}
+						return PPC_MMU_FATAL;
+					}
+*/
+					// ok..
+					*result = PTE2_RPN(pte) | offset;
+					
+					// update access bits
+					if (flags & PPC_MMU_WRITE) {
+						pte |= PTE2_C | PTE2_R;
+					} else {
+						pte |= PTE2_R;
+					}
+					ppc_write_physical_word(pteg_addr+4, pte);
+//					PPC_MMU_WARN("hash function 2 used!\n");
+//					gSinglestep = true;
+					return PPC_MMU_OK;
+				}
+			}
+			pteg_addr+=8;
+		}
+	}
+
+	// page fault
+	if (!(flags & PPC_MMU_NO_EXC)) {
+		if (flags & PPC_MMU_CODE) {
+			e600_ppc_exception(core, PPC_EXC_ISI, PPC_EXC_SRR1_PAGE, addr);
+		} else {
+			if (flags & PPC_MMU_WRITE) {
+				e600_ppc_exception(core, PPC_EXC_DSI, PPC_EXC_DSISR_PAGE | PPC_EXC_DSISR_STORE, addr);
+			} else {
+				e600_ppc_exception(core, PPC_EXC_DSI, PPC_EXC_DSISR_PAGE, addr);
+			}
+		}
+		return PPC_MMU_EXC;
+	}
+
+
+	return PPC_MMU_FATAL;
+}
+
+int ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result)
+{
+	int ret;
+
+	if(core->pvr == 0x80040010)    /*PVR for mpc8641D*/
+	{
+		ret = e600_effective_to_physical(core, addr, flags, result);
+		if(ret == PPC_MMU_OK)
+			return PPC_MMU_OK;
+	}
+	else if(core->pvr == 0x8020000)  /*PVR for mpc8560*/
+	{
+		ret = e500_effective_to_physical(core, addr, flags, result);
+		if(ret == PPC_MMU_OK)
+			return PPC_MMU_OK;
+	}
+
+	return PPC_MMU_FATAL;
+}
+
 int e500_mmu_init(e500_mmu_t * mmu){
 	memset(mmu, 0, sizeof(e500_mmu_t));
 	/* the initial tlb map of real hardware */
