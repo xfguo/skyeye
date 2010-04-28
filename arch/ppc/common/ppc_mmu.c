@@ -620,6 +620,11 @@ int FASTCALL ppc_read_physical_word(uint32 addr, uint32 *result)
 		return PPC_MMU_OK;
 	}
 #endif
+	if (addr < DDR_RAM_SIZE) {
+		// big endian
+		*result = ppc_word_from_BE(*((int *)&ddr_ram[addr]));
+		return PPC_MMU_OK;
+	}
 	int ret = io_mem_read(addr, result, 4);
 	*result = ppc_bswap_word(result);
 	return ret;
