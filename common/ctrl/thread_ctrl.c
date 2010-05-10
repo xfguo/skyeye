@@ -146,7 +146,7 @@ void skyeye_loop(generic_arch_t *arch_instance){
                          * spin until it's time to go.  this is useful when
                          * we're not auto-starting.
                          */
-			sleep(1);
+			usleep(100);
                 }
 	#if 0	
 		/* check callback function */	
