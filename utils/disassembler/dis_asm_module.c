@@ -10,7 +10,7 @@ const int INSN_LENGTH = 4;
 int com_disassemble(char* arg){
         char** endptr;
         generic_address_t addr;
-        if(arg == NULL && *arg == '\0'){
+        if(arg == NULL || *arg == '\0'){
                 generic_arch_t* arch_instance = get_arch_instance(NULL);
                 addr = arch_instance->get_pc();
         }
