@@ -308,6 +308,22 @@ static exception_t x86_set_register_by_id(int id, uint32 value){
         return No_exp;
 }
 
+exception_t mmu_read(short length, uint32 addr,uint32_t *value)
+{
+	switch(length)
+	{
+		case 8:
+			*value = BX_CPU(0)->read_virtual_byte_32(BX_SEG_REG_CS,addr);break;
+		case 16:
+			*value = BX_CPU(0)->read_virtual_word_32(BX_SEG_REG_CS,addr);break;
+		case 32:
+			*value = BX_CPU(0)->read_virtual_dword_32(BX_SEG_REG_CS,addr);break;
+		default:
+			*value = 0;
+			fprintf(stderr,"Wrong argument value of  'length' in function %s \n",__FUNCTION__);
+	}
+	return No_exp;
+}
 void
 init_x86_arch ()
 {
@@ -326,5 +342,6 @@ init_x86_arch ()
 	x86_arch.get_regval_by_id = x86_get_regval_by_id;
 	x86_arch.get_regname_by_id = x86_get_regname_by_id;
 	x86_arch.get_step = x86_get_step;
+	x86_arch.mmu_read = mmu_read;
 	register_arch (&x86_arch);
 }
