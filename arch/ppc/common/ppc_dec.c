@@ -294,6 +294,7 @@ static void ppc_opc_init_group2()
 	ppc_opc_table_group2[982] = ppc_opc_icbi;
 	ppc_opc_table_group2[983] = ppc_opc_stfiwx;
 	ppc_opc_table_group2[1014] = ppc_opc_dcbz;
+	ppc_opc_table_group2[822] = ppc_opc_dss;      /*Temporarily modify*/
 
 	if ((ppc_cpu_get_pvr(0) & 0xffff0000) == 0x000c0000) {
 		/* Added for Altivec support */
