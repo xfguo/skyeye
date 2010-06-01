@@ -276,6 +276,7 @@ mpc8641d_io_reset (void *state)
 
 	io->uart[0].ier = 0x0;
 	io->uart[0].iir = 0x1;
+	io->uart[0].rbr = 0x1;
 	//gCPU.mpic.iivpr[UART_IRQ] = 0x80800000;
 
 	/* initialize interrupt controller */
