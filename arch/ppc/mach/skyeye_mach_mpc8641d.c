@@ -891,6 +891,25 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 		}
 	}
 
+	/* ETH0 */
+	if (offset >= 0x24000 && offset < 0x25000) {
+		switch (offset) {
+			case 0x24014:
+				/* source attribute register for DMA0 */
+				io->dma.satr0 = data;
+				break;
+			case 0x21118:
+				io->dma.satr0 = data;
+				break;
+			default:
+				fprintf (stderr, "in %s, error when write dma.addr=0x%x, \
+                	                pc=0x%x\n", __FUNCTION__, offset,
+					 current_core->pc);
+				return;
+				//skyeye_exit(-1);
+		}
+	}
+
 	/* PIC Register map: global register */
 	if (offset >= 0x40000 && offset <= 0x4FFF0) {
 		switch (offset) {
