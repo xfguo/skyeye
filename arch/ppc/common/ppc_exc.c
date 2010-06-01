@@ -73,6 +73,11 @@ bool FASTCALL e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, u
 		printf("In %s, addr=0x%x, pc=0x%x DSI exception.\n", __FUNCTION__, a, core->pc);
                 break;
 	}
+	case PPC_EXC_SC: {  // .285
+		core->srr[0] = core->npc;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		break;
+	}
 #if 0
 	case PPC_EXC_ISI: { // .274
 		if (gCPU.pc == 0) {
