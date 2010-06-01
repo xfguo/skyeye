@@ -149,6 +149,12 @@ typedef struct mpic_s{
 	uint32 ipidr[4]; /* IPI 0 - 3 dispatch register */
 	uint32 iivpr[64];
 	uint32 iidr[64];
+
+	uint32 mivpr[4];
+	uint32 midr[4];
+	uint32 msivpr[8];
+	uint32 msidr[8];
+
 }mpic_t;
 
 typedef struct ecm_s{
@@ -958,6 +964,31 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			return;
 		if (offset >= 0x50100 && offset <= 0x515f0)	/* Reserved region for MPC8572 */
 			return;
+
+		if (offset >= 0x51600 && offset <= 0x51670) {
+			int index = (offset - 0x51600) >> 4;
+			if (index & 0x1)
+				io->mpic.midr[index >> 1] = data;
+			else
+				io->mpic.mivpr[index >> 1] = data;
+			return;
+		}
+
+		if (offset >= 0x51680 && offset <= 0x51bf0)	 /* Reserved region for MPC8641d*/
+			return;
+
+		if (offset >= 0x51c00 && offset <= 0x51cf0) {
+			int index = (offset - 0x51c00) >> 4;
+			if (index & 0x1)
+				io->mpic.msidr[index >> 1] = data;
+			else
+				io->mpic.msivpr[index >> 1] = data;
+			return;
+		}
+
+		if (offset >= 0x51d00 && offset <= 0x5fff0)	 /* Reserved region for MPC8641d*/
+			return;
+
 		fprintf (stderr,
 			 "in %s, error when write pic ram,offset=0x%x,pc=0x%x\n",
 			 __FUNCTION__, offset, current_core->pc);
