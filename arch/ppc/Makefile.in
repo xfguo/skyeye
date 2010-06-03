@@ -54,7 +54,8 @@ pkglibLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 libppc_la_LIBADD =
 am__objects_1 = skyeye_mach_mpc8560.lo skyeye_mach_mpc8572.lo \
-	mpc8560_boot_linux.lo mpc8572_boot_linux.lo
+	mpc8560_boot_linux.lo mpc8572_boot_linux.lo \
+	skyeye_mach_mpc8641d.lo mpc8641d_boot_linux.lo
 am__objects_2 = ppc_alu.lo ppc_cpu.lo ppc_exc.lo ppc_mmu.lo ppc_vec.lo \
 	ppc_arch_interface.lo ppc_dec.lo ppc_fpu.lo ppc_opc.lo \
 	ppc_e500_core.lo ppc_cpm.lo ppc_e500_exc.lo ppc_io.lo \
@@ -228,7 +229,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-ppc_mach = mach/skyeye_mach_mpc8560.c mach/skyeye_mach_mpc8572.c mach/mpc8560_boot_linux.c mach/mpc8572_boot_linux.c
+ppc_mach = mach/skyeye_mach_mpc8560.c mach/skyeye_mach_mpc8572.c mach/mpc8560_boot_linux.c mach/mpc8572_boot_linux.c mach/skyeye_mach_mpc8641d.c mach/mpc8641d_boot_linux.c
 ppc_comm = common/ppc_alu.c common/ppc_cpu.c common/ppc_exc.c  common/ppc_mmu.c    common/ppc_vec.c \
 common/ppc_arch_interface.c  common/ppc_dec.c       common/ppc_fpu.c  common/ppc_opc.c \
 common/ppc_e500_core.c	      common/ppc_cpm.c						\
@@ -313,6 +314,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc8560_boot_linux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc8572_boot_linux.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc8641d_boot_linux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_alu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_arch_interface.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_cpm.Plo@am__quote@
@@ -331,6 +333,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_vec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_mach_mpc8560.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_mach_mpc8572.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_mach_mpc8641d.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -380,6 +383,20 @@ mpc8572_boot_linux.lo: mach/mpc8572_boot_linux.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mach/mpc8572_boot_linux.c' object='mpc8572_boot_linux.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mpc8572_boot_linux.lo `test -f 'mach/mpc8572_boot_linux.c' || echo '$(srcdir)/'`mach/mpc8572_boot_linux.c
+
+skyeye_mach_mpc8641d.lo: mach/skyeye_mach_mpc8641d.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT skyeye_mach_mpc8641d.lo -MD -MP -MF $(DEPDIR)/skyeye_mach_mpc8641d.Tpo -c -o skyeye_mach_mpc8641d.lo `test -f 'mach/skyeye_mach_mpc8641d.c' || echo '$(srcdir)/'`mach/skyeye_mach_mpc8641d.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/skyeye_mach_mpc8641d.Tpo $(DEPDIR)/skyeye_mach_mpc8641d.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mach/skyeye_mach_mpc8641d.c' object='skyeye_mach_mpc8641d.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o skyeye_mach_mpc8641d.lo `test -f 'mach/skyeye_mach_mpc8641d.c' || echo '$(srcdir)/'`mach/skyeye_mach_mpc8641d.c
+
+mpc8641d_boot_linux.lo: mach/mpc8641d_boot_linux.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mpc8641d_boot_linux.lo -MD -MP -MF $(DEPDIR)/mpc8641d_boot_linux.Tpo -c -o mpc8641d_boot_linux.lo `test -f 'mach/mpc8641d_boot_linux.c' || echo '$(srcdir)/'`mach/mpc8641d_boot_linux.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/mpc8641d_boot_linux.Tpo $(DEPDIR)/mpc8641d_boot_linux.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mach/mpc8641d_boot_linux.c' object='mpc8641d_boot_linux.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o mpc8641d_boot_linux.lo `test -f 'mach/mpc8641d_boot_linux.c' || echo '$(srcdir)/'`mach/mpc8641d_boot_linux.c
 
 ppc_alu.lo: common/ppc_alu.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ppc_alu.lo -MD -MP -MF $(DEPDIR)/ppc_alu.Tpo -c -o ppc_alu.lo `test -f 'common/ppc_alu.c' || echo '$(srcdir)/'`common/ppc_alu.c
