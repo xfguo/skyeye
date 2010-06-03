@@ -427,17 +427,13 @@ int ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32
 	if(core->pvr == 0x80040010)    /*PVR for mpc8641D*/
 	{
 		ret = e600_effective_to_physical(core, addr, flags, result);
-		if(ret == PPC_MMU_OK)
-			return PPC_MMU_OK;
 	}
 	else if(core->pvr == 0x8020000)  /*PVR for mpc8560*/
 	{
 		ret = e500_effective_to_physical(core, addr, flags, result);
-		if(ret == PPC_MMU_OK)
-			return PPC_MMU_OK;
 	}
 
-	return PPC_MMU_FATAL;
+	return ret;
 }
 
 int e500_mmu_init(e500_mmu_t * mmu){
