@@ -164,6 +164,7 @@ typedef struct ecm_s{
 
 typedef struct std_16550_uart_s{
 	uint32 rbr;
+	uint32 dlb;
 	uint32 thr;
 	uint32 iir;
 	uint32 ier;
@@ -282,7 +283,7 @@ mpc8641d_io_reset (void *state)
 
 	io->uart[0].ier = 0x0;
 	io->uart[0].iir = 0x1;
-	io->uart[0].rbr = 0x1;
+	io->uart[0].dlb = 0x1;
 	//gCPU.mpic.iivpr[UART_IRQ] = 0x80800000;
 
 	/* initialize interrupt controller */
@@ -332,8 +333,12 @@ mpc8641d_io_read_byte (void *state, uint32_t offset)
 		case 0x8006:
 			return io->pci_cfg.cfg_data;
 		case 0x4500:
-			io->uart[0].lsr &= ~0x01;
-			return io->uart[0].rbr;
+			if(io->uart[0].lcr & 0x80)
+				return io->uart[0].dlb;
+			else{
+				io->uart[0].lsr &= ~0x01;
+				return io->uart[0].rbr;
+			}
 		case 0x4501:
 			//printf("In %s,read offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, current_core->pc);
 			if (io->uart[0].lcr & 0x80)
