@@ -63,7 +63,7 @@ IVOR15 Debug
 #if 1
 bool FASTCALL e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
 {
-	if (type != PPC_EXC_DEC) PPC_EXC_TRACE("@%08x: type = %08x (%08x, %08x)\n", gCPU.pc, type, flags, a);
+	if (type != PPC_EXC_DEC) PPC_EXC_TRACE("@%08x: type = %08x (%08x, %08x)\n", core->pc, type, flags, a);
 	switch (type) {
 	case PPC_EXC_DSI: { // .271
 		core->srr[0] = core->pc;
@@ -73,74 +73,67 @@ bool FASTCALL e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, u
 		printf("In %s, addr=0x%x, pc=0x%x DSI exception.\n", __FUNCTION__, a, core->pc);
                 break;
 	}
+	case PPC_EXC_ISI: { // .274
+		if (core->pc == 0) {
+			PPC_EXC_WARN("pc == 0 in ISI\n");
+			//SINGLESTEP("");
+		}
+		core->srr[0] = core->pc;
+		core->srr[1] = (core->msr & 0x87c0ffff) | flags;
+		break;
+	}
+	case PPC_EXC_DEC: { // .284
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		break;
+	}
+	case PPC_EXC_EXT_INT: {
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		break;
+	}
 	case PPC_EXC_SC: {  // .285
 		core->srr[0] = core->npc;
 		core->srr[1] = core->msr & 0x87c0ffff;
 		break;
 	}
-#if 0
-	case PPC_EXC_ISI: { // .274
-		if (gCPU.pc == 0) {
-			PPC_EXC_WARN("pc == 0 in ISI\n");
-			//SINGLESTEP("");
-		}
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = (gCPU.msr & 0x87c0ffff) | flags;
-		break;
-	}
-	case PPC_EXC_DEC: { // .284
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = gCPU.msr & 0x87c0ffff;
-		break;
-	}
-	case PPC_EXC_EXT_INT: {
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = gCPU.msr & 0x87c0ffff;
-		break;
-	}
-	case PPC_EXC_SC: {  // .285
-		gCPU.srr[0] = gCPU.npc;
-		gCPU.srr[1] = gCPU.msr & 0x87c0ffff;
-		break;
-	}
 	case PPC_EXC_NO_FPU: { // .284
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = gCPU.msr & 0x87c0ffff;
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
 		break;
 	}
 	case PPC_EXC_NO_VEC: {	// v.41
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = gCPU.msr & 0x87c0ffff;
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
 		break;
 	}
 	case PPC_EXC_PROGRAM: { // .283
 		if (flags & PPC_EXC_PROGRAM_NEXT) {
-			gCPU.srr[0] = gCPU.npc;
+			core->srr[0] = core->npc;
 		} else {
-			gCPU.srr[0] = gCPU.pc;
+			core->srr[0] = core->pc;
 		}
-		gCPU.srr[1] = (gCPU.msr & 0x87c0ffff) | flags;
+		core->srr[1] = (core->msr & 0x87c0ffff) | flags;
 		break;
 	}
 	case PPC_EXC_FLOAT_ASSIST: { // .288
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = gCPU.msr & 0x87c0ffff;
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
 		break;
 	}
 	case PPC_EXC_MACHINE_CHECK: { // .270
-		if (!(gCPU.msr & MSR_ME)) {
+		if (!(core->msr & MSR_ME)) {
 			PPC_EXC_ERR("machine check exception and MSR[ME]=0.\n");
 		}
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = (gCPU.msr & 0x87c0ffff) | MSR_RI;
+		core->srr[0] = core->pc;
+		core->srr[1] = (core->msr & 0x87c0ffff) | MSR_RI;
 		break;
 	}
 	case PPC_EXC_TRACE2: { // .286
-		gCPU.srr[0] = gCPU.pc;
-		gCPU.srr[1] = gCPU.msr & 0x87c0ffff;
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
 		break;
 	}
-#endif
 	default:
 		PPC_EXC_ERR("unknown\n");
 		return false;
