@@ -42,19 +42,21 @@ extern byte * ddr_ram;
 //#define GET_CCSR_BASE(reg)(((reg >> 8)&0xFFF) << 20)
 
 /* For e600 */
-#define DEFAULT_CCSR_MEM 0xF8000000
-#define CCSR_MEM_SIZE 0x100000
-#define GET_CCSR_BASE(reg)(((reg >> 8)&0xFFFF) << 16)
+//#define DEFAULT_CCSR_MEM 0xF8000000
+//#define CCSR_MEM_SIZE 0x100000
+//#define GET_CCSR_BASE(reg)(((reg >> 8)&0xFFFF) << 16)
+static inline bool_t in_ccsr_range(uint32 p){
+	return (p >= current_core->get_ccsr_base(gCPU.ccsr)) && (p < (current_core->get_ccsr_base(gCPU.ccsr) + current_core->ccsr_size));
+}
 
 int FASTCALL ppc_read_effective_word(uint32 addr, uint32 *result)
 {
 	uint32 p;
 	int r;
 	if (!(r = ppc_effective_to_physical(current_core, addr, PPC_MMU_READ, &p))) {
-		if((p >= GET_CCSR_BASE(gCPU.ccsr)) && (p < (GET_CCSR_BASE(gCPU.ccsr) + CCSR_MEM_SIZE))){
+		if(in_ccsr_range(p)){
 			skyeye_config_t *config = get_current_config();
-			*result = config->mach->mach_io_read_word(&gCPU, (p - GET_CCSR_BASE(gCPU.ccsr)));
-			//*result = skyeye_config.mach->mach_io_read_word(&gCPU, (p - GET_CCSR_BASE(gCPU.ccsr)));
+			*result = config->mach->mach_io_read_word(&gCPU, (p - current_core->get_ccsr_base(gCPU.ccsr)));
 		}
 		#if 1
 		else if((p >= boot_rom_start_addr) && (p < (boot_rom_start_addr - 1 + boot_romSize )))
@@ -86,10 +88,10 @@ int FASTCALL ppc_read_effective_half(uint32 addr, uint16 *result)
 	if (!(r = ppc_effective_to_physical(current_core, addr, PPC_MMU_READ, &p))) {
 		//ppc_io_read_halfword(&current_core-> p);
 		//printf("DBG:ccsr=0x%x,CCSR_BASE=0x%x\n",current_core->ccsr.ccsr,GET_CCSR_BASE(current_core->ccsr.ccsr));
-		if((p >= GET_CCSR_BASE(gCPU.ccsr)) && (p < (GET_CCSR_BASE(gCPU.ccsr) + CCSR_MEM_SIZE))){
+		if(in_ccsr_range(p)){
 			//*result = skyeye_config.mach->mach_io_read_halfword(&gCPU, (p - GET_CCSR_BASE(gCPU.ccsr)));
 			skyeye_config_t* config = get_current_config();
-			*result = config->mach->mach_io_read_halfword(&gCPU, (p - GET_CCSR_BASE(gCPU.ccsr)));
+			*result = config->mach->mach_io_read_halfword(&gCPU, (p - current_core->get_ccsr_base(gCPU.ccsr)));
 		}
 		#if 1
 		else if((p >= boot_rom_start_addr) && (p < (boot_rom_start_addr - 1 + boot_romSize )))
@@ -122,8 +124,8 @@ int FASTCALL ppc_read_effective_byte(uint32 addr, uint8 *result)
 		//ppc_io_read_byte (&current_core-> p);
 		//printf("\nDBG:in %s,addr=0x%x,p=0x%x\n", __FUNCTION__, addr,p);
 		//printf("DBG:ccsr=0x%x,CCSR_BASE=0x%x\n",current_core->ccsr.ccsr,GET_CCSR_BASE(current_core->ccsr.ccsr));
-		if((p >= GET_CCSR_BASE(gCPU.ccsr)) && (p < (GET_CCSR_BASE(gCPU.ccsr) + CCSR_MEM_SIZE))){
-			int offset = p - GET_CCSR_BASE(gCPU.ccsr);
+		if(in_ccsr_range(p)){
+			int offset = p - current_core->get_ccsr_base(gCPU.ccsr);
 			skyeye_config_t* config = get_current_config();
 			*result = config->mach->mach_io_read_byte(&gCPU, offset);
 			//*result = skyeye_config.mach->mach_io_read_byte(&gCPU, offset);
@@ -159,8 +161,8 @@ int FASTCALL ppc_write_effective_word(uint32 addr, uint32 data)
 		//ppc_exception for unalign
 	}
 	if (!((r=ppc_effective_to_physical(current_core, addr, PPC_MMU_WRITE, &p)))) {
-		if(p >= GET_CCSR_BASE(gCPU.ccsr) && p <(GET_CCSR_BASE(gCPU.ccsr) + CCSR_MEM_SIZE)){
-			int offset = p - GET_CCSR_BASE(gCPU.ccsr);
+		if(in_ccsr_range(p)){
+			int offset = p - current_core->get_ccsr_base(gCPU.ccsr);
 			//skyeye_config.mach->mach_io_write_word(&gCPU, offset, data);
 			skyeye_config_t* config = get_current_config();
 			config->mach->mach_io_write_word(&gCPU, offset, data);
@@ -191,8 +193,8 @@ int FASTCALL ppc_write_effective_half(uint32 addr, uint16 data)
 	uint32 p;
 	int r;
 	if (!((r=ppc_effective_to_physical(current_core, addr, PPC_MMU_WRITE, &p)))) {
-		if(p >= GET_CCSR_BASE(gCPU.ccsr) && p <(GET_CCSR_BASE(gCPU.ccsr) + CCSR_MEM_SIZE)){
-			int offset = p - GET_CCSR_BASE(gCPU.ccsr);
+		if(in_ccsr_range(p)){
+			int offset = p - current_core->get_ccsr_base(gCPU.ccsr);
 			//skyeye_config.mach->mach_io_write_halfword(&gCPU, offset, data);
 			skyeye_config_t* config = get_current_config();
                         config->mach->mach_io_write_halfword(&gCPU, offset, data);
@@ -226,8 +228,8 @@ int FASTCALL ppc_write_effective_byte(uint32 addr, uint8 data)
 
                 //printf("DBG:in %s,addr=0x%x,p=0x%x, data=0x%x, pc=0x%x\n", __FUNCTION__, addr,p, data, current_core->pc);
                 //printf("DBG:ccsr=0x%x,CCSR_BASE=0x%x",current_core->ccsr.ccsr,GET_CCSR_BASE(current_core->ccsr.ccsr));
-                if(p >= GET_CCSR_BASE(gCPU.ccsr) && p <(GET_CCSR_BASE(gCPU.ccsr) + CCSR_MEM_SIZE)){
-                        int offset = p - GET_CCSR_BASE(gCPU.ccsr);
+		if(in_ccsr_range(p)){
+                        int offset = p - current_core->get_ccsr_base(gCPU.ccsr);
 			//skyeye_config.mach->mach_io_write_byte(&gCPU, offset, data);
 			skyeye_config_t* config = get_current_config();
 			config->mach->mach_io_write_byte(&gCPU, offset, data);

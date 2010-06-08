@@ -200,6 +200,8 @@ typedef struct e500_core_s{
 	uint32 step;
 	int (*effective_to_physical)(struct e500_core_s * core, uint32 addr, int flags, uint32 *result);
 	bool (*ppc_exception)(struct e500_core_s *core, uint32 type, uint32 flags, uint32 a);
+	uint32 (*get_ccsr_base)(uint32 ccsr_reg);
+	uint32 ccsr_size;
 	int syscall_number;
 	
 }e500_core_t;

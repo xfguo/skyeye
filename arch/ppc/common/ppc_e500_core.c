@@ -66,6 +66,16 @@ void ppc_e500_ipi_int(int core_id, int ipi_id){
 	//printf("In %s, npc=0x%x, pir=0x%x\n", __FUNCTION__, core->npc, core->pir);
 }
 #endif
+static uint32 e500_get_ccsr_base(uint32 reg){
+	return ((reg >> 8)&0xFFF) << 20;
+}
+
+/*
+ * get ccsr base address according to the register value
+ */
+static uint32 e600_get_ccsr_base(uint32 reg){
+	return ((reg >> 8)&0xFFFF) << 16;
+}
 /*
  * Initialization for e500 core
  */
@@ -85,6 +95,8 @@ void ppc_core_init(e500_core_t * core, int core_id){
 		core->effective_to_physical = e500_effective_to_physical;
 		core->ppc_exception = e500_ppc_exception;
 		core->syscall_number = SYSCALL;
+		core->get_ccsr_base = e500_get_ccsr_base;
+		core->ccsr_size = 0x100000;
 	}
 	else if(!strcmp(mach->machine_name, "mpc8572")){
 		core->pvr = 0x80210030;	/* PVR for mpc8572 */
@@ -93,6 +105,8 @@ void ppc_core_init(e500_core_t * core, int core_id){
 		core->effective_to_physical = e500_effective_to_physical;
 		core->ppc_exception = e500_ppc_exception;
 		core->syscall_number = SYSCALL;
+		core->get_ccsr_base = e500_get_ccsr_base;
+		core->ccsr_size = 0x100000;
 	}
 	else if(!strcmp(mach->machine_name, "mpc8641d")){
 		core->pvr = 0x80040010; /* PVR for mpc8641D */
@@ -100,6 +114,8 @@ void ppc_core_init(e500_core_t * core, int core_id){
 		core->effective_to_physical = e600_effective_to_physical;
 		core->ppc_exception = e600_ppc_exception;
 		core->syscall_number = PPC_EXC_SC;
+		core->get_ccsr_base = e600_get_ccsr_base;
+		core->ccsr_size = 0x100000;
 	}
 
 	core->pir = core_id;
