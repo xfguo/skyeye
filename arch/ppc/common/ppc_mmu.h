@@ -39,6 +39,8 @@ extern uint32 gMemorySize;
 #define PPC_MMU_FATAL 2
 
 int FASTCALL ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
+int FASTCALL e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
+int FASTCALL e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
 bool FASTCALL ppc_mmu_set_sdr1(uint32 newval, bool quiesce);
 void ppc_mmu_tlb_invalidate();
 

@@ -405,12 +405,12 @@ int e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint3
 	// page fault
 	if (!(flags & PPC_MMU_NO_EXC)) {
 		if (flags & PPC_MMU_CODE) {
-			e600_ppc_exception(core, PPC_EXC_ISI, PPC_EXC_SRR1_PAGE, addr);
+			ppc_exception(core, PPC_EXC_ISI, PPC_EXC_SRR1_PAGE, addr);
 		} else {
 			if (flags & PPC_MMU_WRITE) {
-				e600_ppc_exception(core, PPC_EXC_DSI, PPC_EXC_DSISR_PAGE | PPC_EXC_DSISR_STORE, addr);
+				ppc_exception(core, PPC_EXC_DSI, PPC_EXC_DSISR_PAGE | PPC_EXC_DSISR_STORE, addr);
 			} else {
-				e600_ppc_exception(core, PPC_EXC_DSI, PPC_EXC_DSISR_PAGE, addr);
+				ppc_exception(core, PPC_EXC_DSI, PPC_EXC_DSISR_PAGE, addr);
 			}
 		}
 		return PPC_MMU_EXC;
@@ -422,18 +422,7 @@ int e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint3
 
 int ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result)
 {
-	int ret;
-
-	if(core->pvr == 0x80040010)    /*PVR for mpc8641D*/
-	{
-		ret = e600_effective_to_physical(core, addr, flags, result);
-	}
-	else if(core->pvr == 0x8020000)  /*PVR for mpc8560*/
-	{
-		ret = e500_effective_to_physical(core, addr, flags, result);
-	}
-
-	return ret;
+	return core->effective_to_physical(core, addr, flags, result);
 }
 
 int e500_mmu_init(e500_mmu_t * mmu){

@@ -24,6 +24,9 @@
 
 #include "ppc_cpu.h"
 #include "ppc_e500_exc.h"
+#include "ppc_exc.h"
+#include "ppc_mmu.h"
+#include "skyeye_config.h"
 
 #define TCR_DIE (1 << 26)
 #define TSR_DIS (1 << 27)
@@ -72,10 +75,33 @@ void ppc_core_init(e500_core_t * core, int core_id){
 	for (j = 0; j < 16; j++) {
 		core->sr[j] = 0x2aa*j;
 	}
-	//core->pvr = 0x8020000; /* PVR for mpc8560 */
-	//core->pvr = 0x80210030;	/* PVR for mpc8572 */
-	core->pvr = 0x80040010; /* PVR for mpc8641D */
+	
+	skyeye_config_t* config = get_current_config();
+	machine_config_t *mach = config->mach;
+	if(!strcmp(mach->machine_name, "mpc8560")){
+		core->pvr = 0x8020000; /* PVR for mpc8560 */
+		/* E500 core initialization */
+		e500_mmu_init(&core->mmu);
+		core->effective_to_physical = e500_effective_to_physical;
+		core->ppc_exception = e500_ppc_exception;
+		core->syscall_number = SYSCALL;
+	}
+	else if(!strcmp(mach->machine_name, "mpc8572")){
+		core->pvr = 0x80210030;	/* PVR for mpc8572 */
+		/* E500 core initialization */
+		e500_mmu_init(&core->mmu);
+		core->effective_to_physical = e500_effective_to_physical;
+		core->ppc_exception = e500_ppc_exception;
+		core->syscall_number = SYSCALL;
+	}
+	else if(!strcmp(mach->machine_name, "mpc8641d")){
+		core->pvr = 0x80040010; /* PVR for mpc8641D */
+		/* E600 core initialization */
+		core->effective_to_physical = e600_effective_to_physical;
+		core->ppc_exception = e600_ppc_exception;
+		core->syscall_number = PPC_EXC_SC;
+	}
+
 	core->pir = core_id;
 
-	e500_mmu_init(&core->mmu);
 }

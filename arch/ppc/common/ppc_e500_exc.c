@@ -27,7 +27,7 @@
 #include "ppc_mmu.h"
 #include "tracers.h"
 
-bool FASTCALL ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
+bool FASTCALL e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
 {
 	switch(type){
 		case CRI_INPUT:

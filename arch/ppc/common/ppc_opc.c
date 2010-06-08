@@ -1168,7 +1168,8 @@ void ppc_opc_sc()
 		return;
 	}
 	//ppc_exception(current_core, SYSCALL ,0 ,0);
-	e600_ppc_exception(current_core, PPC_EXC_SC ,0 ,0);
+	//e600_ppc_exception(current_core, PPC_EXC_SC ,0 ,0);
+	ppc_exception(current_core, current_core->syscall_number ,0 ,0);
 }
 
 /*

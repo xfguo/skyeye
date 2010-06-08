@@ -36,6 +36,12 @@
 #include "ppc_exc.h"
 #include "ppc_mmu.h"
 #include "tracers.h"
+
+bool ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a){
+	return core->ppc_exception(core, type, flags, a);
+}
+
+
 /*
 IVOR0  Critical Input
 IVOR1  Machine Check

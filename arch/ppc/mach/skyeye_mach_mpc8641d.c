@@ -255,7 +255,7 @@ std8250_io_do_cycle (void * state)
 			io->pic_percpu.iack[core_id] = 0x2a;
 			//printf("In %s, ack=0x%x\n", __FUNCTION__, io->pic_percpu.iack[core_id]);
 			core->ipi_flag = 1;	/* we need to inform the core that npc is changed to exception vector */
-			e600_ppc_exception (core, PPC_EXC_EXT_INT, 0, 0);
+			ppc_exception (core, PPC_EXC_EXT_INT, 0, 0);
 		}
 	}
 }
@@ -1037,7 +1037,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			        	//core->iack = (core->iack & 0xFFFF0000) | (gCPU.mpic.ipivpr[ipi_id] & 0xFFFF);
 			        	io->pic_percpu.iack[core_id] = (io->pic_percpu.iack[core_id] & 0xFFFF0000) | (io->mpic.ipivpr[0] & 0xFFFF);
         //printf("In %s,iack=0x%x, pc=0x%x", __FUNCTION__, gCPU.pic_percpu.iack[core_id], core->pc);
-			        	e600_ppc_exception(core, PPC_EXC_EXT_INT, 0, 0);
+			        	ppc_exception(core, PPC_EXC_EXT_INT, 0, 0);
 			        	core->ipi_flag = 1; /* we need to inform the core that npc is changed to exception vector */
         //printf("In %s, npc=0x%x, pir=0x%x\n", __FUNCTION__, core->npc, core->pir);
 				}

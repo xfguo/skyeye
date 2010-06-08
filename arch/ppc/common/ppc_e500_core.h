@@ -25,6 +25,7 @@
 #ifndef __PPC_E500_CORE_H__
 #define __PPC_E500_CORE_H__
 #include <types.h>
+#include "ppc_e500_core.h"
 /* tlb entry */
 typedef struct ppc_tlb_entry_s{
 	uint v;
@@ -197,6 +198,10 @@ typedef struct e500_core_s{
 
 	uint32 ipi_flag;
 	uint32 step;
+	int (*effective_to_physical)(struct e500_core_s * core, uint32 addr, int flags, uint32 *result);
+	bool (*ppc_exception)(struct e500_core_s *core, uint32 type, uint32 flags, uint32 a);
+	int syscall_number;
+	
 }e500_core_t;
 
 #define E500
