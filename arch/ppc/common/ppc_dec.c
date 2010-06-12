@@ -238,7 +238,7 @@ static void ppc_opc_init_group2()
 	ppc_opc_table_group2[343] = ppc_opc_lhax;
 	ppc_opc_table_group2[335] = ppc_opc_isel;
 	ppc_opc_table_group2[370] = ppc_opc_tlbia;
-	ppc_opc_table_group2[371] = ppc_opc_mftb;
+	ppc_opc_table_group2[371] = ppc_opc_mfspr;
 	ppc_opc_table_group2[375] = ppc_opc_lhaux;
 	ppc_opc_table_group2[407] = ppc_opc_sthx;
 	ppc_opc_table_group2[412] = ppc_opc_orcx;
