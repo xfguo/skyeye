@@ -34,6 +34,7 @@
 #include "skyeye_options.h"
 //#include "skyeye_arch.h"
 #include "skyeye_config.h"
+#include "skyeye_pref.h"
 
 #include "skyeye_types.h"
 
@@ -42,6 +43,9 @@
 #include "skyeye_net.h"
 #include "skyeye_lcd.h"
 */
+int
+do_load_addr_option (skyeye_option_t * this_option, int num_params,
+		 const char *params[]);
 extern FILE *skyeye_logfd;
 int
 split_param (const char *param, char *name, char *value)
@@ -88,6 +92,7 @@ skyeye_option_init (skyeye_config_t * config)
 #endif
 	skyeye_option_list = NULL;
 	register_option("cpu", do_deprecated_option, "Do not need to provide cpu option any more.\n");
+	register_option("load_addr", do_load_addr_option, "Set load base address and mask value for elf file loading.\n");
 }
 
 exception_t register_option(char* option_name, do_option_t do_option_func, char* helper){

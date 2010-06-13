@@ -1,5 +1,8 @@
 #include "skyeye_options.h"
 #include "skyeye_config.h"
+#include "skyeye_pref.h"
+
+#include "skyeye_types.h"
 #ifdef DBCT_TEST_SPEED
 int
 do_dbct_test_speed_sec(struct skyeye_option_t *this_opion, int num_params, const char *params[])
@@ -57,6 +60,11 @@ do_load_addr_option (skyeye_option_t * this_option, int num_params,
 		else
                         SKYEYE_ERR ("Error: Unkonw load_addr option  \"%s\"\n", params[i]);
 	}
+	sky_pref_t *pref;
+	/* get the current preference for simulator */
+	pref = get_skyeye_pref();
+	pref->exec_load_base = load_base;
+	pref->exec_load_mask = load_mask;
 	/* FIXME, we should update load_base and load_mask to preference of SkyEye */
 	fprintf(stderr, "%s not finished.\n", __FUNCTION__);
 	//printf("Your elf file will be load to: base address=0x%x,mask=0x%x\n", load_base, load_mask);
