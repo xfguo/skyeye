@@ -2766,7 +2766,7 @@ ac_config_headers="$ac_config_headers ltdlconf.h"
 
 
 # some common header path we should include them
-COMMON_INCLUDES="-I\$(top_srcdir)/common/include"
+COMMON_INCLUDES="-I\$(top_srcdir)/common/include -I\$(srcdir)/common/"
 
 
 

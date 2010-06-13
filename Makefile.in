@@ -269,7 +269,7 @@ SUBDIRS = arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device
 #skyeye_LDADD =  $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/device/libdev.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/sparc/libsparc.a $(top_srcdir)/memory/libmemory.a $(top_srcdir)/third-party/bfd/libbfd.a $(top_srcdir)/third-party/libiberty/libiberty.a $(top_srcdir)/third-party/readline/libreadline.a
 
 # workaround getopt issue on Cygwin platform
-skyeye_LDADD = -L$(top_srcdir)/common -lcommon -lc $(am__append_1)
+skyeye_LDADD = -L./common -lcommon -lc $(am__append_1)
 # add curses library for ubentu system.
 # skyeye_LDADD += -lncurses
 
@@ -899,26 +899,26 @@ skyeye_gui:
 	cd gui/qt4_src && rm -f skyeye_gui && make
 	cp -f gui/qt4_src/skyeye-gui $(prefix)/bin/
 lib:
-	cd third-party/libiberty && ./configure --prefix=$(prefix) --enable-shared ;make;
-	cd third-party/bfd/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
-	cd third-party/opcodes/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
-	cd third-party/readline/ && ./configure --prefix=$(prefix) --enable-shared;make;
+	cd $(top_srcdir)/third-party/libiberty && ./configure --prefix=$(prefix) --enable-shared ;make;
+	cd $(top_srcdir)/third-party/bfd/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
+	cd $(top_srcdir)/third-party/opcodes/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
+	cd $(top_srcdir)/third-party/readline/ && ./configure --prefix=$(prefix) --enable-shared;make;
 build_lib:
-	cd third-party/libiberty && make;
-	cd third-party/bfd/ && make;
-	cd third-party/opcodes/ && make;
-	cd third-party/readline/ && make;
+	cd $(top_srcdir)/third-party/libiberty && make;
+	cd $(top_srcdir)/third-party/bfd/ && make;
+	cd $(top_srcdir)third-party/opcodes/ && make;
+	cd $(top_srcdir)third-party/readline/ && make;
 install_lib:
-	cd third-party/libiberty && make install
-	cd third-party/bfd/ && make install
-	cd third-party/opcodes/ && make install
-	cd third-party/readline/ && make install
+	cd $(top_srcdir)/third-party/libiberty && make install
+	cd $(top_srcdir)/third-party/bfd/ && make install
+	cd $(top_srcdir)/third-party/opcodes/ && make install
+	cd $(top_srcdir)/third-party/readline/ && make install
 
 clean_lib:
-	cd third-party/libiberty && make distclean
-	cd third-party/bfd/ && make distclean
-	cd third-party/opcodes/ && make distclean
-	cd third-party/readline/ && make distclean
+	cd $(top_srcdir)/third-party/libiberty && make distclean
+	cd $(top_srcdir)/third-party/bfd/ && make distclean
+	cd $(top_srcdir)/third-party/opcodes/ && make distclean
+	cd $(top_srcdir)/third-party/readline/ && make distclean
 install-data-hook:
 	rm -f -r $(prefix)/testsuite && mkdir $(prefix)/testsuite
 	cp -a $(top_srcdir)/testsuite/arm_hello $(prefix)/testsuite/arm_hello/

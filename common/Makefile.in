@@ -120,9 +120,7 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-# we will link the common module with main
-#libcommon_la_LDFLAGS = -module
-DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
+DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_MODULE_DIR=$(skyeye_module_dir)
 DEPDIR = @DEPDIR@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
@@ -283,6 +281,9 @@ libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(co
 libcommon_la_LIBADD = -L$(top_srcdir)/third-party/bfd/.libs/ -lbfd \
 	-L$(top_srcdir)/third-party/libiberty/pic -liberty -lreadline \
 	@LIBLTDL@ @LIBADD_DL@ $(am__append_1)
+# we will link the common module with main
+#libcommon_la_LDFLAGS = -module
+skyeye_module_dir = \"$(prefix)/lib/skyeye\"
 INCLUDES = @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ \
 	-I$(top_srcdir)/third-party/bfd/ -I$(top_srcdir)/third-party \
 	@INCLTDL@ $(am__append_2)
