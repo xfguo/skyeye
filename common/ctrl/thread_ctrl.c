@@ -204,6 +204,7 @@ void destroy_threads(void){
 		 */
                 if(pthread_pool[i].state != Blank_state){
 			pthread_cancel(pthread_pool[i].id);
+			pthread_join(pthread_pool[i].id, NULL);
 		}
         }
 }

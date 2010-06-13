@@ -244,7 +244,7 @@ com_quit (arg)
 {
   SIM_fini();
   set_cli_done();  
-  return (0);
+  exit (0);
 }
 
 int com_list_modules(char* arg){
