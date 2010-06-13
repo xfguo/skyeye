@@ -923,7 +923,6 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			case 0x410c0:
 			case 0x410d0:
 				io->mpic.ipivpr[(offset - 0x410a0) >> 4] = data;
-				//printf("In %s,offset=0x%x, data=0x%x\n", __FUNCTION__, offset, data);
 				break;
 			case 0x41020:
 				/* source attribute register for DMA0 */
@@ -957,7 +956,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 				io->pic_global.gtdr3 = data;
 				break;
 			default:
-				fprintf (stderr, "in %s, error when write mpic, offset=0x%x, \
+				fprintf (stderr, "in %s, error when write mpic global, offset=0x%x, \
 					pc=0x%x\n", __FUNCTION__, offset,
 					 current_core->pc);
 				return;
@@ -1022,8 +1021,10 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 	/* per-CPU */
 	if (offset >= 0x60000 && offset <= 0x7FFF0) {
 		switch (offset) {
-			case 0x60040:
-				io->mpic.ipidr[0] = data;
+			case 0x60050:
+				{
+				int reg_no = (offset >> 4) & 0x3;
+				io->mpic.ipidr[reg_no] = data;
 				int core_id = -1;
 				if (data & 0x1)	/* dispatch the interrupt to core 0 */
 					core_id = 0;		
@@ -1033,15 +1034,35 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 					/* trigger an interrupt to dedicated core */
 					e500_core_t* core = &cpu->core[core_id];
 				        core->ipr |= IPI0;
-				        io->mpic.ipivpr[0] |= 0x40000000; /* set activity bit in vpr */
+				        io->mpic.ipivpr[1] |= 0x40000000; /* set activity bit in vpr */
 			        	//core->iack = (core->iack & 0xFFFF0000) | (gCPU.mpic.ipivpr[ipi_id] & 0xFFFF);
-			        	io->pic_percpu.iack[core_id] = (io->pic_percpu.iack[core_id] & 0xFFFF0000) | (io->mpic.ipivpr[0] & 0xFFFF);
-        //printf("In %s,iack=0x%x, pc=0x%x", __FUNCTION__, gCPU.pic_percpu.iack[core_id], core->pc);
+			        	io->pic_percpu.iack[core_id] = (io->pic_percpu.iack[core_id] & 0xFFFF0000) | (io->mpic.ipivpr[1] & 0xFFFF);
 			        	ppc_exception(core, PPC_EXC_EXT_INT, 0, 0);
 			        	core->ipi_flag = 1; /* we need to inform the core that npc is changed to exception vector */
-        //printf("In %s, npc=0x%x, pir=0x%x\n", __FUNCTION__, core->npc, core->pir);
 				}
 				return;
+				}
+			case 0x60060:
+				{
+				int reg_no = (offset >> 4) & 0x3;
+				io->mpic.ipidr[reg_no] = data;
+				int core_id = -1;
+				if (data & 0x1)	/* dispatch the interrupt to core 0 */
+					core_id = 0;		
+				if (data & 0x2)	/* dispatch the interrupt to core 1 */
+					core_id = 1;
+				if(data & 0x3){	
+					/* trigger an interrupt to dedicated core */
+					e500_core_t* core = &cpu->core[core_id];
+				        core->ipr |= IPI0;
+				        io->mpic.ipivpr[2] |= 0x40000000; /* set activity bit in vpr */
+			        	//core->iack = (core->iack & 0xFFFF0000) | (gCPU.mpic.ipivpr[ipi_id] & 0xFFFF);
+			        	io->pic_percpu.iack[core_id] = (io->pic_percpu.iack[core_id] & 0xFFFF0000) | (io->mpic.ipivpr[2] & 0xFFFF);
+			        	ppc_exception(core, PPC_EXC_EXT_INT, 0, 0);
+			        	core->ipi_flag = 1; /* we need to inform the core that npc is changed to exception vector */
+				}
+				return;
+				}
 			case 0x60080:
 				io->pic_ram.ctpr0 = data;
 				return;
@@ -1052,14 +1073,72 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 					//printf("In %s, writing to eoi1 for core 0,clear int\n", __FUNCTION__);
 				}
 				/* clear the interrupt with highest priority in ISR */
+				if (current_core->ipr & IPI0) {
+					current_core->ipr &= ~IPI0;
+					//printf("In %s, writing to eoi1 for core 0,clear int\n", __FUNCTION__);
+				}
+
 				return;
+			case 0x61050:
+				{
+				int reg_no = (offset >> 4) & 0x3;
+				io->mpic.ipidr[reg_no] = data;
+				int core_id = -1;
+				if (data & 0x1)	/* dispatch the interrupt to core 0 */
+					core_id = 0;		
+				if (data & 0x2)	/* dispatch the interrupt to core 1 */
+					core_id = 1;
+				if(data & 0x3){	
+					/* trigger an interrupt to dedicated core */
+					e500_core_t* core = &cpu->core[core_id];
+				        core->ipr |= IPI0;
+				        io->mpic.ipivpr[1] |= 0x40000000; /* set activity bit in vpr */
+			        	//core->iack = (core->iack & 0xFFFF0000) | (gCPU.mpic.ipivpr[ipi_id] & 0xFFFF);
+			        	io->pic_percpu.iack[core_id] = (io->pic_percpu.iack[core_id] & 0xFFFF0000) | (io->mpic.ipivpr[1] & 0xFFFF);
+        //printf("In %s,iack=0x%x, pc=0x%x", __FUNCTION__, gCPU.pic_percpu.iack[core_id], core->pc);
+			        	ppc_exception(core, PPC_EXC_EXT_INT, 0, 0);
+			        	core->ipi_flag = 1; /* we need to inform the core that npc is changed to exception vector */
+				}
+				return;
+				}
+
+			case 0x61060:
+				{
+				int reg_no = (offset >> 4) & 0x3;
+				io->mpic.ipidr[reg_no] = data;
+				int core_id = -1;
+				if (data & 0x1)	/* dispatch the interrupt to core 0 */
+					core_id = 0;		
+				if (data & 0x2)	/* dispatch the interrupt to core 1 */
+					core_id = 1;
+				if(data & 0x3){	
+					/* trigger an interrupt to dedicated core */
+					e500_core_t* core = &cpu->core[core_id];
+				        core->ipr |= IPI0;
+				        io->mpic.ipivpr[2] |= 0x40000000; /* set activity bit in vpr */
+			        	//core->iack = (core->iack & 0xFFFF0000) | (gCPU.mpic.ipivpr[ipi_id] & 0xFFFF);
+			        	io->pic_percpu.iack[core_id] = (io->pic_percpu.iack[core_id] & 0xFFFF0000) | (io->mpic.ipivpr[2] & 0xFFFF);
+			        	ppc_exception(core, PPC_EXC_EXT_INT, 0, 0);
+			        	core->ipi_flag = 1; /* we need to inform the core that npc is changed to exception vector */
+				}
+				return;
+				}
+
 			case 0x61080:
 				io->pic_ram.ctpr1 = data;
 				return;
 			case 0x610b0:	/* processor 1 end of interrupt register */
 				io->pic_ram.eoi1 = data;
+				
 				/* clear the interrupt with highest priority in ISR */
-				//printf("In %s, writing to eoi1 for core 1\n", __FUNCTION__);
+				if (current_core->ipr & (1 << UART_IRQ)) {
+                                        current_core->ipr &= ~(1 << UART_IRQ);
+                                }
+				if (current_core->ipr & (1 << UART_IRQ)) {
+                                        current_core->ipr &= ~(1 << UART_IRQ);
+                                }
+
+
 				return;
 			default:
 				fprintf (stderr, "in %s, error when write mpic, offset=0x%x, \
@@ -1201,14 +1280,13 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 	case 0x20:
 		//io->ccsr.bptr = data;
 		cpu->bptr = data;
-		//printf("In %s, write bptr=0x%x\n", __FUNCTION__, data);
 		break;
 	case 0x1010:
 		//io->ecm.eebpcr = data;
 		cpu->eebpcr = data;
-		//printf("In %s, write eebpcr=0x%x\n", __FUNCTION__, data);
 		if (data & 0x2000000)	/* enable CPU1 */
-			cpu->core[1].pc = 0xFFFFF000;
+			/* The address of e600 reset vector*/
+			cpu->core[1].pc = PPC_EXC_SYS_RESET;
 		break;
 	case 0x90C80:
 		io->sccr = data;
