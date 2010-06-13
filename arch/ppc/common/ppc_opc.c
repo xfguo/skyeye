@@ -1090,6 +1090,15 @@ void ppc_opc_mtspr()
 		case 21:
 			PPC_OPC_ERR("write(%08x) to spr %d:%d (DABR) not supported!\n", current_core->gpr[rS], spr1, spr2);
 			return;
+		case 22:
+			current_core->e600_msscr0 = current_core->gpr[rS];
+			return;
+		case 23:
+			current_core->e600_msssr0 = current_core->gpr[rS];
+			return;
+		case 24:
+			current_core->e600_ldstcr = current_core->gpr[rS];
+			return;	
 		case 27:
 			PPC_OPC_WARN("write(%08x) to spr %d:%d (ICTC) not supported!\n", current_core->gpr[rS], spr1, spr2);
 			return;
