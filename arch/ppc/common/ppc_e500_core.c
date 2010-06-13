@@ -30,7 +30,7 @@
 
 #define TCR_DIE (1 << 26)
 #define TSR_DIS (1 << 27)
-void dec_io_do_cycle(e500_core_t * core){
+static void e500_dec_io_do_cycle(e500_core_t * core){
 	core->tbl++;
 	/**
 	 *  test DIE bit of TCR if timer is enabled
@@ -55,6 +55,24 @@ void dec_io_do_cycle(e500_core_t * core){
 	}
 	return;
 }
+
+static void e600_dec_io_do_cycle(e500_core_t * core){
+	core->tbl++;
+	/* if tbl overflow, we increase tbh */
+	if(core->tbl == 0)
+		core->tbu++;
+	/* trigger interrupt when dec value from 1 to 0 */	
+	if(core->dec > 0)
+		core->dec--;
+	/* if decrementer eqauls zero */
+	if((core->dec == 0) && (core->msr & MSR_EE)){
+		/* trigger timer interrupt */
+		ppc_exception(core, PPC_EXC_DEC, 0, core->pc);
+		core->dec--;
+	}
+	return;
+}
+
 #if 0
 void ppc_e500_ipi_int(int core_id, int ipi_id){
 
@@ -95,6 +113,7 @@ void ppc_core_init(e500_core_t * core, int core_id){
 		core->effective_to_physical = e500_effective_to_physical;
 		core->ppc_exception = e500_ppc_exception;
 		core->syscall_number = SYSCALL;
+		core->dec_io_do_cycle = e500_dec_io_do_cycle;
 		core->get_ccsr_base = e500_get_ccsr_base;
 		core->ccsr_size = 0x100000;
 	}
@@ -105,6 +124,7 @@ void ppc_core_init(e500_core_t * core, int core_id){
 		core->effective_to_physical = e500_effective_to_physical;
 		core->ppc_exception = e500_ppc_exception;
 		core->syscall_number = SYSCALL;
+		core->dec_io_do_cycle = e500_dec_io_do_cycle;
 		core->get_ccsr_base = e500_get_ccsr_base;
 		core->ccsr_size = 0x100000;
 	}
@@ -114,6 +134,7 @@ void ppc_core_init(e500_core_t * core, int core_id){
 		core->effective_to_physical = e600_effective_to_physical;
 		core->ppc_exception = e600_ppc_exception;
 		core->syscall_number = PPC_EXC_SC;
+		core->dec_io_do_cycle = e600_dec_io_do_cycle;
 		core->get_ccsr_base = e600_get_ccsr_base;
 		core->ccsr_size = 0x100000;
 	}

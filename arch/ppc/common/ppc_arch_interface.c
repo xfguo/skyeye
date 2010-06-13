@@ -222,7 +222,7 @@ static void per_cpu_step(e500_core_t * running_core){
 	//debug_log(core);	
 exec_npc:
 	if(!ppc_divisor){
-		dec_io_do_cycle(core);
+		core->dec_io_do_cycle(core);
 		ppc_divisor = 0;
 	}
 	else

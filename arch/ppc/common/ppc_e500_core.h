@@ -202,8 +202,8 @@ typedef struct e500_core_s{
 	bool (*ppc_exception)(struct e500_core_s *core, uint32 type, uint32 flags, uint32 a);
 	uint32 (*get_ccsr_base)(uint32 ccsr_reg);
 	uint32 ccsr_size;
-	int syscall_number;
-	
+	uint32 syscall_number;
+	void (*dec_io_do_cycle)(struct e500_core_s *core);
 }e500_core_t;
 
 #define E500
