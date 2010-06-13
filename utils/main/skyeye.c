@@ -366,11 +366,13 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	 *  name of current config file
 	 */
 	char *skyeye_config_filename = NULL;
+	
+	uint32 uart_port;
 
 	//char *exec_file = NULL;
 	int ret = 0;
 	opterr = 0;
-	while ((c = getopt (argc, argv, "be:dc:nl:h")) != -1)
+	while ((c = getopt (argc, argv, "be:dcp:nl:h")) != -1)
 		switch (c) {
 		case 'e':
 			exec_file = optarg;
@@ -384,6 +386,9 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 			ret = -1;
 		case 'c':
 			skyeye_config_filename = optarg;
+			break;
+		case 'p':
+                        uart_port = strtoul(optarg, NULL, 10);
 			break;
 		case 'n':
 			interactive_mode = False;
@@ -462,6 +467,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	pref->exec_load_base = elf_load_base;
        	pref->exec_load_mask = elf_load_mask;
 	pref->endian = endian;
+	pref->uart_port = uart_port;
 	return ret;
 }
 

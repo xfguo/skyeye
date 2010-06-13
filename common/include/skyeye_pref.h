@@ -26,6 +26,8 @@ struct _sky_pref_s{
 	 * if true, we will run the simulator loop before cli.
 	 */
 	bool_t autoboot;
+
+	uint32 uart_port;
 };
 typedef struct _sky_pref_s sky_pref_t;
 

@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include "skyeye_uart.h"
+#include "skyeye_pref.h"
 
 #ifdef __linux__
 #include <net/if.h>
@@ -126,7 +127,9 @@ static int create_uart_console(struct uart_link_state * ul_state){
 retry:
 	server.sin_family = AF_INET;
 	server.sin_addr.s_addr = INADDR_ANY;
-	server.sin_port = htons(0);	/* bind to an OS selected local port */
+
+	sky_pref_t* pref = get_skyeye_pref();
+	server.sin_port = htons(pref->uart_port);	/* bind to an OS selected local port */
 
 	if (bind(sv_skt, (struct sockaddr *)&server, sizeof(server)) < 0) {
 		switch (errno) {
@@ -149,7 +152,7 @@ retry:
 	gethostname(myhostname, MAXHOSTNAME);
 	//printf("In %s, before main loop\n", __FUNCTION__);
 	/* Create the client xterm */
-	create_term(myhostname, ntohs(server.sin_port));
+	//create_term(myhostname, ntohs(server.sin_port));
 	/* main loop */
 	do {
 		if (!ul_state->tty_attached) {
@@ -289,7 +292,24 @@ int uart_net_close(struct uart_device *uart_dev)
 
 int uart_net_read(struct uart_device *uart_dev, void *buf, size_t count, struct timeval *timeout)
 {
-	return -1;
+	int ret = -1;
+	char* buf1 = buf;
+	struct uart_link_state * ul_state = uart_dev->priv;
+	if (ul_state->tty_attached) {
+		/* move the charaters in buffer */
+		int i = 0;
+               //printf("In %s, count=%d, head=%d, tail=%d\n", __FUNCTION__, count, ul_state->in.head, ul_state->in.tail);
+		while(i < count && (ul_state->in.head < ul_state->in.tail)){
+			buf1[i] =  ul_state->in.bufp[ul_state->in.head];
+			i++;
+			ul_state->in.head++;
+                       //printf("In %s, i=%d, count=%d, head=%d, tail=%d\n", __FUNCTION__, i, count, ul_state->in.head, ul_state->in.tail);
+		}
+               /* read the char expected */
+		if((i == count) || (ul_state->in.head == ul_state->in.tail))
+			ret = i;
+	}
+	return ret;
 }
 
 
