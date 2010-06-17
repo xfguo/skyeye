@@ -53,8 +53,4 @@ void skyeye_stepi(int steps){
 	stopped_step  = arch_instance->get_step() + steps;
 	skyeye_log(Debug_log, __FUNCTION__, "stopped_step=%d\n", stopped_step);
 	SIM_continue();
-	while(arch_instance->get_step() < stopped_step)
-	{
-			usleep(10);
-	}
 }

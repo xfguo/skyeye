@@ -134,6 +134,8 @@ void gdbserver_cont(){
 }
 void gdbserver_step(){
 	skyeye_stepi(1);
+	while(skyeye_is_running())
+		;
 #if 0
          if(!strcmp(skyeye_config.arch->arch_name,"arm")){
                 //chy 2006004-12
