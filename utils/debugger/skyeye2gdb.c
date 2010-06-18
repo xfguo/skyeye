@@ -43,7 +43,7 @@ int
 frommem (unsigned char *memory)
 {
 	sky_pref_t* pref = get_skyeye_pref();
-	pref->endian = Big_endian;
+	//pref->endian = Big_endian;
 	if (pref->endian == Big_endian) {
 		return (memory[0] << 24)
 			| (memory[1] << 16) | (memory[2] << 8) | (memory[3] <<
@@ -61,7 +61,7 @@ void
 tomem (unsigned char *memory, int val)
 {
 	sky_pref_t* pref = get_skyeye_pref();
-	pref->endian = Big_endian;
+	//pref->endian = Big_endian;
 	if (pref->endian == Big_endian) {
 		memory[0] = val >> 24;
 		memory[1] = val >> 16;
@@ -94,7 +94,10 @@ sim_write (generic_address_t addr, unsigned char *buffer, int size)
 	skyeye_config_t* config = get_current_config();
 	generic_arch_t *arch_instance = get_arch_instance(config->arch->arch_name);
 	for (i = 0; i < size; i++) {
-		fault = arch_instance->mmu_write(8, addr + i, buffer[i]);
+		if(arch_instance->mmu_write != NULL)
+			fault = arch_instance->mmu_write(8, addr + i, buffer[i]);
+		else
+			mem_write(8, addr + i, buffer[i]);
 		if(fault) return -1; 
 	}
 	return size;
@@ -109,7 +112,10 @@ sim_read (generic_address_t addr, unsigned char *buffer, int size)
 	skyeye_config_t* config = get_current_config();
 	generic_arch_t *arch_instance = get_arch_instance(config->arch->arch_name);
 	for (i = 0; i < size; i++) {
-		fault = arch_instance->mmu_read(8, addr+i, &v);
+		if(arch_instance->mmu_read != NULL)
+			fault = arch_instance->mmu_read(8, addr+i, &v);
+		else
+			fault = mem_read(8, addr + i, &v);
 		if(fault) 
 			return -1; 
 		buffer[i]=v;
