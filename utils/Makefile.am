@@ -11,6 +11,8 @@ utils_bus_log = bus_log/bus_log.c bus_log/bus_log_module.c
 
 utils_pmon = perf_monitor/pmon.c perf_monitor/pmon_module.c
 
+utils_shutdown = shutdown/shutdown_module.c
+
 libgdbserver_la_SOURCES = $(utils_debugger)
 libgdbserver_la_LDFLAGS = -module
 
@@ -23,13 +25,16 @@ liblog_la_LDFLAGS = -module
 libpmon_la_SOURCES = $(utils_pmon)   
 libpmon_la_LDFLAGS = -module
 
-libbus_log_la_SOURCES = $(utils_bus_log)   
+libbus_log_la_SOURCES = $(utils_bus_log)
 libbus_log_la_LDFLAGS = -module
+
+libshutdown_la_SOURCES = $(utils_shutdown)
+libshutdown_la_LDFLAGS = -module
 
 libdisasm_la_SOURCES = $(utils_disassembler)
 libdisasm_la_LDFLAGS = -module -L$(top_srcdir)/third-party/opcodes/.libs/ -L$(top_srcdir)/third-party/bfd/.libs/ -L$(top_srcdir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
 
-pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la
+pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la
 #pkglib_LTLIBRARIES = libutils.la libgdbserver.la
 
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
