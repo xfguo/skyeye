@@ -49,7 +49,7 @@ case $host in
     #dbct=true
     ;;
   *-*-cygwin*)
-    LIBS="$LIBS -L /usr/lib/w32api -lwinmm -ladvapi32"
+    LIBS="$LIBS -L/usr/lib/w32api -lwinmm -ladvapi32"
     #dbct=true
     ;;
   *-*-beos*|*-*-haiku*)
