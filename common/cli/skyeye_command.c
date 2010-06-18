@@ -128,6 +128,8 @@ find_command (name)
      char *name;
 {
   COMMAND *node;
+  if(name == NULL)
+	return ((COMMAND *)NULL);
   node = command_list;
   while(node){
 	if(!strncmp(name, node->name, strlen(node->name))){
@@ -139,8 +141,9 @@ find_command (name)
 }
 
 exception_t run_command(char* command_str){
-	char* command_name, arg;	
-	COMMAND* command = find_command(command_name);
+	COMMAND* command = find_command(command_str);
+	if(command != NULL && command->func != NULL)
+		(*command->func)(NULL);
 	return No_exp;
 }
 

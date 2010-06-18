@@ -36,9 +36,9 @@ int com_disassemble(char* arg){
                 }
 #endif
         }
-	/* we will disassemble ten instructions once */
+	/* we will disassemble one instructions once */
 	int i = 0;
-	for(i = 0; i < 10; i++)
+	for(i = 0; i < 1; i++)
 		disassemble(addr + (i * INSN_LENGTH));
 }
 
