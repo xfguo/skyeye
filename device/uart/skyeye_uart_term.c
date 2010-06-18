@@ -37,6 +37,12 @@
 
 #include <stdlib.h>
 
+#ifndef SKYEYE_BIN
+const char* default_bin_dir = "/opt/skyeye/bin/";
+#else
+const char* default_bin_dir = SKYEYE_BIN;
+#endif
+const char* uart_prog = "uart_instance";
 
 /*
  * The structure used to represent the state of uart physical link.
@@ -72,8 +78,13 @@ static int create_term(char * hostname, int port){
 	char port_str[32];
 	//char *Env_argv[] = { "/bin/ls", "-l", "-a", (char *) 0 };
 	//char * argv[]={"/usr/bin/xterm", (char *)0};
-	char* uart_instance_prog = "/opt/skyeye/bin/uart_instance";
+	char uart_instance_prog[1024];
 	//char * argv[]={"xterm","-e",uart_instance_prog,"localhost", "2345"};
+	int bin_dir_len = strlen(default_bin_dir);
+	memset(&uart_instance_prog[0], '\0', 1024);
+	strncpy(&uart_instance_prog[0], default_bin_dir, bin_dir_len);
+	strncpy(&uart_instance_prog[bin_dir_len], uart_prog, strlen(uart_prog));
+
 	sprintf(port_str, "%d", port);
 	switch (pid = fork())
     	{

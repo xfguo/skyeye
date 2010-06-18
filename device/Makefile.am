@@ -50,7 +50,8 @@ pkglib_LTLIBRARIES = libuart.la libflash.la libnandflash.la libsound.la liblcd.l
 
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
 
-INCLUDES = -I./ @COMMON_INCLUDES@
+skyeye_bin_dir = \"$(prefix)/bin/\"
+INCLUDES = -I./ @COMMON_INCLUDES@ -DSKYEYE_BIN=$(skyeye_bin_dir)
 
 INCLUDES += @LCD_CFLAGS@
 if GTK_LCD
