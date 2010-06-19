@@ -1,5 +1,6 @@
 #ifndef __SKYEYE_DEFS_H__
 #define __SKYEYE_DEFS_H__
+#include <termios.h>
 #include "skyeye_types.h"
 
 #ifdef __cplusplus
@@ -28,6 +29,8 @@ struct _sky_pref_s{
 	bool_t autoboot;
 
 	uint32 uart_port;
+
+	struct termios saved_term;
 };
 typedef struct _sky_pref_s sky_pref_t;
 

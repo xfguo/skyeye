@@ -203,6 +203,8 @@ void destroy_threads(void){
 		 * Before cancel a thread, maybe we should stop it at first?
 		 */
                 if(pthread_pool[i].state != Blank_state){
+			if(pthread_pool[i].id == pthread_self())
+				continue;
 			pthread_cancel(pthread_pool[i].id);
 			pthread_join(pthread_pool[i].id, NULL);
 		}

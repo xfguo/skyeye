@@ -242,8 +242,8 @@ extern void set_cli_done();
 com_quit (arg)
      char *arg;
 {
-  SIM_fini();
   set_cli_done();  
+  SIM_fini();
   exit (0);
 }
 

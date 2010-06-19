@@ -92,6 +92,12 @@ void SIM_init(){
 	if(!pref->module_search_dir)
 		pref->module_search_dir = skyeye_strdup(default_lib_dir);
 	SKY_load_all_modules(pref->module_search_dir, NULL);
+
+	/* save the original termios */
+	struct termios tmp;
+	tcgetattr(0, &tmp);
+	memcpy(&pref->saved_term, &tmp, sizeof(struct termios));
+
 	//skyeye_config_t *config;
 	//config = malloc(sizeof(skyeye_config_t));
 	/*	
@@ -208,6 +214,7 @@ void SIM_stop(generic_arch_t* arch_instance){
 	skyeye_pause();	
 }
 void SIM_fini(){
+	sky_pref_t *pref = get_skyeye_pref();
 	//pthread_cancel();
 	generic_arch_t* arch_instance = get_arch_instance("");
 	SIM_stop(arch_instance);
@@ -219,6 +226,8 @@ void SIM_fini(){
 	/* free the memory */
 	printf("exit.\n");
 	/* restore the environment */
+	tcsetattr(0, TCSANOW, &pref->saved_term);
+
 	return;
 	//exit(0);
 }
