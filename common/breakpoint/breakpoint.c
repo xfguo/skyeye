@@ -225,13 +225,18 @@ breakpoint_t* get_next_bp(breakpoint_t* bp){
 static void check_breakpoint(generic_arch_t* arch_instance){
 #if 1
 	int i;
+	generic_address_t current_pc = arch_instance->get_pc();
+	if(!strncmp("arm", arch_instance->arch_name, strlen("arm"))){
+		current_pc -= 8;
+	}
+	
 	for (i = 0;i < breakpoint_mgt.bp_number;i++){
 		breakpoint_t* bp = &breakpoint_mgt.breakpoint[i];
 		/* if id is zero, we think the bp is disabled now. */
 		if(bp->id == 0)
 			continue;
 		/* return if any breakpoint at the address is hit */
-		if(bp->address == arch_instance->get_pc()){
+		if(bp->address == current_pc){
 			//arch_instance->stop();
 			bp->hits++;
 			printf("The %d# breakpoint at address 0x%x is hit.\n", bp->id, bp->address);
