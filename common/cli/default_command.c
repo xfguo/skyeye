@@ -95,6 +95,7 @@ com_si(char* arg){
 		#endif
 	}
 	skyeye_stepi(steps);
+	run_command("disassemble");
 	return flag;
 }
 

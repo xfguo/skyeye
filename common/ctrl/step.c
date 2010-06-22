@@ -18,7 +18,6 @@ static void check_steps(generic_arch_t* arch_instance){
 	if(current_step == stopped_step){
 		SIM_stop();
 		stopped_step = 0;
-		run_command("disassemble");
 	}
 	return;
 }
