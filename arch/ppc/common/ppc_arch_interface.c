@@ -419,7 +419,7 @@ init_ppc_arch ()
 
 	static arch_config_t ppc_arch;
 
-	ppc_arch.arch_name = "ppc";
+	ppc_arch.arch_name = "powerpc";
 	ppc_arch.init = ppc_init_state;
 	ppc_arch.reset = ppc_reset_state;
 	ppc_arch.set_pc = ppc_set_pc;
