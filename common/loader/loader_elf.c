@@ -28,6 +28,7 @@
 #include "bank_defs.h"
 #include "skyeye_pref.h"
 #include "skyeye_arch.h"
+#include "elf.h"
 /** 
  * add by michael.Kang, to load elf file to another address 
  */
@@ -334,31 +335,25 @@ load_exec (const char *file, addr_type_t addr_type)
 #endif //#ifndef HAVE_LIBBFD
 endian_t get_elf_endian(const char* elf_filename){
 	endian_t endian;
-	bfd *tmp_bfd = NULL;
+	Elf32_Ehdr elf_header;
+	FILE* file = fopen(elf_filename, "r");
 
-	tmp_bfd = bfd_openr (elf_filename, NULL);
-	if (tmp_bfd == NULL) {
-		fprintf (stderr, "open %s error: %s\n", elf_filename,
-			 bfd_errmsg (bfd_get_error ()));
-		goto out;
-	}
-	if (!bfd_check_format (tmp_bfd, bfd_object)) {
-		/* FIXME:In freebsd, if bfd_errno is bfd_error_file_ambiguously_recognized,
-		 * though bfd can't recognize this format, we should try to load file.*/
-		if (bfd_get_error () != bfd_error_file_ambiguously_recognized) {
-			fprintf (stderr, "check format of %s error: %s\n",
-				 elf_filename, bfd_errmsg (bfd_get_error ()));
-			goto out;
-		}
-	}
+	if (fread (elf_header.e_ident, EI_NIDENT, 1, file) != 1)
+		return 0;
 
-	if( bfd_big_endian(tmp_bfd))
-		endian = Big_endian;
-	else
-		endian = Little_endian;
-out:
-	if (tmp_bfd)
-		bfd_close (tmp_bfd);
+	/* Determine how to read the rest of the header.  */
+	switch (elf_header.e_ident[EI_DATA])
+	{
+		default: /* fall through */
+		case ELFDATANONE: /* fall through */
+		case ELFDATA2LSB:
+			endian = Little_endian;
+			break;
+		case ELFDATA2MSB:
+			endian = Big_endian;
+			break;
+	}
+	fclose(file);
 	return endian;
 }
 exception_t load_elf(const char* elf_filename, addr_type_t addr_type){

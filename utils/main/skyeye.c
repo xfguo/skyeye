@@ -463,6 +463,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 			fprintf(stderr, "Can not allocate memory.\n");
 			exit(-1);
 		}
+		endian = get_elf_endian(exec_file);
 	}
 	pref->exec_load_base = elf_load_base;
        	pref->exec_load_mask = elf_load_mask;
