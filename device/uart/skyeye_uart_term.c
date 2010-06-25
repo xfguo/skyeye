@@ -96,7 +96,7 @@ static int create_term(char * hostname, int port){
 		case 0:
 		{
         	    	//printf("[child]connect to %s:%s!\n", hostname, port_str);
-			int ret = execlp("xterm","xterm", "-e", uart_instance_prog, hostname, port_str);
+			int ret = execlp("xterm","xterm", "-e", uart_instance_prog, hostname, port_str, (char *)NULL);
 			perror("Child:");
 			fprintf(stderr, "SKYEYE Error:We need xterm to run the console of uart.Please check if you installed it correctly.\n");
 
