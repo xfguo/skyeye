@@ -54,7 +54,7 @@ register_arch (arch_config_t * arch)
  */
 generic_arch_t * get_arch_instance(const char* arch_name){
 	if(running_arch_list == NULL){
-		running_arch_list = skyeye_mm(sizeof(generic_arch_t));
+		running_arch_list = skyeye_mm_zero(sizeof(generic_arch_t));
 	}
 	skyeye_config_t* config = get_current_config();
 	if(config->arch == NULL){
