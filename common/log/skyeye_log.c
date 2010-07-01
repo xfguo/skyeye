@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <config.h>
 #include "skyeye_options.h"
 #include "skyeye_config.h"
 #include "skyeye_log.h"
 
-const char* Front_message = "SkyEye is an Open Source project under GPL. All rights of different parts or modules are reserved by their author. Any modification or redistributions of SkyEye should note remove or modify the annoucement of SkyEye copyright. \n\
+const char* Front_message = "SkyEye is an Open Source project under GPL. All rights of different parts or modules are reserved by their author. Any modification or redistributions of SkyEye should not remove or modify the annoucement of SkyEye copyright. \n\
 Get more information about it, please visit the homepage http://www.skyeye.org.\n\
 Type \"help\" to get command list. \n ";
 
 char* get_front_message(){
-	printf("%s", Front_message);
+	printf("%s\n%s", PACKAGE_STRING, Front_message);
 	return Front_message;
 }
 
