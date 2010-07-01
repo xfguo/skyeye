@@ -17,11 +17,13 @@ static FILE* pmon_fd;
 static void pmon_count(generic_arch_t* arch_instance){
 	int seconds = 0;
 	uint32 steps = 0;
+	uint32 last_steps = 0;
 	while(enable_pmon_flag){
-		sleep(10);
-		seconds = seconds + 10;
+		last_steps = arch_instance->get_step();
+		sleep(1);
+		seconds++;
 		steps = arch_instance->get_step();
-		fprintf(pmon_fd,"In %d seconds, MIPS=%d\n", seconds, steps/seconds);
+		fprintf(pmon_fd,"In %d seconds, MIPS=%d\n", seconds, (steps - last_steps));
 	}
 }
 
