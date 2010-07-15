@@ -44,6 +44,7 @@ const char* after_str = "after";
 
 /* callback function for bus access. Will record pc here. */
 static void log_bus_callback(generic_arch_t* arch_instance){
+	unsigned int current_pc = arch_instance->get_pc();
 	if(enable_log_flag){
 		bus_recorder_t* recorder_buffer;
 		recorder_buffer = get_last_bus_access();
@@ -58,8 +59,11 @@ static void log_bus_callback(generic_arch_t* arch_instance){
 		else
 			when = after_str;
 
+		if(!strncmp("arm", arch_instance->arch_name, strlen("arm"))){
+			current_pc -=8;
+		}
 		fprintf(log_fd, "Bus %s %s access @0x%x, size=%d, addr=0x%x, value=0x%x\n", 
-		when, access, arch_instance->get_pc(), recorder_buffer->size, recorder_buffer->addr, recorder_buffer->value);
+		when, access, current_pc, recorder_buffer->size, recorder_buffer->addr, recorder_buffer->value);
 	}
 }
 
