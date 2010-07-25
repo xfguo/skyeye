@@ -97,6 +97,13 @@ libpmon_la_OBJECTS = $(am_libpmon_la_OBJECTS)
 libpmon_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libpmon_la_LDFLAGS) $(LDFLAGS) -o $@
+libshutdown_la_LIBADD =
+am__objects_7 = shutdown_module.lo
+am_libshutdown_la_OBJECTS = $(am__objects_7)
+libshutdown_la_OBJECTS = $(am_libshutdown_la_OBJECTS)
+libshutdown_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libshutdown_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/libltdl/config/depcomp
 am__depfiles_maybe = depfiles
@@ -111,10 +118,12 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libbus_log_la_SOURCES) $(libcodecov_la_SOURCES) \
 	$(libdisasm_la_SOURCES) $(libgdbserver_la_SOURCES) \
-	$(liblog_la_SOURCES) $(libpmon_la_SOURCES)
+	$(liblog_la_SOURCES) $(libpmon_la_SOURCES) \
+	$(libshutdown_la_SOURCES)
 DIST_SOURCES = $(libbus_log_la_SOURCES) $(libcodecov_la_SOURCES) \
 	$(libdisasm_la_SOURCES) $(libgdbserver_la_SOURCES) \
-	$(liblog_la_SOURCES) $(libpmon_la_SOURCES)
+	$(liblog_la_SOURCES) $(libpmon_la_SOURCES) \
+	$(libshutdown_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -274,6 +283,7 @@ utils_code_cov = code_cov/code_cov.c code_cov/code_cov_module.c
 utils_log = log/log.c log/log_module.c
 utils_bus_log = bus_log/bus_log.c bus_log/bus_log_module.c
 utils_pmon = perf_monitor/pmon.c perf_monitor/pmon_module.c
+utils_shutdown = shutdown/shutdown_module.c
 libgdbserver_la_SOURCES = $(utils_debugger)
 libgdbserver_la_LDFLAGS = -module
 libcodecov_la_SOURCES = $(utils_code_cov)   
@@ -282,11 +292,13 @@ liblog_la_SOURCES = $(utils_log)
 liblog_la_LDFLAGS = -module
 libpmon_la_SOURCES = $(utils_pmon)   
 libpmon_la_LDFLAGS = -module
-libbus_log_la_SOURCES = $(utils_bus_log)   
+libbus_log_la_SOURCES = $(utils_bus_log)
 libbus_log_la_LDFLAGS = -module
+libshutdown_la_SOURCES = $(utils_shutdown)
+libshutdown_la_LDFLAGS = -module
 libdisasm_la_SOURCES = $(utils_disassembler)
 libdisasm_la_LDFLAGS = -module -L$(top_srcdir)/third-party/opcodes/.libs/ -L$(top_srcdir)/third-party/bfd/.libs/ -L$(top_srcdir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
-pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la
+pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la
 INCLUDES = -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_srcdir)/common @COMMON_INCLUDES@ 
 all: all-am
 
@@ -360,6 +372,8 @@ liblog.la: $(liblog_la_OBJECTS) $(liblog_la_DEPENDENCIES)
 	$(liblog_la_LINK) -rpath $(pkglibdir) $(liblog_la_OBJECTS) $(liblog_la_LIBADD) $(LIBS)
 libpmon.la: $(libpmon_la_OBJECTS) $(libpmon_la_DEPENDENCIES) 
 	$(libpmon_la_LINK) -rpath $(pkglibdir) $(libpmon_la_OBJECTS) $(libpmon_la_LIBADD) $(LIBS)
+libshutdown.la: $(libshutdown_la_OBJECTS) $(libshutdown_la_DEPENDENCIES) 
+	$(libshutdown_la_LINK) -rpath $(pkglibdir) $(libshutdown_la_OBJECTS) $(libshutdown_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -386,6 +400,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pmon.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pmon_module.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_regdefs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shutdown_module.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye2gdb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sparc_regdefs.Plo@am__quote@
 
@@ -556,6 +571,13 @@ pmon_module.lo: perf_monitor/pmon_module.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='perf_monitor/pmon_module.c' object='pmon_module.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pmon_module.lo `test -f 'perf_monitor/pmon_module.c' || echo '$(srcdir)/'`perf_monitor/pmon_module.c
+
+shutdown_module.lo: shutdown/shutdown_module.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT shutdown_module.lo -MD -MP -MF $(DEPDIR)/shutdown_module.Tpo -c -o shutdown_module.lo `test -f 'shutdown/shutdown_module.c' || echo '$(srcdir)/'`shutdown/shutdown_module.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/shutdown_module.Tpo $(DEPDIR)/shutdown_module.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='shutdown/shutdown_module.c' object='shutdown_module.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o shutdown_module.lo `test -f 'shutdown/shutdown_module.c' || echo '$(srcdir)/'`shutdown/shutdown_module.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
