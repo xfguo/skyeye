@@ -44,6 +44,8 @@ typedef struct shutdown_config
 	unsigned long long  max_ins;
 }shutdown_config_t;
 static shutdown_config_t* shutdown = NULL;
+static max_insn_shutdown_enable = 0;
+static addr_access_shutdown_enable = 0;
 
 static int
 do_shutdown_option (skyeye_option_t * this_option, int num_params,
@@ -64,6 +66,7 @@ do_shutdown_option (skyeye_option_t * this_option, int num_params,
 		SKYEYE_ERR ("Error, shutdown address needs align on 8 bytes\n");
 		return -1;
 	}
+	addr_access_shutdown_enable = 1;
 
 	if(ret = strncmp(params[1],"max_ins=",8)){
 		SKYEYE_ERR ("Error, Wrong parameter for shutdown_device\n");
@@ -74,6 +77,7 @@ do_shutdown_option (skyeye_option_t * this_option, int num_params,
 		shutdown->max_ins = strtoull(value,NULL,16);
 	else
 		shutdown->max_ins = strtoull(value,NULL,10);
+	max_insn_shutdown_enable = 1;
 
 	printf("Shutdown addr=%x, max_ins=%x\n",shutdown->shutdown_addr,shutdown->max_ins);
 	return 1;
@@ -83,6 +87,8 @@ do_shutdown_option (skyeye_option_t * this_option, int num_params,
 /* callback function for step exeuction. */
 static void max_insn_callback(generic_arch_t* arch_instance){
 	uint32 step = arch_instance->get_step();
+	if(!max_insn_shutdown_enable)
+		return;
 	if(step == shutdown->max_ins)
 		run_command("quit");
 }
@@ -90,6 +96,8 @@ static void max_insn_callback(generic_arch_t* arch_instance){
 /* callback function for bus write. Will record pc here. */
 static void write_shutdown_callback(generic_arch_t* arch_instance){
 	bus_recorder_t* buffer = get_last_bus_access(SIM_access_write);
+	if(!addr_access_shutdown_enable)
+		return;
 	if(buffer->addr == shutdown->shutdown_addr)
 		run_command("quit");
 }
