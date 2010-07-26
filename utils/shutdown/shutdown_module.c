@@ -29,6 +29,7 @@
 #include "skyeye_callback.h"
 #include "skyeye_bus.h"
 #include "skyeye_options.h"
+#include "skyeye_module.h"
 
 /*
  * If status of shutdown device is 1, when "shutdown_addr"
@@ -83,14 +84,14 @@ do_shutdown_option (skyeye_option_t * this_option, int num_params,
 static void max_insn_callback(generic_arch_t* arch_instance){
 	uint32 step = arch_instance->get_step();
 	if(step == shutdown->max_ins)
-		execute_command("quit");
+		run_command("quit");
 }
 
 /* callback function for bus write. Will record pc here. */
 static void write_shutdown_callback(generic_arch_t* arch_instance){
 	bus_recorder_t* buffer = get_last_bus_access(SIM_access_write);
 	if(buffer->addr == shutdown->shutdown_addr)
-		execute_command("quit");
+		run_command("quit");
 }
 
 /* module name */
