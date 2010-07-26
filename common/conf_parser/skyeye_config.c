@@ -131,7 +131,7 @@ parse_line_unformatted (char *line)
 /*parse every line that has been formatted
  * return -1: if a  option has exceeded it's max number or
  * 	option's do_option function has a error or
- * 	there is an unkonw option.
+ * 	there is an unknown option.
  * 	upper level function should print error and exit.
  * */
 #if 0
@@ -167,7 +167,7 @@ parse_line_formatted (int num_params, const char *params[])
 
 		}
 	}
-	fprintf (stderr, "Unkonw option: %s\n", params[0]);
+	fprintf (stderr, "Unknown option: %s\n", params[0]);
 	return -1;		/* unknow option specified */
 }
 #endif

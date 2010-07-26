@@ -17,7 +17,7 @@ do_mach_option (skyeye_option_t * this_option, int num_params,
 		ret = 0;
 	}
         else{
-                SKYEYE_ERR ("Error: Unkonw mach name \"%s\"\n", params[0]);
+                SKYEYE_ERR ("Error: Unknown mach name \"%s\"\n", params[0]);
 		ret = -1;
         }
         return ret;

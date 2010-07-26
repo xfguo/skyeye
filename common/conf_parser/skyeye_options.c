@@ -208,7 +208,7 @@ do_cpu_option (skyeye_option_t * this_option, int num_params,
 	}
 	ret = skyeye_config.arch->parse_cpu (params);
 	if (ret < 0)
-		SKYEYE_ERR ("Error: Unkonw cpu name \"%s\"\n", params[0]);
+		SKYEYE_ERR ("Error: Unknown cpu name \"%s\"\n", params[0]);
 	return ret;
 }
 #endif
@@ -221,7 +221,7 @@ do_mach_option (skyeye_option_t * this_option, int num_params,
 	machine_config_t *mach = skyeye_config.mach;
 	ret = skyeye_config.arch->parse_mach (mach, params);
 	if (ret < 0) {
-		SKYEYE_ERR ("Error: Unkonw mach name \"%s\"\n", params[0]);
+		SKYEYE_ERR ("Error: Unknown mach name \"%s\"\n", params[0]);
 	}
 	return ret;
 }
@@ -262,7 +262,7 @@ do_step_disassemble_option (skyeye_option_t * this_option, int num_params,
 		}
 
 	}
-	SKYEYE_ERR ("Error: Unkonw cpu name \"%s\"\n", params[0]);
+	SKYEYE_ERR ("Error: Unknown cpu name \"%s\"\n", params[0]);
 	return -1;
 }
 #endif
@@ -295,6 +295,6 @@ parse_line_formatted (int num_params, const char *params[])
 		}
 		sop = sop->next;
 	}
-	fprintf (stderr, "Unkonw option: %s\n", params[0]);
+	fprintf (stderr, "Unknown option: %s\n", params[0]);
 	return -1;		/* unknow option specified */
 }

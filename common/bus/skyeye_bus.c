@@ -140,7 +140,7 @@ do_mem_bank_option (skyeye_option_t * this_option, int num_params,
 	int ret;
 	ret = skyeye_config.arch->parse_mem (num_params, params);
 	if (ret < 0) {
-		SKYEYE_ERR ("Error: Unkonw mem bank name \"%s\"\n",
+		SKYEYE_ERR ("Error: Unknown mem bank name \"%s\"\n",
 			    params[0]);
 	}
 	return ret;
@@ -155,7 +155,7 @@ do_bus_bank_option (skyeye_option_t * this_option, int num_params,
 	int ret;
 	ret = skyeye_config.arch->parse_mem (num_params, params);
 	if (ret < 0) {
-		SKYEYE_ERR ("Error: Unkonw mem bank name \"%s\"\n",
+		SKYEYE_ERR ("Error: Unknown mem bank name \"%s\"\n",
 			    params[0]);
 	}
 	return ret;

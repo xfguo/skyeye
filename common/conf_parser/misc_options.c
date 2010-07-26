@@ -58,7 +58,7 @@ do_load_addr_option (skyeye_option_t * this_option, int num_params,
 			sscanf (value, "%x", &load_mask);
 		}
 		else
-                        SKYEYE_ERR ("Error: Unkonw load_addr option  \"%s\"\n", params[i]);
+                        SKYEYE_ERR ("Error: Unknown load_addr option  \"%s\"\n", params[i]);
 	}
 	sky_pref_t *pref;
 	/* get the current preference for simulator */

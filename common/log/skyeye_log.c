@@ -91,7 +91,7 @@ do_log_option (skyeye_option_t * this_option, int num_params,
 				     length);
 		}
 		else
-			SKYEYE_ERR ("Error: Unkonw cpu name \"%s\"\n", params[0]);
+			SKYEYE_ERR ("Error: Unknown cpu name \"%s\"\n", params[0]);
 	}
 #endif
 	return 0;
