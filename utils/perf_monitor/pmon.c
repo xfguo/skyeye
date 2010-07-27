@@ -18,6 +18,9 @@ static void pmon_count(generic_arch_t* arch_instance){
 	int seconds = 0;
 	uint32 steps = 0;
 	uint32 last_steps = 0;
+	/* Test if skyeye is in running state. */
+	if(!skyeye_is_running())
+		return;
 	while(enable_pmon_flag){
 		last_steps = arch_instance->get_step();
 		sleep(1);
