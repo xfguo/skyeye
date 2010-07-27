@@ -188,7 +188,7 @@ static int ppc_fetch_register(int rn, unsigned char * memory){
 void init_ppc_register_defs(void){
 	/* initialize the struct of powerpc register defination */
 	static register_defs_t ppc_reg_defs;
-	ppc_reg_defs.name = "ppc";
+	ppc_reg_defs.name = "powerpc";
 	ppc_reg_defs.register_raw_size = ppc_register_raw_size;
 	ppc_reg_defs.register_bytes = 32 * 4 + 32 * 4 + 7 * 4; 	
 	ppc_reg_defs.register_byte = ppc_register_byte;
