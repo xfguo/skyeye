@@ -20,6 +20,8 @@
 
 #include "armdefs.h"
 #include "s3c2410x.h"
+#include "skyeye_sched.h"
+#include "skyeye_lock.h"
 //zzc:2005-1-1
 #ifdef __CYGWIN__
 //chy 2005-07-28
@@ -71,6 +73,8 @@ typedef struct s3c2410x_io
 } s3c2410x_io_t;
 static s3c2410x_io_t s3c2410x_io;
 #define io s3c2410x_io
+
+RWLOCK_T lock;
 
 static inline void
 s3c2410x_set_subsrcint (unsigned int irq)
@@ -137,6 +141,23 @@ s3c2410x_update_intr (void *mach)
 	s3c2410x_update_int (state);
 }
 
+static int s3c2410x_scheduler_id = -1;
+static void s3c2410x_timer_callback(ARMul_State * state)
+{
+	RW_WRLOCK(lock);
+	io.timer.tcnt[4] = io.timer.tcntb[4];
+	/*timer 4 hasn't tcmp */
+	//io.timer.tcmp[4] = io.timer.tcmpb[4];
+	io.timer.tcnto[4] = io.timer.tcntb[4];
+	io.srcpnd |= INT_TIMER4;
+	{
+	extern ARMul_State * state;
+	s3c2410x_update_int (state);
+	}
+	RW_UNLOCK(lock);
+}
+
+
 static void
 s3c2410x_io_reset (void* arch_instance)
 {
@@ -177,8 +198,8 @@ s3c2410x_io_reset (void* arch_instance)
 static void
 s3c2410x_io_do_cycle (ARMul_State * state)
 {
-	int i;
 
+#if 0
 	if ((io.timer.tcon & 0x100000) != 0) {
 		io.timer.tcnt[4]--;
 		if (io.timer.tcnt[4] < 0) {
@@ -191,7 +212,8 @@ s3c2410x_io_do_cycle (ARMul_State * state)
 			return;
 		}
 	}
-
+#endif
+	int i;
 	for (i = 0; i < 3; i++) {
 		if (((io.uart[i].utrstat & 0x1) == 0x0) && ((io.uart[i].ucon & 0x3) == 0x1)) {
 			struct timeval tv;
@@ -378,9 +400,120 @@ s3c2410x_timer_write (ARMul_State * state, u32 offset, u32 data)
 		break;
 	case TCON:
 		{
+			extern ARMul_State * state;
 			io.timer.tcon = data;
-			if (io.timer.tcon) {
+
+			/* 2010-07-27 added by Jeff.Du. Used timer scheduler */
+			/* timer4 */
+			/* timer4  update*/
+			if ((io.timer.tcon & 0x80000) != 0) {
+
+				/* if timer4 is started */
+				if(s3c2410x_scheduler_id != -1 ){
+					/* prescaler for timer4 */
+					int scaler = ((io.timer.tcfg0 & 0xff00) >> 8);
+				
+					/* divider selection for timer4 frequency */
+					int div = ((io.timer.tcfg1 & 0xf0000) >> 16);
+
+					/* get the divider */
+					int mux = 1;		/* divider for timer4 */
+					switch(div){
+						case 0x0:
+							mux=2;
+							break;
+						case 0x1:
+							mux=4;
+							break;
+						case 0x2:
+							mux=8;
+							break;
+						case 0x3:
+							mux=16;
+							break;
+						case 0x4:
+							mux=1;
+							break;
+						default:
+							mux=1;
+							break;
+					}
+
+					/* timer4 frequency */
+					long long freq = ((50000000/(scaler + 1))/mux);
+					
+					/* get timer4 occur time */	
+					unsigned int ms = (int)(io.timer.tcntb[4] / (freq/1000));		
+					/* get timer4 mode */
+					int mode = (io.timer.tcon & 0x400000)?Periodic_sched:Oneshot_sched;
+					/* check if a proper value */
+					if (ms == 0 && io.timer.tcntb[4])
+						ms = 1;
+
+					/* update timer4 */
+					mod_thread_scheduler(s3c2410x_scheduler_id,(unsigned int)ms,mode);
+					//mod_timer_scheduler(s3c2410x_scheduler_id,(unsigned int)ms,mode);
+				}
 			}
+	
+			/* timer4 start or stop */	
+			if ((io.timer.tcon & 0x100000) != 0) {
+				/* set internal timer */
+				if(s3c2410x_scheduler_id == -1 ){
+					/* prescaler for timer4 */
+					int scaler = ((io.timer.tcfg0 & 0xffff00) >> 8);
+					/* divider selection for timer4 frequency */
+					int div = ((io.timer.tcfg1 & 0x30000) >> 16);
+
+					int mux = 1;		/* divider for timer4 */
+					/* get the divider */
+					switch(div){
+						case 0x0:  /* 1/2 */
+							mux=2;
+							break;
+						case 0x1:  /* 1/4 */
+							mux=4;
+							break;
+						case 0x2:  /* 1/8 */
+							mux=8;
+							break;
+						case 0x3:  /* 1/16 */
+							mux=16;
+							break;
+						case 0x4:  /* Extern FCLK0 */
+							mux=1;
+							break;
+						default:
+							mux=1;
+							break;
+					}
+
+					/* timer4 frequency */
+					long long freq = ((50000000/(scaler + 1))/mux);
+					/* get timer4 occur time */	
+					unsigned int ms = (int)(io.timer.tcntb[4] / (freq/1000));		
+					/* get timer4 mode */
+					int mode = (io.timer.tcon & 0x400000)?Periodic_sched:Oneshot_sched;
+					/* check if a proper value */
+					if (ms == 0 && io.timer.tcntb[4])
+						ms = 1;
+
+					RWLOCK_INIT(lock);
+					/* create a timer scheduler */
+					create_thread_scheduler((unsigned int)ms,mode, s3c2410x_timer_callback, (void*)state, &s3c2410x_scheduler_id);
+					//create_timer_scheduler((unsigned int)ms,mode, s3c2410x_timer_callback, (void*)state, &s3c2410x_scheduler_id);
+				}
+			}
+			else
+			{
+				if(s3c2410x_scheduler_id != -1){
+					del_thread_scheduler(s3c2410x_scheduler_id);
+					//del_timer_scheduler(s3c2410x_scheduler_id);
+					s3c2410x_scheduler_id = -1;
+					RWLOCK_DESTROY(lock);
+				}
+			}
+			/* timer4 end */	
 		}
 		break;
 	case TCNTB0:
