@@ -57,6 +57,12 @@ void SIM_init(){
 	 * initialization of module manangement 
 	 */
 	init_module_list();
+	
+	/*
+	 * initialization the timer scheduler 
+	 */
+	init_thread_scheduler();
+	init_timer_scheduler();
 
 	
 	/*

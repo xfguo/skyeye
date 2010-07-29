@@ -2,7 +2,7 @@
 common_breakpoint = breakpoint/breakpoint.c
 common_misc = misc/support.c
 common_module = module/skyeye_module.c
-common_ctrl = ctrl/thread_ctrl.c ctrl/sim_ctrl.c ctrl/step.c
+common_ctrl = ctrl/thread_ctrl.c ctrl/sim_ctrl.c ctrl/step.c ctrl/scheduler.c
 common_conf_parser = conf_parser/skyeye_options.c conf_parser/skyeye_config.c conf_parser/misc_options.c
 common_log = log/skyeye_log.c
 common_loader = loader/loader_elf.c loader/loader_file.c
@@ -26,7 +26,8 @@ nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/arch_regdefs.h ./include/skyeye_config.h ./include/skyeye_device.h \
 ./include/skyeye.h ./include/io_memory.h ./include/memory.h ./include/skyeye_mm.h \
 ./include/skyeye_options.h ./include/skyeye_mach.h ./include/skyeye_pref.h \
-./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h
+./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
+./include/skyeye_queue.h
 
 libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback)
 
