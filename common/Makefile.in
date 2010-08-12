@@ -61,7 +61,7 @@ libcommon_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__objects_1 = skyeye_module.lo
 am__objects_2 = support.lo
 am__objects_3 = breakpoint.lo
-am__objects_4 = thread_ctrl.lo sim_ctrl.lo step.lo
+am__objects_4 = thread_ctrl.lo sim_ctrl.lo step.lo scheduler.lo
 am__objects_5 = mman.lo usleep.lo gettimeofday.lo
 am__objects_6 = skyeye_pref.lo
 am__objects_7 = skyeye_arch.lo
@@ -253,7 +253,7 @@ top_srcdir = @top_srcdir@
 common_breakpoint = breakpoint/breakpoint.c
 common_misc = misc/support.c
 common_module = module/skyeye_module.c
-common_ctrl = ctrl/thread_ctrl.c ctrl/sim_ctrl.c ctrl/step.c
+common_ctrl = ctrl/thread_ctrl.c ctrl/sim_ctrl.c ctrl/step.c ctrl/scheduler.c
 common_conf_parser = conf_parser/skyeye_options.c conf_parser/skyeye_config.c conf_parser/misc_options.c
 common_log = log/skyeye_log.c
 common_loader = loader/loader_elf.c loader/loader_file.c
@@ -275,7 +275,8 @@ nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/arch_regdefs.h ./include/skyeye_config.h ./include/skyeye_device.h \
 ./include/skyeye.h ./include/io_memory.h ./include/memory.h ./include/skyeye_mm.h \
 ./include/skyeye_options.h ./include/skyeye_mach.h ./include/skyeye_pref.h \
-./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h
+./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
+./include/skyeye_queue.h
 
 libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback)
 libcommon_la_LIBADD = -L$(top_srcdir)/third-party/bfd/.libs/ -lbfd \
@@ -370,6 +371,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mman.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pen_buffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ram.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scheduler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sim_ctrl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_arch.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_bus.Plo@am__quote@
@@ -451,6 +453,13 @@ step.lo: ctrl/step.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ctrl/step.c' object='step.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o step.lo `test -f 'ctrl/step.c' || echo '$(srcdir)/'`ctrl/step.c
+
+scheduler.lo: ctrl/scheduler.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT scheduler.lo -MD -MP -MF $(DEPDIR)/scheduler.Tpo -c -o scheduler.lo `test -f 'ctrl/scheduler.c' || echo '$(srcdir)/'`ctrl/scheduler.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/scheduler.Tpo $(DEPDIR)/scheduler.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ctrl/scheduler.c' object='scheduler.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o scheduler.lo `test -f 'ctrl/scheduler.c' || echo '$(srcdir)/'`ctrl/scheduler.c
 
 mman.lo: portable/mman.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mman.lo -MD -MP -MF $(DEPDIR)/mman.Tpo -c -o mman.lo `test -f 'portable/mman.c' || echo '$(srcdir)/'`portable/mman.c
