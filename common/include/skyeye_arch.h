@@ -33,6 +33,7 @@ typedef struct generic_arch_s
 	 */
 	exception_t (*mmu_write)(short size, generic_address_t addr, uint32_t value);
 	endian_t endianess;
+	align_t alignment;
 } generic_arch_t;
 
 /*

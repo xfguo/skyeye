@@ -52,6 +52,11 @@ typedef enum {
 #endif
 
 typedef enum {
+	Align = 0,
+	UnAlign	
+}align_t;
+
+typedef enum {
 	Little_endian = 0,
 	Big_endian
 }endian_t;

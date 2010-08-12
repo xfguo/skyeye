@@ -45,8 +45,8 @@ static const int DT_STRUCT_SIZE = 8 * 1024;
 static const char * dtb_filename = "sbc8641d.dtb";
 
 static void load_initrd(){
-	//load_file(initrd_filename, initrd_start);
-#if 1
+	load_file(initrd_filename, initrd_start);
+#if 0
 	FILE *f;
 
 	if(f = fopen(initrd_filename, "rb")){
@@ -82,8 +82,8 @@ struct boot_param_header {
  * 
  */
 static void setup_boot_param(){
-	//load_file(dtb_filename, bd_start);
-	#if 1
+	load_file(dtb_filename, bd_start);
+	#if 0
 	struct boot_param_header * initial_boot_param = &ddr_ram[bd_start];
 	//initial_boot_param->off_dt_struct = ppc_word_from_BE(OFF_DT_STRUCT);
 	FILE *f;
@@ -100,8 +100,8 @@ static void setup_boot_param(){
                 skyeye_exit(-1);
         }
 	#endif
-	//load_data(bootcmd, (strlen(bootcmd) + 1), bootcmd_start);
-	memcpy(&ddr_ram[bootcmd_start], bootcmd, (strlen(bootcmd) + 1));
+	load_data(bootcmd, (strlen(bootcmd) + 1), bootcmd_start);
+	//memcpy(&ddr_ram[bootcmd_start], bootcmd, (strlen(bootcmd) + 1));
 }
 #if 0
 static void set_bootcmd(){

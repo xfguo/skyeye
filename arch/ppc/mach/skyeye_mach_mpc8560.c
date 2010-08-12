@@ -314,8 +314,8 @@ scc1_io_do_cycle (void *state, ppc_cpm_t * cpm)
 							   ram[recv_bd_base +
 							       curr_rx_bd +
 							       4]));
-				ddr_ram[buf_addr] = buf;
-				//bus_write(8, buf_addr, buf);
+				//ddr_ram[buf_addr] = buf;
+				bus_write(8, buf_addr, buf);
 				/* Now we only implement that send a char once */
 				*((sint16 *) &ram[recv_bd_base + curr_rx_bd + 2]) = ppc_half_to_BE (0x1);
 
@@ -364,8 +364,8 @@ scc1_io_do_cycle (void *state, ppc_cpm_t * cpm)
 		if (bd_flag & 0x8000) {
 			int i = 0;
 			for (; i < bd_len; i++) {
-				char c = ddr_ram[buf_addr + i];
-				#if 0
+				//char c = ddr_ram[buf_addr + i];
+				#if 1
 				char c;
 				bus_read(8, buf_addr + i, &c);
 				#endif

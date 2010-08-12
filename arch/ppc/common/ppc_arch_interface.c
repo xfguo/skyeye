@@ -28,9 +28,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "sysendian.h"
 #include "ppc_irq.h"
 #include "ppc_regformat.h"
+#include "bank_defs.h"
 
 #include "skyeye_types.h"
 #include "skyeye_config.h"
+#include "skyeye_arch.h"
 
 #ifdef __CYGWIN__
 #include <sys/time.h>
@@ -131,8 +133,13 @@ ppc_init_state ()
 	ppc_cpu_init();
 	/* write something to a file for debug or profiling */
 	if (!prof_file) {
-                prof_file = fopen ("./kernel_prof.txt", "w");
+                prof_file = fopen ("./kernel_prof_131.txt", "w");
         }
+
+	/* initialize the alignment and endianess for powerpc */
+	generic_arch_t* arch_instance = get_arch_instance(NULL);
+	arch_instance->alignment = UnAlign;
+	arch_instance->endianess = Big_endian;
 
 	/* Before boot linux, we need to do some preparation */
 	//ppc_boot();
@@ -202,12 +209,13 @@ static void per_cpu_step(e500_core_t * running_core){
              		 skyeye_exit(-1);
 	
 	};
-#if 0
+#if 1
 	uint32 instr;
 	if(bus_read(32, real_addr, &instr) != 0){
 		/* some error handler */
 	}
-	core->current_opc = ppc_word_from_BE(instr);
+	//core->current_opc = ppc_word_from_BE(instr);
+	core->current_opc = instr;
 #else
 	if(real_addr > boot_rom_start_addr)
 		core->current_opc = ppc_word_from_BE(*((int *)&boot_rom[real_addr - boot_rom_start_addr]));

@@ -32,7 +32,9 @@
 #include "ppc_e500_exc.h"
 #include "ppc_cpu.h"
 #include "sysendian.h"
+#include "bank_defs.h"
 #define UART_IRQ 26
+
 
 extern byte * ddr_ram;
 
@@ -58,7 +60,7 @@ int FASTCALL ppc_read_effective_word(uint32 addr, uint32 *result)
 			skyeye_config_t *config = get_current_config();
 			*result = config->mach->mach_io_read_word(&gCPU, (p - current_core->get_ccsr_base(gCPU.ccsr)));
 		}
-		#if 1
+		#if 0
 		else if((p >= boot_rom_start_addr) && (p < (boot_rom_start_addr - 1 + boot_romSize )))
 			*result = ppc_word_from_BE(*((int *)&boot_rom[p - boot_rom_start_addr]));
 		else if((p >= init_ram_start_addr) && (p < (init_ram_start_addr + init_ram_size)))
@@ -74,7 +76,7 @@ int FASTCALL ppc_read_effective_word(uint32 addr, uint32 *result)
 		else{
 			if(bus_read(32, p, result) != 0){
 			}
-			*result = ppc_word_from_BE(*result);
+//			*result = ppc_word_from_BE(*result);
 		}
 		#endif
 	}
@@ -93,7 +95,7 @@ int FASTCALL ppc_read_effective_half(uint32 addr, uint16 *result)
 			skyeye_config_t* config = get_current_config();
 			*result = config->mach->mach_io_read_halfword(&gCPU, (p - current_core->get_ccsr_base(gCPU.ccsr)));
 		}
-		#if 1
+		#if 0
 		else if((p >= boot_rom_start_addr) && (p < (boot_rom_start_addr - 1 + boot_romSize )))
 			*result = ppc_half_from_BE(*((sint16 *)&boot_rom[p - boot_rom_start_addr]));
 		else if((p >= init_ram_start_addr) && (p < (init_ram_start_addr + init_ram_size)))
@@ -106,7 +108,7 @@ int FASTCALL ppc_read_effective_half(uint32 addr, uint16 *result)
 		else{
 			if(bus_read(16, p, result) != 0){
                         }
-                        *result = ppc_half_from_BE(*result);
+ //                       *result = ppc_half_from_BE(*result);
 
 			//fprintf(stderr,"in %s, can not find address 0x%x,pc=0x%x\n", __FUNCTION__, p, current_core->pc);
 			//skyeye_exit(-1);
@@ -132,7 +134,7 @@ int FASTCALL ppc_read_effective_byte(uint32 addr, uint8 *result)
 			//printf("In %s, offset=0x%x, *result=0x%x\n", __FUNCTION__, offset, *result);
 			return r;
 		}
-		#if 1
+		#if 0
 		else if((p >= boot_rom_start_addr) && (p < (boot_rom_start_addr - 1 + boot_romSize )))
 			*result = *((byte *)&boot_rom[p - boot_rom_start_addr]);
 		else if((p >= init_ram_start_addr) && (p < (init_ram_start_addr + init_ram_size)))
@@ -168,7 +170,7 @@ int FASTCALL ppc_write_effective_word(uint32 addr, uint32 data)
 			config->mach->mach_io_write_word(&gCPU, offset, data);
 			//printf("DBG:write to CCSR,value=0x%x,offset=0x%x,pc=0x%x\n", data, offset,current_core->pc);
 		}
-		#if 1
+		#if 0
 		else if((p >= boot_rom_start_addr) && (p < (boot_rom_start_addr + boot_romSize )))
 
                         *((int *)&boot_rom[p - boot_rom_start_addr]) = ppc_word_to_BE(data);
@@ -179,7 +181,8 @@ int FASTCALL ppc_write_effective_word(uint32 addr, uint32 data)
 		}
 		#else
                 else{
-			bus_write(32, p, ppc_word_to_BE(data));	
+			//bus_write(32, p, ppc_word_to_BE(data));	
+			bus_write(32, p, data);	
                         //fprintf(stderr,"in %s, can not find address 0x%x,pc=0x%x,ccsr_base=0x%x, ccsr=0x%x\n", __FUNCTION__, p, current_core->pc, GET_CCSR_BASE(gCPU.ccsr), gCPU.ccsr);
                         //skyeye_exit(-1);
                 }
@@ -200,7 +203,7 @@ int FASTCALL ppc_write_effective_half(uint32 addr, uint16 data)
                         config->mach->mach_io_write_halfword(&gCPU, offset, data);
 			//printf("DBG:write to CCSR,value=0x%x,offset=0x%x,pc=0x%x\n", data, offset,current_core->pc);
 		}
-		#if 1
+		#if 0
 		else if((p >= boot_rom_start_addr) && (p < (boot_rom_start_addr + boot_romSize )))
                         *((sint16 *)&boot_rom[p - boot_rom_start_addr]) = ppc_half_to_BE(data);
 		else if((p >= init_ram_start_addr) && (p < (init_ram_start_addr + init_ram_size)))
@@ -210,7 +213,8 @@ int FASTCALL ppc_write_effective_half(uint32 addr, uint16 data)
 		}
 		#else
                 else{
-			bus_write(16, p, ppc_half_to_BE(data));	
+			bus_write(16, p, data);	
+			//bus_write(16, p, ppc_half_to_BE(data));	
                         //fprintf(stderr,"in %s, can not find address 0x%x,pc=0x%x\n", __FUNCTION__, p, current_core->pc);
                         //skyeye_exit(-1);
                 }
@@ -236,7 +240,7 @@ int FASTCALL ppc_write_effective_byte(uint32 addr, uint8 data)
 			return r;
                         //printf("DBG:write to CCSR,value=0x%x,offset=0x%x\n", data, offset);
                 }
-		#if 1
+		#if 0
                 else if((p >= boot_rom_start_addr) && (p < (boot_rom_start_addr + boot_romSize )))
 
                         *((byte *)&boot_rom[p - boot_rom_start_addr]) = data;

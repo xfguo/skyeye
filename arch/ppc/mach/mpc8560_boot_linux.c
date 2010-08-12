@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "ppc_boot.h"
 #include "ppc_mmu.h"
 #include "sysendian.h"
+#include "skyeye_loader.h" 
 
 extern byte * ddr_ram; /* 64M DDR SDRAM */
 
@@ -44,11 +45,12 @@ static void load_initrd(){
 	core->gpr[4] = initrd_start;
 	core->gpr[5] = initrd_start + initrd_size;
 
-	//load_file(filename, initrd_start);
-#if 1
+	load_file(filename, initrd_start);
+#if 0
 	if(f = fopen(filename, "rb")){
-		void * t = &ddr_ram[initrd_start];
-		if (fread(&ddr_ram[initrd_start], 1, initrd_size, f))
+		//void * t = &ddr_ram[initrd_start];
+		//if (fread(&ddr_ram[initrd_start], 1, initrd_size, f))
+		if (fread((void *)get_dma_addr(iniitrd_start), 1, initrd_size, f))
 			printf("Load %s to 0x%x...\n", filename, initrd_start);
 		else
 			printf("Can not load %s to 0x%x\n", filename, initrd_start);
@@ -64,7 +66,7 @@ static void load_initrd(){
 static void set_bootcmd(){
 	const int bd_start = 8 * 1024 * 1024;
 	e500_core_t * core = &gCPU.core[0];
-	#if 1
+	#if 0
 	bd_t * t = &ddr_ram[bd_start];
         t->bi_immr_base = ppc_word_to_BE(0xe0000000);
         t->bi_busfreq = ppc_word_to_BE(100 * 1024 * 1024);
@@ -86,9 +88,9 @@ static void set_bootcmd(){
 
 	char * bootcmd = "root=/dev/ram0 console=ttyCPM0 mem=64M";
 	const int bootcmd_start= 9 * 1024 * 1024;
-	memcpy(&ddr_ram[bootcmd_start], bootcmd, (strlen(bootcmd) + 1));
+	//memcpy(&ddr_ram[bootcmd_start], bootcmd, (strlen(bootcmd) + 1));
 	/* load bootcmd string to bootcmd_start address */
-	//load_data(bootcmd, (strlen(bootcmd) + 1), bootcmd_start);
+	load_data(bootcmd, (strlen(bootcmd) + 1), bootcmd_start);
 
 	core->gpr[6] = bootcmd_start;
 	core->gpr[7] = bootcmd_start + strlen(bootcmd) + 1;

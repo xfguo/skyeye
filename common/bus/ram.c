@@ -28,6 +28,7 @@
 #include "skyeye_ram.h"
 #include "skyeye_arch.h"
 #include "skyeye_pref.h"
+#include "skyeye_swapendian.h"
 
 /* All the memory including rom and dram */
 static mem_state_t global_memory;
@@ -42,15 +43,32 @@ mem_read_byte (uint32_t addr)
 	}
 	mem_config_t * memmap = get_global_memmap();
 	mem_state_t * memory = get_global_memory();
-	data = memory->rom[global_mbp -
-			      memmap->mem_banks][(addr -
-							   global_mbp->
-							   addr) >> 2];
-	//printf("In %s, banks=0x%x,offset=0x%x\n", __FUNCTION__, global_mbp - memmap->mem_banks, (addr - global_mbp-> addr) >> 2);
 	generic_arch_t* arch_instance = get_arch_instance(NULL);
-	offset = (((uint32_t) arch_instance->endianess * 3) ^ (addr & 3)) << 3;	/* bit offset into the word */
-	//printf("In %s,data=0x%x\n, offset=0x%x, addr=0x%x\n", __FUNCTION__, data, offset, addr);
-	return (data >> offset & 0xffL);
+
+	/* judge the alignment */
+	if(arch_instance->alignment == Align)
+	{
+		data = memory->rom[global_mbp -
+			      	memmap->mem_banks][(addr -
+								   global_mbp->
+							   		addr) >> 2];
+	}
+	else if(arch_instance->alignment == UnAlign)
+	{
+		uint8_t *base = &global_memory.rom[global_mbp -memmap->mem_banks][0];
+		data = base[addr - global_mbp->addr];
+	}
+	/* judge the endianess */
+	if(arch_instance->endianess == Little_endian)
+	{
+		offset = (((uint32_t) arch_instance->endianess * 3) ^ (addr & 3)) << 3;	/* bit offset into the word */
+		return (data >> offset & 0xffL);
+	}
+	else if(arch_instance->endianess == Big_endian)
+	{
+		return data;	
+	}
+
 }
 
 static uint32_t
@@ -59,15 +77,32 @@ mem_read_halfword (uint32_t addr)
 	uint32_t data, offset;
 	mem_bank_t * global_mbp = bank_ptr(addr);
 	mem_config_t * memmap = get_global_memmap();
-	data = global_memory.rom[global_mbp -
-			      memmap->mem_banks][(addr -
-							   global_mbp->
-							   addr) >> 2];
-
 	generic_arch_t* arch_instance = get_arch_instance(NULL);
-	offset = (((uint32_t) arch_instance->endianess * 2) ^ (addr & 2)) << 3;	/* bit offset into the word */
 
-	return (data >> offset) & 0xffff;
+	/* judge the alignment */
+	if(arch_instance->alignment == Align)
+	{
+		data = global_memory.rom[global_mbp -
+				      memmap->mem_banks][(addr -
+								   global_mbp->
+								   addr) >> 2];
+	}
+	else if(arch_instance->alignment == UnAlign)
+	{
+		uint8_t *base = &global_memory.rom[global_mbp -memmap->mem_banks][0];
+		data = *(uint16_t *)(&base[addr - global_mbp->addr]);
+	}
+
+	/* judge the endianess */
+	if(arch_instance->endianess == Little_endian)
+	{
+		offset = (((uint32_t) arch_instance->endianess * 2) ^ (addr & 2)) << 3;	/* bit offset into the word */
+		return (data >> offset) & 0xffff;
+	}
+	else if(arch_instance->endianess == Big_endian)
+	{
+		return half_from_BE(data);
+	}
 }
 
 static uint32_t
@@ -76,11 +111,28 @@ mem_read_word (uint32_t addr)
 	uint32_t data;
 	mem_bank_t * global_mbp = bank_ptr(addr);
 	mem_config_t * memmap = get_global_memmap();
-	data = global_memory.rom[global_mbp -
-			      memmap->mem_banks][(addr -
-							   global_mbp->
-							   addr) >> 2];
-	return data;
+	generic_arch_t* arch_instance = get_arch_instance(NULL);
+
+	/* judge the alignment */
+	if(arch_instance->alignment == Align)
+	{
+		data = global_memory.rom[global_mbp -
+					  memmap->mem_banks][(addr -
+								   global_mbp->
+								   addr) >> 2];
+	}
+	else if(arch_instance->alignment == UnAlign)
+	{
+		uint8_t *base = &global_memory.rom[global_mbp -memmap->mem_banks][0];
+		data = *(uint32_t *)(&base[addr - global_mbp->addr]);
+	}
+
+	/* judge the endianess */
+	if(arch_instance->endianess == Little_endian)
+		return data;
+	else if(arch_instance->endianess == Big_endian)
+		return word_from_BE(data);
+	
 }
 
 static void
@@ -100,24 +152,36 @@ mem_write_byte (uint32_t addr, uint32_t data)
 	//printf("In %s, addr=0x%x,banks=0x%x,offset=0x%x\n", __FUNCTION__, addr, global_mbp - memmap->mem_banks, (addr - global_mbp-> addr) >> 2);
 	assert(global_mbp != NULL);
 	assert(memmap != NULL);	
-	temp = &global_memory.rom[global_mbp -
-			       memmap->mem_banks][(addr -
-							    global_mbp->
-							    addr) >> 2];
-	//generic_arch_t* arch_instance = get_arch_instance(NULL);
-	sky_pref_t* pref = get_skyeye_pref();
-	endian_t endian = pref->endian;
-	offset = (((uint32_t) endian * 3) ^ (addr & 3)) << 3;
-	/* bit offset into the word */
-	//printf("In %s, temp=0x%x,data=0x%x\n", __FUNCTION__, temp, *temp);
-	//printf("In %s, temp=0x%x\n", __FUNCTION__, temp);
-	*temp = (*temp & ~(0xffL << offset)) | ((data & 0xffL) << offset);
+	generic_arch_t* arch_instance = get_arch_instance(NULL);
+
+	/* judge the alignment */
+	if(arch_instance->alignment == Align)
+	{
+		temp = &global_memory.rom[global_mbp -
+					   memmap->mem_banks][(addr -
+									global_mbp->
+									addr) >> 2];
+	}
+	else if(arch_instance->alignment == UnAlign)
+	{
+		uint8_t *base = &global_memory.rom[global_mbp -memmap->mem_banks][0];
+		temp = (uint32_t *)(&base[addr - global_mbp->addr]);
+	}
+
+	/* judge the endianess */
+	if(arch_instance->endianess == Little_endian)
+	{
+		offset = (((uint32_t) arch_instance->endianess * 3) ^ (addr & 3)) << 3;/* bit offset into the word */
+		*temp = (*temp & ~(0xffL << offset)) | ((data & 0xffL) << offset);
+	}
+	else if(arch_instance->endianess == Big_endian)
+		*(uint8_t *)temp = data;
 }
 
 static void
 mem_write_halfword (uint32_t addr, uint32_t data)
 {
-	unsigned long *temp, offset;
+	uint32_t *temp, offset;
 	mem_bank_t * global_mbp = bank_ptr(addr);
 	mem_config_t * memmap = get_global_memmap();
 
@@ -126,19 +190,36 @@ mem_write_halfword (uint32_t addr, uint32_t data)
 		tb_setdirty (arch_instance, addr, global_mbp);
 	}
 #endif
-	temp = &global_memory.rom[global_mbp -
-			       memmap->mem_banks][(addr -
-							    global_mbp->
-							    addr) >> 2];
 	generic_arch_t* arch_instance = get_arch_instance(NULL);
-	offset = (((uint32_t) arch_instance->endianess * 2) ^ (addr & 2)) << 3;	/* bit offset into the word */
 
-	*temp = (*temp & ~(0xffffL << offset)) | ((data & 0xffffL) << offset);
+	/* judge the alignment */
+	if(arch_instance->alignment == Align)
+	{
+		temp = &global_memory.rom[global_mbp -
+					   memmap->mem_banks][(addr -
+									global_mbp->
+									addr) >> 2];
+	}
+	else if(arch_instance->alignment == UnAlign)
+	{
+		uint8_t *base = &global_memory.rom[global_mbp -memmap->mem_banks][0];
+		temp = (uint32_t *)(&base[addr - global_mbp->addr]);
+	}
+
+	/* judge the endianess */
+	if(arch_instance->endianess == Little_endian)
+	{
+		offset = (((uint32_t) arch_instance->endianess * 2) ^ (addr & 2)) << 3;	/* bit offset into the word */
+		*temp = (*temp & ~(0xffffL << offset)) | ((data & 0xffffL) << offset);
+	}
+	else if(arch_instance->endianess == Big_endian)
+		*(uint16_t *)temp = half_to_BE(data);
 }
 
 static void
 mem_write_word (uint32_t addr, uint32_t data)
 {
+	uint32_t *temp;
 	mem_bank_t * global_mbp = bank_ptr(addr);
 	mem_config_t * memmap = get_global_memmap();
 
@@ -148,10 +229,26 @@ mem_write_word (uint32_t addr, uint32_t data)
 		tb_setdirty (arch_instance, addr, global_mbp);
 	}
 #endif
-	global_memory.rom[global_mbp -
-		       memmap->mem_banks][(addr -
-						    global_mbp->addr) >> 2] =
-	data;
+	generic_arch_t* arch_instance = get_arch_instance(NULL);
+
+	/* judge the alignment */
+	if(arch_instance->alignment == Align)
+	{
+		temp = &global_memory.rom[global_mbp -
+				   		memmap->mem_banks][(addr -
+								global_mbp->addr) >> 2];
+	}	
+	else if(arch_instance->alignment == UnAlign)
+	{
+		uint8_t *base = &global_memory.rom[global_mbp -memmap->mem_banks][0];
+		temp = (uint32_t *)(&base[addr - global_mbp->addr]);
+	}
+
+	/* judge the endianess */
+	if(arch_instance->endianess == Little_endian)
+		*temp = data;
+	else if(arch_instance->endianess == Big_endian)
+		*temp = word_to_BE(data);
 }
 /*
  * allocate memory space for the banks
