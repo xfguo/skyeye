@@ -337,6 +337,10 @@ endian_t get_elf_endian(const char* elf_filename){
 	endian_t endian;
 	Elf32_Ehdr elf_header;
 	FILE* file = fopen(elf_filename, "r");
+	if(file == NULL){
+		fprintf(stderr, "In %s, can not open file %s\n", __FUNCTION__, elf_filename);
+		exit(-1);
+	}
 
 	if (fread (elf_header.e_ident, EI_NIDENT, 1, file) != 1)
 		return 0;
