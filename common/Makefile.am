@@ -12,7 +12,7 @@ common_portable = portable/mman.c portable/usleep.c portable/gettimeofday.c
 common_preference = preference/skyeye_pref.c
 common_memory = bus/bank_ops.c  bus/io.c  bus/ram.c bus/flash.c bus/skyeye_bus.c bus/bus_recoder.c
 common_core = core/skyeye_arch.c
-common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c
+common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c device/skyeye_signal.c
 common_mach = mach/skyeye_mach.c
 common_callback = callback/callback.c
 

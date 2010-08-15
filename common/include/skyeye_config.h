@@ -33,6 +33,7 @@
 #include "skyeye_types.h"
 #include "skyeye_device.h"
 #include "skyeye_mach.h"
+#include "skyeye_signal.h"
 
 #define DEFAULT_CONFIG_FILE "skyeye.conf"
 #define MAX_FILE_NAME 256
@@ -190,6 +191,10 @@ typedef struct
          * write a data by a virtual address.
          */
         exception_t (*mmu_write)(short size, generic_address_t addr, uint32_t value);
+	/**
+	 * get a signal from external
+	 */
+	exception_t (*signal)(interrupt_signal_t* signal);
 
 } arch_config_t;
 

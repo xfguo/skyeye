@@ -32,6 +32,11 @@ typedef struct generic_arch_s
 	 * write a data by a virtual address.
 	 */
 	exception_t (*mmu_write)(short size, generic_address_t addr, uint32_t value);
+	/**
+	 * get a signal from external
+	 */
+	exception_t (*signal)(interrupt_signal_t* signal);
+
 	endian_t endianess;
 	align_t alignment;
 } generic_arch_t;

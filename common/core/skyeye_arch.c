@@ -74,6 +74,7 @@ generic_arch_t * get_arch_instance(const char* arch_name){
 	running_arch_list->get_regname_by_id = config->arch->get_regname_by_id;	
 	running_arch_list->mmu_read = config->arch->mmu_read;	
 	running_arch_list->mmu_write = config->arch->mmu_write;	
+	running_arch_list->signal = config->arch->signal;
 	return running_arch_list;
 }
 static int
