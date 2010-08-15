@@ -117,8 +117,13 @@ s3c2410x_update_int (ARMul_State * state)
 	s3c2410x_update_subsrcint ();
 	s3c2410x_update_extint ();
 	requests = io.srcpnd & (~io.intmsk & INT_MASK_INIT);
-	state->NfiqSig = (requests & io.intmod) ? LOW : HIGH;
-	state->NirqSig = (requests & ~io.intmod) ? LOW : HIGH;
+	
+	interrupt_signal_t interrupt_signal;
+	interrupt_signal.arm_signal.firq = (requests & io.intmod) ? Low_level : High_level;
+	//state->NfiqSig = (requests & io.intmod) ? LOW : HIGH;
+	interrupt_signal.arm_signal.irq = (requests & ~io.intmod) ? Low_level : High_level;
+	//state->NirqSig = (requests & ~io.intmod) ? LOW : HIGH;
+	send_signal(&interrupt_signal);
 }
 
 static void
