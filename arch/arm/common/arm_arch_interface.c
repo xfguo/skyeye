@@ -3,6 +3,7 @@
 #include "armemu.h"
 #include "arm_regformat.h"
 #include "skyeye_options.h"
+#include "skyeye_signal.h"
 
 ARMul_State *state;
 int stop_simulator = 0;
@@ -441,6 +442,14 @@ static exception_t arm_set_register_by_id(int id, uint32 value){
         return No_exp;
 }
 
+static exception_t arm_signal(interrupt_signal_t* signal){
+	arm_signal_t* arm_signal = &signal->arm_signal;
+	if(arm_signal->irq != Prev_level)
+		state->NirqSig = arm_signal->irq;
+	 if(arm_signal->firq != Prev_level)
+		state->NfiqSig = arm_signal->firq;
+	return No_exp;
+}
 void
 init_arm_arch ()
 {
@@ -462,6 +471,7 @@ init_arm_arch ()
 	arm_arch.parse_regfile = arm_parse_regfile;
 	arm_arch.get_regval_by_id = arm_get_regval_by_id;
         arm_arch.get_regname_by_id = arm_get_regname_by_id;
+	arm_arch.signal = arm_signal;
 
 	register_arch (&arm_arch);
 }
