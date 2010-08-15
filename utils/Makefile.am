@@ -32,7 +32,7 @@ libshutdown_la_SOURCES = $(utils_shutdown)
 libshutdown_la_LDFLAGS = -module
 
 libdisasm_la_SOURCES = $(utils_disassembler)
-libdisasm_la_LDFLAGS = -module -L$(top_srcdir)/third-party/opcodes/.libs/ -L$(top_srcdir)/third-party/bfd/.libs/ -L$(top_srcdir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
+libdisasm_la_LDFLAGS = -module -L./$(top_builddir)/third-party/opcodes/.libs/ -L./$(top_builddir)/third-party/bfd/.libs/ -L./$(top_builddir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
 
 pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la
 #pkglib_LTLIBRARIES = libutils.la libgdbserver.la
