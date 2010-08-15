@@ -34,7 +34,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@WIN32_FALSE@am__append_1 = -L$(top_srcdir)/third-party/readline/ 
+@WIN32_FALSE@am__append_1 = -L$(top_builddir)/third-party/readline/
 @LCD_TRUE@am__append_2 = @LCD_CFLAGS@
 subdir = common
 DIST_COMMON = $(nobase_include_HEADERS) $(srcdir)/Makefile.am \
@@ -279,9 +279,9 @@ nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/skyeye_queue.h
 
 libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback)
-libcommon_la_LIBADD = -L$(top_srcdir)/third-party/bfd/.libs/ -lbfd \
-	-L$(top_srcdir)/third-party/libiberty/pic -liberty -lreadline \
-	@LIBLTDL@ @LIBADD_DL@ $(am__append_1)
+libcommon_la_LIBADD = -L$(top_builddir)/third-party/bfd/.libs/ -lbfd \
+	-L$(top_builddir)/third-party/libiberty/pic -liberty \
+	-lreadline @LIBLTDL@ @LIBADD_DL@ $(am__append_1)
 # we will link the common module with main
 #libcommon_la_LDFLAGS = -module
 skyeye_module_dir = \"$(prefix)/lib/skyeye\"
