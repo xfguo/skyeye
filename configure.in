@@ -249,4 +249,5 @@ AC_OUTPUT([Makefile
 	arch/x86/Makefile
 	device/Makefile 
 	common/Makefile
+	soc/arm/Makefile
 	utils/Makefile])

@@ -18,10 +18,11 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
 
-#include "armdefs.h"
 #include "s3c2410x.h"
-#include "skyeye_sched.h"
-#include "skyeye_lock.h"
+#include <skyeye_config.h>
+#include <skyeye_arch.h>
+#include <skyeye_sched.h>
+#include <skyeye_lock.h>
 //zzc:2005-1-1
 #ifdef __CYGWIN__
 //chy 2005-07-28
@@ -52,17 +53,17 @@ typedef struct s3c2410_wd_timer_s{
 }s3c2410_wd_timer_t;
 typedef struct s3c2410x_io
 {
-	u32 srcpnd;		/* Indicate the interrupt request status */
-	u32 intmod;		/* Interrupt mode register */
-	u32 intmsk;		/* Determine which interrupt source is masked */
-	u32 priority;		/* IRQ priority control register */
-	u32 intpnd;		/* Indicate the interrupt request status */
-	u32 intoffset;		/* Indicate the IRQ interrupt request source */
-	u32 subsrcpnd;		/* Indicate the interrupt request status */
-	u32 intsubmsk;		/* Determin which interrupt source is masked */
+	uint32 srcpnd;		/* Indicate the interrupt request status */
+	uint32 intmod;		/* Interrupt mode register */
+	uint32 intmsk;		/* Determine which interrupt source is masked */
+	uint32 priority;		/* IRQ priority control register */
+	uint32 intpnd;		/* Indicate the interrupt request status */
+	uint32 intoffset;		/* Indicate the IRQ interrupt request source */
+	uint32 subsrcpnd;		/* Indicate the interrupt request status */
+	uint32 intsubmsk;		/* Determin which interrupt source is masked */
 
-	u32 eintmask;		/* Interrupt pending register for 20 external interrupts (EINT[23:4]) */
-	u32 eintpend;		/* Interrupt mask register for 20 external interrupts (EINT[23:4]). */
+	uint32 eintmask;		/* Interrupt pending register for 20 external interrupts (EINT[23:4]) */
+	uint32 eintpend;		/* Interrupt mask register for 20 external interrupts (EINT[23:4]). */
 	struct s3c2410x_timer_io timer;	/* Timer */
 	struct s3c2410x_uart_io uart[3]; /* uart */
 	struct s3c2410x_clkpower clkpower;	/* clock and power management */
@@ -84,7 +85,7 @@ s3c2410x_set_subsrcint (unsigned int irq)
 static inline void
 s3c2410x_update_subsrcint ()
 {
-	u32 requests;
+	uint32 requests;
 	s3c2410x_set_subsrcint (UART_INT_TXD << (0 * 3));
 	s3c2410x_set_subsrcint (UART_INT_TXD << (1 * 3));
 	s3c2410x_set_subsrcint (UART_INT_TXD << (2 * 3));
@@ -102,7 +103,7 @@ s3c2410x_update_subsrcint ()
 static inline void
 s3c2410x_update_extint ()
 {
-	u32 requests = ((io.eintpend & (~io.eintmask)));
+	uint32 requests = ((io.eintpend & (~io.eintmask)));
 	if (requests & 0xF0)
 		io.srcpnd |= INT_EINT4_7;
 	if (requests & 0xFFFF00)
@@ -111,9 +112,9 @@ s3c2410x_update_extint ()
 }
 
 static void
-s3c2410x_update_int (ARMul_State * state)
+s3c2410x_update_int (void* arch_instance)
 {
-	ARMword requests;
+	uint32_t requests;
 	s3c2410x_update_subsrcint ();
 	s3c2410x_update_extint ();
 	requests = io.srcpnd & (~io.intmsk & INT_MASK_INIT);
@@ -127,13 +128,13 @@ s3c2410x_update_int (ARMul_State * state)
 }
 
 static void
-s3c2410x_set_ext_intr (u32 interrupt)
+s3c2410x_set_ext_intr (uint32 interrupt)
 {
 	io.eintpend |= (1 << interrupt);
 }
 
 static int
-s3c2410x_pending_ext_intr (u32 interrupt)
+s3c2410x_pending_ext_intr (uint32 interrupt)
 {
 	return ((io.eintpend & (1 << interrupt)));
 }
@@ -141,13 +142,12 @@ s3c2410x_pending_ext_intr (u32 interrupt)
 static void
 s3c2410x_update_intr (void *mach)
 {
-	struct machine_config *mc = (struct machine_config *) mach;
-	ARMul_State *state = (ARMul_State *) mc->state;
-	s3c2410x_update_int (state);
+	generic_arch_t* arch_instance = get_arch_instance("");
+	s3c2410x_update_int (arch_instance);
 }
 
 static int s3c2410x_scheduler_id = -1;
-static void s3c2410x_timer_callback(ARMul_State * state)
+static void s3c2410x_timer_callback(generic_arch_t* arch_instance)
 {
 	RW_WRLOCK(lock);
 	io.timer.tcnt[4] = io.timer.tcntb[4];
@@ -155,19 +155,15 @@ static void s3c2410x_timer_callback(ARMul_State * state)
 	//io.timer.tcmp[4] = io.timer.tcmpb[4];
 	io.timer.tcnto[4] = io.timer.tcntb[4];
 	io.srcpnd |= INT_TIMER4;
-	{
-	extern ARMul_State * state;
-	s3c2410x_update_int (state);
-	}
+		s3c2410x_update_int (arch_instance);
 	RW_UNLOCK(lock);
 }
 
 
 static void
-s3c2410x_io_reset (void* arch_instance)
+s3c2410x_io_reset (generic_arch_t* arch_instance)
 {
 	int i;
-	extern ARMul_State * state;
 
 	memset (&s3c2410x_io, 0, sizeof (s3c2410x_io));
 
@@ -189,19 +185,17 @@ s3c2410x_io_reset (void* arch_instance)
 
 	io.eintmask = 0x00FFFFF0;	
 
-	/* ARM920T uses LOW */
-	state->lateabtSig = LOW;
-
-	state->Reg[1] = 193;	//for SMDK2410
+	/* set mach id of SMDK2410 for linux boot */
+	arch_instance->set_regval_by_id(1, 193);
+	//state->Reg[1] = 193;	//for SMDK2410
 	//state->Reg[1] = 395;  //for SMDK2410TK
 	//state->Reg[1] = 241;    //ARCH_S3C2440
-
 }
 
 
 /* s3c2410x io_do_cycle */
 static void
-s3c2410x_io_do_cycle (ARMul_State * state)
+s3c2410x_io_do_cycle (generic_arch_t * state)
 {
 
 #if 0
@@ -248,7 +242,7 @@ s3c2410x_io_do_cycle (ARMul_State * state)
 
 
 static void
-s3c2410x_uart_read (u32 offset, u32 * data, int index)
+s3c2410x_uart_read (uint32 offset, uint32 * data, int index)
 {
 	switch (offset) {
 	case ULCON:
@@ -292,7 +286,7 @@ s3c2410x_uart_read (u32 offset, u32 * data, int index)
 }
 
 static void
-s3c2410x_uart_write (ARMul_State * state, u32 offset, u32 data, int index)
+s3c2410x_uart_write (generic_arch_t * state, uint32 offset, uint32 data, int index)
 {
 
 	SKYEYE_DBG ("%s(UART%d: 0x%x, 0x%x)\n", __FUNCTION__, index, offset, data);
@@ -331,7 +325,6 @@ s3c2410x_uart_write (ARMul_State * state, u32 offset, u32 data, int index)
 			io.uart[index].utrstat |= 0x6;	//set strstat register bit[0]
 			if ((io.uart[index].ucon & 0xc) == 0x4) {
 				s3c2410x_set_subsrcint (UART_INT_TXD << (index * 3));
-				extern ARMul_State * state;
 				s3c2410x_update_int (state);
 			}
 		}
@@ -345,7 +338,7 @@ s3c2410x_uart_write (ARMul_State * state, u32 offset, u32 data, int index)
 }
 
 static void
-s3c2410x_timer_read (u32 offset, u32 * data)
+s3c2410x_timer_read (uint32 offset, uint32 * data)
 {
 	switch (offset) {
 	case TCFG0:
@@ -394,7 +387,7 @@ s3c2410x_timer_read (u32 offset, u32 * data)
 }
 
 static void
-s3c2410x_timer_write (ARMul_State * state, u32 offset, u32 data)
+s3c2410x_timer_write (generic_arch_t * state, uint32 offset, uint32 data)
 {
 	switch (offset) {
 	case TCFG0:
@@ -405,7 +398,6 @@ s3c2410x_timer_write (ARMul_State * state, u32 offset, u32 data)
 		break;
 	case TCON:
 		{
-			extern ARMul_State * state;
 			io.timer.tcon = data;
 
 			/* 2010-07-27 added by Jeff.Du. Used timer scheduler */
@@ -547,22 +539,22 @@ s3c2410x_timer_write (ARMul_State * state, u32 offset, u32 data)
 	}
 }
 
-static ARMword
-s3c2410x_io_read_word (void* arch_instance, ARMword addr)
+static uint32
+s3c2410x_io_read_word (void* arch_instance, uint32 addr)
 {
-	ARMword data = -1;
+	uint32 data = -1;
 	int i;
 	/* uart */
 	if ((addr >= UART_CTL_BASE0)
 	    && (addr < (UART_CTL_BASE0 + UART_CTL_SIZE))) {
-		s3c2410x_uart_read ((u32) ((addr - UART_CTL_BASE0) % 0x4000),
-				    (u32 *) & data,
+		s3c2410x_uart_read ((uint32) ((addr - UART_CTL_BASE0) % 0x4000),
+				    (uint32 *) & data,
 				    (addr - UART_CTL_BASE0) / 0x4000);
 		return data;
 	}
 	if ((addr >= PWM_CTL_BASE) && (addr < (PWM_CTL_BASE + PWM_CTL_SIZE))) {
-		s3c2410x_timer_read ((u32) (addr - PWM_CTL_BASE),
-				     (u32 *) & data);
+		s3c2410x_timer_read ((uint32) (addr - PWM_CTL_BASE),
+				     (uint32 *) & data);
 		return data;
 	}
 
@@ -705,20 +697,20 @@ s3c2410x_io_read_word (void* arch_instance, ARMword addr)
 	return data;
 }
 
-static ARMword
-s3c2410x_io_read_byte (void* arch_instance, ARMword addr)
+static uint32
+s3c2410x_io_read_byte (void* arch_instance, uint32 addr)
 {
 	s3c2410x_io_read_word (arch_instance, addr);
 }
 
-static ARMword
-s3c2410x_io_read_halfword (void* arch_instance, ARMword addr)
+static uint32
+s3c2410x_io_read_halfword (void* arch_instance, uint32 addr)
 {
 	s3c2410x_io_read_word (arch_instance, addr);
 }
 
 static void
-s3c2410x_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
+s3c2410x_io_write_word (generic_arch_t * state, uint32 addr, uint32 data)
 {
 	if ((addr >= UART_CTL_BASE0)
 	    && (addr < UART_CTL_BASE0 + UART_CTL_SIZE)) {
@@ -746,7 +738,6 @@ s3c2410x_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
 	case SRCPND:
 		io.srcpnd &= (~data & INT_MASK_INIT);
 		//2006-04-04 chy, for eCos on s3c2410. SRCPND will change the INTPND, INTOFFSET, so when write SRCPND, the interrupt should be update
-		extern ARMul_State * state;
 		s3c2410x_update_int (state);
 		break;
 	case INTMOD:
@@ -754,7 +745,6 @@ s3c2410x_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
 		break;
 	case INTMSK:
 		io.intmsk = data;
-		extern ARMul_State * state;
 		s3c2410x_update_int (state);
 		break;
 	case PRIORITY:
@@ -851,14 +841,14 @@ s3c2410x_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
 }
 
 static void
-s3c2410x_io_write_byte (ARMul_State * state, ARMword addr, ARMword data)
+s3c2410x_io_write_byte (generic_arch_t * state, uint32 addr, uint32 data)
 {
 	SKYEYE_DBG ("SKYEYE: s3c2410x_io_write_byte error\n");
 	s3c2410x_io_write_word (state, addr, data);
 }
 
 static void
-s3c2410x_io_write_halfword (ARMul_State * state, ARMword addr, ARMword data)
+s3c2410x_io_write_halfword (generic_arch_t * state, uint32 addr, uint32 data)
 {
 	SKYEYE_DBG ("SKYEYE: s3c2410x_io_write_halfword error\n");
 	s3c2410x_io_write_word (state, addr, data);
@@ -868,8 +858,6 @@ s3c2410x_io_write_halfword (ARMul_State * state, ARMword addr, ARMword data)
 void
 s3c2410x_mach_init (void * arch_instance, machine_config_t * this_mach)
 {
-	extern ARMul_State * state;
-	ARMul_SelectProcessor (state, ARM_v4_Prop);
 	this_mach->mach_io_do_cycle = s3c2410x_io_do_cycle;
 	this_mach->mach_io_reset = s3c2410x_io_reset;
 	this_mach->mach_io_read_byte = s3c2410x_io_read_byte;
@@ -885,6 +873,6 @@ s3c2410x_mach_init (void * arch_instance, machine_config_t * this_mach)
 	this_mach->mach_set_intr = s3c2410x_set_ext_intr;
 	this_mach->mach_pending_intr = s3c2410x_pending_ext_intr;
 	this_mach->mach_update_intr = s3c2410x_update_intr;
-	this_mach->state = (void *) state;
+	this_mach->state = (void *) arch_instance;
 
 }

@@ -27,6 +27,9 @@
 #ifndef __S3C2410X_H_
 #define __S3C2410X_H_
 
+#include <skyeye_types.h>
+#include <skyeye_mach.h>
+
 #define REGW(addr)	(*(volatile unsigned int *)(addr))
 /********************************************
 * Memory Controller Registers
@@ -254,19 +257,19 @@
 
 struct s3c2410x_clkpower
 {
-	u32 locktime;
-	u32 mpllcon;
-	u32 upllcon;
-	u32 clkcon;
-	u32 clkslow;
-	u32 clkdivn;
+	uint32 locktime;
+	uint32 mpllcon;
+	uint32 upllcon;
+	uint32 clkcon;
+	uint32 clkslow;
+	uint32 clkdivn;
 };
 
 struct s3c2410x_timer_io
 {
-	u32 tcfg0;
-	u32 tcfg1;
-	u32 tcon;
+	uint32 tcfg0;
+	uint32 tcfg1;
+	uint32 tcon;
 	int tcnt[S3C2410_TIMER_NUM];
 	int tcmp[S3C2410_TIMER_NUM];
 	int tcntb[S3C2410_TIMER_NUM];
@@ -276,17 +279,17 @@ struct s3c2410x_timer_io
 
 struct s3c2410x_uart_io
 {
-	u32 ulcon;		/* UART line control register */
-	u32 ucon;		/* UART control register */
-	u32 ufcon;		/* UART FIFO control register */
-	u32 umcon;		/* UART Modem control register */
-	u32 utrstat;		/* UART Tx/Rx status register */
-	u32 uerstat;		/* UART Rx error status register */
-	u32 ufstat;		/* UART FIFO status register */
-	u32 umstat;		/* UART Modem status register */
-	u32 utxh;		/* UART transmit buffer register */
-	u32 urxh;		/* UART receive buffer register */
-	u32 ubrdiv;		/* Baud rate divisor register 0 */
+	uint32 ulcon;		/* UART line control register */
+	uint32 ucon;		/* UART control register */
+	uint32 ufcon;		/* UART FIFO control register */
+	uint32 umcon;		/* UART Modem control register */
+	uint32 utrstat;		/* UART Tx/Rx status register */
+	uint32 uerstat;		/* UART Rx error status register */
+	uint32 ufstat;		/* UART FIFO status register */
+	uint32 umstat;		/* UART Modem status register */
+	uint32 utxh;		/* UART transmit buffer register */
+	uint32 urxh;		/* UART receive buffer register */
+	uint32 ubrdiv;		/* Baud rate divisor register 0 */
 };
 
 #define UART_INT_RXD		0x1
@@ -297,5 +300,7 @@ struct s3c2410x_uart_io
 #define UART_UCON_INIT		0x5
 #define UART_ULCON_INIT		0x3	//8N1
 #define UART_UTRSTAT_INIT	0x6
+
+void s3c2410x_mach_init (void * arch_instance, machine_config_t * this_mach);
 
 #endif /* __S3C2410X_H_ */

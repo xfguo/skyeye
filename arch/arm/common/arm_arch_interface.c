@@ -95,7 +95,11 @@ arm_init_state ()
 	/* set the old default for all machines not doing it by their own yet */
 	//skyeye_config.mach->io_cycle_divisor = 50;
 	//skyeye_config.mach->mach_init (state, skyeye_config.mach);
-	
+	if(!strcmp(p_arm_cpu->cpu_arch_name, "armv4"))
+		ARMul_SelectProcessor (state, ARM_v4_Prop);
+	if(!strcmp(p_arm_cpu->cpu_name, "arm920t"))
+		state->lateabtSig = LOW;
+		
 }
 static uint32 step = 0;
 static uint32 cycle = 0;
@@ -145,7 +149,7 @@ extern void pxa250_mach_init ();
 extern void pxa270_mach_init ();
 extern void cs89712_mach_init ();
 extern void at91rm92_mach_init ();
-extern void s3c2410x_mach_init ();
+//extern void s3c2410x_mach_init ();
 extern void s3c2440_mach_init ();
 extern void shp_mach_init ();
 extern void lpc_mach_init ();
@@ -239,7 +243,7 @@ machine_config_t arm_machines[] = {
 	{"pxa_lubbock", pxa250_mach_init, NULL, NULL, NULL},	/* xscale pxa250 lubbock developboard */
 	{"pxa_mainstone", pxa270_mach_init, NULL, NULL, NULL},	/* xscale pxa270 mainstone developboard */
 	{"at91rm92", at91rm92_mach_init, NULL, NULL, NULL},	/* at91RM9200 */
-	{"s3c2410x", s3c2410x_mach_init, NULL, NULL, NULL},	/* s3c2410x */
+	//{"s3c2410x", s3c2410x_mach_init, NULL, NULL, NULL},	/* s3c2410x */
 	{"s3c2440", s3c2440_mach_init, NULL, NULL, NULL},	/* s3c2440 */
 	{"sharp_lh7a400", shp_mach_init, NULL, NULL, NULL},	/* sharp lh7a400 developboard */
 	{"ns9750", ns9750_mach_init, NULL, NULL, NULL},		/* NetSilicon ns9750 */
