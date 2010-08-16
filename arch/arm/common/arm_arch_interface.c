@@ -474,7 +474,8 @@ init_arm_arch ()
 	//arm_arch.parse_mem = arm_parse_mem;
 	arm_arch.parse_regfile = arm_parse_regfile;
 	arm_arch.get_regval_by_id = arm_get_regval_by_id;
-        arm_arch.get_regname_by_id = arm_get_regname_by_id;
+	arm_arch.get_regname_by_id = arm_get_regname_by_id;
+	arm_arch.set_regval_by_id = arm_set_register_by_id;
 	arm_arch.signal = arm_signal;
 
 	register_arch (&arm_arch);
