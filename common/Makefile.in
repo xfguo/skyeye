@@ -70,7 +70,8 @@ am__objects_9 = skyeye_log.lo
 am__objects_10 = skyeye_command.lo skyeye_cli.lo default_command.lo
 am__objects_11 = skyeye_mm.lo
 am__objects_12 = skyeye_mach.lo
-am__objects_13 = skyeye_device.lo pen_buffer.lo skyeye_uart_ops.lo
+am__objects_13 = skyeye_device.lo pen_buffer.lo skyeye_uart_ops.lo \
+	skyeye_signal.lo
 am__objects_14 = bank_ops.lo io.lo ram.lo flash.lo skyeye_bus.lo \
 	bus_recoder.lo
 am__objects_15 = loader_elf.lo loader_file.lo
@@ -263,7 +264,7 @@ common_portable = portable/mman.c portable/usleep.c portable/gettimeofday.c
 common_preference = preference/skyeye_pref.c
 common_memory = bus/bank_ops.c  bus/io.c  bus/ram.c bus/flash.c bus/skyeye_bus.c bus/bus_recoder.c
 common_core = core/skyeye_arch.c
-common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c
+common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c device/skyeye_signal.c
 common_mach = mach/skyeye_mach.c
 common_callback = callback/callback.c
 pkglib_LTLIBRARIES = libcommon.la
@@ -385,6 +386,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_module.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_options.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_pref.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_signal.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_uart_ops.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/step.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/support.Plo@am__quote@
@@ -579,6 +581,13 @@ skyeye_uart_ops.lo: device/skyeye_uart_ops.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='device/skyeye_uart_ops.c' object='skyeye_uart_ops.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o skyeye_uart_ops.lo `test -f 'device/skyeye_uart_ops.c' || echo '$(srcdir)/'`device/skyeye_uart_ops.c
+
+skyeye_signal.lo: device/skyeye_signal.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT skyeye_signal.lo -MD -MP -MF $(DEPDIR)/skyeye_signal.Tpo -c -o skyeye_signal.lo `test -f 'device/skyeye_signal.c' || echo '$(srcdir)/'`device/skyeye_signal.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/skyeye_signal.Tpo $(DEPDIR)/skyeye_signal.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='device/skyeye_signal.c' object='skyeye_signal.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o skyeye_signal.lo `test -f 'device/skyeye_signal.c' || echo '$(srcdir)/'`device/skyeye_signal.c
 
 bank_ops.lo: bus/bank_ops.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bank_ops.lo -MD -MP -MF $(DEPDIR)/bank_ops.Tpo -c -o bank_ops.lo `test -f 'bus/bank_ops.c' || echo '$(srcdir)/'`bus/bank_ops.c
