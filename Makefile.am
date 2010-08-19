@@ -33,10 +33,24 @@ prof_convert_SOURCES = utils/code_cov/prof_convert.c
 if LCD
 skyeye_LDADD += @LCD_LIBS@
 endif
+all:third-party/readline/libreadline.a third-party/bfd/.libs/libbfd.so third-party/libiberty/libiberty.a third-party/opcodes/.libs/libopcodes.so
 
 skyeye_gui:
 	cd gui/qt4_src && rm -f skyeye_gui && make
 	cp -f gui/qt4_src/skyeye-gui $(prefix)/bin/
+
+third-party/readline/libreadline.a:
+	mkdir -p third-party/readline/ && cd third-party/readline/ && ./../../$(top_srcdir)/third-party/readline/configure --prefix=$(prefix) --enable-shared;make;
+
+third-party/bfd/.libs/libbfd.so:
+	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
+
+third-party/libiberty/libiberty.a:
+	mkdir -p third-party/libiberty && cd third-party/libiberty && ./../../$(srcdir)/third-party/libiberty/configure --prefix=$(prefix) --enable-shared ;make;
+
+third-party/opcodes/.libs/libopcodes.so:
+	mkdir -p third-party/opcodes/ && cd third-party/opcodes/ && ./../../$(top_srcdir)/third-party/opcodes/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
+
 lib:
 	mkdir -p third-party/libiberty && cd third-party/libiberty && ./../../$(srcdir)/third-party/libiberty/configure --prefix=$(prefix) --enable-shared ;make;
 	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
