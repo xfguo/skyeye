@@ -605,11 +605,9 @@ int FASTCALL ppc_read_physical_word(uint32 addr, uint32 *result)
 		return PPC_MMU_OK;
 	}
 #endif
-	if (addr < DDR_RAM_SIZE) {
-		// big endian
-		bus_read(32, addr, result);
-		return PPC_MMU_OK;
-	}
+	// big endian
+	bus_read(32, addr, result);
+	return PPC_MMU_OK;
 }
 
 inline int FASTCALL ppc_read_physical_half(uint32 addr, uint16 *result)
