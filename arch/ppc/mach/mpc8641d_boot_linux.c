@@ -30,8 +30,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "ppc_mmu.h"
 #include "sysendian.h"
 
-extern byte * ddr_ram; /* 512M DDR SDRAM */
-
 static const int initrd_start  = 32 * 1024 * 1024, initrd_size = 1 * 1024 * 1024;
 static const char * initrd_filename = "initrd.img";
 static const int bd_start = 8 * 1024 * 1024;
@@ -46,22 +44,6 @@ static const char * dtb_filename = "sbc8641d.dtb";
 
 static void load_initrd(){
 	load_file(initrd_filename, initrd_start);
-#if 0
-	FILE *f;
-
-	if(f = fopen(initrd_filename, "rb")){
-		void * t = &ddr_ram[initrd_start];
-		if (fread(&ddr_ram[initrd_start], 1, initrd_size, f))
-			printf("Load %s to 0x%x...\n", initrd_filename, initrd_start);
-		else
-			printf("Can not load %s to 0x%x\n", initrd_filename, initrd_start);
-		fclose(f);
-	}
-	else{
-		fprintf(stderr, "Can not open initrd file %s.\n", initrd_filename);
-		skyeye_exit(-1);
-	}
-#endif        
 }
 
 struct boot_param_header {
@@ -83,38 +65,8 @@ struct boot_param_header {
  */
 static void setup_boot_param(){
 	load_file(dtb_filename, bd_start);
-	#if 0
-	struct boot_param_header * initial_boot_param = &ddr_ram[bd_start];
-	//initial_boot_param->off_dt_struct = ppc_word_from_BE(OFF_DT_STRUCT);
-	FILE *f;
-        if(f = fopen(dtb_filename, "rb")){
-                //void * t = &ddr_ram[OFF_DT_STRUCT];
-                if (fread(&ddr_ram[bd_start], 1, DT_STRUCT_SIZE, f))
-                        printf("Load %s to 0x%x...\n", dtb_filename, bd_start );
-                else
-                        printf("Can not load %s to 0x%x\n", dtb_filename, bd_start);
-                fclose(f);
-        }
-        else{
-                fprintf(stderr, "Can not open dtb file%s.\n", dtb_filename);
-                skyeye_exit(-1);
-        }
-	#endif
 	load_data(bootcmd, (strlen(bootcmd) + 1), bootcmd_start);
-	//memcpy(&ddr_ram[bootcmd_start], bootcmd, (strlen(bootcmd) + 1));
 }
-#if 0
-static void set_bootcmd(){
-	bd_t * t = &ddr_ram[bd_start];
-        t->bi_immr_base = ppc_word_to_BE(0xe0000000);
-        t->bi_busfreq = ppc_word_to_BE(100 * 1024 * 1024);
-        t->bi_intfreq = ppc_word_to_BE(500 * 1024 * 1024);
-        t->bi_baudrate = ppc_word_to_BE(9600);
-        t->bi_memsize = ppc_word_to_BE(64 * 1024 * 1024);
-
-	memcpy(&ddr_ram[bootcmd_start], bootcmd, (strlen(bootcmd) + 1));
-}
-#endif
 static void set_boot_param(e500_core_t * core){
 	core->gpr[1] = 0x00FF0000;
 	core->gpr[3] = bd_start;

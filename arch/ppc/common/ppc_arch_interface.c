@@ -52,7 +52,6 @@ ppc_reset_state ()
 
 byte * init_ram; /* FIXME: 16k init ram for 8560, will be replaced by memory module */
 byte * boot_rom; /* FIXME : default 8M bootrom for 8560, will be replaced by memory module */
-byte * ddr_ram; /* FIXME: 64M DDR SDRAM, will be replaced by memory module */
 
 unsigned long init_ram_start_addr, init_ram_size;
 uint32 boot_romSize;
@@ -117,13 +116,6 @@ ppc_init_state ()
 		fprintf(stderr, "malloc failed!\n");
 		skyeye_exit(-1);
 	}
-#if 1
-	if(!(ddr_ram = malloc(DDR_RAM_SIZE))){
-		fprintf(stderr, "malloc failed!\n");
-                skyeye_exit(-1);
-
-	}
-#endif
 	init_ram_size = INIT_RAM_SIZE;
 	init_ram_start_addr = 0xe4010000;
 
@@ -167,8 +159,7 @@ static void debug_log(e500_core_t * core){
 			fprintf(prof_file,"DBG:before r4=0x%x,r3=0x%x,r5=0x%x,pc=0x%x, npc=0x%x, &npc=0x%x, pir=0x%x\n", core->gpr[4], core->gpr[3], core->gpr[5], core->pc, core->npc, &core->npc, core->pir);
 	}
 	if(flag){
-                //fprintf(prof_file,"DBG:before pc=0x%x,r0=0x%x,r3=0x%x,r31=0x%x,ddr_ram[0xc21701e4 + 48]=0x%x\n", gCPU.pc, gCPU.gpr[0], gCPU.gpr[3], gCPU.gpr[31], *(int *)&ddr_ram[0x21701e4 + 48]);
-                        //fprintf(prof_file,"DBG:before pc=0x%x,r0=0x%x,r1=0x%x,r3=0x%x,r4=0x%x,r5=0x%x,r8=0x%x,r30=0x%x, r31=0x%x, lr=0x%x\n", gCPU.pc, gCPU.gpr[0], gCPU.gpr[1], gCPU.gpr[3], gCPU.gpr[4], gCPU.gpr[5], gCPU.gpr[8], gCPU.gpr[30], gCPU.gpr[31], gCPU.lr);
+                //fprintf(prof_file,"DBG:before pc=0x%x,r0=0x%x,r1=0x%x,r3=0x%x,r4=0x%x,r5=0x%x,r8=0x%x,r30=0x%x, r31=0x%x, lr=0x%x\n", gCPU.pc, gCPU.gpr[0], gCPU.gpr[1], gCPU.gpr[3], gCPU.gpr[4], gCPU.gpr[5], gCPU.gpr[8], gCPU.gpr[30], gCPU.gpr[31], gCPU.lr);
                 //if(core->pc >= 0xC0000000)
 		/*
                 if(core->pir)
@@ -209,23 +200,14 @@ static void per_cpu_step(e500_core_t * running_core){
              		 skyeye_exit(-1);
 	
 	};
-#if 1
+
 	uint32 instr;
 	if(bus_read(32, real_addr, &instr) != 0){
 		/* some error handler */
 	}
 	//core->current_opc = ppc_word_from_BE(instr);
 	core->current_opc = instr;
-#else
-	if(real_addr > boot_rom_start_addr)
-		core->current_opc = ppc_word_from_BE(*((int *)&boot_rom[real_addr - boot_rom_start_addr]));
-	else if(real_addr >=0 && real_addr < DDR_RAM_SIZE)
-		core->current_opc = ppc_word_from_BE(*((int *)&ddr_ram[real_addr]));  	
-	else{
-		fprintf(stderr,"Can not get instruction from addr 0x%x\n",real_addr);
-		skyeye_exit(-1);
-	}
-#endif
+
 	ppc_exec_opc(core);
 	//debug_log(core);	
 exec_npc:

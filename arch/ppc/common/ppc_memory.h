@@ -24,7 +24,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define INIT_RAM_SIZE 0x4000
 extern byte * init_ram; /* 16k init ram for 8560 */
 extern byte * boot_rom; /* default 8M bootrom for 8560 */
-extern byte * ddr_ram; /* 512M DDR SDRAM */
 extern unsigned long init_ram_start_addr, init_ram_size;
 extern uint32 boot_romSize;
 extern uint32 boot_rom_start_addr;
