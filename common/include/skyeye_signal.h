@@ -37,6 +37,8 @@ typedef struct{
                 signal_t irq;
                 /* Fast irq signal in arm */
                 signal_t firq;
+		/* reset signal in arm dyf add when move sa1100 to soc dir  2010.9.21*/
+		signal_t reset;
 }arm_signal_t;
 
 typedef	struct{

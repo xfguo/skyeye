@@ -120,6 +120,8 @@ arm_init_state ()
 	}
 	if (!strcmp(p_arm_cpu->cpu_name, "s3c2440"))
 		state->lateabtSig = LOW;
+	if (!strcmp(p_arm_cpu->cpu_name, "sa1100"))
+		state->lateabtSig = LOW;
 }
 
 static uint32 step = 0;
@@ -260,7 +262,7 @@ machine_config_t arm_machines[] = {
 	{"lh79520", lh79520_mach_init, NULL, NULL, NULL},	/* sharp LH79520 */
 //	{"ep9312", ep9312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP9312 */
 //	{"cs89712", cs89712_mach_init, NULL, NULL, NULL},	/* cs89712 */
-	{"sa1100", sa1100_mach_init, NULL, NULL, NULL},		/* sa1100 */
+//	{"sa1100", sa1100_mach_init, NULL, NULL, NULL},		/* sa1100 */
 	{"pxa_lubbock", pxa250_mach_init, NULL, NULL, NULL},	/* xscale pxa250 lubbock developboard */
 	{"pxa_mainstone", pxa270_mach_init, NULL, NULL, NULL},	/* xscale pxa270 mainstone developboard */
 //	{"at91rm92", at91rm92_mach_init, NULL, NULL, NULL},	/* at91RM9200 */
@@ -467,12 +469,16 @@ static exception_t arm_set_register_by_id(int id, uint32 value){
         return No_exp;
 }
 
-static exception_t arm_signal(interrupt_signal_t* signal){
-	arm_signal_t* arm_signal = &signal->arm_signal;
+static exception_t arm_signal(interrupt_signal_t *signal){
+	arm_signal_t *arm_signal = &signal->arm_signal;
 	if(arm_signal->irq != Prev_level)
 		state->NirqSig = arm_signal->irq;
 	 if(arm_signal->firq != Prev_level)
 		state->NfiqSig = arm_signal->firq;
+
+	/* reset signal in arm dyf add when move sa1100 to soc dir  2010.9.21*/
+	 if(arm_signal->reset != Prev_level)
+		state->NresetSig = arm_signal->reset;
 	return No_exp;
 }
 void

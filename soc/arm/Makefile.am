@@ -6,6 +6,7 @@ cs89712 = cs89712/skyeye_mach_cs89712.c cs89712/cs89712_module.c
 ep9312 = ep9312/skyeye_mach_ep9312.c ep9312/ep9312_module.c
 ep7312 = ep7312/skyeye_mach_ep7312.c ep7312/ep7312_module.c
 s3c2440 = s3c2440/skyeye_mach_s3c2440.c s3c2440/s3c2440_module.c
+sa1100 = sa1100/skyeye_mach_sa1100.c sa1100/sa1100_module.c
 
 
 libs3c2410_la_SOURCES = $(s3c2410)
@@ -32,8 +33,12 @@ libep7312_la_LDFLAGS = -module
 libs3c2440_la_SOURCES = $(s3c2440)
 libs3c2440_la_LDFLAGS = -module
 
+libsa1100_la_SOURCES = $(sa1100)
+libsa1100_la_LDFLAGS = -module
+
 pkglib_LTLIBRARIES = libs3c6410.la libs3c2410.la libat91rm92.la libat91.la libcs89712.la \
-libep9312.la libep7312.la libs3c2440.la
+libep9312.la libep7312.la libs3c2440.la libsa1100.la
+
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
 
 INCLUDES = -I$(top_srcdir)/arch/arm/mach -I$(top_srcdir)/common @COMMON_INCLUDES@
