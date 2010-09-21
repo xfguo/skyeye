@@ -112,6 +112,8 @@ arm_init_state ()
 		state->lateabtSig = HIGH;
 		state->abort_model = 2;
 	}
+	if (!strcmp(p_arm_cpu->cpu_name, "ep9312"))
+		state->lateabtSig = LOW;
 }
 
 static uint32 step = 0;
@@ -250,7 +252,7 @@ machine_config_t arm_machines[] = {
 	/* machine define for cpu with mmu */
 	{"ep7312", ep7312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP7312 */
 	{"lh79520", lh79520_mach_init, NULL, NULL, NULL},	/* sharp LH79520 */
-	{"ep9312", ep9312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP9312 */
+//	{"ep9312", ep9312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP9312 */
 //	{"cs89712", cs89712_mach_init, NULL, NULL, NULL},	/* cs89712 */
 	{"sa1100", sa1100_mach_init, NULL, NULL, NULL},		/* sa1100 */
 	{"pxa_lubbock", pxa250_mach_init, NULL, NULL, NULL},	/* xscale pxa250 lubbock developboard */
