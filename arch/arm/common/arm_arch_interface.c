@@ -114,6 +114,10 @@ arm_init_state ()
 	}
 	if (!strcmp(p_arm_cpu->cpu_name, "ep9312"))
 		state->lateabtSig = LOW;
+	if (!strcmp(p_arm_cpu->cpu_name, "ep7312")) {
+		state->lateabtSig = HIGH;
+		state->abort_model = 2;
+	}
 }
 
 static uint32 step = 0;
@@ -250,7 +254,7 @@ machine_config_t arm_machines[] = {
 	{"s3c3410x", s3c3410x_mach_init, NULL, NULL, NULL},	/* Samsung s3c3410x */
 
 	/* machine define for cpu with mmu */
-	{"ep7312", ep7312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP7312 */
+//	{"ep7312", ep7312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP7312 */
 	{"lh79520", lh79520_mach_init, NULL, NULL, NULL},	/* sharp LH79520 */
 //	{"ep9312", ep9312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP9312 */
 //	{"cs89712", cs89712_mach_init, NULL, NULL, NULL},	/* cs89712 */
