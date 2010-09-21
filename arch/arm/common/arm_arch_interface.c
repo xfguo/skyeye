@@ -118,6 +118,8 @@ arm_init_state ()
 		state->lateabtSig = HIGH;
 		state->abort_model = 2;
 	}
+	if (!strcmp(p_arm_cpu->cpu_name, "s3c2440"))
+		state->lateabtSig = LOW;
 }
 
 static uint32 step = 0;
@@ -263,7 +265,7 @@ machine_config_t arm_machines[] = {
 	{"pxa_mainstone", pxa270_mach_init, NULL, NULL, NULL},	/* xscale pxa270 mainstone developboard */
 //	{"at91rm92", at91rm92_mach_init, NULL, NULL, NULL},	/* at91RM9200 */
 	//{"s3c2410x", s3c2410x_mach_init, NULL, NULL, NULL},	/* s3c2410x */
-	{"s3c2440", s3c2440_mach_init, NULL, NULL, NULL},	/* s3c2440 */
+//	{"s3c2440", s3c2440_mach_init, NULL, NULL, NULL},	/* s3c2440 */
 	{"sharp_lh7a400", shp_mach_init, NULL, NULL, NULL},	/* sharp lh7a400 developboard */
 	{"ns9750", ns9750_mach_init, NULL, NULL, NULL},		/* NetSilicon ns9750 */
 	{"lpc2210", lpc2210_mach_init, NULL, NULL, NULL},	/* Philips LPC2210 */
