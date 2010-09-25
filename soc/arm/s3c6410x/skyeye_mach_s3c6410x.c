@@ -84,6 +84,7 @@ s3c6410x_update_int (void *arch_instance)
 	} else {
 		interrupt_signal.arm_signal.irq =  High_level;
 	}
+	interrupt_signal.arm_signal.reset =  Prev_level;
 	send_signal(&interrupt_signal);
 }
 

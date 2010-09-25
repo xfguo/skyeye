@@ -138,6 +138,7 @@ at91_update_int (void *arch_instance)
 	//state->NfiqSig = (requests & 0x00001) ? LOW : HIGH;
 	interrupt_signal.arm_signal.irq = (requests & 0x3fffe) ? Low_level : High_level;
 	//state->NirqSig = (requests & 0x3fffe) ? LOW : HIGH;
+	interrupt_signal.arm_signal.reset = Prev_level;
 }
 
 /* new added functions

@@ -334,6 +334,8 @@ sa_io_do_cycle (void  *state)
 				/* change for move to soc dir dyf 2010.9.20 */
 				interrupt_signal_t reset_signal;
 				reset_signal.arm_signal.reset = Low_level;
+				reset_signal.arm_signal.firq = Prev_level;
+				reset_signal.arm_signal.irq = Prev_level;
 				send_signal(&reset_signal);
 			}
 		}
@@ -399,6 +401,7 @@ refresh_irq (void *state)
 	interrupt_signal_t interrupt_signal;
 	interrupt_signal.arm_signal.firq = sa_io.icfp ? Low_level : High_level;
 	interrupt_signal.arm_signal.irq = sa_io.icip ? Low_level : High_level;
+	interrupt_signal.arm_signal.reset = Prev_level;
 	send_signal(&interrupt_signal);
 }
 

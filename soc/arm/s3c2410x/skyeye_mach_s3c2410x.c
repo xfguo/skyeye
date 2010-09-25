@@ -124,6 +124,7 @@ s3c2410x_update_int (void* arch_instance)
 	//state->NfiqSig = (requests & io.intmod) ? LOW : HIGH;
 	interrupt_signal.arm_signal.irq = (requests & ~io.intmod) ? Low_level : High_level;
 	//state->NirqSig = (requests & ~io.intmod) ? LOW : HIGH;
+	interrupt_signal.arm_signal.reset = Prev_level;
 	send_signal(&interrupt_signal);
 }
 

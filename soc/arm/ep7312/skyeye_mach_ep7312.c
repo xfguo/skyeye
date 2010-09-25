@@ -115,6 +115,7 @@ ep7312_update_int (void  * state)
 	interrupt_signal_t interrupt_signal;
 	interrupt_signal.arm_signal.firq = (requests & 0x0001) ? Low_level : High_level;
 	interrupt_signal.arm_signal.irq = (requests & 0xfffe) ? Low_level : High_level;
+	interrupt_signal.arm_signal.reset = Prev_level;
 	send_signal(&interrupt_signal);
 }
 static void
