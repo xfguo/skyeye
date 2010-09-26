@@ -3,7 +3,7 @@ arm_mmu = common/mmu/arm7100_mmu.c common/mmu/arm920t_mmu.c common/mmu/arm926ejs
 arm_dbct = dbct/arm2x86.c dbct/arm2x86_coproc.c dbct/arm2x86_dp.c dbct/arm2x86_mem.c dbct/arm2x86_movl.c dbct/arm2x86_mul.c dbct/arm2x86_other.c dbct/arm2x86_psr.c dbct/arm2x86_shift.c dbct/arm2x86_test.c dbct/tb.c 
 arm_mach = \
 mach/skyeye_mach_ps7500.c     \
-mach/skyeye_mach_lh79520.c   mach/skyeye_mach_s3c4510b.c \
+mach/skyeye_mach_s3c4510b.c \
 mach/skyeye_mach_lpc.c
 libarm_la_SOURCES = $(arm_comm) $(arm_mmu) $(arm_mach)
 if DBCT

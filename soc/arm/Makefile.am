@@ -14,6 +14,7 @@ ns9750 = ns9750/skyeye_mach_ns9750.c ns9750/ns9750_module.c
 sharp = sharp/skyeye_mach_sharp.c sharp/sharp_module.c
 omap5912 = omap5912/skyeye_mach_omap5912.c omap5912/omap5912_module.c
 lpc2210 = lpc2210/skyeye_mach_lpc2210.c lpc2210/lpc2210_module.c
+lh79520 = lh79520/skyeye_mach_lh79520.c lh79520/lh79520_module.c
 
 libs3c2410_la_SOURCES = $(s3c2410)
 libs3c2410_la_LDFLAGS = -module
@@ -63,9 +64,12 @@ libomap5912_la_LDFLAGS = -module
 liblpc2210_la_SOURCES = $(lpc2210)
 liblpc2210_la_LDFLAGS = -module
 
+liblh79520_la_SOURCES = $(lh79520)
+liblh79520_la_LDFLAGS = -module
+
 pkglib_LTLIBRARIES = libs3c6410.la libs3c2410.la libat91rm92.la libat91.la libcs89712.la \
 libep9312.la libep7312.la libs3c2440.la libsa1100.la libpxa270.la libpxa250.la libs3c3410x.la \
-libns9750.la libsharp.la  libomap5912.la liblpc2210.la
+libns9750.la libsharp.la  libomap5912.la liblpc2210.la liblh79520.la
 
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
 

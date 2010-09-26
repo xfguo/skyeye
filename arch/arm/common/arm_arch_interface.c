@@ -157,6 +157,10 @@ arm_init_state ()
 		ARMul_SelectProcessor(state, ARM_v4_Prop);
 		state->lateabtSig = HIGH;
 	}
+	if (!strcmp(p_arm_cpu->cpu_name, "lh79520")) {
+		ARMul_SelectProcessor (state, ARM_v4_Prop);
+		state->lateabtSig = HIGH;
+	}
 
 }
 
@@ -295,7 +299,7 @@ machine_config_t arm_machines[] = {
 
 	/* machine define for cpu with mmu */
 //	{"ep7312", ep7312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP7312 */
-	{"lh79520", lh79520_mach_init, NULL, NULL, NULL},	/* sharp LH79520 */
+//	{"lh79520", lh79520_mach_init, NULL, NULL, NULL},	/* sharp LH79520 */
 //	{"ep9312", ep9312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP9312 */
 //	{"cs89712", cs89712_mach_init, NULL, NULL, NULL},	/* cs89712 */
 //	{"sa1100", sa1100_mach_init, NULL, NULL, NULL},		/* sa1100 */
