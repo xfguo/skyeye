@@ -5,7 +5,7 @@ arm_mach = \
 mach/skyeye_mach_ps7500.c     \
 mach/skyeye_mach_lh79520.c   mach/skyeye_mach_s3c4510b.c \
 mach/skyeye_mach_lpc2210.c      \
-mach/skyeye_mach_lpc.c    mach/skyeye_mach_omap5912.c
+mach/skyeye_mach_lpc.c
 libarm_la_SOURCES = $(arm_comm) $(arm_mmu) $(arm_mach)
 if DBCT
 libarm_la_SOURCES += $(arm_dbct)

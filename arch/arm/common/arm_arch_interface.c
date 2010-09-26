@@ -149,6 +149,11 @@ arm_init_state ()
 		/* FIXME:ARM926EJS uses LOW? */
 		state->lateabtSig = LOW;
 	}
+	if (!strcmp(p_arm_cpu->cpu_name, "omap5912")) {
+		ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop);
+		state->lateabtSig = LOW;
+	}
+
 }
 
 static uint32 step = 0;
@@ -299,7 +304,7 @@ machine_config_t arm_machines[] = {
 //	{"ns9750", ns9750_mach_init, NULL, NULL, NULL},		/* NetSilicon ns9750 */
 	{"lpc2210", lpc2210_mach_init, NULL, NULL, NULL},	/* Philips LPC2210 */
 	{"ps7500", ps7500_mach_init, NULL, NULL, NULL},		/* Cirrus Logic PS7500FE */
-	{"omap5912", omap5912_mach_init, NULL, NULL, NULL},	/* omap5912 osk */
+//	{"omap5912", omap5912_mach_init, NULL, NULL, NULL},	/* omap5912 osk */
 	{NULL, NULL, NULL, NULL, NULL},
 };
 
