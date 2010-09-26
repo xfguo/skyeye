@@ -196,7 +196,7 @@ skyeye_read_config (char* skyeye_conf_filename)
 	*/
 	//char *skyeye_config_filename = get_conf_filename();
 	/* FIXME, maybe we should reset memmap in another place */
-	reset_global_memmap();
+	//reset_global_memmap();
 
 	if (config_fd = fopen (skyeye_conf_filename, "r")) {
 		int retval = 0;

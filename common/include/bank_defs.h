@@ -25,6 +25,7 @@
 #define __BANK_DEF_H__
 
 #include <stdint.h>
+#include "skyeye_types.h"
 #define MAX_BANK 8
 #define MAX_STR  1024
 typedef struct mem_bank
@@ -33,6 +34,8 @@ typedef struct mem_bank
 	char (*bank_write)(short size, int offset, unsigned int value);
 	char (*bank_read)(short size, int offset, unsigned int *result);
 	char filename[MAX_STR];
+	/* the name of object mapping to the bank */
+	char* objname;
 	unsigned type;
 } mem_bank_t;
 
@@ -43,6 +46,9 @@ typedef struct
 	mem_bank_t mem_banks[MAX_BANK];
 } mem_config_t;
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 /**
  *  The interface of read data from bus
  */
@@ -60,4 +66,11 @@ void reset_global_memmap();
 
 /* Get the global memmap */
 mem_config_t * get_global_memmap();
+
+/* Mapping a range of address to the address space */
+exception_t addr_mapping(mem_bank_t* bank);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -40,9 +40,44 @@ static int
 do_bus_bank_option (skyeye_option_t * this_option, int num_params,
 		    const char *params[]);
 
+static void insert_bank(mem_bank_t* bank);
+
 void init_bus(){
 	register_option("mem_bank", do_mem_bank_option, "");
+	mem_config_t *mc = get_global_memmap();
+	memset(mc, 0, sizeof(mem_config_t));
 	//register_option("mem_bank", do_bus_bank_option, "");
+}
+
+exception_t addr_mapping(mem_bank_t* bank){
+	insert_bank(bank);
+	return No_exp;
+}
+
+static void insert_bank(mem_bank_t* bank){
+	int num;
+	mem_config_t *mc = get_global_memmap();
+	
+	mem_bank_t *mb = mc->mem_banks;
+
+	/* TODO, should check the MAX_BANK range.*/
+	mc->bank_num = mc->current_num++;
+	num = mc->current_num - 1;	/*mem_banks should begin from 0. */
+	//skyeye_log(Info_log, __FUNCTION__, "insert bank at %d\n", num);
+	if(num >= MAX_BANK){
+		skyeye_log(Error_log, __FUNCTION__, "Out of range of valid bank\n");
+		return;
+	}
+	/* TODO, should check the validity of every field in bank */
+	/* insert a bank to the last blank band in mem_banks array */
+	strncpy(mb[num].filename, bank->filename, MAX_STR);
+	//strncpy(mb[num].objname, bank->objname, MAX_STR);
+	mb[num].objname = bank->objname;
+	mb[num].addr = bank->addr; 
+	mb[num].len = bank->len; 
+	mb[num].bank_write = bank->bank_write; 
+	mb[num].bank_read = bank->bank_read; 
+	mb[num].type = bank->type;
 }
 
 /**
@@ -54,81 +89,78 @@ static int
 parse_mem(int num_params, const char* params[])
 {
 	char name[MAX_PARAM_NAME], value[MAX_PARAM_NAME];
-	int i, num;
-	mem_config_t *mc = get_global_memmap();
-
-	mem_bank_t *mb = mc->mem_banks;
+	mem_bank_t mb;
+	memset(&mb, 0, sizeof(mem_bank_t));
 	skyeye_config_t* config = get_current_config();
-	mc->bank_num = mc->current_num++;
 
-	num = mc->current_num - 1;	/*mem_banks should begin from 0. */
-	mb[num].filename[0] = '\0';
+	int i;
 	for (i = 0; i < num_params; i++) {
 		if (split_param (params[i], name, value) < 0)
 			SKYEYE_ERR
 				("Error: mem_bank %d has wrong parameter \"%s\".\n",
-				 num, name);
+				 i, name);
 
 		if (!strncmp ("map", name, strlen (name))) {
 			if (!strncmp ("M", value, strlen (value))) {
-				mb[num].bank_read = mem_read;
-				mb[num].bank_write = mem_write;
-				mb[num].type = MEMTYPE_RAM;
+				mb.bank_read = mem_read;
+				mb.bank_write = mem_write;
+				mb.type = MEMTYPE_RAM;
 			}
 			else if (!strncmp ("I", value, strlen (value))) {
-				mb[num].bank_read = io_read;
-				mb[num].bank_write = io_write;
-				mb[num].type = MEMTYPE_IO;
+				mb.bank_read = io_read;
+				mb.bank_write = io_write;
+				mb.type = MEMTYPE_IO;
 			}
 			else if (!strncmp ("F", value, strlen (value))) {
-				mb[num].bank_read = flash_read;
-				mb[num].bank_write = flash_write;
-				mb[num].type = MEMTYPE_FLASH;
+				mb.bank_read = flash_read;
+				mb.bank_write = flash_write;
+				mb.type = MEMTYPE_FLASH;
 			}
 			else {
 				SKYEYE_ERR
 					("Error: mem_bank %d \"%s\" parameter has wrong value \"%s\"\n",
-					 num, name, value);
+					 i, name, value);
 			}
 		}
 		else if (!strncmp ("type", name, strlen (name))) {
 			//chy 2003-09-21: process type
 			if (!strncmp ("R", value, strlen (value))) {
-				if (mb[num].type == MEMTYPE_RAM)
-					mb[num].type = MEMTYPE_ROM;
-				mb[num].bank_write = warn_write;
+				if (mb.type == MEMTYPE_RAM)
+					mb.type = MEMTYPE_ROM;
+				mb.bank_write = warn_write;
 			}
 		}
 		else if (!strncmp ("addr", name, strlen (name))) {
 
 			if (value[0] == '0' && value[1] == 'x')
-				mb[num].addr = strtoul (value, NULL, 16);
+				mb.addr = strtoul (value, NULL, 16);
 			else
-				mb[num].addr = strtoul (value, NULL, 10);
+				mb.addr = strtoul (value, NULL, 10);
 
 		}
 		else if (!strncmp ("size", name, strlen (name))) {
 
 			if (value[0] == '0' && value[1] == 'x')
-				mb[num].len = strtoul (value, NULL, 16);
+				mb.len = strtoul (value, NULL, 16);
 			else
-				mb[num].len = strtoul (value, NULL, 10);
+				mb.len = strtoul (value, NULL, 10);
 
 		}
 		else if (!strncmp ("file", name, strlen (name))) {
-			strncpy (mb[num].filename, value, strlen (value) + 1);
+			strncpy (mb.filename, value, strlen (value) + 1);
 		}
 		else if (!strncmp ("boot", name, strlen (name))) {
 			/*this must be the last parameter. */
 			if (!strncmp ("yes", value, strlen (value)))
-				config->start_address = mb[num].addr;
+				config->start_address = mb.addr;
 		}
 		else {
 			SKYEYE_ERR
 				("Error: mem_bank %d has unknow parameter \"%s\".\n",
-				 num, name);
+				 i, name);
 		}
-	}
+	}//for (i = 0; i < num_params; i++)
+	insert_bank(&mb);
 	return 0;
 }
 
