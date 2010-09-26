@@ -87,6 +87,8 @@ void SIM_init(){
 	 */
 	init_bp();
 
+	/* the management of named object */
+	init_conf_obj();
 	/* 
 	 * get the current preference for simulator 
 	 */

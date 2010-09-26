@@ -34,6 +34,8 @@ typedef uint32_t address_t;
 typedef uint32_t uinteger_t;
 typedef int32_t integer_t;
 typedef struct conf_object_s{
+	char* objname;
+	void* obj;
 }conf_object_t;
 typedef uint32_t physical_address_t;
 typedef uint32_t generic_address_t; 
