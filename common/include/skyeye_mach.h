@@ -1,6 +1,7 @@
 #ifndef __SKYEYE_MACH_H__
 #define __SKYEYE_MACH_H__
 #include "skyeye_types.h"
+#include "skyeye_signal.h"
 
 #ifdef __cplusplus
  extern "C" {
@@ -45,6 +46,7 @@ typedef struct machine_config
 	void (*mach_set_intr) (uint32 interrupt);	/*set interrupt pending bit */
 	int (*mach_pending_intr) (uint32 interrupt);	/*test if interrupt is pending. 1: pending */
 	void (*mach_update_intr) (void *mach);	/*update interrupt pending bit */
+	void (*mach_intr_signal)(int irq_line, signal_t signal);
 
 	int (*mach_mem_read_byte) (void *mach, uint32 addr, uint32 * data);
 	int (*mach_mem_write_byte) (void *mach, uint32 addr, uint32 data);
