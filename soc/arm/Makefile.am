@@ -9,7 +9,7 @@ s3c2440 = s3c2440/skyeye_mach_s3c2440.c s3c2440/s3c2440_module.c
 sa1100 = sa1100/skyeye_mach_sa1100.c sa1100/sa1100_module.c
 pxa270 = pxa270/skyeye_mach_pxa270.c pxa270/pxa270_module.c
 pxa250 = pxa250/skyeye_mach_pxa250.c pxa250/pxa250_module.c
-
+s3c3410x = s3c3410x/skyeye_mach_s3c3410x.c s3c3410x/s3c3410x_module.c
 
 libs3c2410_la_SOURCES = $(s3c2410)
 libs3c2410_la_LDFLAGS = -module
@@ -44,8 +44,11 @@ libpxa270_la_LDFLAGS = -module
 libpxa250_la_SOURCES = $(pxa250)
 libpxa250_la_LDFLAGS = -module
 
+libs3c3410x_la_SOURCES = $(s3c3410x)
+libs3c3410x_la_LDFLAGS = -module
+
 pkglib_LTLIBRARIES = libs3c6410.la libs3c2410.la libat91rm92.la libat91.la libcs89712.la \
-libep9312.la libep7312.la libs3c2440.la libsa1100.la libpxa270.la libpxa250.la
+libep9312.la libep7312.la libs3c2440.la libsa1100.la libpxa270.la libpxa250.la libs3c3410x.la
 
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
 

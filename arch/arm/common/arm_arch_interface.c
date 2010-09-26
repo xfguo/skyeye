@@ -129,11 +129,16 @@ arm_init_state ()
 		//chy 2004-05-09, set lateabtSig
 		state->lateabtSig = LOW;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "pxa_lubbock")){
+	if (!strcmp(p_arm_cpu->cpu_name, "pxa_lubbock")) {
 		ARMul_SelectProcessor (state,
 			       ARM_XScale_Prop | ARM_v5_Prop | ARM_v5e_Prop);
 		state->lateabtSig = LOW;
 	}
+	if (!strcmp(p_arm_cpu->cpu_name, "s3c3410x")) {
+		ARMul_SelectProcessor(state, ARM_v4_Prop);
+		state->lateabtSig = HIGH;
+	}
+
 }
 
 static uint32 step = 0;
@@ -267,7 +272,7 @@ machine_config_t arm_machines[] = {
 	{"s3c4510b", s3c4510b_mach_init, NULL, NULL, NULL},	/* Samsung s3c4510b */
 //	{"s3c44b0x", s3c44b0x_mach_init, NULL, NULL, NULL},	/* Samsung s3c44b0x */
 //	{"s3c44b0", s3c44b0x_mach_init, NULL, NULL, NULL},	/* Samsung s3c44b0x */
-	{"s3c3410x", s3c3410x_mach_init, NULL, NULL, NULL},	/* Samsung s3c3410x */
+//	{"s3c3410x", s3c3410x_mach_init, NULL, NULL, NULL},	/* Samsung s3c3410x */
 
 	/* machine define for cpu with mmu */
 //	{"ep7312", ep7312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP7312 */
