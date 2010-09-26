@@ -129,6 +129,11 @@ arm_init_state ()
 		//chy 2004-05-09, set lateabtSig
 		state->lateabtSig = LOW;
 	}
+	if (!strcmp(p_arm_cpu->cpu_name, "pxa_lubbock")){
+		ARMul_SelectProcessor (state,
+			       ARM_XScale_Prop | ARM_v5_Prop | ARM_v5e_Prop);
+		state->lateabtSig = LOW;
+	}
 }
 
 static uint32 step = 0;
@@ -214,7 +219,7 @@ arm_parse_cpu (const char *params[])
 		    (params[0], arm_cpus[i].cpu_name, MAX_PARAM_NAME)) {
 
 			p_arm_cpu = &arm_cpus[i];
-			SKYEYE_INFO ("cpu info: %s, %s, %x, %x, %x \n",
+			SKYEYE_INFO("cpu info: %s, %s, %x, %x, %x \n",
 				     p_arm_cpu->cpu_arch_name,
 				     p_arm_cpu->cpu_name,
 				     p_arm_cpu->cpu_val,
@@ -270,7 +275,7 @@ machine_config_t arm_machines[] = {
 //	{"ep9312", ep9312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP9312 */
 //	{"cs89712", cs89712_mach_init, NULL, NULL, NULL},	/* cs89712 */
 //	{"sa1100", sa1100_mach_init, NULL, NULL, NULL},		/* sa1100 */
-	{"pxa_lubbock", pxa250_mach_init, NULL, NULL, NULL},	/* xscale pxa250 lubbock developboard */
+//	{"pxa_lubbock", pxa250_mach_init, NULL, NULL, NULL},	/* xscale pxa250 lubbock developboard */
 //	{"pxa_mainstone", pxa270_mach_init, NULL, NULL, NULL},	/* xscale pxa270 mainstone developboard */
 //	{"at91rm92", at91rm92_mach_init, NULL, NULL, NULL},	/* at91RM9200 */
 	//{"s3c2410x", s3c2410x_mach_init, NULL, NULL, NULL},	/* s3c2410x */
