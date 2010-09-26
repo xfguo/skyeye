@@ -122,6 +122,7 @@ arm_init_state ()
 		state->lateabtSig = LOW;
 	if (!strcmp(p_arm_cpu->cpu_name, "sa1100"))
 		state->lateabtSig = LOW;
+
 	if (!strcmp(p_arm_cpu->cpu_name, "pxa_mainstone")) {
 		ARMul_SelectProcessor (state,
 				       ARM_XScale_Prop | ARM_v5_Prop | ARM_v5e_Prop |
@@ -138,7 +139,11 @@ arm_init_state ()
 		ARMul_SelectProcessor(state, ARM_v4_Prop);
 		state->lateabtSig = HIGH;
 	}
-
+	if (!strcmp(p_arm_cpu->cpu_name, "ns9750")) {
+		ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop);
+		/* FIXME:ARM926EJS uses LOW? */
+		state->lateabtSig = LOW;
+	}
 }
 
 static uint32 step = 0;
@@ -286,7 +291,7 @@ machine_config_t arm_machines[] = {
 	//{"s3c2410x", s3c2410x_mach_init, NULL, NULL, NULL},	/* s3c2410x */
 //	{"s3c2440", s3c2440_mach_init, NULL, NULL, NULL},	/* s3c2440 */
 	{"sharp_lh7a400", shp_mach_init, NULL, NULL, NULL},	/* sharp lh7a400 developboard */
-	{"ns9750", ns9750_mach_init, NULL, NULL, NULL},		/* NetSilicon ns9750 */
+//	{"ns9750", ns9750_mach_init, NULL, NULL, NULL},		/* NetSilicon ns9750 */
 	{"lpc2210", lpc2210_mach_init, NULL, NULL, NULL},	/* Philips LPC2210 */
 	{"ps7500", ps7500_mach_init, NULL, NULL, NULL},		/* Cirrus Logic PS7500FE */
 	{"omap5912", omap5912_mach_init, NULL, NULL, NULL},	/* omap5912 osk */

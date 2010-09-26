@@ -2,7 +2,6 @@ arm_comm = common/arm_arch_interface.c common/armcopro.c common/armemu.c common/
 arm_mmu = common/mmu/arm7100_mmu.c common/mmu/arm920t_mmu.c common/mmu/arm926ejs_mmu.c  common/mmu/arm1176jzf_s_mmu.c common/mmu/cache.c common/mmu/maverick.c common/mmu/rb.c common/mmu/sa_mmu.c common/mmu/tlb.c common/mmu/wb.c common/mmu/xscale_copro.c
 arm_dbct = dbct/arm2x86.c dbct/arm2x86_coproc.c dbct/arm2x86_dp.c dbct/arm2x86_mem.c dbct/arm2x86_movl.c dbct/arm2x86_mul.c dbct/arm2x86_other.c dbct/arm2x86_psr.c dbct/arm2x86_shift.c dbct/arm2x86_test.c dbct/tb.c 
 arm_mach = \
-mach/skyeye_mach_ns9750.c    \
 mach/skyeye_mach_ps7500.c     \
 mach/skyeye_mach_lh79520.c   mach/skyeye_mach_s3c4510b.c \
 mach/skyeye_mach_lpc2210.c      \
