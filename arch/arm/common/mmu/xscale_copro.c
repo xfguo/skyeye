@@ -23,12 +23,12 @@
 
 #include "armdefs.h"
 #include "armemu.h"
-#include "pxa.h"
+/*#include "pxa.h" */
 
-//chy 2005-09-19
+/* chy 2005-09-19 */
 
-extern pxa270_io_t pxa270_io;
-//chy 2005-09-19 -----end
+/* extern pxa270_io_t pxa270_io; */
+/* chy 2005-09-19 -----end */
 
 typedef struct xscale_mmu_desc_s
 {
@@ -78,6 +78,10 @@ ARMword xscale_mmu_mrc (ARMul_State * state, ARMword instr, ARMword * value);
 ARMword xscale_mmu_mcr (ARMul_State * state, ARMword instr, ARMword value);
 
 
+/* jeff add 2010.9.26 for pxa270 cp6*/
+#define PXA270_ICMR 0x40D00004
+#define PXA270_ICPR 0x40D00010
+#define PXA270_ICLR 0x40D00008
 //chy 2005-09-19 for xscale pxa27x cp6
 unsigned
 xscale_cp6_mrc (ARMul_State * state, unsigned type, ARMword instr,
@@ -91,13 +95,25 @@ xscale_cp6_mrc (ARMul_State * state, unsigned type, ARMword instr,
 	//printf("SKYEYE: xscale_cp6_mrc:opcode_2 0x%x, CRm 0x%x, reg 0x%x,reg[15] 0x%x, instr %x\n",opcode_2,CRm,reg,state->Reg[15], instr);
 
 	switch (reg) {
-	case CR0_ICIP:		// cp 6 reg 0
+	case CR0_ICIP: {		// cp 6 reg 0
 		//printf("cp6_mrc cr0 ICIP              \n");
-		*data = (pxa270_io.icmr & pxa270_io.icpr) & ~pxa270_io.iclr;
+		/* *data = (pxa270_io.icmr & pxa270_io.icpr) & ~pxa270_io.iclr; */
+		/* use bus_read get the pxa270 machine registers  2010.9.26 jeff*/
+		int icmr, icpr, iclr;
+		bus_read(32, PXA270_ICMR, &icmr);
+		bus_read(32, PXA270_ICPR, &icpr);
+		bus_read(32, PXA270_ICLR, &iclr);
+		*data = (icmr & icpr)  & ~iclr;
+		}
 		break;
-	case CR1_ICMR:		// cp 6 reg 1
+	case CR1_ICMR: {	// cp 6 reg 1
 		//printf("cp6_mrc cr1 ICMR\n");
-		*data = pxa270_io.icmr;
+		/* *data = pxa270_io.icmr; */
+		int icmr;
+		/* use bus_read get the pxa270 machine registers  2010.9.26 jeff*/
+		bus_read(32, PXA270_ICMR, &icmr);
+		*data = icmr;
+		}
 		break;
 	default:
 		*data = 0;
