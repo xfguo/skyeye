@@ -64,6 +64,11 @@ mmu_init (ARMul_State * state)
 		fprintf (stderr, "SKYEYE: use arm926ejs mmu ops\n");
 		state->mmu.ops = arm926ejs_mmu_ops;
 		break;
+	/* case 0x560f5810: */
+	case 0x0007b000:
+		fprintf (stderr, "SKYEYE: use arm11jzf-s mmu ops\n");
+		state->mmu.ops = arm1176jzf_s_mmu_ops;
+		break;
 
 	default:
 		fprintf (stderr,

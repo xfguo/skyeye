@@ -74,6 +74,24 @@ extern ARMword isize;
 #define INSN_SIZE 4
 #endif
 
+/*add armv6 CPSR  feature*/
+#define EFLAG state->EFlag
+#define SETE state->EFlag = 1
+#define CLEARE state->EFlag = 0
+#define ASSIGNE(res) state->NFlag = res
+
+#define AFLAG state->AFlag
+#define SETA  state->AFlag = 1
+#define CLEARA state->AFlag = 0
+#define ASSIGNA(res) state->NFlag = res
+
+#define QFLAG state->QFlag
+#define SETQ state->QFlag = 1
+#define CLEARQ state->AFlag = 0
+#define ASSIGNQ(res) state->QFlag = res
+
+/* add end */
+
 #define NFLAG state->NFlag
 #define SETN state->NFlag = 1
 #define CLEARN state->NFlag = 0
@@ -317,12 +335,15 @@ extern ARMword isize;
 
 #ifdef MODE32
 #ifdef MODET
-#define LHS ((LHSReg == 15) ? (state->Reg[15] & 0xFFFFFFFC): (state->Reg[LHSReg]))
+#define LHS ((LHSReg == 15) ? (state->Reg[15] & 0xFFFFFFFC) : (state->Reg[LHSReg]))
+#define RHS ((RHSReg == 15) ? (state->Reg[15] & 0xFFFFFFFC) : (state->Reg[RHSReg]))
 #else
 #define LHS (state->Reg[LHSReg])
+#define RHS (state->Reg[RHSReg])
 #endif
 #else
 #define LHS ((LHSReg == 15) ? R15PC : (state->Reg[LHSReg]))
+#define RHS ((RHSReg == 15) ? R15PC : (state->Reg[RHSReg]))
 #endif
 
 #define MULDESTReg (BITS (16, 19))

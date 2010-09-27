@@ -81,6 +81,8 @@ typedef enum mmu_regnum_t
 #define CONTROL_VECTOR                  (1<<13)
 #define CONTROL_RR                      (1<<14)
 #define CONTROL_L4                      (1<<15)
+#define CONTROL_XP                      (1<<23)
+#define CONTROL_EE                      (1<<25)
 
 /*Macro defines for MMU state*/
 #define MMU_CTL (state->mmu.control)
@@ -174,13 +176,21 @@ typedef struct mmu_ops_s
 #include "mmu/arm7100_mmu.h"
 #include "mmu/arm920t_mmu.h"
 #include "mmu/arm926ejs_mmu.h"
+#include "mmu/arm1176jzf_s_mmu.h"
 
 typedef struct mmu_state_t
 {
 	ARMword control;
 	ARMword translation_table_base;
+/* dyf 201-08-11 for arm1176 */
+	ARMword translation_table_base0;
+	ARMword translation_table_base1;
+	ARMword translation_table_ctrl;
+/* arm1176 end */
+
 	ARMword domain_access_control;
 	ARMword fault_status;
+	ARMword fault_statusi;  /* prefetch fault status */
 	ARMword fault_address;
 	ARMword last_domain;
 	ARMword process_id;

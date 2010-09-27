@@ -187,7 +187,9 @@ below line sould be in skyeye_mach_XXX.c 's XXX_mach_init function
 	state->is_v5e = (properties & ARM_v5e_Prop) ? HIGH : LOW;
 	state->is_XScale = (properties & ARM_XScale_Prop) ? HIGH : LOW;
 	state->is_iWMMXt = (properties & ARM_iWMMXt_Prop) ? HIGH : LOW;
-	state->is_v6 = LOW;
+	/* state->is_v6 = LOW */;
+	/* jeff.du 2010-08-05 */
+	state->is_v6 = (properties & ARM_v6_Prop) ? HIGH : LOW;
 	state->is_ep9312 = (properties & ARM_ep9312_Prop) ? HIGH : LOW;
 	//chy 2005-09-19
 	state->is_pxa27x = (properties & ARM_PXA27X_Prop) ? HIGH : LOW;
@@ -573,6 +575,7 @@ ARMul_Abort (ARMul_State * state, ARMword vector)
 				  esize);
 		break;
 	}
+
 	if (ARMul_MODE32BIT) {
 		if (state->mmu.control & CONTROL_VECTOR)
 			vector += 0xffff0000;	//for v4 high exception  address

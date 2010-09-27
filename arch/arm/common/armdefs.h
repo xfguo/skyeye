@@ -215,6 +215,8 @@ struct ARMul_State
 	ARMdword Accumulator;
 
 	ARMword NFlag, ZFlag, CFlag, VFlag, IFFlags;	/* dummy flags for speed */
+	/* add armv6 flags dyf:2010-08-09 */
+	ARMword GEFlag, EFlag, AFlag, QFlags;
 	//chy:2003-08-19, used in arm v5e|xscale
 	ARMword SFlag;
 #ifdef MODET
@@ -414,6 +416,9 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 //chy 2003-08-11 
 #define ARM_v4_Prop      0x40
 #define ARM_v5_Prop      0x80
+/*jeff.du 2010-08-05 */
+#define ARM_v6_Prop      0xc0
+
 #define ARM_v5e_Prop     0x100
 #define ARM_XScale_Prop  0x200
 #define ARM_ep9312_Prop  0x400

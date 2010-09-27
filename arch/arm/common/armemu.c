@@ -302,10 +302,10 @@ int ARMul_ICE_debug(ARMul_State *state,ARMword instr,ARMword addr)
 {
  int i;
 #if 0
- if(debugmode){
+ if (debugmode) {
    if (instr == ARMul_ABORTWORD) return 0;
-   for (i=0;i<skyeye_ice.num_bps;i++){
-	 if(skyeye_ice.bps[i] == addr){
+   for (i = 0; i < skyeye_ice.num_bps; i++) {
+	 if (skyeye_ice.bps[i] == addr) {
 		 //for test
 		 //printf("SKYEYE: ICE_debug bps [%d]== 0x%x\n", i,addr);
 		 state->EndCondition = 0;
@@ -315,7 +315,7 @@ int ARMul_ICE_debug(ARMul_State *state,ARMword instr,ARMword addr)
     }
     if (skyeye_ice.tps_status==TRACE_STARTED)
     {
-        for (i=0;i<skyeye_ice.num_tps;i++)
+	for (i = 0; i < skyeye_ice.num_tps; i++)
         {
             if (((skyeye_ice.tps[i].tp_address==addr)&&(skyeye_ice.tps[i].status==TRACEPOINT_ENABLED))||(skyeye_ice.tps[i].status==TRACEPOINT_STEPPING))
             {
@@ -331,7 +331,7 @@ int ARMul_ICE_debug(ARMul_State *state,ARMword instr,ARMword addr)
 	/* chech if we need to run some callback functions at this time */
 	generic_arch_t* arch_instance = get_arch_instance("");	
 	exec_callback(Step_callback, arch_instance);
-	if(!skyeye_is_running()){
+	if (!skyeye_is_running()) {
 		if (instr == ARMul_ABORTWORD) return 0;
 		state->EndCondition = 0;
 		state->Emulate = STOP;
@@ -392,7 +392,7 @@ ARMul_Emulate26 (ARMul_State * state)
 			loaded = ARMul_LoadInstrS (state, pc + (isize * 2),
 						   isize);
 			loaded_addr=pc + (isize * 2);
-			if(have_bp) goto  TEST_EMULATE;
+			if (have_bp) goto  TEST_EMULATE;
 			break;
 
 		case NONSEQ:
@@ -408,7 +408,7 @@ ARMul_Emulate26 (ARMul_State * state)
 						   isize);
 			loaded_addr=pc + (isize * 2);
 			NORMALCYCLE;
-			if(have_bp) goto  TEST_EMULATE;
+			if (have_bp) goto  TEST_EMULATE;
 			break;
 
 		case PCINCEDSEQ:
@@ -423,7 +423,7 @@ ARMul_Emulate26 (ARMul_State * state)
 						   isize);
 			loaded_addr=pc + (isize * 2);
 			NORMALCYCLE;
-			if(have_bp) goto  TEST_EMULATE;
+			if (have_bp) goto  TEST_EMULATE;
 			break;
 
 		case PCINCEDNONSEQ:
@@ -438,7 +438,7 @@ ARMul_Emulate26 (ARMul_State * state)
 						   isize);
 			loaded_addr=pc + (isize * 2);
 			NORMALCYCLE;
-			if(have_bp) goto  TEST_EMULATE;
+			if (have_bp) goto  TEST_EMULATE;
 			break;
 
 		case RESUME:
@@ -462,7 +462,7 @@ ARMul_Emulate26 (ARMul_State * state)
 						    isize);
 			loaded_addr=pc + isize * 2;
 			NORMALCYCLE;
-			if(have_bp) goto  TEST_EMULATE;
+			if (have_bp) goto  TEST_EMULATE;
 			break;
 
 		default:
@@ -486,7 +486,7 @@ ARMul_Emulate26 (ARMul_State * state)
 						   isize);
 			loaded_addr=pc + isize * 2;
 			NORMALCYCLE;
-			if(have_bp) goto  TEST_EMULATE;
+			if (have_bp) goto  TEST_EMULATE;
 			break;
 		}
 
@@ -533,7 +533,7 @@ ARMul_Emulate26 (ARMul_State * state)
 					mybeg4 = 1;
 					printf ("************SKYEYE: startkerenl: sti now  numinstr is %llu  ********\n", state->NumInstrs);
 				}
-				//if(pc==0xc001e4f4||pc==0xc001e4f8||pc==0xc001e4fc||pc==0xc001e500||pc==0xffff0004) { //MRA instr
+				/*if (pc==0xc001e4f4||pc==0xc001e4f8||pc==0xc001e4fc||pc==0xc001e500||pc==0xffff0004) { //MRA instr */
 				if (pc == 0xc001e500) {	//MRA instr
 					mybeg5 = 1;
 					printf ("************SKYEYE: MRA instr now  numinstr is %llu  ********\n", state->NumInstrs);
@@ -559,8 +559,8 @@ ARMul_Emulate26 (ARMul_State * state)
 				if (mybegin == 1) {
 					//fprintf(skyeye_logfd,"p %x,i %x,d %x,l %x,",pc,instr,decoded,loaded);
 					//chy for test 20050729
-					/*if(state->NumInstrs>=3302294) {
-					   if(pc==0x100c9d4 && instr==0xe1b0f00e){
+					/*if (state->NumInstrs>=3302294) {
+					   if (pc==0x100c9d4 && instr==0xe1b0f00e){
 					   chy_debug();
 					   printf("*********************************************\n");
 					   printf("******SKYEYE N %llx :p %x,i %x\n  SKYEYE******\n",state->NumInstrs,pc,instr);
@@ -729,15 +729,60 @@ ARMul_Emulate26 (ARMul_State * state)
 
 		/* Check the condition codes.  */
 		if ((temp = TOPBITS (28)) == AL)
-			/* Vile deed in the need for speed.  */
+			/* Vile deed in the need for speed. */
 			goto mainswitch;
 
-		/* Check the condition code.  */
+		/* Check the condition code. */
 		switch ((int) TOPBITS (28)) {
 		case AL:
 			temp = TRUE;
 			break;
 		case NV:
+
+			/* dyf add for armv6 instruct CPS 2010.9.17 */
+			if (state->is_v6) {
+				/* clrex do nothing here temporary */
+				if (instr == 0xf57ff01f) {
+					goto donext;
+				}
+
+				if (BITS(20, 27) == 0x10) {
+					if (BIT(19)) {
+						if (BIT(8)) {
+							if (BIT(18))
+								state->Cpsr |= 1<<8;
+							else
+								state->Cpsr &= ~(1<<8);
+						}
+						if (BIT(7)) {
+							if (BIT(18))
+								state->Cpsr |= 1<<7;
+							else
+								state->Cpsr &= ~(1<<7);
+							ASSIGNINT (state->Cpsr & INTBITS);
+						}
+						if (BIT(6)) {
+							if (BIT(18))
+								state->Cpsr |= 1<<6;
+							else
+								state->Cpsr &= ~(1<<6);
+							ASSIGNINT (state->Cpsr & INTBITS);
+						}
+					}
+					if (BIT(17)) {
+						state->Cpsr |= BITS(0, 4);
+						printf("skyeye test state->Mode\n");
+						if (state->Mode != (state->Cpsr & MODEBITS)) {
+							state->Mode =
+								ARMul_SwitchMode (state, state->Mode,
+										  state->Cpsr & MODEBITS);
+
+							state->NtransSig = (state->Mode & 3) ? HIGH : LOW;
+						}
+					}
+					goto donext;
+				}
+			}
 			if (state->is_v5) {
 				if (BITS (25, 27) == 5) {	/* BLX(1) */
 					ARMword dest;
@@ -1670,6 +1715,7 @@ ARMul_Emulate26 (ARMul_State * state)
 				break;
 
 			case 0x12:	/* TEQ reg and MSR reg to CPSR (ARM6).  */
+
 				if (state->is_v5) {
 					if (BITS (4, 7) == 3) {
 						/* BLX(2) */
@@ -2089,12 +2135,12 @@ ARMul_Emulate26 (ARMul_State * state)
 							      0x80000000) ==
 							     0; op1 <<= 1)
 								result++;
-
 						state->Reg[BITS (12, 15)] =
 							result;
 						break;
 					}
 				}
+
 #ifdef MODET
 				if (BITS (4, 7) == 0xB) {
 					/* STRH immediate offset, write-back, down, pre indexed.  */
@@ -2163,6 +2209,13 @@ ARMul_Emulate26 (ARMul_State * state)
 
 			case 0x18:	/* ORR reg */
 #ifdef MODET
+				/* dyf add armv6 instr strex  2010.9.17 */
+				if (state->is_v6) {
+					if (BITS (4, 7) == 0x9)
+						if (handle_v6_insn (state, instr))
+							break;
+				}
+
 				if (BITS (4, 11) == 0xB) {
 					/* STRH register offset, no write-back, up, pre indexed.  */
 					SHPREUP ();
@@ -2184,6 +2237,13 @@ ARMul_Emulate26 (ARMul_State * state)
 
 			case 0x19:	/* ORRS reg */
 #ifdef MODET
+				/* dyf add armv6 instr ldrex */
+				if (state->is_v6) {
+					if (BITS (4, 7) == 0x9) {
+						if (handle_v6_insn (state, instr))
+							break;
+					}
+				}
 				if ((BITS (4, 11) & 0xF9) == 0x9)
 					/* LDR register offset, no write-back, up, pre indexed.  */
 					LHPREUP ();
@@ -2227,6 +2287,13 @@ ARMul_Emulate26 (ARMul_State * state)
 
 			case 0x1c:	/* BIC reg */
 #ifdef MODET
+				/* dyf add for STREXB */
+				if (state->is_v6) {
+					if (BITS (4, 7) == 0x9) {
+						if (handle_v6_insn (state, instr))
+							break;
+					}
+				}
 				if (BITS (4, 7) == 0xB) {
 					/* STRH immediate offset, no write-back, up, pre indexed.  */
 					SHPREUP ();
@@ -2248,10 +2315,33 @@ ARMul_Emulate26 (ARMul_State * state)
 
 			case 0x1d:	/* BICS reg */
 #ifdef MODET
-				if ((BITS (4, 7) & 0x9) == 0x9)
+				/* ladsh P=1 U=1 W=0 L=1 S=1 H=1 */
+				if (BITS(4, 7) == 0xF) {
+					temp = LHS + GetLS7RHS (state, instr);
+					LoadHalfWord (state, instr, temp, LSIGNED);
+					break;
+
+				}
+				if (BITS (4, 7) == 0xb) {
+					/* LDRH immediate offset, no write-back, up, pre indexed.  */
+					temp = LHS + GetLS7RHS (state, instr);
+					LoadHalfWord (state, instr, temp, LUNSIGNED);
+					break;
+				}
+
+				/* Continue with instruction decoding.  */
+				/*if ((BITS (4, 7) & 0x9) == 0x9) */
+				if ((BITS (4, 7)) == 0x9) {
+					/* ldrexb */
+					if (state->is_v6) {
+						if (handle_v6_insn (state, instr))
+							break;
+					}
 					/* LDR immediate offset, no write-back, up, pre indexed.  */
 					LHPREUP ();
-				/* Continue with instruction decoding.  */
+
+				}
+
 #endif
 				rhs = DPSRegRHS;
 				dest = LHS & ~rhs;
@@ -3158,6 +3248,18 @@ ARMul_Emulate26 (ARMul_State * state)
 				break;
 
 			case 0x6e:	/* Store Byte, WriteBack, Post Inc, Reg.  */
+#if 0
+				if (state->is_v6) {
+					int Rm = 0;
+					/* utxb */
+					if (BITS(15, 19) == 0xf && BITS(4, 7) == 0x7) {
+
+						Rm = (RHS >> (8 * BITS(10, 11))) & 0xff;
+						DEST = Rm;
+					}
+
+				}
+#endif
 				if (BIT (4)) {
 #ifdef MODE32
 				  if (state->is_v6
@@ -4122,13 +4224,13 @@ ARMul_Emulate26 (ARMul_State * state)
 //AJ2D--------------------------------------------------------------------------
 //chy 2006-04-14 for ctrl-c debug
 #if 0
-   if(debugmode){
+   if (debugmode) {
       if (instr != ARMul_ABORTWORD) { 
         remote_interrupt_test_time++;
 	//chy 2006-04-14 2000 should be changed in skyeye_conf ???!!!
-	if(remote_interrupt_test_time>=2000){
+	if (remote_interrupt_test_time >= 2000) {
            remote_interrupt_test_time=0;
-	   if(remote_interrupt()){
+	   if (remote_interrupt()) {
 		//for test
 		//printf("SKYEYE: ICE_debug recv Ctrl_C\n");
 		state->EndCondition = 0;
@@ -4198,21 +4300,21 @@ ARMul_Emulate32_dbct (ARMul_State * state)
 
 	state->Reg[15] += INSN_SIZE;
 	do {
-		/*if(skyeye_config.log.logon>=1){
-		   if(state->NumInstrs>=skyeye_config.log.start && state->NumInstrs<=skyeye_config.log.end) {
+		/*if (skyeye_config.log.logon>=1) {
+		   if (state->NumInstrs>=skyeye_config.log.start && state->NumInstrs<=skyeye_config.log.end) {
 		   static int mybegin=0;
 		   static int myinstrnum=0;
 
-		   if(mybegin==0) mybegin=1;
-		   if(mybegin==1) {
+		   if (mybegin==0) mybegin=1;
+		   if (mybegin==1) {
 		   state->Reg[15] -= INSN_SIZE;
-		   if(skyeye_config.log.logon>=1) fprintf(skyeye_logfd,"N %llx :p %x,i %x,",state->NumInstrs, (state->Reg[15] - INSN_SIZE), instr);
-		   if(skyeye_config.log.logon>=2) SKYEYE_OUTREGS(skyeye_logfd);
-		   if(skyeye_config.log.logon>=3) SKYEYE_OUTMOREREGS(skyeye_logfd);
+		   if (skyeye_config.log.logon>=1) fprintf(skyeye_logfd,"N %llx :p %x,i %x,",state->NumInstrs, (state->Reg[15] - INSN_SIZE), instr);
+		   if (skyeye_config.log.logon>=2) SKYEYE_OUTREGS(skyeye_logfd);
+		   if (skyeye_config.log.logon>=3) SKYEYE_OUTMOREREGS(skyeye_logfd);
 		   fprintf(skyeye_logfd,"\n");
-		   if(skyeye_config.log.length>0){
+		   if (skyeye_config.log.length>0) {
 		   myinstrnum++;
-		   if(myinstrnum>=skyeye_config.log.length) {
+		   if (myinstrnum>=skyeye_config.log.length) {
 		   myinstrnum=0;
 		   fflush(skyeye_logfd);
 		   fseek(skyeye_logfd,0L,SEEK_SET);
@@ -5259,7 +5361,7 @@ LoadMult (ARMul_State * state, ARMword instr, ARMword address, ARMword WBBase)
 	   if (state->Aborted)
 	   {
 	   if (BIT (21) && LHSReg != 15)
-	   if(!(state->abortSig && state->Aborted && state->lateabtSig==LOW))
+	   if (!(state->abortSig && state->Aborted && state->lateabtSig == LOW))
 	   LSBase = WBBase;
 	   TAKEABORT;
 	   }else if (BIT (21) && LHSReg != 15)
@@ -5780,7 +5882,6 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
     case 0x32: printf ("Unhandled v6 insn: nop/sev/wfe/wfi/yield\n"); break;
     case 0x34: printf ("Unhandled v6 insn: movt\n"); break;
     case 0x3f: printf ("Unhandled v6 insn: rbit\n"); break;
-#endif
     case 0x61: printf ("Unhandled v6 insn: sadd/ssub\n"); break;
     case 0x62: printf ("Unhandled v6 insn: qadd/qsub\n"); break;
     case 0x63: printf ("Unhandled v6 insn: shadd/shsub\n"); break;
@@ -5788,13 +5889,72 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
     case 0x66: printf ("Unhandled v6 insn: uqadd/uqsub\n"); break;
     case 0x67: printf ("Unhandled v6 insn: uhadd/uhsub\n"); break;
     case 0x68: printf ("Unhandled v6 insn: pkh/sxtab/selsxtb\n"); break;
+#endif
     case 0x6c: printf ("Unhandled v6 insn: uxtb16/uxtab16\n"); break;
     case 0x70: printf ("Unhandled v6 insn: smuad/smusd/smlad/smlsd\n"); break;
     case 0x74: printf ("Unhandled v6 insn: smlald/smlsld\n"); break;
     case 0x75: printf ("Unhandled v6 insn: smmla/smmls/smmul\n"); break;
     case 0x78: printf ("Unhandled v6 insn: usad/usada8\n"); break;
+#if 0
     case 0x7a: printf ("Unhandled v6 insn: usbfx\n"); break;
     case 0x7c: printf ("Unhandled v6 insn: bfc/bfi\n"); break;
+#endif
+
+
+/* add new instr for arm v6. */
+    ARMword lhs, temp;
+    case 0x18:	/* ORR reg */
+      {
+	/* dyf add armv6 instr strex  2010.9.17 */
+	 if (BITS (4, 7) == 0x9) {
+		lhs = LHS;
+		ARMul_StoreWordS(state, lhs, RHS);
+		DEST = 0;
+		return 1;
+	 }
+	 break;
+      }
+
+    case 0x19:	/* orrs reg */
+      {
+	/* dyf add armv6 instr ldrex  */
+	if (BITS (4, 7) == 0x9) {
+		lhs = LHS;
+		LoadWord (state, instr, lhs);
+		return 1;
+	}
+	break;
+      }
+
+    case 0x1c:	/* BIC reg */
+      {
+	/* dyf add for STREXB */
+	if (BITS (4, 7) == 0x9) {
+		lhs = LHS;
+		BUSUSEDINCPCN;
+		ARMul_StoreByte (state, lhs, RHS);
+		if (state->Aborted) {
+			TAKEABORT;
+		}
+		UNDEF_LSRBPC;
+		/* WRITESDEST (dest); */
+		state->Reg[DESTReg] = 0;
+		return 1;
+	}
+	break;
+      }
+
+    case 0x1d:	/* BICS reg */
+      {
+	if ((BITS (4, 7)) == 0x9) {
+		/* ldrexb */
+		temp = LHS;
+		LoadByte (state, instr, temp, LUNSIGNED);
+		return 1;
+	}
+	break;
+      }
+/* add end */
 
     case 0x6a:
       {
@@ -5851,9 +6011,12 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	  case 0x87: ror = 16; break;
 	  case 0xc7: ror = 24; break;
 
+	  case 0xf3:
+	    DEST = ((RHS & 0xFF) << 24) | ((RHS & 0xFF00)) << 8 | ((RHS & 0xFF0000) >> 8) | ((RHS & 0xFF000000) >> 24);
+	    return 1;
 	  case 0xfb:
-	    printf ("Unhandled v6 insn: rev\n");
-	    return 0;
+	    DEST = ((RHS & 0xFF) << 8) | ((RHS & 0xFF00)) >> 8 | ((RHS & 0xFF0000) << 8) | ((RHS & 0xFF000000) >> 8);
+	    return 1;
 	  default:
 	    break;
 	  }
@@ -5939,15 +6102,17 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 
 	Rm = ((state->Reg[BITS (0, 3)] >> ror) & 0xFFFF);
 
-	if (BITS (16, 19) == 0xf)
 	  /* UXT */
-	  state->Reg[BITS (12, 15)] = Rm;
-	else
-	  {
+	/* state->Reg[BITS (12, 15)] = Rm; */
+          /* dyf add */
+	if (BITS (16, 19) == 0xf) {
+	  state->Reg[BITS (12, 15)] = (Rm >> (8 * BITS(10, 11))) & 0x0000FFFF;
+	} else {
 	    /* UXTAH */
-	    state->Reg[BITS (12, 15)] = state->Reg [BITS (16, 19)] + Rm;
-	  }
+	    /* state->Reg[BITS (12, 15)] = state->Reg [BITS (16, 19)] + Rm; */
+	    state->Reg[BITS (12, 15)] = state->Reg[BITS (16, 19)] >> (8 * (BITS(10, 11))) + Rm;
 	}
+      }
       return 1;
 
 #if 0
@@ -5959,5 +6124,3 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
   printf ("Unhandled v6 insn: UNKNOWN: %08x\n", instr);
   return 0;
 }
-
-

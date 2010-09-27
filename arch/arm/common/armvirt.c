@@ -299,8 +299,17 @@ ARMul_ReLoadInstr (ARMul_State * state, ARMword address, ARMword isize)
 		fault = GetWord (state, address, &data);
 	else
 		fault = LoadInstr (state, address, &data);
-	//printf("In %s,address=0x%x, data=0x%x\n", __FUNCTION__, address, data);
+
 	if (fault) {
+
+		/* dyf add for s3c6410 no instcache temporary 2010.9.17 */
+		if (!(skyeye_cachetype == INSTCACHE)) {
+			/* set translation fault  on prefetch abort */
+			state->mmu.fault_statusi = fault  & 0xFF;
+			state->mmu.fault_address = address;
+		}
+		/* add end */
+
 		ARMul_PREFETCHABORT (address);
 		return ARMul_ABORTWORD;
 	}

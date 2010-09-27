@@ -95,9 +95,14 @@ arm_init_state ()
 	/* set the old default for all machines not doing it by their own yet */
 	//skyeye_config.mach->io_cycle_divisor = 50;
 	//skyeye_config.mach->mach_init (state, skyeye_config.mach);
-	if(!strcmp(p_arm_cpu->cpu_arch_name, "armv4"))
+	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv4"))
 		ARMul_SelectProcessor (state, ARM_v4_Prop);
-	if(!strcmp(p_arm_cpu->cpu_name, "arm920t"))
+	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv6"))
+		ARMul_SelectProcessor (state, ARM_v6_Prop);
+
+	if (!strcmp(p_arm_cpu->cpu_name, "arm920t"))
+		state->lateabtSig = LOW;
+	if (!strcmp(p_arm_cpu->cpu_name, "arm11"))
 		state->lateabtSig = LOW;
 		
 }
@@ -171,7 +176,7 @@ cpu_config_t arm_cpus[] = {
 	{"armv5", "arm926ejs", 0x41069260, 0xff0ffff0, INSTCACHE},
 	{"xscale", "pxa25x", PXA250, 0xfffffff0, INSTCACHE},
 	{"xscale", "pxa27x", PXA270, 0xfffffff0, INSTCACHE},
-	{"armv6",  "arm11", NULL,0x0,NULL}
+	{"armv6",  "arm11", 0x0007b000, 0x0007f000, NONCACHE}
 };
 
 
