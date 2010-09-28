@@ -18,17 +18,16 @@ static ARMword preset_regfile[16];
 extern ARMword skyeye_cachetype;
 //chy 2005-08-01, borrow from wlm's 2005-07-26's change
 ARMword
-ARMul_Debug (ARMul_State * state, ARMword pc, ARMword instr)
+ARMul_Debug (ARMul_State *state, ARMword pc, ARMword instr)
 {
 }
 
 void
-ARMul_ConsolePrint (ARMul_State * state, const char *format, ...)
+ARMul_ConsolePrint (ARMul_State *state, const char *format, ...)
 {
 }
 void
-ARMul_CallCheck (ARMul_State * state, ARMword cur_pc, ARMword to_pc,
-		 ARMword instr)
+ARMul_CallCheck (ARMul_State *state, ARMword cur_pc, ARMword to_pc, ARMword instr)
 {
 }
 
@@ -57,7 +56,7 @@ arm_reset_state ()
 	//state->disassemble = skyeye_config.can_step_disassemble;
 	//io_reset (state);	/*from ARMul_Reset. */
 	/* set some register value */
-	if(preset_regfile[1])
+	if (preset_regfile[1])
 		state->Reg[1] = preset_regfile[1];
 
 }
@@ -104,68 +103,43 @@ arm_init_state ()
 		state->lateabtSig = LOW;
 	if (!strcmp(p_arm_cpu->cpu_name, "arm11"))
 		state->lateabtSig = LOW;
-	if (!strcmp(p_arm_cpu->cpu_name, "at91"))
+	if (!strcmp(p_arm_cpu->cpu_name, "arm7tdmi"))
 		state->lateabtSig = LOW;
-	if (!strcmp(p_arm_cpu->cpu_name, "at91rm92"))
-		state->lateabtSig = LOW;
-	if (!strcmp(p_arm_cpu->cpu_name, "cs89712")) {
+	if (!strcmp(p_arm_cpu->cpu_name, "arm720t")) {
 		state->lateabtSig = HIGH;
 		state->abort_model = 2;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "ep9312"))
-		state->lateabtSig = LOW;
-	if (!strcmp(p_arm_cpu->cpu_name, "ep7312")) {
-		state->lateabtSig = HIGH;
-		state->abort_model = 2;
-	}
-	if (!strcmp(p_arm_cpu->cpu_name, "s3c2440"))
-		state->lateabtSig = LOW;
 	if (!strcmp(p_arm_cpu->cpu_name, "sa1100"))
 		state->lateabtSig = LOW;
-
-	if (!strcmp(p_arm_cpu->cpu_name, "pxa_mainstone")) {
+	if (!strcmp(p_arm_cpu->cpu_name, "pxa27x")) {
 		ARMul_SelectProcessor (state,
-				       ARM_XScale_Prop | ARM_v5_Prop | ARM_v5e_Prop |
-				       ARM_PXA27X_Prop);
+				       ARM_XScale_Prop | ARM_v5_Prop | ARM_v5e_Prop | ARM_PXA27X_Prop);
 		//chy 2004-05-09, set lateabtSig
 		state->lateabtSig = LOW;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "pxa_lubbock")) {
+	if (!strcmp(p_arm_cpu->cpu_name, "pxa25x")) {
 		ARMul_SelectProcessor (state,
 			       ARM_XScale_Prop | ARM_v5_Prop | ARM_v5e_Prop);
 		state->lateabtSig = LOW;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "s3c3410x")) {
-		ARMul_SelectProcessor(state, ARM_v4_Prop);
-		state->lateabtSig = HIGH;
-	}
-	if (!strcmp(p_arm_cpu->cpu_name, "ns9750")) {
+	if (!strcmp(p_arm_cpu->cpu_name, "arm926ejs")) {
 		ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop);
 		/* FIXME:ARM926EJS uses LOW? */
 		state->lateabtSig = LOW;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "sharp_lh7a400")) {
+	if (!strcmp(p_arm_cpu->cpu_name, "arm9tdmi")) {
 		ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop);
 		/* FIXME:ARM926EJS uses LOW? */
 		state->lateabtSig = LOW;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "omap5912")) {
-		ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop);
-		state->lateabtSig = LOW;
-	}
-	if (!strcmp(p_arm_cpu->cpu_name, "lpc2210")) {
+	if (!strcmp(p_arm_cpu->cpu_name, "arm7tdmis")) {
 		ARMul_SelectProcessor(state, ARM_v4_Prop);
 		state->lateabtSig = HIGH;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "lh79520")) {
+	if (!strcmp(p_arm_cpu->cpu_name, "arm7500fe")) {
 		ARMul_SelectProcessor (state, ARM_v4_Prop);
 		state->lateabtSig = HIGH;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "ps7500")) {
-		ARMul_SelectProcessor (state, ARM_v4_Prop);
-		state->lateabtSig = HIGH;
-	}
-
 }
 
 static uint32 step = 0;
@@ -205,27 +179,27 @@ static int arm_ICE_read_byte (WORD addr, uint8_t *pv){
 	return bus_read(8, addr, pv);
 }
 //extern void at91_mach_init ();
-extern void ep7312_mach_init ();
-extern void lh79520_mach_init ();
-extern void ep9312_mach_init ();
+//extern void ep7312_mach_init ();
+//extern void lh79520_mach_init ();
+//extern void ep9312_mach_init ();
 extern void s3c4510b_mach_init ();
 //extern void s3c44b0x_mach_init ();
-extern void s3c3410x_mach_init ();
-extern void sa1100_mach_init ();
-extern void pxa250_mach_init ();
-extern void pxa270_mach_init ();
-extern void cs89712_mach_init ();
-extern void at91rm92_mach_init ();
+//extern void s3c3410x_mach_init ();
+//extern void sa1100_mach_init ();
+//extern void pxa250_mach_init ();
+//extern void pxa270_mach_init ();
+//extern void cs89712_mach_init ();
+//extern void at91rm92_mach_init ();
 //extern void s3c2410x_mach_init ();
-extern void s3c2440_mach_init ();
-extern void shp_mach_init ();
+//extern void s3c2440_mach_init ();
+//extern void shp_mach_init ();
 extern void lpc_mach_init ();
-extern void ns9750_mach_init ();
-extern void lpc2210_mach_init();
-extern void ps7500_mach_init();
-extern void imx_mach_init();
-extern void integrator_mach_init();
-extern void omap5912_mach_init();
+//extern void ns9750_mach_init ();
+//extern void lpc2210_mach_init();
+//extern void ps7500_mach_init();
+//extern void imx_mach_init();
+//extern void integrator_mach_init();
+//extern void omap5912_mach_init();
 
 //chy 2003-08-11: the cpu_id can be found in linux/arch/arm/boot/compressed/head.S
 cpu_config_t arm_cpus[] = {
@@ -268,7 +242,7 @@ arm_parse_cpu (const char *params[])
 }
 
 int
-do_cpu_option (skyeye_option_t * this_option, int num_params,
+do_cpu_option (skyeye_option_t *this_option, int num_params,
                 const char *params[])
 {
 	int i;
@@ -322,12 +296,12 @@ machine_config_t arm_machines[] = {
 
 #if 0
 static int
-arm_parse_mach (machine_config_t * mach, const char *params[])
+arm_parse_mach (machine_config_t *mach, const char *params[])
 {
 	int i;
 	for (i = 0; i < (sizeof (arm_machines) / sizeof (machine_config_t));
 	     i++) {
-		if(!arm_machines[i].machine_name)
+		if (!arm_machines[i].machine_name)
 			continue;
 		if (!strncmp
 		    (params[0], arm_machines[i].machine_name,
@@ -348,20 +322,20 @@ arm_parse_mach (machine_config_t * mach, const char *params[])
 }
 #endif
 /*mem bank*/
-extern ARMword real_read_word (ARMul_State * state, ARMword addr);
-extern void real_write_word (ARMul_State * state, ARMword addr, ARMword data);
-extern ARMword io_read_word (ARMul_State * state, ARMword addr);
-extern void io_write_word (ARMul_State * state, ARMword addr, ARMword data);
+extern ARMword real_read_word (ARMul_State *state, ARMword addr);
+extern void real_write_word (ARMul_State *state, ARMword addr, ARMword data);
+extern ARMword io_read_word (ARMul_State *state, ARMword addr);
+extern void io_write_word (ARMul_State *state, ARMword addr, ARMword data);
 
 /*ywc 2005-03-30*/
-extern ARMword flash_read_byte (ARMul_State * state, ARMword addr);
-extern void flash_write_byte (ARMul_State * state, ARMword addr,
+extern ARMword flash_read_byte (ARMul_State *state, ARMword addr);
+extern void flash_write_byte (ARMul_State *state, ARMword addr,
 			      ARMword data);
-extern ARMword flash_read_halfword (ARMul_State * state, ARMword addr);
-extern void flash_write_halfword (ARMul_State * state, ARMword addr,
+extern ARMword flash_read_halfword (ARMul_State *state, ARMword addr);
+extern void flash_write_halfword (ARMul_State *state, ARMword addr,
 				  ARMword data);
-extern ARMword flash_read_word (ARMul_State * state, ARMword addr);
-extern void flash_write_word (ARMul_State * state, ARMword addr,
+extern ARMword flash_read_word (ARMul_State *state, ARMword addr);
+extern void flash_write_word (ARMul_State *state, ARMword addr,
 			      ARMword data);
 #if 0
 static int
@@ -421,8 +395,7 @@ arm_parse_mem (int num_params, const char *params[])
 					("Error: mem_bank %d \"%s\" parameter has wrong value \"%s\"\n",
 					 num, name, value);
 			}
-		}
-		else if (!strncmp ("type", name, strlen (name))) {
+		} else if (!strncmp ("type", name, strlen (name))) {
 			//chy 2003-09-21: process type
 			if (!strncmp ("R", value, strlen (value))) {
 				if (mb[num].type == MEMTYPE_RAM)
@@ -431,32 +404,27 @@ arm_parse_mem (int num_params, const char *params[])
 				mb[num].write_halfword = warn_write_halfword;
 				mb[num].write_word = warn_write_word;
 			}
-		}
-		else if (!strncmp ("addr", name, strlen (name))) {
+		} else if (!strncmp ("addr", name, strlen (name))) {
 
 			if (value[0] == '0' && value[1] == 'x')
 				mb[num].addr = strtoul (value, NULL, 16);
 			else
 				mb[num].addr = strtoul (value, NULL, 10);
 
-		}
-		else if (!strncmp ("size", name, strlen (name))) {
+		} else if (!strncmp ("size", name, strlen (name))) {
 
 			if (value[0] == '0' && value[1] == 'x')
 				mb[num].len = strtoul (value, NULL, 16);
 			else
 				mb[num].len = strtoul (value, NULL, 10);
 
-		}
-		else if (!strncmp ("file", name, strlen (name))) {
+		} else if (!strncmp ("file", name, strlen (name))) {
 			strncpy (mb[num].filename, value, strlen (value) + 1);
-		}
-		else if (!strncmp ("boot", name, strlen (name))) {
+		} else if (!strncmp ("boot", name, strlen (name))) {
 			/*this must be the last parameter. */
 			if (!strncmp ("yes", value, strlen (value)))
 				skyeye_config.start_address = mb[num].addr;
-		}
-		else {
+		} else {
 			SKYEYE_ERR
 				("Error: mem_bank %d has unknow parameter \"%s\".\n",
 				 num, name);
@@ -503,7 +471,7 @@ static char* arm_get_regname_by_id(int id){
         return arm_regstr[id];
 }
 static uint32 arm_get_regval_by_id(int id){
-	if(id == CPSR_REG)
+	if (id == CPSR_REG)
 		return state->Cpsr;
 	else
         	return state->Reg[id];
@@ -515,13 +483,13 @@ static exception_t arm_set_register_by_id(int id, uint32 value){
 
 static exception_t arm_signal(interrupt_signal_t *signal){
 	arm_signal_t *arm_signal = &signal->arm_signal;
-	if(arm_signal->irq != Prev_level)
+	if (arm_signal->irq != Prev_level)
 		state->NirqSig = arm_signal->irq;
-	 if(arm_signal->firq != Prev_level)
+	if (arm_signal->firq != Prev_level)
 		state->NfiqSig = arm_signal->firq;
 
 	/* reset signal in arm dyf add when move sa1100 to soc dir  2010.9.21*/
-	 if(arm_signal->reset != Prev_level)
+	if (arm_signal->reset != Prev_level)
 		state->NresetSig = arm_signal->reset;
 	return No_exp;
 }
