@@ -231,7 +231,6 @@ static void lpc2210_io_reset(void *state)
 	io.vibdiv  = 0;
 }
 
-
 /*lpc2210 io_do_cycle*/
 void lpc2210_io_do_cycle(void *state)
 {
@@ -275,7 +274,6 @@ void lpc2210_io_do_cycle(void *state)
         }/* if (rcr > 0 && ...*/
 	}
 }
-
 
 uint32_t	lpc2210_fix_int(uint32_t val)
 {
@@ -349,7 +347,6 @@ lpc2210_uart_read(void *state, uint32_t addr,int i)
 	return(data);
 }
 
-
 void
 lpc2210_uart_write(void *state, uint32_t addr, uint32_t data,int i)
 {
@@ -385,14 +382,13 @@ lpc2210_uart_write(void *state, uint32_t addr, uint32_t data,int i)
 uint32_t lpc2210_io_read_word(void *state, uint32_t addr)
 {
 	/*
- * 	 * The lpc2210 system registers
- * 	 	 */
+  	 * The lpc2210 system registers
+ 	 */
 
 	uint32_t data = -1;
 	static uint32_t current_ivr = 0; /* mega hack,  2.0 needs this */
 	int i;
 	uint32_t dataimr = 0;
-
 
 	switch (addr) {
 	case 0xfffff000: /* ISR */
@@ -433,7 +429,6 @@ uint32_t lpc2210_io_read_word(void *state, uint32_t addr)
 	case 0xfffff200: /*VicVectCntl0*/
 		data = io.vic.VectCntl[0];
 		break;
-
 
 	/*Timer0 */
 	case 0xe0004000:
@@ -547,7 +542,6 @@ uint32_t lpc2210_io_read_word(void *state, uint32_t addr)
 		data = io.mamtim;
 		break;
 
-
 	default:
 		if (addr >=0xe000c000 && addr <= 0xe000c01c) {
 			data = lpc2210_uart_read(state, addr,0);
@@ -591,9 +585,6 @@ uint32_t lpc2210_io_read_halfword(void *state, uint32_t addr)
 		//exit(-1);
 }
 
-
-
-
 void lpc2210_io_write_byte(void *state, uint32_t addr, uint32_t data)
 {
 
@@ -617,7 +608,6 @@ void lpc2210_io_write_word(void *state, uint32_t addr, uint32_t data)
 	/*
 	 * The lpc2210 system registers
 	 */
-
 
 	switch (addr) {
 	case 0xfffff000: /* ISR */
@@ -858,8 +848,6 @@ void lpc2210_mach_init(void *state, machine_config_t *this_mach)
 	this_mach->mach_update_int = 		lpc2210_update_int;
 
 	//ksh 2004-2-7
-
-
 	//state->mach_io.instr = (uint32_t *)&io.vic.IRQStatus;
 	//*state->io.instr = (uint32_t *)&io.intsr;
 	//state->io->net_flags = (uint32_t *)&io.net_flags;

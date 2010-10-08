@@ -372,7 +372,6 @@
 #define CANLUTerrAd     (*((volatile unsigned char *) 0xE003C018))	/* lpc2119\lpc2129\lpc2292\lpc2294 only */
 #define CANLUTerr       (*((volatile unsigned char *) 0xE003C01C))	/* lpc2119\lpc2129\lpc2292\lpc2294 only */
 
-
 /* Timer 0 */
 /* 定时器0的特殊寄存器 */
 #define T0IR            (*((volatile unsigned int *) 0xE0004000))
@@ -479,7 +478,6 @@
 #define rm_irqhandler()             ((void (*)())(0x7fffffd0))()
 #define rm_irqhandler2()            ((void (*)())(0x7fffffe0))()
 #define iap_entry(a, b)             ((void (*)())(0x7ffffff1))(a, b)
-
 
 struct lpc_timers
 {
