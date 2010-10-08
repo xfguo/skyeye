@@ -30,7 +30,6 @@
 s3c6410x_io_t s3c6410x_io;
 #define io s3c6410x_io
 
-
 static inline void
 s3c6410x__update_uart_adc ()
 {
@@ -56,7 +55,6 @@ s3c6410x_update_extint ()
 	io.vicx_status[0].vicxintenable |= EINT1; /* EINT 0~3 */
 #endif
 }
-
 
 static void
 s3c6410x_update_int (void *arch_instance)
@@ -637,8 +635,6 @@ s3c6410x_io_read_halfword (void *arch_instance, uint32 addr)
 static void
 s3c6410x_io_write_word (generic_arch_t *state, uint32 addr, uint32 data)
 {
-
-
 	if ((addr >= UART_CTL_BASE0)
 	    && (addr < UART_CTL_BASE0 + UART_CTL_SIZE)) {
 #if 0
@@ -832,7 +828,6 @@ s3c6410x_io_write_halfword (generic_arch_t *state, uint32 addr, uint32 data)
 	SKYEYE_DBG ("SKYEYE: s3c6410x_io_write_halfword error\n");
 	s3c6410x_io_write_word (state, addr, data);
 }
-
 
 void
 s3c6410x_mach_init (void *arch_instance, machine_config_t *this_mach)

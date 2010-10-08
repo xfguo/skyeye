@@ -87,13 +87,11 @@
 #define P1_user_stat	DRAM_CTL_BASE4+(0x0) /*DRAM controller user_stat register*/
 #define P1_user_cfg		DRAM_CTL_BASE4+(0x4) /*DRAM controller user_cfg register*/
 
-
 /********************************************
 * LCD Controller Registers
 ********************************************/
 #define LCD_CTL_BASE           (0x0)
 #define LCD_CTL_SIZE           (0x0)
-
 
 /********************************************
 * GPIO Controller Registers
@@ -170,7 +168,6 @@
 #define GPKDAT		GPIO_CTL_BASE1+(0x808)  /*Port K Data Register*/
 #define GPKPUD		GPIO_CTL_BASE1+(0x80c)  /*Port K Pull-up/down Register*/
 
-
 #define GPLCON0		GPIO_CTL_BASE1+(0x810)  /*Port L Configuration Register*/
 #define GPLCON1		GPIO_CTL_BASE1+(0x814)  /*Port L Configuration Register*/
 #define GPLDAT		GPIO_CTL_BASE1+(0x818)  /*Port L Data Register*/
@@ -224,7 +221,6 @@
 #define EINT0PEND		GPIO_CTL_BASE2+(0x24)	/*External Interrupt Pending Register*/
 #define SPCONSLP		GPIO_CTL_BASE2-(0x80)	/*Special Port Sleep mode configure Register*/
 #define SLPEN			GPIO_CTL_BASE2+(0x30)	/*Sleep mode Pad configure Register*/
-
 
 /*Externel Interrupt Register*/
 #define GPIO_CTL_BASE3 (0x7F008200)
@@ -309,7 +305,6 @@
 
 #define VIC0_BASE  (0x71200000)
 #define VIC0_SIZE  (0x280)
-
 
 #define  VIC0IRQSTATUS			VIC0_BASE + (0x000)  /*  IRQ  Status  Register  */
 #define  VIC0FIQSTATUS			VIC0_BASE + (0x004)  /*  FIQ  Status  Register  */
@@ -536,7 +531,6 @@
 #define INT_RTC_TIC			(2)	/*	RTC TIC interrupt VICO */
 #define INT_EINT1			(1)	/*	External interrupt 4 ~ 11 VICO */
 #define INT_EINT0			(0)	/*	External interrupt 0 ~ 3 VICO */
-
 
 /*********************/
 /* RTC Registers     */
@@ -830,8 +824,6 @@ typedef struct s3c6410x_io_t{
 	/* System Control Register*/
 	struct s3c6410x_sys_ctl sys_ctl;
 
-
-
 	u32 vic0irqstatus;    /*  IRQ  Status  Register  */
 	u32 vic0fiqstatus;    /*  FIQ  Status  Register  */
 	u32 vic0rawintr;      /*  Raw  Interrupt  Status  Register  */
@@ -846,8 +838,6 @@ typedef struct s3c6410x_io_t{
 	u32 vic0swprioritymask;    /*  Software  Priority  Mask  Register  */
 	u32 vic0prioritydaisy;    /*  Vector  Priority  Register  for  Daisy  Chain  */
 	u32 vic0vecpriority[32];    /*  Vector  Priority  0-31  Register  */
-
-
 
 	u32 vic1irqstatus;    /*  IRQ  Status  Register  */
 	u32 vic1fiqstatus;    /*  FIQ  Status  Register  */
