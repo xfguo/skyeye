@@ -51,10 +51,8 @@
 #define TIMER2_CONTROL	(TIMER1_PHYS+0x08)
 #define TIMER3_CONTROL	(TIMER1_PHYS+0x28)
 
-
-
 #define TIMER_CONTROL_MODE	(1<<6)
 
 void
-lh79520_mach_init (void * state, machine_config_t * this_mach);
+lh79520_mach_init (void *state, machine_config_t *this_mach);
 #endif //

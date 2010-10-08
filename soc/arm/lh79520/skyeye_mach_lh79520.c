@@ -88,7 +88,7 @@ static lh79520_io_t lh79520_io;
 #define io lh79520_io
 
 static void
-lh79520_update_int (void * state)
+lh79520_update_int (void *state)
 {
 	uint32_t requests = io.intsr & io.intmr;
 #if 0
@@ -103,7 +103,7 @@ lh79520_update_int (void * state)
 }
 
 static void
-lh79520_io_reset (void * state)
+lh79520_io_reset (void *state)
 {
 	int i;
 
@@ -120,7 +120,7 @@ lh79520_io_reset (void * state)
 }
 
 static void
-UART2VIC (void * state)
+UART2VIC (void *state)
 {
 	if (io.uartmis)
 		io.intsr |= UART1INT;
@@ -129,9 +129,8 @@ UART2VIC (void * state)
 	lh79520_update_int (state);
 }
 
-
 void
-lh79520_io_do_cycle (void * state)
+lh79520_io_do_cycle (void *state)
 {
 	int t;
 
@@ -143,14 +142,12 @@ lh79520_io_do_cycle (void * state)
 			if (io.tcd[t] == 0) {
 				if (io.tcd_ctrl[t] & TIMER_CONTROL_MODE) {	//Periodic mode
 					io.tcd[t] = io.tcd_reload[t];
-				}
-				else {	//Free-Running mode
+				} else {	//Free-Running mode
 					io.tcd[t] = 0xffff;
 				}
 				io.intsr |= (t ? TC2OI : TC1OI);
 				lh79520_update_int (state);
-			}
-			else {
+			} else {
 				io.tcd[t]--;
 			}
 		}
@@ -174,9 +171,8 @@ lh79520_io_do_cycle (void * state)
 	}
 }
 
-
 uint32_t
-lh79520_io_read_word (void * state, uint32_t addr)
+lh79520_io_read_word (void *state, uint32_t addr)
 {
 	uint32_t data = 0;
 
@@ -233,7 +229,7 @@ lh79520_io_read_word (void * state, uint32_t addr)
 }
 
 uint32_t
-lh79520_io_read_byte (void * state, uint32_t addr)
+lh79520_io_read_byte (void *state, uint32_t addr)
 {
 	//some parts of kernel such as printascii use byte operation
 	if (addr >= UART1_PHYS + UARTDR && addr <= UART1_PHYS + UARTICR)
@@ -250,7 +246,7 @@ lh79520_io_read_byte (void * state, uint32_t addr)
 }
 
 uint32_t
-lh79520_io_read_halfword (void * state, uint32_t addr)
+lh79520_io_read_halfword (void *state, uint32_t addr)
 {
 	//some parts of kernel use it
 	if (addr >= UART1_PHYS + UARTDR && addr <= UART1_PHYS + UARTICR)
@@ -263,7 +259,7 @@ lh79520_io_read_halfword (void * state, uint32_t addr)
 }
 
 void
-lh79520_io_write_word (void * state, uint32_t addr, uint32_t data)
+lh79520_io_write_word (void *state, uint32_t addr, uint32_t data)
 {
 	uint32_t tmp;
 
@@ -349,7 +345,7 @@ lh79520_io_write_word (void * state, uint32_t addr, uint32_t data)
 	}
 }
 void
-lh79520_io_write_byte (void * state, uint32_t addr, uint32_t data)
+lh79520_io_write_byte (void *state, uint32_t addr, uint32_t data)
 {
 	//some parts of kernel such as printascii use byte operation
 	if (addr >= UART1_PHYS + UARTDR && addr <= UART1_PHYS + UARTICR)
@@ -363,15 +359,14 @@ lh79520_io_write_byte (void * state, uint32_t addr, uint32_t data)
 }
 
 void
-lh79520_io_write_halfword (void * state, uint32_t addr, uint32_t data)
+lh79520_io_write_halfword (void *state, uint32_t addr, uint32_t data)
 {
 	printf ("SKYEYE: %s error %x %x\n", __func__, addr, data);
 	skyeye_exit (-1);
 }
 
-
 void
-lh79520_mach_init (void * state, machine_config_t * this_mach)
+lh79520_mach_init (void *state, machine_config_t *this_mach)
 {
 #if 0
 	ARMul_SelectProcessor (state, ARM_v4_Prop);
