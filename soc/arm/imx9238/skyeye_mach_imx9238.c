@@ -22,16 +22,20 @@
  * 03/02/2007   Michael.Kang  <blackfin.kang@gmail.com>
  */
 
-#include "armdefs.h"
-typedef struct imx_timer_s{
+#include <skyeye_config.h>
+#include <skyeye_arch.h>
+#include <skyeye_sched.h>
+#include <skyeye_lock.h>
+
+typedef struct imx_timer_s {
 	uint32_t tctl;
 	uint32_t tprer;
 	uint32_t tcmp;
 	uint32_t tcr;
 	uint32_t tcn;
 	uint32_t tstat;
-}imx_timer_t;
-typedef struct imx_uart_s{
+} imx_timer_t;
+typedef struct imx_uart_s {
 	uint32_t urx;
 	uint32_t utx;
 	uint32_t ucr[4];
@@ -45,8 +49,8 @@ typedef struct imx_uart_s{
 	uint32_t bipr[4];
 	uint32_t bmpr[4];
 	uint32_t uts;
-}imx_uart_t;
-typedef struct imx_aitc_s{
+} imx_uart_t;
+typedef struct imx_aitc_s {
 	uint32_t intcntl;
 	uint32_t nimask;
 	uint32_t intennum;
@@ -66,17 +70,17 @@ typedef struct imx_aitc_s{
 	uint32_t nipndl;
 	uint32_t fipndh;
 	uint32_t fipndl;
-}imx_aitc_t;
-typedef struct imx_io_s{
+} imx_aitc_t;
+typedef struct imx_io_s {
 	imx_timer_t timer[2];
 	imx_uart_t uart[3];
 	imx_aitc_t aitc;
-}imx_io_t;
+} imx_io_t;
 void imx_io_do_cycle(){}
 
-static ARMword aitc_read_word(void * state, ARMword addr){
+static uint32_t aitc_read_word(void *state, uint32_t addr){
 	int offset = addr - 0x00223000;
-	ARMword data;
+	uint32_t data;
 	switch(offset){
 		default:
 			fprintf(stderr, "io error in %s, addr=0x%x\n", __FUNCTION__, addr);
@@ -84,7 +88,9 @@ static ARMword aitc_read_word(void * state, ARMword addr){
 	}
 	return data;
 }
-static void aitc_write_word(void * state, ARMword addr, ARMword data){
+
+static void
+aitc_write_word(void *state, uint32_t addr, uint32_t data){
         int offset = addr - 0x00223000;
         switch(offset){
                 default:
@@ -93,10 +99,11 @@ static void aitc_write_word(void * state, ARMword addr, ARMword data){
         }
         return;
 }
-static ARMword
-imx_io_read_word (void * state, ARMword addr)
+
+static uint32_t
+imx_io_read_word (void *state, uint32_t addr)
 {
-	ARMword data;
+	uint32_t data;
 	switch(addr){
                 default:
                         fprintf(stderr, "io error in %s, addr=0x%x\n", __FUNCTION__, addr);
@@ -105,22 +112,21 @@ imx_io_read_word (void * state, ARMword addr)
 	return data;
 }
 
-static ARMword
-imx_io_read_byte (void * state, ARMword addr)
+static uint32_t
+imx_io_read_byte (void *state, uint32_t addr)
 {
 	return imx_io_read_word (state, addr);
 
 }
 
-ARMword
-imx_io_read_halfword (void * state, ARMword addr)
+uint32_t
+imx_io_read_halfword (void *state, uint32_t addr)
 {
 	return imx_io_read_word (state, addr);
 }
-
 
 void
-imx_io_write_word (void * state, ARMword addr, ARMword data)
+imx_io_write_word (void *state, uint32_t addr, uint32_t data)
 {
 	/*
 	 * The imx system registers
@@ -133,42 +139,40 @@ imx_io_write_word (void * state, ARMword addr, ARMword data)
                         skyeye_exit(-1);
         }
         return ;
-
 }
 
 void
-imx_io_write_byte (void * state, ARMword addr, ARMword data)
+imx_io_write_byte (void *state, uint32_t addr, uint32_t data)
 {
-
 	imx_io_write_word (state, addr, data);
 	//SKYEYE_OUTREGS(stderr);
 	//exit(-1);
-
 }
 
 void
-imx_io_write_halfword (void * state, ARMword addr, ARMword data)
+imx_io_write_halfword (void *state, uint32_t addr, uint32_t data)
 {
 	imx_io_write_word (state, addr, data);
 	//SKYEYE_OUTREGS(stderr);
 	//exit(-1);
 }
 static void
-imx_io_reset (void * curr_state)
+imx_io_reset (void *curr_state)
 {
 }
 
-
 void
-imx_mach_init (void * arch_instance, machine_config_t * this_mach)
+imx_mach_init (generic_arch_t *arch_instance, machine_config_t *this_mach)
 {
-	extern ARMul_State * state;
+#if 0
 	//chy 2003-08-19, setprocessor
 	ARMul_SelectProcessor (state, ARM_v4_Prop);
 	//chy 2004-05-09, set lateabtSig
 	state->lateabtSig = HIGH;
-
 	state->Reg[1] = 160; /* MACH_TYPE_MX1ADS 160 */
+#endif
+
+	arch_instance->set_regval_by_id(1, 160); /* MACH_TYPE_MX1ADS 160 */
 
 	this_mach->mach_io_do_cycle = imx_io_do_cycle;
 	this_mach->mach_io_reset = imx_io_reset;
@@ -180,5 +184,4 @@ imx_mach_init (void * arch_instance, machine_config_t * this_mach)
 	this_mach->mach_io_write_word = imx_io_write_word;
 
 	//this_mach->mach_update_int = imx_update_int;
-
 }
