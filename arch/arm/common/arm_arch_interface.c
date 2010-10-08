@@ -94,6 +94,8 @@ arm_init_state ()
 	/* set the old default for all machines not doing it by their own yet */
 	//skyeye_config.mach->io_cycle_divisor = 50;
 	//skyeye_config.mach->mach_init (state, skyeye_config.mach);
+	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv3"))
+		ARMul_SelectProcessor (state, ARM_v4_Prop);
 	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv4"))
 		ARMul_SelectProcessor (state, ARM_v4_Prop);
 	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv6"))

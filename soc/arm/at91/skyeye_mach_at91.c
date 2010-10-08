@@ -135,6 +135,7 @@ at91_update_int (void *arch_instance)
 	interrupt_signal.arm_signal.irq = (requests & 0x3fffe) ? Low_level : High_level;
 	//state->NirqSig = (requests & 0x3fffe) ? LOW : HIGH;
 	interrupt_signal.arm_signal.reset = Prev_level;
+	send_signal(&interrupt_signal);
 }
 
 /* new added functions
@@ -153,20 +154,30 @@ at91_pending_intr (u32 interrupt)
 static void
 at91_update_intr (void *mach)
 {
-	generic_arch_t* arch_instance = get_arch_instance("");
-	s3c2410x_update_int (arch_instance);
+	struct machine_config *mc = (struct machine_config *) mach;
+	interrupt_signal_t interrupt_signal;
+	uint32_t requests = io.ipr & io.imr;
+
+	interrupt_signal.arm_signal.firq = (requests & 0x00001) ? Low_level : High_level;
+	//state->NfiqSig = (requests & 0x00001) ? LOW : HIGH;
+	interrupt_signal.arm_signal.irq = (requests & 0x3fffe) ? Low_level : High_level;
+	//state->NirqSig = (requests & 0x3fffe) ? LOW : HIGH;
+	interrupt_signal.arm_signal.reset = Prev_level;
+	send_signal(&interrupt_signal);
 }
 
 static int
 at91_mem_read_byte (void *arch_instance, u32 addr, u32 *data)
 {
-	*data = (u32) mem_read_char (arch_instance, addr);
+//	*data = (u32) mem_read_char (arch_instance, addr);
+	pirntf("in mem read \n");
 }
 
 static int
 at91_mem_write_byte (void *arch_instance, u32 addr, u32 data)
 {
-	mem_write_char (arch_instance, addr, (char) data);
+//	mem_write_char (arch_instance, addr, (char) data);
+	pirntf("in mem write \n");
 }
 
 static void
@@ -198,7 +209,6 @@ at91_io_do_cycle (generic_arch_t *state)
 
 	for (t = 0; t < 3; t++) {
 		if (io.tcd[t] == 0) {
-
 			if (io.syscon & (t ? TC2M : TC1M)) {
 
 				io.tcd[t] = io.tcd_reload[t];
@@ -236,7 +246,10 @@ at91_io_do_cycle (generic_arch_t *state)
 			if (hasrcr)
 			{
 				for (i = 0; i < n; i++, io.usart[0].rcr--, io.usart[0].rpr++)
-					mem_write_char (state, io.usart[0].rpr, buf[i]);
+				{
+					//mem_write_char (state, io.usart[0].rpr, buf[i]);
+					bus_write(8, io.usart[0].rpr, buf[i]);
+				}
 				if (io.usart[0].rcr == 0)
 					io.sysflg &= ~URXFE;
 			} else {
@@ -401,8 +414,9 @@ uart_write (generic_arch_t *state, uint32_t addr, uint32_t data, int uartno)
 		break;
 	case 0xf:		// TCR
 		for (; tx_buf && data > 0; data--) {
-			char c = mem_read_char (state, tx_buf++);
-
+//			char c = mem_read_char (state, tx_buf++);
+			char c;
+			bus_read(8, tx_buf++, &c);
 			/* 2007-01-18 modified by Anthony Lee : for new uart device frame */
 			skyeye_uart_write(-1, &c, 1, NULL);
 
