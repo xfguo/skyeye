@@ -43,5 +43,5 @@ enum
 };
 
 void
-sa1100_mach_init (void* arch_instance, machine_config_t * mc);
+sa1100_mach_init (void *arch_instance, machine_config_t *mc);
 #endif

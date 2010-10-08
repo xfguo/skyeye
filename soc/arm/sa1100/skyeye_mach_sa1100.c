@@ -293,7 +293,6 @@ sa_io_read_word (void  *state, uint32_t addr)
 	return data;
 };
 
-
 static void
 sa_io_do_cycle (void  *state)
 {
@@ -364,7 +363,6 @@ sa_io_do_cycle (void  *state)
 	/*reset interrupt pin status */
 	refresh_irq (state);
 };
-
 
 static void
 refresh_irq (void *state)
