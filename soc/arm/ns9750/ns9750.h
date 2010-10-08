@@ -80,7 +80,6 @@
  * */
 #define AT91RM92_ID_SYS    (0x1 << 1)	// System Peripheral
 
-
 #define AT91RM92_ST_PITS         (0x1 <<  0)	// (ST) Period Interval Timer Interrupt
 #define AT91RM92_ST_WDOVF        (0x1 <<  1)	// (ST) Watchdog Overflow
 #define AT91RM92_ST_RTTINC       (0x1 <<  2)	// (ST) Real-time Timer Increment
@@ -105,8 +104,6 @@ struct ns9750_st_io
 	u16 wdv_dc;		/*Watchdog Counter Value down count */
 	u16 rtpres_dc;		/*Real-time Timer Prescaler Value down count */
 };
-
-
 
 /********************************************
 * USART definition
@@ -156,7 +153,6 @@ struct ns9750_st_io
 
 #define AT91RM92_UART_SIZE	  0x4000
 
-
 #define AT91RM92_ID_US0    ( 0x1 << 6)	// USART 0
 #define AT91RM92_ID_US1    ( 0x1 << 7)	// USART 1
 #define AT91RM92_ID_US2    ( 0x1 << 8)	// USART 2
@@ -186,6 +182,6 @@ struct ns9750_uart_io
 };
 
 void
-ns9750_mach_init (void  * state, machine_config_t * this_mach);
+ns9750_mach_init (void  *state, machine_config_t *this_mach);
 
 #endif /*__NS9750_H_ */

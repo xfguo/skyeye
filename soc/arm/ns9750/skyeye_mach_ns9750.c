@@ -66,7 +66,6 @@ typedef struct ns9750_io {
 
 	int tc_prescale;
 
-
 } ns9750_io_t;
 static ns9750_io_t ns9750_io;
 #define io ns9750_io
@@ -139,14 +138,11 @@ ns9750_io_reset (void  *state)
 
 }
 
-
 /*ns9750 io_do_cycle*/
 static void
 ns9750_io_do_cycle (void  *state)
 {
 #if 1
-
-
 	if (io.st.pimr != 0) {
 		if (io.st.piv_dc == 0) {
 			io.st.sr |= AT91RM92_ST_PITS;
@@ -154,8 +150,7 @@ ns9750_io_do_cycle (void  *state)
 				io.ipr |= AT91RM92_ID_SYS;
 			}
 			io.st.piv_dc = io.st.pimr;
-		}
-		else {
+		} else {
 			io.st.piv_dc--;
 		}
 	}
@@ -181,7 +176,6 @@ ns9750_io_do_cycle (void  *state)
 	ns9750_update_int (state);
 #endif
 }
-
 
 static void
 ns9750_uart_read (u32 offset, u32 *data)
@@ -279,8 +273,6 @@ ns9750_uart_write (void  *state, u32 offset, u32 data)
 	SKYEYE_DBG ("%s(0x%x, 0x%x)\n", __func__, offset, data);
 }
 
-
-
 static void
 ns9750_st_read (u32 offset, u32 *data)
 {
@@ -374,8 +366,7 @@ ns9750_io_read_word (void  *state, uint32_t addr)
 			data = i;
 			io.ipr &= ~(1 << data);
 			ns9750_update_int (state);
-		}
-		else
+		} else
 			data = 0;
 		io.ivr = data;
 		SKYEYE_DBG ("read IVR=%d\n", data);
@@ -460,7 +451,6 @@ ns9750_io_write_halfword (void  *state, uint32_t addr, uint32_t data)
 	ns9750_io_write_word (state, addr, data);
 }
 
-
 void
 ns9750_mach_init (void  *state, machine_config_t *this_mach)
 {
@@ -493,6 +483,4 @@ ns9750_mach_init (void  *state, machine_config_t *this_mach)
 	//this_mach->mach_mem_write_byte =      ns9750_mem_write_byte;
 
 	//this_mach->state = (void *)state;
-
-
 }
