@@ -14,7 +14,6 @@
 /* 2007-01-18 added by Anthony Lee : for new uart device frame */
 #include "skyeye_uart.h"
 
-
 typedef struct shp_io_t {
 	INTCREGS intc;
 	TIMERREGS timer1;
@@ -271,12 +270,9 @@ shp_io_read_word (void *state, uint32_t addr)
 	return data;
 }
 
-
 static void
 shp_io_do_cycle (void *state)
 {
-
-
 	/*timer1 */
 	if (++shp_io.timer1_scale >= 5000) {
 		shp_io.timer1_scale = 0;
@@ -328,11 +324,9 @@ shp_io_do_cycle (void *state)
 		}
 	}
 
-
 	/*reset interrupt pin status */
 	refresh_irq (state);
 };
-
 
 static void
 refresh_irq (void *state)
