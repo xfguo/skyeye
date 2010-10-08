@@ -50,11 +50,8 @@
 /* 2007-01-18 added by Anthony Lee : for new uart device frame */
 #include <skyeye_uart.h>
 
-
-void ep9312_io_write_word (void  * state, uint32_t addr, uint32_t data);
-uint32_t ep9312_io_read_word (void  * state, uint32_t addr);
-
-
+void ep9312_io_write_word (void  *state, uint32_t addr, uint32_t data);
+uint32_t ep9312_io_read_word (void  *state, uint32_t addr);
 
 #define NR_UART			3
 
@@ -63,7 +60,6 @@ uint32_t ep9312_io_read_word (void  * state, uint32_t addr);
 
 #define UART_IIR_RIS	(1<<1)
 #define UART_IIR_TIS	(1<<2)
-
 
 const int TCOI[2] = { 1 << 4, 1 << 5 };
 const int UART_RXINTR[3] = { 1 << 23, 1 << 25, 1 << 27 };
@@ -120,13 +116,11 @@ ep9312_io_reset (void  *state)
 	io.tc[1].mod_value = 0xffff;
 	io.tc[2].mod_value = 0xffffffff;
 
-
 	for (i = 0; i < NR_UART; i++) {
 		io.uart[i].dr = 0;
 		io.uart[i].fr = UART_FR_TXFE;
 	}
 }
-
 
 void
 ep9312_io_do_cycle (void  *state)
@@ -142,8 +136,7 @@ ep9312_io_do_cycle (void  *state)
 				io.tc[i].value = io.tc[i].mod_value;
 			io.intsr[0] |= TCOI[i];
 			ep9312_update_int (state);
-		}
-		else {
+		} else {
 			io.tc[i].value--;
 		}
 	}
@@ -171,7 +164,6 @@ ep9312_io_do_cycle (void  *state)
 		}
 	}			//if (!(io.intsr & URXINT))
 }
-
 
 static void
 ep9312_uart_read (void  *state, u32 offset, u32 *data, int index)
@@ -218,6 +210,7 @@ ep9312_uart_read (void  *state, u32 offset, u32 *data, int index)
 		break;
 	}
 }
+
 static void
 ep9312_uart_write (void  *state, u32 offset, u32 data, int index)
 {
@@ -245,8 +238,7 @@ ep9312_uart_write (void  *state, u32 offset, u32 data, int index)
 				io.intmr[1] &= ~(INT_UART[index]);
 
 				io.uart[index].iir &= ~(UART_IIR_TIS);	//Interrupt Identification and Clear
-			}
-			else {
+			} else {
 
 				io.intmr[0] |= (UART_TXINTR[index]);
 				io.intsr[0] |= (UART_TXINTR[index]);
@@ -306,6 +298,7 @@ ep9312_tc_read (u32 offset, u32 *data, int index)
 		break;
 	}
 }
+
 static void
 ep9312_tc_write (void  *state, u32 offset, u32 data, int index)
 {

@@ -53,7 +53,6 @@
  * */
 #define EP9312_ID_SYS    (0x1 << 1)	// System Peripheral
 
-
 #define TC_CTL_CLKSEL          (0x1 <<  3)	// (TC) Control: CLKSEL bit
 #define TC_CTL_MODE            (0x1 <<  6)	// (TC) Control: Mode bit
 #define TC_CTL_ENABLE          (0x1 <<  7)	// (TC) Control: Enable bit
@@ -69,8 +68,6 @@ struct ep9312_tc_io {
 	u32 mod_value;		/* TC1 and TC2: 0xffff; TC3: 0xffffffff */
 
 };
-
-
 
 /********************************************
 * UART definition
