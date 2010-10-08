@@ -36,7 +36,6 @@ typedef enum pxa_ioregnum_t
 	OWER = 0x40A00018,	/* OS Timer Watchdog Enable Register */
 	OIER = 0x40A0001C,	/* OS Timer Interrupt Enable Register */
 
-
 	/*Full Function UART */
 	FFRBR = 0x40100000,	/* Receive Buffer Register (read only) */
 	FFTHR = 0x40100000,	/* Transmit Holding Register (write only) */
@@ -292,9 +291,9 @@ typedef struct pxa270_io_t
 	u32 oscc;
 
 	//ywc,2004-11-30,add io of LCD and Touchscreen
-	  /*LCD*/
-		/* remove them later. */
-	  u32 lccr0;
+	/*LCD*/
+	/* remove them later. */
+	u32 lccr0;
 	u32 lccr1;
 	u32 lccr2;
 	u32 lccr3;

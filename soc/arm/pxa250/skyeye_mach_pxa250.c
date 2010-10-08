@@ -19,7 +19,6 @@
 
 #define FF_SCALE	200	//FF UART
 
-
 /* 2007-01-18 added by Anthony Lee : for new uart device frame */
 #include <skyeye_uart.h>
 
@@ -32,8 +31,7 @@
 //chy 2005-09-19, the define of pxa27x_io_t is in pxa.h
 static pxa250_io_t pxa250_io;
 
-
-static void refresh_irq (void  *);
+static void refresh_irq (void *);
 static void
 pxa250_io_reset ()
 {
@@ -41,7 +39,6 @@ pxa250_io_reset ()
 	//chy 2003-08-25
 	pxa250_io.cccr = 0x121;	// 1 0010 0001
 	pxa250_io.cken = 0x17def;
-
 
 	pxa250_io.ts_int = 1 << 15;
 	pxa250_io.ts_addr_begin = 0x40000300;
@@ -92,7 +89,7 @@ pxa_update_intr (void *mach)
 
 }
 static void
-pxa250_update_int (void  * state)
+pxa250_update_int (void  *state)
 {
 	pxa250_io.icip = (pxa250_io.icmr & pxa250_io.icpr) & ~pxa250_io.iclr;
 	pxa250_io.icfp = (pxa250_io.icmr & pxa250_io.icpr) & pxa250_io.iclr;
@@ -304,19 +301,19 @@ pxa250_io_write_word (void  *state, uint32_t addr, uint32_t data)
 };
 
 uint32_t
-pxa250_io_read_byte (void  * state, uint32_t addr)
+pxa250_io_read_byte (void  *state, uint32_t addr)
 {
 	return 0;
 }
 
 uint32_t
-pxa250_io_read_halfword (void  * state, uint32_t addr)
+pxa250_io_read_halfword (void  *state, uint32_t addr)
 {
 	return 0;
 }
 
 uint32_t
-pxa250_io_read_word (void  * state, uint32_t addr)
+pxa250_io_read_word (void  *state, uint32_t addr)
 {
 	u32 data;
 	pxa_ioregnum_t ioregaddr = addr;
@@ -487,9 +484,8 @@ pxa250_io_read_word (void  * state, uint32_t addr)
 	return data;
 };
 
-
 static void
-pxa250_io_do_cycle (void  * state)
+pxa250_io_do_cycle (void  *state)
 {
 
 	 /*RTC*/ if (++pxa250_io.rt_scale >= RT_SCALE) {
@@ -607,9 +603,8 @@ pxa250_io_do_cycle (void  * state)
 	//refresh_irq (state);
 };
 
-
 void
-pxa250_mach_init (void* arch_instance, machine_config_t * mc)
+pxa250_mach_init (void *arch_instance, machine_config_t *mc)
 {
 #if 0
 	//chy 2003-08-19, setprocessor
