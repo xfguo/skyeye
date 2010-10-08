@@ -70,8 +70,6 @@ typedef struct at91rm92_io {
 	struct at91rm92_pmc_io pmc;
 
 	int tc_prescale;
-
-
 } at91rm92_io_t;
 static at91rm92_io_t at91rm92_io;
 #define io at91rm92_io
@@ -98,6 +96,7 @@ at91rm92_set_intr (u32 interrupt)
 {
 	io.ipr |= (1 << interrupt);
 }
+
 static int
 at91rm92_pending_intr (u32 interrupt)
 {
@@ -116,7 +115,7 @@ at91rm92_update_intr (void *mach)
 
 }
 static int
-at91rm92_mem_read_byte (void *mach, u32 addr, u32 * data)
+at91rm92_mem_read_byte (void *mach, u32 addr, u32 *data)
 {
 	struct machine_config *mc = (struct machine_config *) mach;
 	ARMul_State *state = (ARMul_State *) mc->state;
@@ -149,12 +148,10 @@ at91rm92_io_reset (generic_arch_t *arch_instance)
 	io.pmc.ckgr_pllar = 0x3F00;
 }
 
-
 /*at91rm92 io_do_cycle*/
 static void
 at91rm92_io_do_cycle (generic_arch_t *state)
 {
-
 	if (io.st.pimr != 0) {
 		if (io.st.piv_dc == 0) {
 			io.st.sr |= AT91RM92_ST_PITS;
@@ -162,13 +159,11 @@ at91rm92_io_do_cycle (generic_arch_t *state)
 				io.ipr |= AT91RM92_ID_SYS;
 			}
 			io.st.piv_dc = io.st.pimr;
-		}
-		else {
+		} else {
 			io.st.crtr++;
 			io.st.piv_dc--;
 		}
 	}
-
 
 	if (1) {
 		/* 2007-01-18 modified by Anthony Lee : for new uart device frame */
@@ -207,9 +202,8 @@ at91rm92_io_do_cycle (generic_arch_t *state)
 	at91rm92_update_int (state);
 }
 
-
 static void
-at91rm92_uart_read (u32 offset, u32 * data)
+at91rm92_uart_read (u32 offset, u32 *data)
 {
 	int i = (offset >> 14) & 0x3;
         offset = offset & 0xFFF;
@@ -317,10 +311,8 @@ at91rm92_uart_write (generic_arch_t *state, u32 offset, u32 data)
 	SKYEYE_DBG ("%s(0x%x, 0x%x)\n", __func__, offset, data);
 }
 
-
-
 static void
-at91rm92_st_read (u32 offset, u32 * data)
+at91rm92_st_read (u32 offset, u32 *data)
 {
 	switch (offset) {
 	case ST_PIMR:
@@ -352,6 +344,7 @@ at91rm92_st_read (u32 offset, u32 * data)
 
 	}
 }
+
 static void
 at91rm92_st_write (generic_arch_t *state, u32 offset, u32 data)
 {
@@ -421,8 +414,7 @@ at91rm92_io_read_word (void *arch_instance, u32 addr)
 			data = i;
 			io.ipr &= ~(1 << data);
 			at91rm92_update_int (arch_instance);
-		}
-		else
+		} else
 			data = 0;
 		io.ivr = data;
 		SKYEYE_DBG ("read IVR=%d\n", data);
@@ -579,12 +571,11 @@ at91rm92_io_write_halfword (generic_arch_t *state, u32 addr, u32 data)
 	at91rm92_io_write_word (state, addr, data);
 }
 
-
 void
 at91rm92_mach_init (generic_arch_t *arch_instance, machine_config_t *this_mach)
 {
 #if 0
-	extern ARMul_State * state;
+	extern ARMul_State *state;
 	ARMul_SelectProcessor (state, ARM_v4_Prop);
 	/* ARM920T uses LOW */
 	state->lateabtSig = LOW;

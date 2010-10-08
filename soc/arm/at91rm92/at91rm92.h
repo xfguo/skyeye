@@ -206,9 +206,7 @@ struct at91rm92_uart_io {
 	u32 fidi;
 	u32 ner;
 	u32 us_if;
-
 	u32 sysflg;
-
 };
 
 struct at91rm92_dbgu_io {
@@ -227,6 +225,7 @@ struct at91rm92_dbgu_io {
 	u32 exid;
 
 };
+
 struct at91rm92_pmc_io {
 	u32 ckgr_pllar;
 	u32 ckgr_pllbr;
