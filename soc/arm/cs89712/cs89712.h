@@ -46,7 +46,6 @@
 #define SDCONF_CASLAT_2		(2)
 #define SDCONF_CASLAT_3		(3)
 
-
 void
-cs89712_mach_init (void * arch_instance, machine_config_t * this_mach);
+cs89712_mach_init (void *arch_instance, machine_config_t *this_mach);
 #endif /* __ASM_HARDWARE_CS89712_H */

@@ -142,7 +142,6 @@
 #define GSEN	0x40000000	/* Grayscale enable (0: monochrome) */
 #define	GSMD	0x80000000	/* Grayscale mode (0: 2 bit, 1: 4 bit) */
 
-
 #define TC1D	0x0300		/* Timer Counter 1 Data register ------------------- */
 #define TC_MASK	0x0000ffff
 #define TC2D	0x0340		/* Timer Counter 2 Data register ------------------- */

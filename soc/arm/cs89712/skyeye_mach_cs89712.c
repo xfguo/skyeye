@@ -76,7 +76,7 @@ static cs89712_io_t cs89712_io;
 #define io cs89712_io
 
 static void
-cs89712_update_int (void * state)
+cs89712_update_int (void *state)
 {
 	uint32_t requests = io.intsr & io.intmr;
 #if 0
@@ -105,12 +105,10 @@ cs89712_io_reset (void *state)
 	io.lcd_limit = 0;
 }
 
-
 void
 cs89712_io_do_cycle (void *state)
 {
 	int t;
-
 
 	for (t = 0; t < 2; t++) {
 		if (io.tcd[t] == 0) {
@@ -118,14 +116,12 @@ cs89712_io_do_cycle (void *state)
 			if (io.syscon & (t ? TC2M : TC1M)) {
 
 				io.tcd[t] = io.tcd_reload[t];
-			}
-			else {
+			} else {
 				io.tcd[t] = 0xffff;
 			}
 			io.intsr |= (t ? TC2OI : TC1OI);
 			cs89712_update_int (state);
-		}
-		else {
+		} else {
 			io.tcd[t]--;
 		}
 	}
@@ -147,7 +143,6 @@ cs89712_io_do_cycle (void *state)
 		}
 	}
 }
-
 
 uint32_t
 cs89712_io_read_byte (void *state, uint32_t addr)
@@ -232,8 +227,6 @@ cs89712_io_read_word (void *state, uint32_t addr)
 	}
 	return data;
 }
-
-
 
 void
 cs89712_io_write_byte (void *state, uint32_t addr, uint32_t data)
@@ -324,7 +317,7 @@ cs89712_io_write_word (void *state, uint32_t addr, uint32_t data)
 }
 
 void
-cs89712_mach_init (void * arch_instance, machine_config_t * this_mach)
+cs89712_mach_init (void *arch_instance, machine_config_t *this_mach)
 {
 #if 0
 	state->abort_model = 2;
