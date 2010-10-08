@@ -48,7 +48,6 @@
 //AJ2D--------------------------------------------------------------------------
 #endif
 
-
 /* 2007-01-18 added by Anthony Lee : for new uart device frame */
 #include <skyeye_uart.h>
 
@@ -61,7 +60,6 @@
 #else
 #define DBG_PRINT(a...)
 #endif
-
 
 /*Internal IO Register*/
 typedef struct ep7312_io
@@ -86,8 +84,6 @@ typedef struct ep7312_io
 	uint32_t ts_addr_begin;
 	uint32_t ts_addr_end;
 
-
-
 	//2004-06-21
 	uint32_t padr;
 	uint32_t pbdr;
@@ -102,9 +98,8 @@ typedef struct ep7312_io
 static ep7312_io_t ep7312_io;
 #define io ep7312_io
 
-
 static void
-ep7312_update_int (void  * state)
+ep7312_update_int (void  *state)
 {
 	uint32_t requests = io.intsr & io.intmr;
 #if 0
@@ -119,7 +114,7 @@ ep7312_update_int (void  * state)
 	send_signal(&interrupt_signal);
 }
 static void
-ep7312_io_reset (void  * state)
+ep7312_io_reset (void  *state)
 {
 	memset(&io, 0, sizeof(io));
 
@@ -142,12 +137,10 @@ ep7312_io_reset (void  * state)
 	io.ts_addr_end = 0x8000b01f;
 }
 
-
 void
-ep7312_io_do_cycle (void  * state)
+ep7312_io_do_cycle (void  *state)
 {
 	int t;
-
 
 	for (t = 0; t < 2; t++) {
 		if (io.tcd[t] == 0) {
@@ -204,9 +197,8 @@ ep7312_io_do_cycle (void  * state)
 	}
 }
 
-
 uint32_t
-ep7312_io_read_byte (void  * state, uint32_t addr)
+ep7312_io_read_byte (void  *state, uint32_t addr)
 {
 	uint32_t data = -1;
 	unsigned char offset = 0;
@@ -246,14 +238,14 @@ ep7312_io_read_byte (void  * state, uint32_t addr)
 }
 
 uint32_t
-ep7312_io_read_halfword (void  * state, uint32_t addr)
+ep7312_io_read_halfword (void  *state, uint32_t addr)
 {
 	printf ("SKYEYE: ep7312_io_read_halfword error\n");
 	skyeye_exit (-1);
 }
 
 uint32_t
-ep7312_io_read_word (void  * state, uint32_t addr)
+ep7312_io_read_word (void  *state, uint32_t addr)
 {
 	uint32_t data = 0;
 	uint32_t ts_addr;
@@ -326,10 +318,8 @@ ep7312_io_read_word (void  * state, uint32_t addr)
 	return data;
 }
 
-
-
 void
-ep7312_io_write_byte (void  * state, uint32_t addr, uint32_t data)
+ep7312_io_write_byte (void  *state, uint32_t addr, uint32_t data)
 {
 	//fprintf(stderr,"skyeye:ep7312_io_write_byte,@addr is  %x",addr);
 	unsigned char offset = 0;
@@ -374,14 +364,14 @@ ep7312_io_write_byte (void  * state, uint32_t addr, uint32_t data)
 }
 
 void
-ep7312_io_write_halfword (void  * state, uint32_t addr, uint32_t data)
+ep7312_io_write_halfword (void  *state, uint32_t addr, uint32_t data)
 {
 	printf ("SKYEYE: ep7312_io_write_halfword error\n");
 	skyeye_exit (-1);
 }
 
 void
-ep7312_io_write_word (void  * state, uint32_t addr, uint32_t data)
+ep7312_io_write_word (void  *state, uint32_t addr, uint32_t data)
 {
 	uint32_t tmp;
 
