@@ -36,7 +36,6 @@ typedef enum pxa_ioregnum_t
 	OWER = 0x40A00018,	/* OS Timer Watchdog Enable Register */
 	OIER = 0x40A0001C,	/* OS Timer Interrupt Enable Register */
 
-
 	/*Full Function UART */
 	FFRBR = 0x40100000,	/* Receive Buffer Register (read only) */
 	FFTHR = 0x40100000,	/* Transmit Holding Register (write only) */
@@ -316,5 +315,5 @@ typedef struct pxa270_io_t
 //chy 2009-09-19 from skyeye_mach_pxa270.c to here-----end
 
 void
-pxa270_mach_init (void * arch_instance, machine_config_t * mc);
+pxa270_mach_init (void *arch_instance, machine_config_t *mc);
 #endif

@@ -26,8 +26,7 @@
 //static pxa270_io_t pxa270_io;
 pxa270_io_t pxa270_io;
 
-
-static void refresh_irq (void  *);
+static void refresh_irq (void *);
 static void
 pxa270_io_reset ()
 {
@@ -36,21 +35,21 @@ pxa270_io_reset ()
 	pxa270_io.cccr = 0x121;	// 1 0010 0001
 	pxa270_io.cken = 0x17def;
 
-
 	pxa270_io.ts_int = 1 << 15;
 	pxa270_io.ts_addr_begin = 0x40000300;
 	pxa270_io.ts_addr_end = 0x4000031f;
 	//ywc,2004-11-30,evaluate io of LCD and Touchscreen,end
 
 };
+
 void
-pxa270_io_write_byte (void  * state, uint32_t addr, uint32_t data)
+pxa270_io_write_byte (void  *state, uint32_t addr, uint32_t data)
 {
 	return;
 }
 
 void
-pxa270_io_write_halfword (void  * state, uint32_t addr, uint32_t data)
+pxa270_io_write_halfword (void  *state, uint32_t addr, uint32_t data)
 {
 	return;
 }
@@ -60,11 +59,13 @@ pxa_set_intr (u32 interrupt)
 {
 	pxa270_io.icpr |= (1 << interrupt);
 }
+
 static int
 pxa_pending_intr (u32 interrupt)
 {
 	return ((pxa270_io.icpr & (1 << interrupt)));
 }
+
 static void
 pxa_update_intr (void *mach)
 {
@@ -84,8 +85,9 @@ pxa_update_intr (void *mach)
 	send_signal(&interrupt_signal);
 
 }
+
 static void
-pxa270_update_int (void  * state)
+pxa270_update_int (void  *state)
 {
 	pxa270_io.icip = (pxa270_io.icmr & pxa270_io.icpr) & ~pxa270_io.iclr;
 	pxa270_io.icfp = (pxa270_io.icmr & pxa270_io.icpr) & pxa270_io.iclr;
@@ -101,7 +103,7 @@ pxa270_update_int (void  * state)
 }
 
 static void
-pxa270_io_write_word (void  * state, uint32_t addr, uint32_t data)
+pxa270_io_write_word (void  *state, uint32_t addr, uint32_t data)
 {
 	pxa_ioregnum_t ioregaddr = addr;
 
@@ -304,19 +306,19 @@ pxa270_io_write_word (void  * state, uint32_t addr, uint32_t data)
 };
 
 uint32_t
-pxa270_io_read_byte (void  * state, uint32_t addr)
+pxa270_io_read_byte (void  *state, uint32_t addr)
 {
 	return 0;
 }
 
 uint32_t
-pxa270_io_read_halfword (void  * state, uint32_t addr)
+pxa270_io_read_halfword (void  *state, uint32_t addr)
 {
 	return 0;
 }
 
 uint32_t
-pxa270_io_read_word (void  * state, uint32_t addr)
+pxa270_io_read_word (void  *state, uint32_t addr)
 {
 	u32 data;
 	pxa_ioregnum_t ioregaddr = addr;
@@ -324,11 +326,8 @@ pxa270_io_read_word (void  * state, uint32_t addr)
 	//ywc,2004-11-30,add for pxa's Touchscreen simulation
 	u32 ts_addr;
 
-
 	//printf("SKYEYE:pxa270_io_read_word: begin io addr 0x%x \n",ioregaddr);
-
 	//ywc,2004-11-30,add for pxa's Touchscreen simulation,end
-
 	//ywc 2004-11-30 read the touch srceen data buffer,return to the ts device driver
 	ts_addr = addr & ~3;	// 1 word==4 byte
 	if (ts_addr >= pxa270_io.ts_addr_begin
@@ -490,9 +489,8 @@ pxa270_io_read_word (void  * state, uint32_t addr)
 	return data;
 };
 
-
 static void
-pxa270_io_do_cycle (void  * state)
+pxa270_io_do_cycle (void  *state)
 {
 
 	 /*RTC*/
@@ -607,19 +605,18 @@ pxa270_io_do_cycle (void  * state)
 	}
 
 	pxa270_update_int (state);
-
 	/*reset interrupt pin status */
 	//refresh_irq (state);
 };
 
-
 static void
-refresh_irq (void  * state)
+refresh_irq (void  *state)
 {
 	u32 irq = 0;
 	u32 mask;
 
-	 /*RTC*/ if ((pxa270_io.rtsr & 0x1) && (pxa270_io.rtsr & 0x4))
+	 /*RTC*/
+	if ((pxa270_io.rtsr & 0x1) && (pxa270_io.rtsr & 0x4))
 		irq |= RTC_ALARM_IRQ;
 	if ((pxa270_io.rtsr & 0x2) && (pxa270_io.rtsr & 0x8))
 		irq |= RTC_HZ_IRQ;
@@ -679,7 +676,7 @@ refresh_irq (void  * state)
 }
 
 void
-pxa270_mach_init (void * arch_instance, machine_config_t * mc)
+pxa270_mach_init (void *arch_instance, machine_config_t *mc)
 {
 	//chy 2003-08-19, setprocessor
 	//chy 2005-09-19 add PXA27X_Prop
@@ -695,7 +692,6 @@ pxa270_mach_init (void * arch_instance, machine_config_t * mc)
 
 	((generic_arch_t *)arch_instance)->set_regval_by_id(1, 406); /*mainstone machine id. */
 	pxa270_io_reset ();
-
 #if 0
 	/*added by ksh for energy estimation in 2004-11-26 */
 	state->energy.cccr = pxa270_io.cccr;
