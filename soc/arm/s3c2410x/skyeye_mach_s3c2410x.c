@@ -151,12 +151,23 @@ static int s3c2410x_scheduler_id = -1;
 static void s3c2410x_timer_callback(generic_arch_t* arch_instance)
 {
 	RW_WRLOCK(lock);
-	io.timer.tcnt[4] = io.timer.tcntb[4];
-	/*timer 4 hasn't tcmp */
-	//io.timer.tcmp[4] = io.timer.tcmpb[4];
-	io.timer.tcnto[4] = io.timer.tcntb[4];
-	io.srcpnd |= INT_TIMER4;
-		s3c2410x_update_int (arch_instance);
+#if 0
+		io.timer.tcnt[4] = io.timer.tcntb[4];
+		/*timer 4 hasn't tcmp */
+		//io.timer.tcmp[4] = io.timer.tcmpb[4];
+		io.timer.tcnto[4] = io.timer.tcntb[4];
+		io.srcpnd |= INT_TIMER4;
+			s3c2410x_update_int (arch_instance);
+#endif
+		io.timer.tcnt[4] -= 100;
+		if (io.timer.tcnt[4] < 0) {
+			io.timer.tcnt[4] = io.timer.tcntb[4];
+			/*timer 4 hasn't tcmp */
+			//io.timer.tcmp[4] = io.timer.tcmpb[4];
+			io.timer.tcnto[4] = io.timer.tcntb[4];
+			io.srcpnd |= INT_TIMER4;
+			s3c2410x_update_int (arch_instance);
+		}
 	RW_UNLOCK(lock);
 }
 
@@ -436,7 +447,6 @@ s3c2410x_timer_write (generic_arch_t *state, uint32 offset, uint32 data)
 
 					/* timer4 frequency */
 					long long freq = ((50000000/(scaler + 1))/mux);
-					
 					/* get timer4 occur time */	
 					unsigned int ms = (int)(io.timer.tcntb[4] / (freq/1000));		
 					/* get timer4 mode */
@@ -444,7 +454,6 @@ s3c2410x_timer_write (generic_arch_t *state, uint32 offset, uint32 data)
 					/* check if a proper value */
 					if (ms == 0 && io.timer.tcntb[4])
 						ms = 1;
-
 					/* update timer4 */
 					mod_thread_scheduler(s3c2410x_scheduler_id,(unsigned int)ms,mode);
 					//mod_timer_scheduler(s3c2410x_scheduler_id,(unsigned int)ms,mode);
@@ -498,10 +507,8 @@ s3c2410x_timer_write (generic_arch_t *state, uint32 offset, uint32 data)
 					create_thread_scheduler((unsigned int)ms,mode, s3c2410x_timer_callback, (void*)state, &s3c2410x_scheduler_id);
 					//create_timer_scheduler((unsigned int)ms,mode, s3c2410x_timer_callback, (void*)state, &s3c2410x_scheduler_id);
 				}
-			}
-			else
-			{
-				if(s3c2410x_scheduler_id != -1){
+			} else {
+				if (s3c2410x_scheduler_id != -1) {
 					del_thread_scheduler(s3c2410x_scheduler_id);
 					//del_timer_scheduler(s3c2410x_scheduler_id);
 					s3c2410x_scheduler_id = -1;
