@@ -127,7 +127,6 @@ omap_update_intr (void *mach)
 	omap5912_update_int(state);
 }
 
-
 static void
 omap5912_io_do_cycle (void *state)
 {
@@ -771,8 +770,6 @@ omap5912_io_write_halfword (void *state, uint32_t addr, uint32_t data)
 	//return omap5912_io_write_word(state, addr, data);
 }
 
-
-
 uint32_t
 omap5912_io_read_word (void *state, uint32_t addr)
 {
@@ -1346,7 +1343,6 @@ omap5912_io_read_halfword (void *state, uint32_t addr)
 {
 	return (omap5912_io_read_word(state, addr) & 0xffff);
 }
-
 
 void
 omap5912_mach_init (void *state, machine_config_t *mc)

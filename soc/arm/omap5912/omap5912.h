@@ -74,7 +74,6 @@ typedef enum omap_ioreg
 	MPU_L2_OCP_CFG = 0xFFFE00A4,
 	MPU_L2_INTH_REV = 0xFFFE00A8,
 
-
 	MPU_L2_ITR_S1 = 0xFFFE0100,
 	MPU_L2_MIR_S1 = 0xFFFE0104,
 	MPU_L2_SIR_IRQ_S1 = 0xFFFE0110,
@@ -320,7 +319,6 @@ MPU_L2_ILR31_S3	=0xFFFE0398,
 	GPIO4_SET_WAKEUPENA = 0xFFFBBCE8,
 	GPIO4_SET_DATAOUT = 0xFFFBBCF0,
 
-
 	/* os timer register*/
 	OS_TIMER_TICK_VAL = 0xFFFB9000,
 	OS_TIMER_TICK_CNTR = 0xFFFB9004,
@@ -389,7 +387,6 @@ MPU_L2_ILR31_S3	=0xFFFE0398,
 	UART1_WER = 0xFFFB005C,
 #endif
 
-
 	ULPD_CLOCK_CTRL	= 0xFFFE0830,
 	SOFT_REQ_REG = 0xFFFE0834,
 	SOFT_REQ_REG2 = 0xFFFE0880,
@@ -408,11 +405,7 @@ MPU_L2_ILR31_S3	=0xFFFE0398,
 	ARM_RSTCT2 = 0xFFFECE14,
 	ARM_SYSST = 0xFFFECE18,
 	DPLL1_CTL_REG = 0xFFFECF00
-
-
-
-}omap_ioreg_t;
-
+} omap_ioreg_t;
 
 #define REGW(addr)	(*(volatile unsigned int *)(addr))
 /********************************************
@@ -426,7 +419,6 @@ MPU_L2_ILR31_S3	=0xFFFE0398,
 /********************************************
 * LCD Controller Registers
 ********************************************/
-
 
 /********************************************
 * GPIO Controller Registers
@@ -518,7 +510,6 @@ MPU_L2_ILR31_S3	=0xFFFE0398,
 #define GPIO4_SET_IRQENABLE2	(0xFFFBBCE4)
 #define GPIO4_SET_WAKEUPENA	(0xFFFBBCE8)
 #define GPIO4_SET_DATAOUT	(0xFFFBBCF0)
-
 
 /********************************************
 * Clock and Power Management Registers
@@ -1116,7 +1107,6 @@ struct omap5912_ic
 	u32 mpu_l2_sir_irq_s3;
 	u32 mpu_l2_sir_fiq_s3;
 	u32 mpu_l2_control_s3;
-
 
 	/*interrupt level 1*/
 	u32 mpu_l1_itr;
