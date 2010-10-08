@@ -160,7 +160,6 @@ static void s3c2410x_timer_callback(generic_arch_t* arch_instance)
 	RW_UNLOCK(lock);
 }
 
-
 static void
 s3c2410x_io_reset (generic_arch_t* arch_instance)
 {
@@ -193,10 +192,9 @@ s3c2410x_io_reset (generic_arch_t* arch_instance)
 	//state->Reg[1] = 241;    //ARCH_S3C2440
 }
 
-
 /* s3c2410x io_do_cycle */
 static void
-s3c2410x_io_do_cycle (generic_arch_t * state)
+s3c2410x_io_do_cycle (generic_arch_t *state)
 {
 
 #if 0
@@ -241,9 +239,8 @@ s3c2410x_io_do_cycle (generic_arch_t * state)
 	//s3c2410x_update_int (state);
 }
 
-
 static void
-s3c2410x_uart_read (uint32 offset, uint32 * data, int index)
+s3c2410x_uart_read (uint32 offset, uint32 *data, int index)
 {
 	switch (offset) {
 	case ULCON:
@@ -287,7 +284,7 @@ s3c2410x_uart_read (uint32 offset, uint32 * data, int index)
 }
 
 static void
-s3c2410x_uart_write (generic_arch_t * state, uint32 offset, uint32 data, int index)
+s3c2410x_uart_write (generic_arch_t *state, uint32 offset, uint32 data, int index)
 {
 
 	SKYEYE_DBG ("%s(UART%d: 0x%x, 0x%x)\n", __FUNCTION__, index, offset, data);
@@ -339,7 +336,7 @@ s3c2410x_uart_write (generic_arch_t * state, uint32 offset, uint32 data, int ind
 }
 
 static void
-s3c2410x_timer_read (uint32 offset, uint32 * data)
+s3c2410x_timer_read (uint32 offset, uint32 *data)
 {
 	switch (offset) {
 	case TCFG0:
@@ -388,7 +385,7 @@ s3c2410x_timer_read (uint32 offset, uint32 * data)
 }
 
 static void
-s3c2410x_timer_write (generic_arch_t * state, uint32 offset, uint32 data)
+s3c2410x_timer_write (generic_arch_t *state, uint32 offset, uint32 data)
 {
 	switch (offset) {
 	case TCFG0:
@@ -541,7 +538,7 @@ s3c2410x_timer_write (generic_arch_t * state, uint32 offset, uint32 data)
 }
 
 static uint32
-s3c2410x_io_read_word (void* arch_instance, uint32 addr)
+s3c2410x_io_read_word (void *arch_instance, uint32 addr)
 {
 	uint32 data = -1;
 	int i;
@@ -699,19 +696,19 @@ s3c2410x_io_read_word (void* arch_instance, uint32 addr)
 }
 
 static uint32
-s3c2410x_io_read_byte (void* arch_instance, uint32 addr)
+s3c2410x_io_read_byte (void *arch_instance, uint32 addr)
 {
 	s3c2410x_io_read_word (arch_instance, addr);
 }
 
 static uint32
-s3c2410x_io_read_halfword (void* arch_instance, uint32 addr)
+s3c2410x_io_read_halfword (void *arch_instance, uint32 addr)
 {
 	s3c2410x_io_read_word (arch_instance, addr);
 }
 
 static void
-s3c2410x_io_write_word (generic_arch_t * state, uint32 addr, uint32 data)
+s3c2410x_io_write_word (generic_arch_t *state, uint32 addr, uint32 data)
 {
 	if ((addr >= UART_CTL_BASE0)
 	    && (addr < UART_CTL_BASE0 + UART_CTL_SIZE)) {
@@ -765,7 +762,6 @@ s3c2410x_io_write_word (generic_arch_t * state, uint32 addr, uint32 data)
 	case INTSUBMSK:
 		io.intsubmsk = data;
 		break;
-
 
 		/* ext interrupt */
 	case EINTMASK:
@@ -855,9 +851,8 @@ s3c2410x_io_write_halfword (generic_arch_t * state, uint32 addr, uint32 data)
 	s3c2410x_io_write_word (state, addr, data);
 }
 
-
 void
-s3c2410x_mach_init (void * arch_instance, machine_config_t * this_mach)
+s3c2410x_mach_init (void *arch_instance, machine_config_t *this_mach)
 {
 	this_mach->mach_io_do_cycle = s3c2410x_io_do_cycle;
 	this_mach->mach_io_reset = s3c2410x_io_reset;
@@ -870,10 +865,8 @@ s3c2410x_mach_init (void * arch_instance, machine_config_t * this_mach)
 
 	this_mach->mach_update_int = s3c2410x_update_int;
 
-
 	this_mach->mach_set_intr = s3c2410x_set_ext_intr;
 	this_mach->mach_pending_intr = s3c2410x_pending_ext_intr;
 	this_mach->mach_update_intr = s3c2410x_update_intr;
 	this_mach->state = (void *) arch_instance;
-
 }

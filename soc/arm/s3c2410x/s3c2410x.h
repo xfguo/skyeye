@@ -57,7 +57,6 @@
 #define LCD_CTL_BASE           (0x4D000000)
 #define LCD_CTL_SIZE           (0x60)
 
-
 /********************************************
 * GPIO Controller Registers
 ********************************************/
@@ -133,7 +132,6 @@
 #define UTXH		(0x20)
 #define URXH		(0x24)
 #define UBRDIV		(0x28)
-
 
 /**************************************/
 /* Interrupt Controller Registers     */
@@ -296,11 +294,10 @@ struct s3c2410x_uart_io
 #define UART_INT_TXD		0x2
 #define UART_INT_EXD		0x4
 
-
 #define UART_UCON_INIT		0x5
 #define UART_ULCON_INIT		0x3	//8N1
 #define UART_UTRSTAT_INIT	0x6
 
-void s3c2410x_mach_init (void * arch_instance, machine_config_t * this_mach);
+void s3c2410x_mach_init (void *arch_instance, machine_config_t *this_mach);
 
 #endif /* __S3C2410X_H_ */
