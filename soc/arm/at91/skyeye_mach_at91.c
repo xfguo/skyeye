@@ -66,7 +66,7 @@
 
 /* extern unsigned int Pen_buffer[8]; */
 
-typedef struct at91_timer_s{
+typedef struct at91_timer_s {
 	uint32_t ccr;
 	uint32_t cmr;
 	uint32_t cv;
@@ -77,9 +77,9 @@ typedef struct at91_timer_s{
 	uint32_t ier;
 	uint32_t idr;
 	uint32_t imr;
-}at91_timer_t;
+} at91_timer_t;
 
-typedef struct at91_usart_s{
+typedef struct at91_usart_s {
 	int rcr;
 	uint32_t csr;
 	uint32_t rhr;
@@ -88,8 +88,7 @@ typedef struct at91_usart_s{
 
 } at91_usart_t;
 
-typedef struct at91_io
-{
+typedef struct at91_io {
 	uint32_t syscon;		/* System control */
 	uint32_t sysflg;		/* System status flags */
 
@@ -108,7 +107,6 @@ typedef struct at91_io
 	u32 eoicr;
 	u32 spu;
 
-
 	uint32_t tcd[3];		/* Timer/counter data */
 	uint32_t tcd_reload[3];	/* Last value written */
 	at91_timer_t tc_channel[3];
@@ -125,8 +123,6 @@ typedef struct at91_io
 } at91_io_t;
 static at91_io_t at91_io;
 #define io at91_io
-
-
 
 static void
 at91_update_int (void *arch_instance)
@@ -153,23 +149,25 @@ at91_pending_intr (u32 interrupt)
 {
 	return ((io.ipr & (1 << interrupt)));
 }
+
 static void
 at91_update_intr (void *mach)
 {
 	generic_arch_t* arch_instance = get_arch_instance("");
 	s3c2410x_update_int (arch_instance);
 }
+
 static int
-at91_mem_read_byte (void *arch_instance, u32 addr, u32 * data)
+at91_mem_read_byte (void *arch_instance, u32 addr, u32 *data)
 {
 	*data = (u32) mem_read_char (arch_instance, addr);
 }
+
 static int
 at91_mem_write_byte (void *arch_instance, u32 addr, u32 data)
 {
 	mem_write_char (arch_instance, addr, (char) data);
 }
-
 
 static void
 at91_io_reset (generic_arch_t *arch_instance)
@@ -192,7 +190,6 @@ at91_io_reset (generic_arch_t *arch_instance)
 	io.ts_addr_end = 0xff00b01f;
 }
 
-
 /*at91 io_do_cycle*/
 void
 at91_io_do_cycle (generic_arch_t *state)
@@ -205,16 +202,14 @@ at91_io_do_cycle (generic_arch_t *state)
 			if (io.syscon & (t ? TC2M : TC1M)) {
 
 				io.tcd[t] = io.tcd_reload[t];
-			}
-			else {
+			} else {
 				io.tcd[t] = 0xffff;
 			}
 			at91_set_intr (t ? IRQ_TC2 : IRQ_TC1);
 			at91_update_int (state);
 			io.tc_channel[2].sr |= 0x10; /* Set CPCS bit of SR */
 
-		}
-		else {
+		} else {
 			io.tcd[t]--;
 			if(io.tcd[t] == 0x1000){
 				io.tc_channel[t].sr |= 0x10; /* Set CPCS bit of SR */
@@ -236,7 +231,6 @@ at91_io_do_cycle (generic_arch_t *state)
 			(io.usart[0].rcr > sizeof (buf) ? sizeof (buf) : io.usart[0].rcr) :
 			(io.usart[0].csr & US_RXRDY) ? 0 : 1;
 
-
 		if((n = skyeye_uart_read(-1, buf, maxread, &tv, NULL)) > 0)
 		{
 			if (hasrcr)
@@ -245,21 +239,20 @@ at91_io_do_cycle (generic_arch_t *state)
 					mem_write_char (state, io.usart[0].rpr, buf[i]);
 				if (io.usart[0].rcr == 0)
 					io.sysflg &= ~URXFE;
-			}
-			else
-			{
+			} else {
 				io.usart[0].rhr = buf[0];
 			}
 
 			io.usart[0].csr |= (US_RXRDY | US_ENDRX);
-			if (io.usart[0].ier != 0) // Only interrupt if someone wants us to do so (otherwise we'll never get here agein
-			{
+			if (io.usart[0].ier != 0) { // Only interrupt if someone wants us to do so (otherwise we'll never get here agein
 				at91_set_intr (IRQ_USART0);
 				at91_update_int (state);
 			}
 		}
-	}			/* if (rcr > 0 && ... */
-//#ifndef NO_LCD
+	}
+
+	/* if (rcr > 0 && ... */
+	//#ifndef NO_LCD
 	if (!(io.ipr & IRQ_EXT1)) {	//if now has no ts interrupt,then query
 
 		unsigned int* Pen_buffer = get_pen_buffer();
@@ -279,7 +272,6 @@ at91_io_do_cycle (generic_arch_t *state)
 //#endif
 	at91_update_int (state);
 }
-
 
 /*
  *  * Atmel serial support for uClinux console.
@@ -345,8 +337,6 @@ uart_read (generic_arch_t *state, uint32_t addr, int uartno)
 	default:
                 fprintf(stderr, "IO erro in %s, addr=0x%x\n", __FUNCTION__, addr);
 //                skyeye_exit(-1);
-
-
 	}
 	return (data);
 }
@@ -429,7 +419,7 @@ uart_write (generic_arch_t *state, uint32_t addr, uint32_t data, int uartno)
 
 static uint32_t timer_read(generic_arch_t *state, int index, int offset){
 	uint32_t data;
-	at91_timer_t * timer = &io.tc_channel[index];
+	at91_timer_t *timer = &io.tc_channel[index];
 	switch(offset){
 	case 0x0:	/* TIMER 1 CCR */
 		data = timer->ccr;
@@ -476,7 +466,7 @@ static uint32_t timer_read(generic_arch_t *state, int index, int offset){
 	return data;
 }
 static void timer_write(generic_arch_t *state, int index, int offset, uint32_t data){
-	at91_timer_t * timer = &io.tc_channel[index];
+	at91_timer_t *timer = &io.tc_channel[index];
 	switch(offset){
 	case 0x0:	/* TIMER 1 CCR */
 		timer->ccr = data;
@@ -486,8 +476,6 @@ static void timer_write(generic_arch_t *state, int index, int offset, uint32_t d
                 else {
                         io.syscon |= TC1M;
                 }
-
-
 		break;
 	case 0x4:	/* TIMER 1 CMR */
 		timer->cmr = data;
@@ -727,7 +715,7 @@ at91_io_write_word (generic_arch_t *state, uint32_t addr, uint32_t data)
 }
 
 void
-at91_mach_init (void * arch_instance, machine_config_t * this_mach)
+at91_mach_init (void *arch_instance, machine_config_t *this_mach)
 {
 #if 0
 	/* chy 2003-08-19, setprocessor */

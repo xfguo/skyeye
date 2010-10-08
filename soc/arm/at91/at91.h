@@ -227,7 +227,6 @@
  * 2001 Erwin Authried
  */
 
-
 /* 0=TC0, 1=TC1, 2=TC2 */
 #define KERNEL_TIMER 1
 
@@ -384,7 +383,6 @@
 #define AIC_ISCR	(AIC_BASE+0x12C)
 #define AIC_EOICR   (AIC_BASE+0x130)
 
-
 #ifndef __ASSEMBLER__
 struct at91_timer_channel {
 	unsigned int ccr;	/* channel control register             (WO) */
@@ -425,7 +423,6 @@ struct at91_timers {
 #define IRQ_EXT1        17
 #define IRQ_EXT2        18
 
-
 /*  TC control register */
 #define TC_SYNC	(1)
 
@@ -457,8 +454,6 @@ struct at91_timers {
 /*
  *	USART registers
  */
-
-
 /*  US control register */
 #define US_SENDA	(1<<12)
 #define US_STTO		(1<<11)
@@ -556,7 +551,6 @@ struct pmc_regs {
 	unsigned int pcsr;
 };
 #endif
-
 
 void
 at91_mach_init (void *arch_instance, machine_config_t *this_mach);
