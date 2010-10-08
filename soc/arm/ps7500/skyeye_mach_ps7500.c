@@ -103,7 +103,6 @@ typedef struct ps7500_io {
 
 	uint8_t		lcd_started;
 
-
 } ps7500_io_t;
 
 static ps7500_io_t ps7500_io;
@@ -137,7 +136,7 @@ static ps7500_io_t ps7500_io;
 
 #define FIQ		0
 
-extern void * state;
+extern void *state;
 
 uint8_t ps7500_getcode(uint8_t);
 
@@ -152,8 +151,6 @@ static void ps7500_update_int(void *state)
 	//			i, io.irq[i], i, io.irqmask[i]);
 	//	}
 	//}
-
-
 #if 0
 	state->NfiqSig = (io.fiq[FIQ] & io.fiqmask[FIQ]) ? LOW : HIGH;
 
@@ -187,17 +184,18 @@ ps7500_set_intr (void *state, u32 interrupt)
 	//io.irq |= (1 << interrupt);
 	SET_IRQ(interrupt);
 }
+
 static int
 ps7500_pending_intr (void *state, u32 interrupt)
 {
 	return io.irq[interrupt];
 }
+
 static void
 ps7500_update_intr (void *mach)
 {
 	struct machine_config *mc = (struct machine_config *) mach;
 	void *state = (void *) mc->state;
-
 
 #if 0
         state->NfiqSig = (io.fiq[FIQ] & io.fiqmask[FIQ]) ? LOW : HIGH;
@@ -244,8 +242,6 @@ static void ps7500_io_reset(void *state)
 	io.sometimes = SOMETIMES_DIVISOR;
 
 	io.lcd_started = 0;
-
-
 	//state->Exception = TRUE;
 }
 
@@ -524,8 +520,6 @@ uint32_t ps7500_io_read_word(void *state, uint32_t addr)
 				*/
 				bus_read(32, RAMSTART + (b * BANKOFFSET) + i, &data2);
 				fwrite(&data2, 4, 1, fo);
-
-
 			}
 		}
 		fclose(fo);
@@ -680,7 +674,6 @@ void ps7500_io_write_byte(void *state, uint32_t addr, uint32_t data)
 				ps7500_kb_queue(state, 0xaa);
 			break;
 
-
 		default:
 			DBG_PRINT("@0x%08x: io_write_byte(0x%08x) <- 0x%02x\n",
 				PC - 8, addr, data);
@@ -818,7 +811,6 @@ uint8_t scancode_alpha[] = {
 uint8_t scancode_number[] = {
 	0x45, 0x16, 0x1e, 0x26, 0x25, 0x2e, 0x36, 0x3d,
 	0x3e, 0x46};
-
 
 uint8_t ps7500_getcode(uint8_t c)
 {
