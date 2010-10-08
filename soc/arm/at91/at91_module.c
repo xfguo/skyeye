@@ -10,7 +10,7 @@ void module_init(){
         /*
          * register the soc to the common library.
          */
-//	register_mach("at91", at91_mach_init);
+	register_mach("at91", at91_mach_init);
 }
 
 void module_fini(){
