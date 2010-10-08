@@ -56,12 +56,9 @@ typedef struct s3c2440_io {
 	struct s3c2440_clkpower clkpower;	/* clock and power management */
 
 	int tc_prescale;
-
-
 } s3c2440_io_t;
 static s3c2440_io_t s3c2440_io;
 #define io s3c2440_io
-
 
 static inline void
 s3c2440_set_subsrcint (unsigned int irq)
@@ -127,7 +124,6 @@ s3c2440_io_reset (void *arch_instance)
 	((generic_arch_t *)arch_instance)->set_regval_by_id(1, 0x16a); /* ARCH_S3C2440 */
 }
 
-
 /* s3c2440 io_do_cycle */
 static void
 s3c2440_io_do_cycle (void *state)
@@ -175,7 +171,6 @@ s3c2440_io_do_cycle (void *state)
 		//s3c2440_update_int (state);
 	}			/* if (io.tc_prescale < 0) */
 }
-
 
 static void
 s3c2440_uart_read (u32 offset, u32 *data)
@@ -277,7 +272,7 @@ s3c2440_uart_write (void *state, u32 offset, u32 data)
 }
 
 static void
-s3c2440_timer_read (u32 offset, u32 * data)
+s3c2440_timer_read (u32 offset, u32 *data)
 {
 	switch (offset) {
 	case TCFG0:
@@ -326,7 +321,7 @@ s3c2440_timer_read (u32 offset, u32 * data)
 }
 
 static void
-s3c2440_timer_write (void  * state, u32 offset, u32 data)
+s3c2440_timer_write (void  *state, u32 offset, u32 data)
 {
 	switch (offset) {
 	case TCFG0:
@@ -368,7 +363,7 @@ s3c2440_timer_write (void  * state, u32 offset, u32 data)
 }
 
 static uint32_t
-s3c2440_io_read_word (void  * state, uint32_t addr)
+s3c2440_io_read_word (void  *state, uint32_t addr)
 {
 
 	uint32_t data = -1;
@@ -412,8 +407,7 @@ s3c2440_io_read_word (void  * state, uint32_t addr)
 					data = (1 << i);
 				else
 					data = i;
-			}
-			else
+			} else
 				data = 0;
 
 		}
@@ -525,7 +519,6 @@ s3c2440_io_write_halfword (void  *state, uint32_t addr, uint32_t data)
 	SKYEYE_DBG ("SKYEYE: s3c2440_io_write_halfword error\n");
 	s3c2440_io_write_word (state, addr, data);
 }
-
 
 void
 s3c2440_mach_init (void *arch_instance, machine_config_t *this_mach)

@@ -121,7 +121,6 @@
 #define URXH		(0x24)
 #define UBRDIV		(0x28)
 
-
 /**************************************/
 /* Interrupt Controller Registers     */
 /**************************************/
@@ -273,7 +272,6 @@ struct s3c2440_uart_io
 #define UART_INT_RXD		0x1
 #define UART_INT_TXD		0x2
 #define UART_INT_EXD		0x4
-
 
 #define UART_UCON_INIT		0x5
 #define UART_ULCON_INIT		0x3	//8N1
