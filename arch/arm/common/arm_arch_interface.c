@@ -98,21 +98,35 @@ arm_init_state ()
 		ARMul_SelectProcessor (state, ARM_v4_Prop);
 	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv4"))
 		ARMul_SelectProcessor (state, ARM_v4_Prop);
+	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv5"))
+		ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop);
 	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv6"))
 		ARMul_SelectProcessor (state, ARM_v6_Prop);
 
-	if (!strcmp(p_arm_cpu->cpu_name, "arm920t"))
-		state->lateabtSig = LOW;
-	if (!strcmp(p_arm_cpu->cpu_name, "arm11"))
-		state->lateabtSig = LOW;
 	if (!strcmp(p_arm_cpu->cpu_name, "arm7tdmi"))
 		state->lateabtSig = LOW;
 	if (!strcmp(p_arm_cpu->cpu_name, "arm720t")) {
 		state->lateabtSig = HIGH;
 		state->abort_model = 2;
 	}
+	if (!strcmp(p_arm_cpu->cpu_name, "arm7tdmis")) {
+		ARMul_SelectProcessor(state, ARM_v4_Prop);
+		state->lateabtSig = HIGH;
+	}
+	if (!strcmp(p_arm_cpu->cpu_name, "arm7500fe")) {
+		ARMul_SelectProcessor (state, ARM_v4_Prop);
+		state->lateabtSig = HIGH;
+	}
+
 	if (!strcmp(p_arm_cpu->cpu_name, "sa1100"))
 		state->lateabtSig = LOW;
+	if (!strcmp(p_arm_cpu->cpu_name, "arm920t"))
+		state->lateabtSig = LOW;
+	if (!strcmp(p_arm_cpu->cpu_name, "arm926ejs")) {
+		/* FIXME:ARM926EJS uses LOW? */
+		state->lateabtSig = LOW;
+	}
+
 	if (!strcmp(p_arm_cpu->cpu_name, "pxa27x")) {
 		ARMul_SelectProcessor (state,
 				       ARM_XScale_Prop | ARM_v5_Prop | ARM_v5e_Prop | ARM_PXA27X_Prop);
@@ -124,24 +138,9 @@ arm_init_state ()
 			       ARM_XScale_Prop | ARM_v5_Prop | ARM_v5e_Prop);
 		state->lateabtSig = LOW;
 	}
-	if (!strcmp(p_arm_cpu->cpu_name, "arm926ejs")) {
-		ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop);
-		/* FIXME:ARM926EJS uses LOW? */
+
+	if (!strcmp(p_arm_cpu->cpu_name, "arm11"))
 		state->lateabtSig = LOW;
-	}
-	if (!strcmp(p_arm_cpu->cpu_name, "arm9tdmi")) {
-		ARMul_SelectProcessor (state, ARM_v5_Prop | ARM_v5e_Prop);
-		/* FIXME:ARM926EJS uses LOW? */
-		state->lateabtSig = LOW;
-	}
-	if (!strcmp(p_arm_cpu->cpu_name, "arm7tdmis")) {
-		ARMul_SelectProcessor(state, ARM_v4_Prop);
-		state->lateabtSig = HIGH;
-	}
-	if (!strcmp(p_arm_cpu->cpu_name, "arm7500fe")) {
-		ARMul_SelectProcessor (state, ARM_v4_Prop);
-		state->lateabtSig = HIGH;
-	}
 }
 
 static uint32 step = 0;
