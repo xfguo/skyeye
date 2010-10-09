@@ -44,7 +44,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *
 * */
 
-#include "armdefs.h"
+#include <skyeye_config.h>
+#include <skyeye_arch.h>
+#include <skyeye_sched.h>
+#include <skyeye_lock.h>
 #include "s3c4510b.h"
 //zzc:2005-1-1
 #ifdef __CYGWIN__
@@ -62,8 +65,8 @@ int tv_usec;
 /* 2007-01-18 added by Anthony Lee : for new uart device frame */
 #include "skyeye_uart.h"
 
-ARMword s3c4510b_io_read_word (ARMul_State * state, ARMword addr);
-void s3c4510b_io_write_word (ARMul_State * state, ARMword addr, ARMword data);
+uint32_t s3c4510b_io_read_word (void *state, uint32_t addr);
+void s3c4510b_io_write_word (void *state, uint32_t addr, uint32_t data);
 
 /* s3c4510b Internal IO Registers
 * */
@@ -71,36 +74,36 @@ typedef struct s3c4510b_io
 {
 
 	/*System Manager control */
-	ARMword syscfg;
-	ARMword clkcon;
+	uint32_t syscfg;
+	uint32_t clkcon;
 
 	/*Interrupt Controller Registers */
-	ARMword intmod;
-	ARMword intpnd;
-	ARMword intmsk;
-	ARMword intoffset;
-	ARMword intpndtst;
-	ARMword intoset_fiq;
-	ARMword intoset_irq;
+	uint32_t intmod;
+	uint32_t intpnd;
+	uint32_t intmsk;
+	uint32_t intoffset;
+	uint32_t intpndtst;
+	uint32_t intoset_fiq;
+	uint32_t intoset_irq;
 
 	/*UART Registers */
-	ARMword ulcon0;
-	ARMword ulcon1;
-	ARMword ucon0;
-	ARMword ucon1;
-	ARMword ustat0;
-	ARMword ustat1;
-	ARMword utxbuf0;
-	ARMword utxbuf1;
-	ARMword urxbuf0;
-	ARMword urxbuf1;
-	ARMword ubrdiv0;
-	ARMword ubrdiv1;
+	uint32_t ulcon0;
+	uint32_t ulcon1;
+	uint32_t ucon0;
+	uint32_t ucon1;
+	uint32_t ustat0;
+	uint32_t ustat1;
+	uint32_t utxbuf0;
+	uint32_t utxbuf1;
+	uint32_t urxbuf0;
+	uint32_t urxbuf1;
+	uint32_t ubrdiv0;
+	uint32_t ubrdiv1;
 
 	/*Timers Registers */
-	ARMword tmod;
-	ARMword tdata0;
-	ARMword tdata1;
+	uint32_t tmod;
+	uint32_t tdata0;
+	uint32_t tdata1;
 	int tcnt0;
 	int tcnt1;
 } s3c4510b_io_t;
@@ -113,30 +116,42 @@ static s3c4510b_io_t s3c4510b_io;
 //extern int skyeye_net_on;
 static unsigned char mac_buf[4096];
 static void
-s3c4510b_update_int (ARMul_State * state)
+s3c4510b_update_int (void *state)
 {
-	ARMword requests = io.intpnd & (~io.intmsk & INT_MASK_INIT);
+	uint32_t requests = io.intpnd & (~io.intmsk & INT_MASK_INIT);
+#if 0
 	state->NfiqSig = (requests & io.intmod) ? LOW : HIGH;
 	state->NirqSig = (requests & ~io.intmod) ? LOW : HIGH;
-} static void
+#endif
+	interrupt_signal_t interrupt_signal;
+	interrupt_signal.arm_signal.firq = (requests & io.intmod) ? Low_level : High_level;
+	interrupt_signal.arm_signal.irq = (requests & ~io.intmod) ? Low_level : High_level;
+	interrupt_signal.arm_signal.reset = Prev_level;
+	send_signal(&interrupt_signal);
+}
+
+static void
 s3c4510b_set_interrupt (unsigned int irq)
 {
 	io.intpnd |= (1 << irq);
-} static int
+}
 
-s3c4510b_pending_intr (u32 interrupt)
+static int
+s3c4510b_pending_intr (uint32_t interrupt)
 {
 	return ((io.intpnd & (1 << interrupt)));
 }
+
 static void
 s3c4510b_update_intr (void *mach)
 {
 	struct machine_config *mc = (struct machine_config *) mach;
-	ARMul_State *state = (ARMul_State *) mc->state;
+	void *state = (void *) mc->state;
 	s3c4510b_update_int (state);
-} static void
+}
 
-s3c4510b_io_reset (ARMul_State * state)
+static void
+s3c4510b_io_reset (void *state)
 {
 	memset (&s3c4510b_io, 0, sizeof (s3c4510b_io));
 	io.syscfg = 0x37ffff91;
@@ -146,10 +161,8 @@ s3c4510b_io_reset (ARMul_State * state)
 	io.tcnt0 = io.tcnt1 = 0xffffffff;
 };
 
-
-						/*s3c4510b io_do_cycle */
 void
-s3c4510b_io_do_cycle (ARMul_State * state)
+s3c4510b_io_do_cycle (void *state)
 {
 	/*Timer */
 	if (ENABLE_TIMER0) {
@@ -203,28 +216,26 @@ s3c4510b_io_do_cycle (ARMul_State * state)
 	s3c4510b_update_int (state);
 }
 
-								/* IO Read Routine
-								 * */
-ARMword
-s3c4510b_io_read_byte (ARMul_State * state, ARMword addr)
+uint32_t
+s3c4510b_io_read_byte (void *state, uint32_t addr)
 {
 
 	//printf("SKYEYE: s3c4510b_io_read_byte error\n");
 	s3c4510b_io_read_word (state, addr);
 }
 
-ARMword
-s3c4510b_io_read_halfword (ARMul_State * state, ARMword addr)
+uint32_t
+s3c4510b_io_read_halfword (void *state, uint32_t addr)
 {
 
 	//printf("SKYEYE: s3c4510b_io_read_halfword error\n");
 	s3c4510b_io_read_word (state, addr);
 }
 
-ARMword
-s3c4510b_io_read_word (ARMul_State * state, ARMword addr)
+uint32_t
+s3c4510b_io_read_word (void *state, uint32_t addr)
 {
-	ARMword data = -1;
+	uint32_t data = -1;
 	switch (addr) {
 	case SYSCFG:
 		data = io.syscfg;
@@ -260,8 +271,7 @@ s3c4510b_io_read_word (ARMul_State * state, ARMword addr)
 			}
 			if (i < 26) {
 				data = (i << 2);
-			}
-			else
+			} else
 				data = 0x54;	/*no interrupt is pending, 0x54 is init data. */
 		}
 
@@ -328,25 +338,24 @@ s3c4510b_io_read_word (ARMul_State * state, ARMword addr)
 	return data;
 }
 
-
-																																			/* IO Write Routine
-																																			 * */
 void
-s3c4510b_io_write_byte (ARMul_State * state, ARMword addr, ARMword data)
+s3c4510b_io_write_byte (void *state, uint32_t addr, uint32_t data)
 {
 
 	//printf("SKYEYE: s3c4510b_io_write_byte error\n");
 	s3c4510b_io_write_word (state, addr, data);
-} void
+}
 
-s3c4510b_io_write_halfword (ARMul_State * state, ARMword addr, ARMword data)
+void
+s3c4510b_io_write_halfword (void *state, uint32_t addr, uint32_t data)
 {
 
 	//printf("SKYEYE: s3c4510b_io_write_halfword error\n");
 	s3c4510b_io_write_word (state, addr, data);
-} void
+}
 
-s3c4510b_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
+void
+s3c4510b_io_write_word (void *state, uint32_t addr, uint32_t data)
 {
 	switch (addr) {
 	case SYSCFG:
@@ -406,7 +415,6 @@ s3c4510b_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
 			io.ustat0 |= (UART_LSR_THRE | UART_LSR_TEMT);
 			if ((io.ucon0 & 0xc) == 0xc) {	/*enable interrupt */
 				s3c4510b_set_interrupt (INT_UARTTX0);
-				extern ARMul_State * state;
 				s3c4510b_update_int (state);
 			}
 		}
@@ -452,12 +460,14 @@ s3c4510b_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
 		break;
 	}
 }
+
 void
-s3c4510b_mach_init (void * arch_instance, machine_config_t * this_mach)
+s3c4510b_mach_init (void *arch_instance, machine_config_t *this_mach)
 {
-	extern ARMul_State * state;
+#if 0
 	ARMul_SelectProcessor (state, ARM_v4_Prop);
 	state->lateabtSig = HIGH;
+#endif
 	this_mach->mach_io_do_cycle = s3c4510b_io_do_cycle;
 	this_mach->mach_io_reset = s3c4510b_io_reset;
 	this_mach->mach_io_read_word = s3c4510b_io_read_word;
@@ -473,5 +483,5 @@ s3c4510b_mach_init (void * arch_instance, machine_config_t * this_mach)
 
 	//this_mach->mach_mem_read_byte = s3c4510b_mem_read_byte;
 	//this_mach->mach_mem_write_byte = s3c4510b_mem_write_byte;
-	this_mach->state = (void *) state;
+	this_mach->state = (void *) arch_instance;
 }

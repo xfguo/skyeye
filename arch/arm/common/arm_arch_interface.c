@@ -183,7 +183,7 @@ static int arm_ICE_read_byte (WORD addr, uint8_t *pv){
 //extern void ep7312_mach_init ();
 //extern void lh79520_mach_init ();
 //extern void ep9312_mach_init ();
-extern void s3c4510b_mach_init ();
+//extern void s3c4510b_mach_init ();
 //extern void s3c44b0x_mach_init ();
 //extern void s3c3410x_mach_init ();
 //extern void sa1100_mach_init ();
@@ -271,7 +271,7 @@ machine_config_t arm_machines[] = {
 	/* machine define for cpu without mmu */
 //	{"at91", at91_mach_init, NULL, NULL, NULL},		/* ATMEL AT91X40 */
 	{"lpc", lpc_mach_init, NULL, NULL, NULL},		/* PHILIPS LPC2xxxx */
-	{"s3c4510b", s3c4510b_mach_init, NULL, NULL, NULL},	/* Samsung s3c4510b */
+//	{"s3c4510b", s3c4510b_mach_init, NULL, NULL, NULL},	/* Samsung s3c4510b */
 //	{"s3c44b0x", s3c44b0x_mach_init, NULL, NULL, NULL},	/* Samsung s3c44b0x */
 //	{"s3c44b0", s3c44b0x_mach_init, NULL, NULL, NULL},	/* Samsung s3c44b0x */
 //	{"s3c3410x", s3c3410x_mach_init, NULL, NULL, NULL},	/* Samsung s3c3410x */

@@ -359,4 +359,6 @@
 #define UART_LSR_THRE   0x40	// Transmit buffer register empty
 #define UART_LSR_TEMT   0x80	// Transmit complete
 
+void
+s3c4510b_mach_init (void *arch_instance, machine_config_t *this_mach);
 #endif /* __ASM_ARCH_HARDWARE_H */
