@@ -44,7 +44,7 @@ machine_config_t * get_mach(const char* mach_name){
 	node = mach_list;
 	while(node){
 		//if(!strncmp(node->machine_name, mach_name, strlen(node->machine_name))){
-		if(!strncmp(node->machine_name, mach_name, strlen(mach_name))){
+		if(!strcmp(node->machine_name, mach_name)){
 			return node;
 		}
 		node = node->next;
