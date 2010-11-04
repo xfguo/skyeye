@@ -42,10 +42,6 @@ static char * bootcmd = "root=/dev/ram0 console=ttyS0 mem=64M";
 static const int DT_STRUCT_SIZE = 8 * 1024;
 static const char * dtb_filename = "mpc8572ds.dtb";
 
-static void load_initrd(){
-	load_file(initrd_filename, initrd_start);
-}
-
 struct boot_param_header {
         uint32_t magic;              /* magic word OF_DT_HEADER */
         uint32_t totalsize;          /* total size of DT block */
@@ -101,8 +97,6 @@ static void setup_boot_map(e500_mmu_t * mmu){
 }
 void mpc8572_boot_linux(){
 	int i;
-	load_initrd();
-	//set_bootcmd(); /* MPC8560 */
 	setup_boot_param(); /* MPC8572 */
 	for(i = 0; i < gCPU.core_num; i++){
 		e500_core_t * core = &gCPU.core[i];
