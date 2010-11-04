@@ -30,24 +30,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "sysendian.h"
 #include "skyeye_loader.h" 
 
-static void load_initrd(){
-
-	FILE *f;
-	const int initrd_start  = 32 * 1024 * 1024, initrd_size = 2 * 1024 * 1024;
-	const char * filename = "initrd.img";
-	e500_core_t * core = &gCPU.core[0];
-/*
- *   r4 - Starting address of the init RAM disk
- *   r5 - Ending address of the init RAM disk
- */
-	core->gpr[4] = initrd_start;
-	core->gpr[5] = initrd_start + initrd_size;
-
-	load_file(filename, initrd_start);
-}
-
 static void set_bootcmd(){
 	const int bd_start = 8 * 1024 * 1024;
+	const int initrd_start  = 32 * 1024 * 1024, initrd_size = 2 * 1024 * 1024;
 	e500_core_t * core = &gCPU.core[0];
 	bd_t t;
 	memset(&t, '\0', sizeof(t));
@@ -59,6 +44,14 @@ static void set_bootcmd(){
 	load_data(&t, sizeof(t), bd_start);
 
 	core->gpr[3] = bd_start;
+
+/*
+ *   r4 - Starting address of the init RAM disk
+ *   r5 - Ending address of the init RAM disk
+ */
+	core->gpr[4] = initrd_start;
+	core->gpr[5] = initrd_start + initrd_size;
+
 
 	char * bootcmd = "root=/dev/ram0 console=ttyCPM0 mem=64M";
 	const int bootcmd_start= 9 * 1024 * 1024;
@@ -90,9 +83,7 @@ static void setup_boot_map(){
 }
 void mpc8560_boot_linux(){
 	/* Fixme, will move it to skyeye.conf */
-	load_initrd();
 	set_bootcmd();
-
 	/* just for linux boot, so we need to do some map */
 	setup_boot_map();
 	gCPU.ccsr = 0xE0000; /* Just for boot linux */
