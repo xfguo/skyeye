@@ -3,6 +3,7 @@
 #include "skyeye_pref.h"
 
 #include "skyeye_types.h"
+#include "skyeye_callback.h"
 #ifdef DBCT_TEST_SPEED
 int
 do_dbct_test_speed_sec(struct skyeye_option_t *this_opion, int num_params, const char *params[])
@@ -76,4 +77,40 @@ do_deprecated_option (skyeye_option_t * this_option, int num_params,
 		 const char *params[])
 {
 	skyeye_log(Warnning_log, __FUNCTION__, "Deprecated option. Do not use any more.\n");
+}
+
+static char filename_initrd[MAX_PARAM_NAME];
+static uint32_t initrd_start;
+
+static void load_initrd(void)
+{
+	load_file(filename_initrd, initrd_start);
+}
+/* set load address for initrd image */
+int
+do_load_file_option (skyeye_option_t * this_option, int num_params,
+		 const char *params[])
+{
+	int i;
+	char name[MAX_PARAM_NAME], value[MAX_PARAM_NAME];
+	unsigned long load_mask;
+	for (i = 0; i < num_params; i++) {
+		if (split_param (params[i], name, value) < 0)
+			SKYEYE_ERR
+				("Error: sound has wrong parameter \"%s\".\n",
+				 name);
+		if (!strncmp ("filename", name, strlen (name))) {
+			strcpy(filename_initrd, value);
+		}
+		else if (!strncmp ("initrd_start", name, strlen (name))) {
+			sscanf (value, "%x", &initrd_start);
+		}
+		else
+                        SKYEYE_ERR ("Error: Unknown load_file option  \"%s\"\n", params[i]);
+	}
+	register_callback(load_initrd, Bootmach_callback);
+	/* FIXME, we should update load_base and load_mask to preference of SkyEye */
+	fprintf(stderr, "%s not finished.\n", __FUNCTION__);
+	//printf("Your elf file will be load to: base address=0x%x,mask=0x%x\n", load_base, load_mask);
+	return 0;
 }
