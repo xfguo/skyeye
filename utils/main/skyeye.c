@@ -506,7 +506,10 @@ main (int argc, char **argv)
 	ret = init_option(argc, argv, pref);
 	/* set the current preference for skyeye */
 	//update_skyeye_pref(pref);
-	if(ret == 0)
+	/* return non-zero represent not run skyeye */
+	if(ret != 0)
+		exit(0);
+	else
 		SIM_init();
 	/* Do anything you want to do , or just deadloop here. */
 	while(1)
