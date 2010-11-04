@@ -56,7 +56,10 @@ static void thread_scheduler(void){
 	 */
 	struct event *tmp ;
 	while(!(skyeye_is_running()))
-	;
+	{
+		/* set a thread cancelation-point */
+		usleep(100);
+	}
 
 	while(1)
 	{
