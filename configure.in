@@ -239,6 +239,28 @@ AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([atexit bzero getpagesize gettimeofday memmove memset munmap select setlocale socket sqrt strcasecmp strchr strdup strerror strspn strtol strtoul])
 
+dnl Check for __attribute__(())
+AC_CACHE_CHECK([for __attribute__((packed))],
+		  [ac_cv_c_attribute_packed],
+		    [ac_cv_c_attribute_packed=no
+			   AC_TRY_COMPILE(, [struct __attribute__((__packed__)) foo { int a; } b;],
+				                       [ac_cv_c_attribute_packed=yes])])
+if test "${ac_cv_c_attribute_packed}" != "no"; then
+  AC_DEFINE(HAVE_ATTRIBUTE_PACKED, 1, Support for __attribute__((packed)) for structs)
+fi
+
+AH_TEMPLATE([HAVE_ATTRIBUTE_ALIGNED], [Has __attribute__((aligned))])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],
+				        [[char testchar[4] __attribute__((aligned));]])],
+			        [AC_DEFINE(HAVE_ATTRIBUTE_ALIGNED, 1)],
+			        [])
+# librt
+AC_CHECK_LIB(rt,sem_init,[have_librt=yes],[have_librt=no])
+if test "${have_librt}" != "no"; then
+  AC_DEFINE(HAVE_LIBRT, 1, Check LIBRT)
+fi
+
+
 AC_OUTPUT([Makefile 
 	arch/arm/Makefile 
 	arch/bfin/Makefile 
@@ -250,4 +272,5 @@ AC_OUTPUT([Makefile
 	device/Makefile 
 	common/Makefile
 	soc/arm/Makefile
+	dyncom/Makefile
 	utils/Makefile])
