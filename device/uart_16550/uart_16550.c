@@ -70,7 +70,7 @@ char uart_16550_read(short size, int addr, unsigned int *result){
 		break;
 
 	default:
-		DBG_PRINT ("uart_read(%s=0x%08x)\n", "uart_reg", addr);
+		//DBG_PRINT ("uart_read(%s=0x%08x)\n", "uart_reg", addr);
 
 		break;
 	}
@@ -100,7 +100,7 @@ static char uart_16550_write(short size, int addr, unsigned int data){
 		reg->scr = data;
 		break;
 	default:
-		DBG_PRINT ("uart_write(%s=0x%08x)\n", "uart_reg", addr);
+		//DBG_PRINT ("uart_write(%s=0x%08x)\n", "uart_reg", addr);
 		break;
 	}
 
