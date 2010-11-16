@@ -111,15 +111,24 @@ dlerrordup (char *errormsg)
     errormsg = strdup (error);
   return errormsg;
 }
-
+#define Check_Failed_Module 1
 exception_t SKY_load_module(const char* module_filename){
 	exception_t ret;
 	char **module_name;
  	lt_dlhandle * handler;
 	const char* err_str = NULL;
 	//skyeye_log(Debug_log, __FUNCTION__, "module_filename = %s\n", module_filename);
+#ifndef Check_Failed_Module
         handler = lt_dlopenext(module_filename);
+#else
         //handler = dlopen(module_filename, RTLD_LAZY);
+	handler = dlopen(module_filename, RTLD_NOW);
+	if(handler == NULL){
+		err_str = dlerror();
+		skyeye_log(Error_log, __FUNCTION__, "dll error: %s\n", err_str);
+	}
+	return No_exp;
+#endif
         if (handler == NULL)
         {
         	err_str = dlerrordup(err_str);
