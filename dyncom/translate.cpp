@@ -95,7 +95,6 @@ translate_instr(cpu_t *cpu, addr_t pc, tag_t tag,
 	}
 
 	if (tag & TAG_WINDOWCHECK) {
-		arch_windowcheck(cpu, cur_bb, bb_trap, bb_instr);
 		cur_bb = bb_instr;
 	}
 

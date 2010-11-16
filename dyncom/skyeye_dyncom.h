@@ -363,8 +363,6 @@ enum {
  * pointer to CPU specific register struct
  */
 typedef void (*debug_function_t)(cpu_t*);
-typedef uint32_t (*windowcheck_function_t)(cpu_t*, uint32_t, uint32_t, uint32_t);
-uint32_t WindowCheck(cpu_t *cpu, uint32_t wr, uint32_t ws, uint32_t wt);
 
 //////////////////////////////////////////////////////////////////////
 
