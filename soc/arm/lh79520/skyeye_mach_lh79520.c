@@ -352,7 +352,7 @@ lh79520_io_write_byte (void *state, uint32_t addr, uint32_t data)
 		return lh79520_io_write_word (state, addr, data);
 	else {
 		printf ("SKYEYE: %s(%x %x) error\n", __func__, addr, data);
-		SKYEYE_OUTREGS (stderr);
+		//SKYEYE_OUTREGS (stderr);
 		system ("stty sane");
 		skyeye_exit (-1);
 	}
