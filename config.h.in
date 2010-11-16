@@ -33,6 +33,12 @@
 /* Define to 1 if you have the `atexit' function. */
 #undef HAVE_ATEXIT
 
+/* Has __attribute__((aligned)) */
+#undef HAVE_ATTRIBUTE_ALIGNED
+
+/* Support for __attribute__((packed)) for structs */
+#undef HAVE_ATTRIBUTE_PACKED
+
 /* Define to 1 if you have the <bfd.h> header file. */
 #undef HAVE_BFD_H
 
@@ -117,6 +123,9 @@
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
+
+/* Check LIBRT */
+#undef HAVE_LIBRT
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
