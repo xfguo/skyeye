@@ -24,7 +24,7 @@
 
 #ifndef __PPC_E500_CORE_H__
 #define __PPC_E500_CORE_H__
-#include <types.h>
+#include "types.h"
 #include "ppc_e500_core.h"
 /* tlb entry */
 typedef struct ppc_tlb_entry_s{
