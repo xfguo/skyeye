@@ -4,7 +4,7 @@
  * disassembler
  */
 
-#include "libcpu.h"
+#include "skyeye_dyncom.h"
 #include "frontend.h"
 #include "arm_internal.h"
 
@@ -5888,7 +5888,7 @@ arch_arm_disasm_instr(cpu_t *cpu, addr_t pc, char *line, unsigned int max_line) 
 	addr_t dummy2, dummy3;
 	int bytes = arch_arm_tag_instr(cpu, pc, &dummy1, &dummy2, &dummy3);
 
-	uint32_t instr = *(uint32_t*)&cpu->RAM[pc];
+	uint32_t instr = *(uint32_t*)&cpu->dyncom_engine->RAM[pc];
 
 	snprintf(line, max_line, "%s", ARM9DASM(instr));
 

@@ -6,7 +6,7 @@
 
 #include <assert.h>
 
-#include "libcpu.h"
+#include "skyeye_dyncom.h"
 #include "arm_types.h"
 #include "arm_internal.h"
 #include "frontend.h"
@@ -90,6 +90,7 @@ arch_func_t arch_func_arm = {
 	arch_arm_disasm_instr,
 	arch_arm_translate_cond,
 	arch_arm_translate_instr,
+	NULL,
 	// idbg support
 	arch_arm_get_psr,
 	arch_arm_get_reg,

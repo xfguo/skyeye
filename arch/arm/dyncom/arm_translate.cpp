@@ -6,8 +6,8 @@
 
 #include "llvm/Instructions.h"
 
-#include "libcpu.h"
-#include "libcpu_llvm.h"
+#include "skyeye_dyncom.h"
+#include "dyncom_llvm.h"
 #include "frontend.h"
 #include "arm_internal.h"
 #include "arm_types.h"
@@ -42,7 +42,7 @@ using namespace llvm;
 //////////////////////////////////////////////////////////////////////
 
 int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc) {
-	uint32_t instr = *(uint32_t*)&cpu->RAM[pc];
+	uint32_t instr = *(uint32_t*)&cpu->dyncom_engine->RAM[pc];
 
 	if (instr == 0xE1A0F00E) /* MOV r15, r0, r14 */
 		*tag = TAG_RET;
@@ -94,7 +94,7 @@ static inline unsigned shift4(unsigned opcode)
 
 Value *
 arch_arm_translate_cond(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
-	switch (*(uint32_t*)&cpu->RAM[pc] >> 28) {
+	switch (*(uint32_t*)&cpu->dyncom_engine->RAM[pc] >> 28) {
 		case 0x0: /* EQ */
 			return LOAD(ptr_Z);
 		case 0x1: /* NE */
@@ -135,7 +135,7 @@ arch_arm_translate_cond(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
 
 Value *operand(cpu_t *cpu, addr_t pc, BasicBlock *bb)
 {
-	uint32_t instr = *(uint32_t*)&cpu->RAM[pc];
+	uint32_t instr = *(uint32_t*)&cpu->dyncom_engine->RAM[pc];
 	if (I) { /* 32-bit immediate */
 		//XXX TODO: shifter carry out
 		uint32_t immed_8 = instr & 0xFF;
@@ -187,7 +187,7 @@ setsub(cpu_t *cpu, Value *op1, Value *op2, BasicBlock *bb)
 
 int arch_arm_translate_instr(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
 LOG("%s:%d pc=%llx\n", __func__, __LINE__, pc);
-	uint32_t instr = *(uint32_t*)&cpu->RAM[pc];
+	uint32_t instr = *(uint32_t*)&cpu->dyncom_engine->RAM[pc];
 
 //	int cond = instr >> 28;
 //	int op1 = (instr>>20)&0xFF;
