@@ -53,7 +53,9 @@
 #include <sys/systeminfo.h>
 #include <sys/stream.h>
 #include <thread.h>
-#else
+#endif
+
+#ifndef __USE_XOPEN2K8
 const uint32_t POLLRDNORM = 0x040; 
 const uint32_t POLLRDBAND = 0x080; 
 //const uint32_t POLLPRI = 0x002; 
