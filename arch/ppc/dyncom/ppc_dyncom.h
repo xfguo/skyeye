@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "llvm/Instructions.h"
 
-#include "dyncom_llvm.h"
+#include "dyncom/dyncom_llvm.h"
 #include "skyeye_dyncom.h"
 #include "skyeye_types.h"
 
