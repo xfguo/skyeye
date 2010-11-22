@@ -111,7 +111,7 @@ dlerrordup (char *errormsg)
     errormsg = strdup (error);
   return errormsg;
 }
-#define Check_Failed_Module 1
+//#define Check_Failed_Module 0
 exception_t SKY_load_module(const char* module_filename){
 	exception_t ret;
 	char **module_name;
@@ -127,7 +127,7 @@ exception_t SKY_load_module(const char* module_filename){
 		err_str = dlerror();
 		skyeye_log(Error_log, __FUNCTION__, "dll error: %s\n", err_str);
 	}
-	return No_exp;
+	return Dll_open_exp;
 #endif
         if (handler == NULL)
         {
