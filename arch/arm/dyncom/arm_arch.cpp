@@ -9,7 +9,7 @@
 #include "skyeye_dyncom.h"
 #include "arm_types.h"
 #include "arm_internal.h"
-#include "frontend.h"
+#include "dyncom/frontend.h"
 
 static void
 arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)

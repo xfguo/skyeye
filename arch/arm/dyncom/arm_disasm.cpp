@@ -5,7 +5,7 @@
  */
 
 #include "skyeye_dyncom.h"
-#include "frontend.h"
+#include "dyncom/frontend.h"
 #include "arm_internal.h"
 
 /**********************************************************************/

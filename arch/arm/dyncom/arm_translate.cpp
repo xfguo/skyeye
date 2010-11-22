@@ -7,11 +7,11 @@
 #include "llvm/Instructions.h"
 
 #include "skyeye_dyncom.h"
-#include "dyncom_llvm.h"
-#include "frontend.h"
+#include "dyncom/dyncom_llvm.h"
+#include "dyncom/frontend.h"
 #include "arm_internal.h"
 #include "arm_types.h"
-#include "tag.h"
+#include "dyncom/tag.h"
 
 using namespace llvm;
 
