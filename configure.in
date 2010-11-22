@@ -272,5 +272,4 @@ AC_OUTPUT([Makefile
 	device/Makefile 
 	common/Makefile
 	soc/arm/Makefile
-	dyncom/Makefile
 	utils/Makefile])

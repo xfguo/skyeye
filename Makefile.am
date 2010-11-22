@@ -1,15 +1,15 @@
 
-SUBDIRS =  dyncom/ arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device/ utils/ arch/sparc/ libltdl common/ soc/arm/
+SUBDIRS =  arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device/ utils/ arch/sparc/ libltdl common/ soc/arm/
 
 #AM_LDFLAGS = $(LIBLS) --start-group $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/device/libdev.a $(top_srcdir)/utils/libutils.a --end-group
 #AM_LDFLAGS = $(LIBLS) -L$(top_srcdir)/arch/arm/ -L$(top_srcdir)/arch/bfin/ -L$(top_srcdir)/arch/coldfire/ -L$(top_srcdir)/arch/mips/ -L$(top_srcdir)/device/ -L$(top_srcdir)/utils/ --start-group  -larm -lbfin -lcoldfire  -lmips -L$(top_srcdir)/arch/ppc/ -lppc -ldev -lutils --end-group
 
 #skyeye_LDADD =  -L$(top_srcdir)/common -lcommon -L$(top_srcdir)/third-party/bfd/.libs/ -lbfd
-skyeye_LDADD =  -L./common -lcommon
+#skyeye_LDADD =  
 #skyeye_LDADD =  $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/device/libdev.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/sparc/libsparc.a $(top_srcdir)/memory/libmemory.a $(top_srcdir)/third-party/bfd/libbfd.a $(top_srcdir)/third-party/libiberty/libiberty.a $(top_srcdir)/third-party/readline/libreadline.a
 
 # workaround getopt issue on Cygwin platform
-skyeye_LDADD += -lc 
+skyeye_LDADD = -lc 
 # add curses library for ubentu system.
 # skyeye_LDADD += -lncurses
 
@@ -17,8 +17,8 @@ skyeye_LDADD += -lc
 
 # some functions in "libutils.a" which is required by other libs
 #skyeye_LDADD += $(top_srcdir)/utils/libutils.a
-
-skyeye_LDFLAGS =
+#skyeye_LDADD += 
+skyeye_LDFLAGS = -L./common -lcommon `llvm-config --libs ` -lrt -L`llvm-config --libdir`
 
 INCLUDES = @COMMON_INCLUDES@ -Ithird-party/bfd/
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0   

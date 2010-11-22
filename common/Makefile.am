@@ -15,6 +15,8 @@ common_core = core/skyeye_arch.c
 common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c device/skyeye_signal.c
 common_mach = mach/skyeye_mach.c
 common_callback = callback/callback.c
+common_dyncom= dyncom/translate_singlestep_bb.cpp dyncom/translate_singlestep.cpp dyncom/translate_all.cpp dyncom/translate.cpp dyncom/timings.cpp dyncom/tag.cpp dyncom/stat.cpp dyncom/sha1.cpp dyncom/optimize.cpp dyncom/interface.cpp dyncom/function.cpp dyncom/frontend.cpp dyncom/fp.cpp dyncom/disasm.cpp dyncom/basicblock.cpp dyncom/memory.cpp
+
 
 pkglib_LTLIBRARIES = libcommon.la
 
@@ -29,7 +31,7 @@ nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
 ./include/skyeye_queue.h
 
-libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback)
+libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_dyncom)
 
 libcommon_la_LIBADD = -L$(top_builddir)/third-party/bfd/.libs/ -lbfd -L$(top_builddir)/third-party/libiberty/pic -liberty -lreadline @LIBLTDL@ @LIBADD_DL@
 
@@ -39,12 +41,13 @@ libcommon_la_LIBADD += -L$(top_builddir)/third-party/readline/
 endif
 # we will link the common module with main
 #libcommon_la_LDFLAGS = -module
+libcommon_la_LDFLAGS = `llvm-config --libs ` -lrt -L`llvm-config --libdir`
 
 skyeye_module_dir = \"$(prefix)/lib/skyeye\"
 
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_MODULE_DIR=$(skyeye_module_dir)
 
-INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party @INCLTDL@
+INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party @INCLTDL@ `llvm-config --cflags`
 
 if LCD
 INCLUDES += @LCD_CFLAGS@
