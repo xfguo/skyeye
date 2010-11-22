@@ -167,7 +167,7 @@ RW_UNLOCK(thread_lock);
 	return  Invarg_exp;
 }
 
-int del_scheduler(int id){
+int del_thread_scheduler(int id){
 	struct event *tmp ;
 	struct event *q = NULL;
 	LIST_FOREACH(tmp, &thread_head,list_entry){

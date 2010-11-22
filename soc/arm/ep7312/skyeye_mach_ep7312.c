@@ -357,7 +357,7 @@ ep7312_io_write_byte (void  *state, uint32_t addr, uint32_t data)
 		break;
 	default:
 		printf ("SKYEYE: ep7312_io_write_byte error@@@@@@@\n");
-		SKYEYE_OUTREGS (stderr);
+		//SKYEYE_OUTREGS (stderr);
 		skyeye_exit (-1);
 		break;
 	}

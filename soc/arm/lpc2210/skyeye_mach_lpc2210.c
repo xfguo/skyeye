@@ -563,7 +563,7 @@ uint32_t lpc2210_io_read_word(void *state, uint32_t addr)
 		printf("ERROR:io_read: addr = %x\n", addr);
 
 		/*fprintf(stderr,"NumInstr %llu, io_read_word unknown addr(0x%08x) = 0x%08x\n", state->NumInstrs, addr, data);*/
-		SKYEYE_OUTREGS(stderr);
+		//SKYEYE_OUTREGS(stderr);
 		//ARMul_Debug(state, 0, 0);
 		break;
 	}

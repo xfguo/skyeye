@@ -53,14 +53,20 @@
 #include <sys/systeminfo.h>
 #include <sys/stream.h>
 #include <thread.h>
-#else
+#else //no define __svr4__
+#if !defined POLLRDNORM
 const uint32_t POLLRDNORM = 0x040; 
+#endif
+#if !defined POLLRDBAND
 const uint32_t POLLRDBAND = 0x080; 
-//const uint32_t POLLPRI = 0x002; 
-//const uint32_t POLLOUT = 0x004; 
+#endif
+#if !defined POLLWRNORM
 const uint32_t POLLWRNORM = 0x100; 
+#endif
+#if !defined POLLWRBAND
 const uint32_t POLLWRBAND = 0x200;
 #endif
+#endif //__svr4__
 
 static int setup_term();
 static int setup_netlink(char * hostp, char * portp);
