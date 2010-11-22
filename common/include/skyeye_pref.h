@@ -28,6 +28,8 @@ struct _sky_pref_s{
 	 */
 	bool_t autoboot;
 
+	bool_t user_mode_sim;
+
 	uint32 uart_port;
 
 	struct termios saved_term;

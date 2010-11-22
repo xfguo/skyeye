@@ -356,6 +356,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	int index;
 	bool_t interactive_mode = True;
 	bool_t autoboot_mode = False;
+	bool_t user_mode = False;
 	int remote_debugmode = 0;
 	endian_t endian = Little_endian;
 	
@@ -372,7 +373,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	//char *exec_file = NULL;
 	int ret = 0;
 	opterr = 0;
-	while ((c = getopt (argc, argv, "be:dcp:nl:h")) != -1)
+	while ((c = getopt (argc, argv, "be:dcp:nl:hu")) != -1)
 		switch (c) {
 		case 'e':
 			exec_file = optarg;
@@ -409,6 +410,9 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 			break;
 		case 'b':
 			endian = Big_endian;
+			break;
+		case 'u':
+			user_mode = True;
 			break;
 		case '?':
 			if (isprint (optopt))
@@ -469,6 +473,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
        	pref->exec_load_mask = elf_load_mask;
 	pref->endian = endian;
 	pref->uart_port = uart_port;
+	pref->user_mode_sim = user_mode;
 	return ret;
 }
 

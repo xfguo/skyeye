@@ -26,6 +26,7 @@
 */
 
 #include <stdio.h>
+#include <skyeye_pref.h>
 
 #include "ppc_cpu.h"
 #include "ppc_exc.h"
@@ -1178,7 +1179,11 @@ void ppc_opc_sc()
 	}
 	//ppc_exception(current_core, SYSCALL ,0 ,0);
 	//e600_ppc_exception(current_core, PPC_EXC_SC ,0 ,0);
-	ppc_exception(current_core, current_core->syscall_number ,0 ,0);
+	sky_pref_t* pref = get_skyeye_pref();
+	if(pref->user_mode_sim)
+		ppc_syscall(current_core);
+	else
+		ppc_exception(current_core, current_core->syscall_number ,0 ,0);
 }
 
 /*
