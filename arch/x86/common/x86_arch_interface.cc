@@ -212,8 +212,8 @@ x86_parse_cpu (cpu_config_t * cpu, const char *param[])
 }
 extern void pc_mach_init (void * arch_instance, machine_config_t * this_mach);
 machine_config_t x86_machines[] = {
-	{"pc", pc_mach_init, NULL, NULL, NULL},
-	{NULL, NULL, NULL, NULL, NULL},
+	{"pc", NULL, pc_mach_init, NULL, NULL, NULL},
+	{NULL, NULL, NULL, NULL, NULL, NULL},
 };
 
 #if 0
@@ -308,7 +308,7 @@ static exception_t x86_set_register_by_id(int id, uint32 value){
         return No_exp;
 }
 
-exception_t mmu_read(short length, uint32 addr,uint32_t *value)
+exception_t mmu_read(short length, generic_address_t addr,uint32_t *value)
 {
 	switch(length)
 	{

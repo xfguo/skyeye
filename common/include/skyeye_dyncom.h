@@ -268,7 +268,7 @@ typedef struct dyncom_engine{
 typedef struct cpu {
 	cpu_archinfo_t info;
 	cpu_archrf_t rf;
-	uint32_t id;
+	void* cpu_data;
 	arch_func_t f;
 
 	uint16_t pc_offset;
@@ -366,7 +366,7 @@ typedef void (*debug_function_t)(cpu_t*);
 
 //////////////////////////////////////////////////////////////////////
 
-API_FUNC cpu_t *cpu_new(uint32_t flags, uint32_t arch_flags);
+API_FUNC cpu_t *cpu_new(uint32_t flags, uint32_t arch_flags,arch_func_t arch_func);
 API_FUNC void cpu_free(cpu_t *cpu);
 API_FUNC void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f);
 API_FUNC void cpu_set_flags_hint(cpu_t *cpu, uint32_t f);

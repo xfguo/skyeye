@@ -203,6 +203,7 @@ typedef struct e500_core_s{
 	uint32 ccsr_size;
 	uint32 syscall_number;
 	void (*dec_io_do_cycle)(struct e500_core_s *core);
+	void* dyncom_cpu;
 }e500_core_t;
 
 #define E500

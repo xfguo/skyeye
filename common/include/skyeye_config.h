@@ -170,7 +170,6 @@ typedef struct
 	void (*set_pc) (WORD addr);
 	WORD (*get_pc)();
 	uint32 (*get_step)();
-	//chy 2006-04-15
 	int (*ICE_write_byte) (WORD addr, uint8_t data);
 	int (*ICE_read_byte)(WORD addr, uint8_t *pv);	
 	uint32 (*get_regval_by_id)(int id);
@@ -196,6 +195,8 @@ typedef struct
 	 */
 	exception_t (*signal)(interrupt_signal_t* signal);
 
+	void (*exec) (uint32_t id);
+	void (*stop) (uint32_t id);
 } arch_config_t;
 
 typedef struct code_cov_option code_cov_t;
