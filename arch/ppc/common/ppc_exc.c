@@ -37,7 +37,7 @@
 #include "ppc_mmu.h"
 #include "tracers.h"
 
-bool ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a){
+bool_t ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a){
 	return core->ppc_exception(core, type, flags, a);
 }
 
@@ -67,7 +67,7 @@ IVOR15 Debug
 
 
 #if 1
-bool FASTCALL e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
+bool_t e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
 {
 	if (type != PPC_EXC_DEC) PPC_EXC_TRACE("@%08x: type = %08x (%08x, %08x)\n", core->pc, type, flags, a);
 	switch (type) {
@@ -142,12 +142,12 @@ bool FASTCALL e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, u
 	}
 	default:
 		PPC_EXC_ERR("unknown\n");
-		return false;
+		return False;
 	}
 	ppc_mmu_tlb_invalidate();
 	core->msr = 0;
 	core->npc = type;
-	return true;
+	return True;
 }
 #endif
 void ppc_cpu_raise_ext_exception()

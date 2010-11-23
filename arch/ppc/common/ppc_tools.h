@@ -21,17 +21,17 @@
 #ifndef __PPC_TOOLS_H__
 #define __PPC_TOOLS_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 
-static inline bool ppc_carry_3(uint32 a, uint32 b, uint32 c)
+static inline bool_t ppc_carry_3(uint32 a, uint32 b, uint32 c)
 {
 	if ((a+b) < a) {
-		return true;
+		return True;
 	}
 	if ((a+b+c) < c) {
-		return true;
+		return True;
 	}
-	return false;
+	return False;
 }
 
 static inline uint32 ppc_word_rotl(uint32 data, int n)

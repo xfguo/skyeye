@@ -21,7 +21,7 @@
 #ifndef __PPC_EXC_H__
 #define __PPC_EXC_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 #include "ppc_e500_core.h"
 /*
  *	.250
@@ -66,9 +66,9 @@
  */
 #define PPC_EXC_PROGRAM_NEXT  (1<<16)
 
-bool FASTCALL ppc_exception(e500_core_t * core, uint32 type, uint32 flags, uint32 a);
-bool FASTCALL e600_ppc_exception(e500_core_t * core, uint32 type, uint32 flags, uint32 a);
-bool FASTCALL e500_ppc_exception(e500_core_t * core, uint32 type, uint32 flags, uint32 a);
+bool_t ppc_exception(e500_core_t * core, uint32 type, uint32 flags, uint32 a);
+bool_t e600_ppc_exception(e500_core_t * core, uint32 type, uint32 flags, uint32 a);
+bool_t e500_ppc_exception(e500_core_t * core, uint32 type, uint32 flags, uint32 a);
 void ppc_cpu_raise_ext_exception();
 void ppc_cpu_cancel_ext_exception();
 

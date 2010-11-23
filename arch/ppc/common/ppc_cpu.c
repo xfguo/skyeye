@@ -35,14 +35,14 @@
 //#include "io/graphic/gcard.h"
 
 
-static bool gSinglestep = false;
+static bool_t gSinglestep = false;
 
 //uint32 gBreakpoint2 = 0x11b3acf4;
 uint32 gBreakpoint3 = 0xc016ee74&0;
 uint32 gBreakpoint = 0x11b3acf4&0;
 uint32 gBreakpoint2 = 0xc017a4f4&0;
 
-bool activate = false;
+bool_t activate = false;
 static inline void ppc_debug_hook()
 {
 	if (current_core->pc == gBreakpoint) {
@@ -274,7 +274,7 @@ void ppc_cpu_map_framebuffer(uint32 pa, uint32 ea)
 	current_core->dbatl[0] = pa;
 }
 
-void ppc_set_singlestep_v(bool v, const char *file, int line, const char *format, ...)
+void ppc_set_singlestep_v(bool_t v, const char *file, int line, const char *format, ...)
 {
 	va_list arg;
 	va_start(arg, format);
@@ -285,7 +285,7 @@ void ppc_set_singlestep_v(bool v, const char *file, int line, const char *format
 	gSinglestep = v;
 }
 
-void ppc_set_singlestep_nonverbose(bool v)
+void ppc_set_singlestep_nonverbose(bool_t v)
 {
 	gSinglestep = v;
 }

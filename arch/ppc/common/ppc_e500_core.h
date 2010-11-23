@@ -24,21 +24,21 @@
 
 #ifndef __PPC_E500_CORE_H__
 #define __PPC_E500_CORE_H__
-#include "types.h"
+#include "skyeye_types.h"
 #include "ppc_e500_core.h"
 /* tlb entry */
 typedef struct ppc_tlb_entry_s{
-	uint v;
-	uint ts;
-	uint tid;
-	uint epn;
-	uint rpn;
-	uint size;
-	uint usxrw;
-	uint wimge;
-	uint x;
-	uint u;
-	uint iprot;	
+	uint32 v;
+	uint32 ts;
+	uint32 tid;
+	uint32 epn;
+	uint32 rpn;
+	uint32 size;
+	uint32 usxrw;
+	uint32 wimge;
+	uint32 x;
+	uint32 u;
+	uint32 iprot;	
 }ppc_tlb_entry_t;
 
 
@@ -74,7 +74,6 @@ typedef union Vector_t {
 	uint8 b[16];
 	sint8 sb[16];
 } Vector_t;
-
 /**
  * description for e500 core, refer to E500CORERM manual
  */
@@ -124,20 +123,20 @@ typedef struct e500_core_s{
 	uint32 pc;
 	uint32 npc;
 	uint32 current_opc;
-	bool   exception_pending;
-	bool   dec_exception;
-	bool   ext_exception;
-	bool   stop_exception;
-	bool   singlestep_ignore;
+	bool_t   exception_pending;
+	bool_t   dec_exception;
+	bool_t   ext_exception;
+	bool_t   stop_exception;
+	bool_t   singlestep_ignore;
 
 	uint32 pagetable_base;
 	int    pagetable_hashmask;
 	uint32 reserve;
-	bool   have_reservation;
+	bool_t   have_reservation;
 	
 	// for generic cpu core
 	uint32 effective_code_page;
-	byte  *physical_code_page;
+	uint8  *physical_code_page;
 	uint64 pdec;	// more precise version of dec
 	uint64 ptb;	// more precise version of tb
 
@@ -199,7 +198,7 @@ typedef struct e500_core_s{
 	uint32 ipi_flag;
 	uint32 step;
 	int (*effective_to_physical)(struct e500_core_s * core, uint32 addr, int flags, uint32 *result);
-	bool (*ppc_exception)(struct e500_core_s *core, uint32 type, uint32 flags, uint32 a);
+	bool_t (*ppc_exception)(struct e500_core_s *core, uint32 type, uint32 flags, uint32 a);
 	uint32 (*get_ccsr_base)(uint32 ccsr_reg);
 	uint32 ccsr_size;
 	uint32 syscall_number;

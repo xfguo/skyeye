@@ -21,9 +21,9 @@
 #ifndef __PPC_DEC_H__
 #define __PPC_DEC_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 
-void FASTCALL ppc_exec_opc();
+void ppc_exec_opc();
 void ppc_dec_init();
 
 typedef void (*ppc_opc_function)();

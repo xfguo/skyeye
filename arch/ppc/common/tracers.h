@@ -21,7 +21,7 @@
 #ifndef __TRACERS_H__
 #define __TRACERS_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 #include "snprintf.h"
 
 #define ht_printf(...)

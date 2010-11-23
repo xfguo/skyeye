@@ -21,13 +21,13 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 
 /*
  *	Debugger Interface
  */
-void ppc_set_singlestep_v(bool v, const char *file, int line, const char *infoformat, ...);
-void ppc_set_singlestep_nonverbose(bool v);
+void ppc_set_singlestep_v(bool_t v, const char *file, int line, const char *infoformat, ...);
+void ppc_set_singlestep_nonverbose(bool_t v);
 
 #define SINGLESTEP(info...)	ppc_set_singlestep_v(true, __FILE__, __LINE__, info)
 

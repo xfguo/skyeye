@@ -23,7 +23,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include "types.h"
+//#include "types.h"
 #include "ppc_cpm.h"
 #include "ppc_e500_core.h"
 
@@ -406,10 +406,10 @@ void ppc_cpu_atomic_cancel_ext_exception();
 extern uint32 gBreakpoint;
 extern uint32 gBreakpoint2;
 
-FILE * prof_file;
+extern FILE * prof_file;
 
-void ppc_set_singlestep_v(bool v, const char *file, int line, const char *format, ...);
-void ppc_set_singlestep_nonverbose(bool v);
+void ppc_set_singlestep_v(bool_t v, const char *file, int line, const char *format, ...);
+void ppc_set_singlestep_nonverbose(bool_t v);
 
 #endif
  

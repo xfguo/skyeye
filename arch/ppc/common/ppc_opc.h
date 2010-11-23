@@ -21,7 +21,7 @@
 #ifndef __PPC_OPC_H__
 #define __PPC_OPC_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 
 static inline void ppc_update_cr0(uint32 r)
 {

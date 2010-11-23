@@ -27,7 +27,7 @@
 #include "ppc_mmu.h"
 #include "tracers.h"
 
-bool FASTCALL e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
+bool_t e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
 {
 	switch(type){
 		case CRI_INPUT:
@@ -222,5 +222,5 @@ bool FASTCALL e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, u
 	}
 	core->npc = (core->ivpr & 0xFFFF0000) | (core->ivor[type] & 0xFFF0);
 	//printf("In %s,npc=0x%x, &npc=0x%x\n", __FUNCTION__, core->npc, &core->npc);
-	return true;
+	return True;
 }

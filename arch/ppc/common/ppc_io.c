@@ -88,7 +88,7 @@ int FASTCALL ppc_read_effective_half(uint32 addr, uint16 *result)
 	return r;
 }
 
-int FASTCALL ppc_read_effective_byte(uint32 addr, uint8 *result)
+int ppc_read_effective_byte(uint32 addr, uint8 *result)
 { 
 	uint32 p;
 	int r;

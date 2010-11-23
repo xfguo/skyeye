@@ -72,7 +72,7 @@
 /* Undefine this to turn of the MSR_VEC check for vector instructions. */
 //#define __VEC_EXC_OFF__
 
-#include "types.h"
+#include "skyeye_types.h"
 
 //#include "tools/snprintf.h"
 

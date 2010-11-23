@@ -50,7 +50,7 @@ void ppc_set_msr(uint32 newmsr)
 		PPC_CPU_WARN("MSR[SE] (singlestep enable) set, but compiled w/o SE support.\n");
 	}
 #else 
-	current_core->singlestep_ignore = true;
+	current_core->singlestep_ignore = True;
 #endif
 	if (newmsr & PPC_CPU_UNSUPPORTED_MSR_BITS) {
 		PPC_CPU_ERR("unsupported bits in MSR set: %08x @%08x\n", newmsr & PPC_CPU_UNSUPPORTED_MSR_BITS, current_core->pc);
@@ -91,9 +91,9 @@ void ppc_opc_bcx()
 	if (!(BO & 4)) {
 		current_core->ctr--;
 	}
-	bool bo2 = ((BO & 2)?1:0);
-	bool bo8 = ((BO & 8)?1:0); // branch condition true
-	bool cr = ((current_core->cr & (1<<(31-BI)))?1:0) ;
+	bool_t bo2 = ((BO & 2)?1:0);
+	bool_t bo8 = ((BO & 8)?1:0); // branch condition true
+	bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0) ;
 	if (((BO & 4) || ((current_core->ctr!=0) ^ bo2))
 	&& ((BO & 16) || (!(cr ^ bo8)))) {
 		if (!(current_core->current_opc & PPC_OPC_AA)) {
@@ -117,8 +117,8 @@ void ppc_opc_bcctrx()
 	PPC_OPC_TEMPL_XL(current_core->current_opc, BO, BI, BD);
 	PPC_OPC_ASSERT(BD==0);
 	PPC_OPC_ASSERT(!(BO & 2));     
-	bool bo8 = ((BO & 8)?1:0);
-	bool cr = ((current_core->cr & (1<<(31-BI)))?1:0);
+	bool_t bo8 = ((BO & 8)?1:0);
+	bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0);
 	if ((BO & 16) || (!(cr ^ bo8))) {
 		if (current_core->current_opc & PPC_OPC_LK) {
 			current_core->lr = current_core->pc + 4;
@@ -139,9 +139,9 @@ void ppc_opc_bclrx()
 	if (!(BO & 4)) {
 		current_core->ctr--;
 	}
-	bool bo2 = ((BO & 2)?1:0);
-	bool bo8 = ((BO & 8)?1:0);
-	bool cr = ((current_core->cr & (1<<(31-BI)))?1:0);
+	bool_t bo2 = ((BO & 2)?1:0);
+	bool_t bo8 = ((BO & 8)?1:0);
+	bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0);
 	if (((BO & 4) || ((current_core->ctr!=0) ^ bo2))
 	&& ((BO & 16) || (!(cr ^ bo8)))) {
 		BD = current_core->lr & 0xfffffffc;
@@ -815,7 +815,7 @@ void ppc_opc_mtspr()
 			return;
 		}
 		case 25: 
-			if (!ppc_mmu_set_sdr1(current_core->gpr[rS], true)) {
+			if (!ppc_mmu_set_sdr1(current_core->gpr[rS], True)) {
 				PPC_OPC_ERR("cannot set sdr1\n");
 			}
 			return;

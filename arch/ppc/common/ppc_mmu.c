@@ -461,7 +461,7 @@ A PTEG contains eight
 PTEs of eight bytes each; therefore, each PTEG is 64 bytes long.
 */
 
-bool FASTCALL ppc_mmu_set_sdr1(uint32 newval, bool quiesce)
+bool_t   ppc_mmu_set_sdr1(uint32 newval, bool_t quiesce)
 {
 	/* if (newval == current_core->sdr1)*/ quiesce = false;
 	PPC_MMU_TRACE("new pagetable: sdr1 = 0x%08x\n", newval);
@@ -494,7 +494,7 @@ bool FASTCALL ppc_mmu_set_sdr1(uint32 newval, bool quiesce)
 	return true;
 }
 
-bool FASTCALL ppc_mmu_page_create(uint32 ea, uint32 pa)
+bool_t   ppc_mmu_page_create(uint32 ea, uint32 pa)
 {
 	uint32 sr = current_core->sr[EA_SR(ea)];
 	uint32 page_index = EA_PageIndex(ea);  // 16 bit
@@ -532,12 +532,12 @@ bool FASTCALL ppc_mmu_page_create(uint32 ea, uint32 pa)
 	return false;
 }
 
-inline bool FASTCALL ppc_mmu_page_free(uint32 ea)
+inline bool_t   ppc_mmu_page_free(uint32 ea)
 {
 	return true;
 }
 
-inline int FASTCALL ppc_direct_physical_memory_handle(uint32 addr, byte *ptr)
+inline int   ppc_direct_physical_memory_handle(uint32 addr, uint8 *ptr)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -548,7 +548,7 @@ inline int FASTCALL ppc_direct_physical_memory_handle(uint32 addr, byte *ptr)
 	return PPC_MMU_FATAL;
 }
 
-int FASTCALL ppc_direct_effective_memory_handle(uint32 addr, byte *ptr)
+int   ppc_direct_effective_memory_handle(uint32 addr, uint8 *ptr)
 {
 	uint32 ea;
 	int r;
@@ -558,7 +558,7 @@ int FASTCALL ppc_direct_effective_memory_handle(uint32 addr, byte *ptr)
 	return r;
 }
 
-int FASTCALL ppc_direct_effective_memory_handle_code(uint32 addr, byte *ptr)
+int   ppc_direct_effective_memory_handle_code(uint32 addr, uint8 *ptr)
 {
 	uint32 ea;
 	int r;
@@ -568,7 +568,7 @@ int FASTCALL ppc_direct_effective_memory_handle_code(uint32 addr, byte *ptr)
 	return r;
 }
 
-inline int FASTCALL ppc_read_physical_qword(uint32 addr, Vector_t *result)
+inline int   ppc_read_physical_qword(uint32 addr, Vector_t *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -581,7 +581,7 @@ inline int FASTCALL ppc_read_physical_qword(uint32 addr, Vector_t *result)
 	return io_mem_read128(addr, (uint128 *)result);
 }
 
-inline int FASTCALL ppc_read_physical_dword(uint32 addr, uint64 *result)
+inline int   ppc_read_physical_dword(uint32 addr, uint64 *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -596,7 +596,7 @@ inline int FASTCALL ppc_read_physical_dword(uint32 addr, uint64 *result)
 	return ret;
 }
 
-int FASTCALL ppc_read_physical_word(uint32 addr, uint32 *result)
+int   ppc_read_physical_word(uint32 addr, uint32 *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -610,7 +610,7 @@ int FASTCALL ppc_read_physical_word(uint32 addr, uint32 *result)
 	return PPC_MMU_OK;
 }
 
-inline int FASTCALL ppc_read_physical_half(uint32 addr, uint16 *result)
+inline int   ppc_read_physical_half(uint32 addr, uint16 *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -625,7 +625,7 @@ inline int FASTCALL ppc_read_physical_half(uint32 addr, uint16 *result)
 	return ret;
 }
 
-inline int FASTCALL ppc_read_physical_byte(uint32 addr, uint8 *result)
+inline int   ppc_read_physical_byte(uint32 addr, uint8 *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -640,7 +640,7 @@ inline int FASTCALL ppc_read_physical_byte(uint32 addr, uint8 *result)
 	return ret;
 }
 
-inline int FASTCALL ppc_read_effective_code(uint32 addr, uint32 *result)
+inline int   ppc_read_effective_code(uint32 addr, uint32 *result)
 {
 	if (addr & 3) {
 		// EXC..bla
@@ -654,7 +654,7 @@ inline int FASTCALL ppc_read_effective_code(uint32 addr, uint32 *result)
 	return r;
 }
 
-inline int FASTCALL ppc_read_effective_qword(uint32 addr, Vector_t *result)
+inline int   ppc_read_effective_qword(uint32 addr, Vector_t *result)
 {
 	uint32 p;
 	int r;
@@ -668,7 +668,7 @@ inline int FASTCALL ppc_read_effective_qword(uint32 addr, Vector_t *result)
 	return r;
 }
 
-inline int FASTCALL ppc_read_effective_dword(uint32 addr, uint64 *result)
+inline int   ppc_read_effective_dword(uint32 addr, uint64 *result)
 {
 	uint32 p;
 	int r;
@@ -695,7 +695,7 @@ inline int FASTCALL ppc_read_effective_dword(uint32 addr, uint64 *result)
 	return r;
 
 }
-inline int FASTCALL ppc_write_physical_qword(uint32 addr, Vector_t *data)
+inline int   ppc_write_physical_qword(uint32 addr, Vector_t *data)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -712,7 +712,7 @@ inline int FASTCALL ppc_write_physical_qword(uint32 addr, Vector_t *data)
 	}
 }
 
-inline int FASTCALL ppc_write_physical_dword(uint32 addr, uint64 data)
+inline int   ppc_write_physical_dword(uint32 addr, uint64 data)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -728,7 +728,7 @@ inline int FASTCALL ppc_write_physical_dword(uint32 addr, uint64 data)
 	}
 }
 
-inline int FASTCALL ppc_write_physical_word(uint32 addr, uint32 data)
+inline int   ppc_write_physical_word(uint32 addr, uint32 data)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -739,7 +739,7 @@ inline int FASTCALL ppc_write_physical_word(uint32 addr, uint32 data)
 #endif
 	return io_mem_write(addr, ppc_bswap_word(data), 4);
 }
-inline int FASTCALL ppc_write_effective_qword(uint32 addr, Vector_t data)
+inline int   ppc_write_effective_qword(uint32 addr, Vector_t data)
 {
 	uint32 p;
 	int r;
@@ -752,7 +752,7 @@ inline int FASTCALL ppc_write_effective_qword(uint32 addr, Vector_t data)
 	return r;
 }
 
-inline int FASTCALL ppc_write_effective_dword(uint32 addr, uint64 data)
+inline int   ppc_write_effective_dword(uint32 addr, uint64 data)
 {
 	uint32 p;
 	int r;
@@ -782,7 +782,7 @@ inline int FASTCALL ppc_write_effective_dword(uint32 addr, uint64 data)
  *	DMA Interface
  */
 
-bool	ppc_dma_write(uint32 dest, const void *src, uint32 size)
+bool_t	ppc_dma_write(uint32 dest, const void *src, uint32 size)
 {
 #if 0
 	if (dest > boot_romSize || (dest+size) > boot_romSize) return false;
@@ -794,7 +794,7 @@ bool	ppc_dma_write(uint32 dest, const void *src, uint32 size)
 	return true;
 }
 
-bool	ppc_dma_read(void *dest, uint32 src, uint32 size)
+bool_t	ppc_dma_read(void *dest, uint32 src, uint32 size)
 {
 #if 0
 	if (src > boot_romSize || (src+size) > boot_romSize) return false;
@@ -806,7 +806,7 @@ bool	ppc_dma_read(void *dest, uint32 src, uint32 size)
 	return true;
 }
 
-bool	ppc_dma_set(uint32 dest, int c, uint32 size)
+bool_t	ppc_dma_set(uint32 dest, int c, uint32 size)
 {
 #if 0
 	if (dest > boot_romSize || (dest+size) > boot_romSize) return false;
@@ -822,17 +822,17 @@ bool	ppc_dma_set(uint32 dest, int c, uint32 size)
 /***************************************************************************
  *	DEPRECATED prom interface
  */
-bool ppc_prom_set_sdr1(uint32 newval, bool quiesce)
+bool_t ppc_prom_set_sdr1(uint32 newval, bool_t quiesce)
 {
 	return ppc_mmu_set_sdr1(newval, quiesce);
 }
 
-bool ppc_prom_effective_to_physical(uint32 *result, uint32 ea)
+bool_t ppc_prom_effective_to_physical(uint32 *result, uint32 ea)
 {
 	return ppc_effective_to_physical(current_core, ea, PPC_MMU_READ|PPC_MMU_SV|PPC_MMU_NO_EXC, result) == PPC_MMU_OK;
 }
 
-bool ppc_prom_page_create(uint32 ea, uint32 pa)
+bool_t ppc_prom_page_create(uint32 ea, uint32 pa)
 {
 	uint32 sr = current_core->sr[EA_SR(ea)];
 	uint32 page_index = EA_PageIndex(ea);  // 16 bit
@@ -870,7 +870,7 @@ bool ppc_prom_page_create(uint32 ea, uint32 pa)
 	return false;
 }
 
-bool ppc_prom_page_free(uint32 ea)
+bool_t ppc_prom_page_free(uint32 ea)
 {
 	return true;
 }

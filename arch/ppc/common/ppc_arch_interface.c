@@ -50,8 +50,8 @@ ppc_reset_state ()
 	//skyeye_config.mach->mach_io_reset(&gCPU);/* set all the default value for register */	
 }
 
-byte * init_ram; /* FIXME: 16k init ram for 8560, will be replaced by memory module */
-byte * boot_rom; /* FIXME : default 8M bootrom for 8560, will be replaced by memory module */
+uint8 * init_ram; /* FIXME: 16k init ram for 8560, will be replaced by memory module */
+uint8 * boot_rom; /* FIXME : default 8M bootrom for 8560, will be replaced by memory module */
 
 unsigned long init_ram_start_addr, init_ram_size;
 uint32 boot_romSize;

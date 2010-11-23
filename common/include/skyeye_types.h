@@ -45,6 +45,11 @@ typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
+typedef int8_t sint8;
+typedef int16_t sint16;
+typedef int32_t sint32;
+typedef int64_t sint64;
+
 typedef enum {
         False = 0,
         True
@@ -104,7 +109,7 @@ typedef enum{
 typedef enum{
 	Generic_exp = 0,
 	Core,
-	Module,
+	ModuleLoading,
 	Conf
 }exception_class_t;
 
