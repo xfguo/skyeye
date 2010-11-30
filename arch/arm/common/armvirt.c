@@ -23,8 +23,6 @@ table. The routines PutWord and GetWord implement this. Pages are never
 freed as they might be needed again. A single area of memory may be
 defined to generate aborts. */
 
-//chy 2005-09-12 disable the nouse armopts.h
-//#include "armopts.h"
 #include "armdefs.h"
 #include "ansidecl.h"
 //#include "code_cov.h"
@@ -436,21 +434,6 @@ ARMul_LoadHalfWord (ARMul_State * state, ARMword address)
 
 }
 
-#if 0
-ARMword
-ARMul_LoadHalfWord (ARMul_State * state, ARMword address)
-{
-	ARMword temp, offset;
-
-	state->NumNcycles++;
-
-	temp = ARMul_ReadWord (state, address);
-	offset = (((ARMword) state->bigendSig * 2) ^ (address & 2)) << 3;	/* bit offset into the word */
-
-	return (temp >> offset) & 0xffff;
-}
-#endif
-
 /***************************************************************************\
 *                      Read Byte (but don't tell anyone!)                   *
 \***************************************************************************/
@@ -489,19 +472,6 @@ ARMul_ReadByte (ARMul_State * state, ARMword address)
 	return data;
 
 }
-
-#if 0
-ARMword
-ARMul_ReadByte (ARMul_State * state, ARMword address)
-{
-	ARMword temp, offset;
-
-	temp = ARMul_ReadWord (state, address);
-	offset = (((ARMword) state->bigendSig * 3) ^ (address & 3)) << 3;	/* bit offset into the word */
-
-	return (temp >> offset & 0xffL);
-}
-#endif
 
 /***************************************************************************\
 *                     Load Byte, (Non Sequential Cycle)                     *
@@ -571,31 +541,6 @@ ARMul_StoreWordN (ARMul_State * state, ARMword address, ARMword data)
 	ARMul_WriteWord (state, address, data);
 }
 
-#if 0
-/***************************************************************************\
-*                    test the virtual addr is or isn't IO address           *
-\***************************************************************************/
-//chy: 2003-05-26
-//extern skyeye_config_t skyeye_config;
-int
-ARMul_notIOaddr (ARMul_State * state, ARMword address)
-{
-	if (!(state->mmu.control & CONTROL_MMU)) {
-		//chy: now is hacking, not very complete
-		if (address >= skyeye_config.ioaddr.addr_begin
-		    && address <= skyeye_config.ioaddr.addr_end)
-			return 0;
-		else
-			return 1;
-	}
-	else {
-		printf ("ARMul_noIOaddr for mmuenable should do in the future!!!\n");
-		exit (-1);
-	}
-
-}
-#endif
-
 /***************************************************************************\
 *                    Store HalfWord, (Non Sequential Cycle)                 *
 \***************************************************************************/
@@ -618,38 +563,6 @@ ARMul_StoreHalfWord (ARMul_State * state, ARMword address, ARMword data)
 	}
 }
 
-#if 0
-void
-ARMul_StoreHalfWord (ARMul_State * state, ARMword address, ARMword data)
-{
-	ARMword temp, offset;
-
-	state->NumNcycles++;
-
-#ifdef VALIDATE
-	if (address == TUBE) {
-		if (data == 4)
-			state->Emulate = FALSE;
-		else
-			(void) putc ((char) data, stderr);	/* Write Char */
-		return;
-	}
-#endif
-	//chy 2003-05-26, if the addr is io addr, then there is error(read io addr maybe change the io register value), so i change it. but now only support mmuless. for mmuenable, it will change again.
-	if (ARMul_notIOaddr (state, address)) {
-		temp = ARMul_ReadWord (state, address);
-	}
-	else {
-		temp = 0;
-	}
-
-	offset = (((ARMword) state->bigendSig * 2) ^ (address & 2)) << 3;	/* bit offset into the word */
-
-	PutWord (state, address,
-		 (temp & ~(0xffffL << offset)) | ((data & 0xffffL) <<
-						  offset));
-}
-#endif
 //chy 2006-04-15 
 int ARMul_ICE_WriteByte (ARMul_State * state, ARMword address, ARMword data)
 {
@@ -680,27 +593,6 @@ ARMul_WriteByte (ARMul_State * state, ARMword address, ARMword data)
 		ARMul_CLEARABORT;
 	}
 }
-
-#if 0
-void
-__ARMul_WriteByte (ARMul_State * state, ARMword address, ARMword data)
-{
-	ARMword temp, offset;
-
-	//chy 2003-05-26, if the addr is io addr, then there is error(read io addr maybe change the io register value), so i change it. but now only support mmuless. for mmuenable, it will change again.
-	if (ARMul_notIOaddr (state, address)) {
-		temp = ARMul_ReadWord (state, address);
-	}
-	else {
-		temp = 0;
-	}
-
-	offset = (((ARMword) state->bigendSig * 3) ^ (address & 3)) << 3;	/* bit offset into the word */
-
-	PutWord (state, address,
-		 (temp & ~(0xffL << offset)) | ((data & 0xffL) << offset));
-}
-#endif
 
 /***************************************************************************\
 *                    Store Byte, (Non Sequential Cycle)                     *
