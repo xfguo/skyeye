@@ -112,8 +112,6 @@ typedef unsigned long long      uint64_t;
 */
 
 #include "armmmu.h"
-#include "armmem.h"
-#include "armio.h"
 //#include "lcd/skyeye_lcd.h"
 
 
