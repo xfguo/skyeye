@@ -72,7 +72,33 @@ void* get_conf_obj(char* objname){
 	else
 		return retval->data;
 }
+#define TYPE_CASTING(conf_obj, type_string) (##type_string##)get_cast_conf_obj(conf_obj, type_string)
 
+
+/**
+* @brief For type casting safely
+*
+* @param conf_obj
+* @param type_string
+*
+* @return 
+*/
+void* get_cast_conf_obj(conf_object_t* conf_obj, const char* type_string){
+	if(!strncmp(conf_obj->objname, type_string, strlen(type_string))){
+		return conf_obj->obj;
+	}
+	else{
+		skyeye_log(Warnning_log, __FUNCTION__, "Type %s cast is failed!\n", type_string);
+		return NULL;
+	}
+}
+conf_object_t* get_conf_obj_by_cast(void* obj, const char* type_string){
+	conf_object_t* conf_obj = malloc(sizeof(conf_object_t));
+	conf_obj->obj = obj;
+	conf_obj->objname = type_string;
+	//put_conf_obj(obj, type_string);
+	return conf_obj;
+}
 void* list_all_obj(){
 }
 

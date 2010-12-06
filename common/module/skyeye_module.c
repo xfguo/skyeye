@@ -111,7 +111,7 @@ dlerrordup (char *errormsg)
     errormsg = strdup (error);
   return errormsg;
 }
-//#define Check_Failed_Module 0
+#define Check_Failed_Module 0
 exception_t SKY_load_module(const char* module_filename){
 	exception_t ret;
 	char **module_name;

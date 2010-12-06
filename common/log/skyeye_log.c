@@ -115,7 +115,7 @@ char* get_exp_str(exception_t exp){
 		return no_exp_str;
 	return exp_str[exp];
 }
-void skyeye_log(log_level_t log_level, char* func_name, char* format, ...){
+void skyeye_log(log_level_t log_level,const char* func_name, char* format, ...){
 	static char buf[1024];
 	memset(buf, '\0', 1024);
 	va_list args;

@@ -23,7 +23,7 @@ static void check_steps(generic_arch_t* arch_instance){
 }
 
 static int com_show_step(char* arg){
-	generic_arch_t* arch_instance = get_arch_instance();
+	generic_arch_t* arch_instance = get_arch_instance("");
 	if(!arch_instance)
 		return 1;
 	uint32 step = arch_instance->get_step();
@@ -41,7 +41,7 @@ void init_stepi(){
  */
 void skyeye_stepi(int steps){
 	/* FIXME, that is not true for variable length of ISA, so get_next_pc should implemented for every core  */
-	generic_arch_t* arch_instance = get_arch_instance();
+	generic_arch_t* arch_instance = get_arch_instance("");
 	/* we do not have valid arch_instance now */
 	if(arch_instance == NULL){
 		return;

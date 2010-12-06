@@ -63,7 +63,7 @@ typedef struct generic_core_s
  * register a simulation module for an architecture.
  */
 void register_arch(arch_config_t * arch);
-
+generic_arch_t * get_arch_instance(const char* arch_name);
 #ifdef __cplusplus
 }
 #endif
