@@ -37,7 +37,10 @@
 #include <sys/time.h>
 #endif
 
+#include "skyeye_uart.h"
 #define UART_IRQ 26
+
+#define TODO(str) fprintf(stderr, "not finish porting %s for new framework.\n", str)
 
 typedef struct ccsr_reg_s{
 	//uint32_t ccsr; /* Configuration,control and status registers base address register */
@@ -289,17 +292,16 @@ mpc8572_io_reset (void *state)
 static uint32_t
 mpc8572_io_read_byte (void *state, uint32_t offset)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
-
         mpc8572_io_t *io = &mpc8572_io;
 
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
 		switch (offset) {
 		default:
+			/*
 			fprintf (stderr,
 				 "in %s, error when read CCSR.addr=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, core->pc);
+			*/
 			skyeye_exit (-1);
 		}
 	}
@@ -309,15 +311,19 @@ mpc8572_io_read_byte (void *state, uint32_t offset)
 			case 0xE0000:
 				return io->por_conf.porpllsr;
 			default:
+				/*
 				fprintf (stderr,
 					 "in %s, error when read CCSR.addr=0x%x,pc=0x%x\n",
 					 __FUNCTION__, offset, current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
 	switch (offset) {
 		case 0x0:
-			return cpu->ccsr;
+			//return cpu->ccsr;
+			TODO("ccsr");
+			return 0;
 		case 0x90C80:
 			return io->sccr;
 		case 0x300C:
@@ -377,18 +383,18 @@ mpc8572_io_read_byte (void *state, uint32_t offset)
 		case 0x4607:
 			return io->uart[1].scr;
 		default:
+			/*
 			fprintf (stderr,
 				 "in %s, error when read CCSR. offset=0x%x, pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
+			*/
+			return 0;
 		//skyeye_exit(-1);
 	}
 }
 static uint32_t
 mpc8572_io_read_halfword (void *state, uint32_t offset)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
-
         mpc8572_io_t *io = &mpc8572_io;
 
 	//int offset = p - GET_CCSR_BASE (io->ccsr.ccsr);
@@ -396,9 +402,11 @@ mpc8572_io_read_halfword (void *state, uint32_t offset)
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
 		switch (offset) {
 			default:
+				/*
 				fprintf (stderr,
 					 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
 					 __FUNCTION__, offset, current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
@@ -408,9 +416,11 @@ mpc8572_io_read_halfword (void *state, uint32_t offset)
 		case 0xE0000:
 			return io->por_conf.porpllsr;
 		default:
+			/*
 			fprintf (stderr,
 				 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
+			*/
 			skyeye_exit (-1);
 		}
 
@@ -418,7 +428,9 @@ mpc8572_io_read_halfword (void *state, uint32_t offset)
 
 	switch (offset) {
 		case 0x0:
-			return cpu->ccsr;
+			TODO("ccsr");
+			//return cpu->ccsr;
+			return 0;
 		case 0x90C80:
 			return io->sccr;
 		case 0x8004:
@@ -426,27 +438,30 @@ mpc8572_io_read_halfword (void *state, uint32_t offset)
 		case 0x8006:
 			return io->pci_cfg.cfg_data;
 		default:
+			/*
 			fprintf (stderr,
 				 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
+			*/
+			TODO("error_handler");
+			return 0;
 			//skyeye_exit(-1);
 	}
 }
 static uint32_t
 mpc8572_io_read_word (void *state, uint32_t offset)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
-
         mpc8572_io_t *io = &mpc8572_io;
 	//printf("DBG:in %s,read CCSR,offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, current_core->pc);
 
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
 		switch (offset) {
 			default:
+				/*
 				fprintf (stderr,
 					 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
 					 __FUNCTION__, offset, current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
@@ -455,9 +470,11 @@ mpc8572_io_read_word (void *state, uint32_t offset)
 			case 0x2E44:
 				return io->ddr_ctrl.err_disable;
 			default:
+				/*
 				fprintf (stderr,
 					 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
 					 __FUNCTION__, offset, current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
@@ -562,9 +579,11 @@ mpc8572_io_read_word (void *state, uint32_t offset)
 			default:
 				break;
 		}
+		/*
 		fprintf (stderr,
 			 "in %s, error when read pic ram,offset=0x%x,pc=0x%x\n",
 			 __FUNCTION__, offset, current_core->pc);
+		*/
 
 	}
 
@@ -577,9 +596,11 @@ mpc8572_io_read_word (void *state, uint32_t offset)
 		case 0x21118:
 			return io->dma.satr0;
 		default:
+			/*
 			fprintf (stderr, "in %s, error when read dma.offset=0x%x, \
                                 pc=0x%x\n", __FUNCTION__, offset,
 				 current_core->pc);
+			*/
 			return;
 			//skyeye_exit(-1);
 
@@ -590,9 +611,11 @@ mpc8572_io_read_word (void *state, uint32_t offset)
 		switch (offset) {
 
 		default:
+			/*
 			fprintf (stderr, "in %s, error when read IO port.offset=0x%x, \
                                 pc=0x%x\n", __FUNCTION__, offset,
 				 current_core->pc);
+			*/
 			return;
 			//skyeye_exit(-1);
 		}
@@ -606,20 +629,28 @@ mpc8572_io_read_word (void *state, uint32_t offset)
 			case 0xE000C:
 				return io->por_conf.pordevsr;
 			default:
+				/*
 				fprintf (stderr,
 					 "in %s, error when read CCSR.addr=0x%x,pc=0x%x\n",
 					 __FUNCTION__, offset, current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
 
 	switch (offset) {
 		case 0x0:
-			return cpu->ccsr;
+			TODO("ccsr");
+			//return cpu->ccsr;
+			return 0;
 		case 0x20:
-			return cpu->bptr;
+			TODO("bptr");
+			//return cpu->bptr;
+			return 0;
 		case 0x1010:
-			return cpu->eebpcr;
+			TODO("eebpcr");
+			//return cpu->eebpcr;
+			return 0;
 		case 0xC28:
 			return io->law.lawbar[1];
 		case 0xC30:
@@ -635,10 +666,14 @@ mpc8572_io_read_word (void *state, uint32_t offset)
 		case 0x8004:
 			return io->pci_cfg.cfg_data;
 		default:
+			/*
 			fprintf (stderr,
 				 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
+			*/
 			//skyeye_exit(-1);
+			TODO("error_handler");
+			return 0;
 	}
 }
 static void
@@ -736,9 +771,12 @@ mpc8572_io_write_byte (void *state, uint32_t offset, uint32_t data)
 			io->uart[1].scr = data;
 			break;
 		default:
+			/*
 			fprintf (stderr,
 				 "in %s, error when write to CCSR.addr=0x%x,offset=0x%x,ccsr=0x%x, pc=0x%x\n",
 				 __FUNCTION__, offset, offset, cpu->ccsr, current_core->pc);
+			*/
+			return ;
 		//skyeye_exit(-1);
 	}
 }
@@ -769,18 +807,23 @@ mpc8572_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 		offset = 0x1f & offset;
 		switch (offset) {
 			default:
+				/*
 				fprintf (stderr, "in %s, error when read CCSR.offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
 					 current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
 		switch (offset) {
 			default:
+				return;
+				/*
 				fprintf (stderr,
 				 "in %s, error when write to CCSR.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
+				*/
 				//skyeye_exit(-1);
 		}
 	}
@@ -803,9 +846,12 @@ mpc8572_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 			io->pci_cfg.cfg_data = data;
 			break;
 		default:
+			return ;
+			/*
 			fprintf (stderr,
 				 "in %s, error when write to CCSR.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
+			*/
 			//skyeye_exit(-1);
 	}
 }
@@ -833,9 +879,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 				io->ddr_ctrl.err_disable = data;
 				break;
 			default:
+				/*
 				fprintf (stderr,
 					 "in %s, error when write ddr_ctrl,offset=0x%x,pc=0x%x\n",
 					 __FUNCTION__, offset, current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
@@ -858,10 +906,10 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 
 		}
 #endif
-
+		/*
 		fprintf (stderr, "in %s, error when write lb_ctrl.addr=0x%x, \
                                 pc=0x%x\n", __FUNCTION__, offset, current_core->pc);
-
+		*/
 		return;
 	}
 
@@ -876,9 +924,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 				io->dma.satr0 = data;
 				break;
 			default:
+				/*
 				fprintf (stderr, "in %s, error when write dma.addr=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
 					 current_core->pc);
+				*/
 				return;
 				//skyeye_exit(-1);
 		}
@@ -926,9 +976,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 				io->pic_global.gtdr3 = data;
 				break;
 			default:
+				/*
 				fprintf (stderr, "in %s, error when write mpic, offset=0x%x, \
 					pc=0x%x\n", __FUNCTION__, offset,
 					 current_core->pc);
+				*/
 				return;
 		}
 		return;
@@ -957,9 +1009,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 			return;
 		if (offset >= 0x50100 && offset <= 0x515f0)	/* Reserved region for MPC8572 */
 			return;
+		/*
 		fprintf (stderr,
 			 "in %s, error when write pic ram,offset=0x%x,pc=0x%x\n",
 			 __FUNCTION__, offset, current_core->pc);
+		*/
 		return;
 	}
 
@@ -991,10 +1045,12 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 				return;
 			case 0x600b0:
 				io->pic_ram.eoi0 = data;
+				TODO("Write IO register");
+				/*
 				if (current_core->ipr & (1 << UART_IRQ)) {
 					current_core->ipr &= ~(1 << UART_IRQ);
 					//printf("In %s, writing to eoi1 for core 0,clear int\n", __FUNCTION__);
-				}
+				}*/
 				/* clear the interrupt with highest priority in ISR */
 				return;
 			case 0x61080:
@@ -1006,9 +1062,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 				//printf("In %s, writing to eoi1 for core 1\n", __FUNCTION__);
 				return;
 			default:
+				/*
 				fprintf (stderr, "in %s, error when write mpic, offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
 					 current_core->pc);
+				*/
 				return;
 
 		}
@@ -1021,9 +1079,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 	if (offset >= 0x90C00 && offset <= 0x90C7F) {
 		switch (offset) {
 			default:
+				/*
 				fprintf (stderr,
 					 "in %s, error when write interrupt controller,offset=0x%x,pc=0x%x\n",
 					 __FUNCTION__, offset, current_core->pc);
+				*/
 				return;
 		}
 	}
@@ -1031,9 +1091,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
 		switch (offset) {
 			default:
+				/*
 				fprintf (stderr,
 					 "in %s, error when write cpm_reg,offset=0x%x,pc=0x%x\n",
 					 __FUNCTION__, offset, current_core->pc);
+				*/
 				return;
 		}
 	}
@@ -1042,9 +1104,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 		offset = 0x1f & offset;
 		switch (offset) {
 			default:
+				/*
 				fprintf (stderr, "in %s, error when read CCSR.offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
 					 current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
@@ -1053,9 +1117,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 	if (offset >= 0x91B00 && offset <= 0x91B1F) {
 		switch (offset) {
 			default:
+				/*
 				fprintf (stderr, "in %s, error when read CCSR.offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
 					 current_core->pc);
+				*/
 				skyeye_exit (-1);
 		}
 	}
@@ -1063,9 +1129,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 	if (offset >= 0x90D00 && offset <= 0x90D70) {
 		switch (offset) {
 			default:
+				/*
 				fprintf (stderr, "in %s, error when write io port.offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
 					 current_core->pc);
+				*/
 				return;
 				//skyeye_exit(-1);
 		}
@@ -1089,9 +1157,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 			io->pci_atmu.powar1 = data;
 			return;
 		default:
+			/*
 			fprintf (stderr,
 				 "in %s, error when write to PCI_ATMU.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
+			*/
 			//skyeye_exit(-1);
 			return;
 		}
@@ -1131,9 +1201,11 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 			io->pic_global.gtdr3 = data;
 			return;
 		default:
+			/*
 			fprintf (stderr,
 				 "in %s, error when write global.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
+			*/
 			return;
 		}
 	}
@@ -1176,9 +1248,12 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 		io->mpic.gcr = data;
 		return;
 	default:
+		return 0;
+		/*
 		fprintf (stderr,
 			 "in %s, error when write to CCSR.offset=0x%x,pc=0x%x\n",
 			 __FUNCTION__, offset, current_core->pc);
+		*/
 		//skyeye_exit(-1);
 	}
 

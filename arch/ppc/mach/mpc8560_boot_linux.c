@@ -33,7 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 static void set_bootcmd(){
 	const int bd_start = 8 * 1024 * 1024;
 	const int initrd_start  = 32 * 1024 * 1024, initrd_size = 2 * 1024 * 1024;
-	e500_core_t * core = &gCPU.core[0];
+	e500_core_t * core = get_boot_core();
 	bd_t t;
 	memset(&t, '\0', sizeof(t));
         t.bi_immr_base = ppc_word_to_BE(0xe0000000);
@@ -63,7 +63,7 @@ static void set_bootcmd(){
 }
 
 static void setup_boot_map(){
-	e500_core_t * core = &gCPU.core[0];
+	e500_core_t * core = get_boot_core();
 	/* setup initial tlb map for linux, that should be done by bootloader */
         ppc_tlb_entry_t * entry = &core->mmu.l2_tlb1_vsp[0];
 
@@ -86,5 +86,6 @@ void mpc8560_boot_linux(){
 	set_bootcmd();
 	/* just for linux boot, so we need to do some map */
 	setup_boot_map();
-	gCPU.ccsr = 0xE0000; /* Just for boot linux */
+	PPC_CPU_State* cpu = get_current_cpu();
+	cpu->ccsr = 0xE0000; /* Just for boot linux */
 }
