@@ -21,18 +21,23 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "ppc_mmu.h"
 #include "ppc_exc.h"
 #include "ppc_e500_exc.h"
+#include "ppc_e500_core.h"
 #include "ppc_memory.h"
 #include "ppc_io.h"
-#include "types.h"
+//#include "types.h"
 #include "tracers.h"
 #include "sysendian.h"
 #include "ppc_irq.h"
 //#include "ppc_regformat.h"
 #include "bank_defs.h"
+#include "ppc_dyncom_run.h"
+#include "ppc_dyncom_dec.h"
 
 #include "skyeye_types.h"
 #include "skyeye_config.h"
 #include "skyeye_arch.h"
+#include "skyeye_mm.h"
+#include <skyeye_log.h>
 
 #ifdef __CYGWIN__
 #include <sys/time.h>
@@ -57,7 +62,7 @@ static bool ppc_cpu_init()
 		skyeye_log(Critical_log, __FUNCTION__, "Can not allocate the enough memory for cpu.\n");
 		skyeye_exit(-1);
 	}
-	mach->cpu_data = cpu;
+	mach->cpu_data = get_conf_obj_by_cast(cpu, "PPC_CPU_State");
 	if(!strcmp(mach->machine_name, "mpc8560")){
 		cpu->core_num = 1;
 	}
@@ -73,7 +78,7 @@ static bool ppc_cpu_init()
 		skyeye_exit(-1);
 	}
 	else
-		cpu->core = malloc(sizeof(e500_core_t) * cpu->core_num);
+		cpu->core = (e500_core_t*)skyeye_mm(sizeof(e500_core_t) * cpu->core_num);
 	/* TODO: zero the memory by malloc */
 
 	if(!cpu->core){
@@ -85,13 +90,13 @@ static bool ppc_cpu_init()
 		
 	int i;
 	for(i = 0; i < cpu->core_num; i++){
-		ppc_core_init(cpu->core[i], i);
-		ppc_dyncom_init(cpu->core[i]);
+		ppc_core_init(&cpu->core[i], i);
+		ppc_dyncom_init(&cpu->core[i]);
 	}
 
 	cpu->boot_core_id = 0;
 	/* initialize decoder */
-	ppc_dec_init();
+	ppc_dyncom_dec_init();
 	return true;
 }
 
@@ -110,7 +115,7 @@ ppc_init_state ()
 }
 
 static void per_cpu_step(e500_core_t * core){
-	ppc_dyncom_run(core->dyncom_cpu);
+	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "e500_core_t"));
 }
 
 /* Fixme later */
@@ -121,7 +126,7 @@ ppc_step_once ()
 {
 	int i;
 	machine_config_t* mach = get_current_mach();
-	PPC_CPU_State* cpu = mach->cpu_data;	
+	PPC_CPU_State* cpu = get_current_cpu();
 	/* workaround boot sequence for dual core, we need the first core initialize some variable for second core. */
 	e500_core_t* core;
 	for(i = 0; i < cpu->core_num; i++ ){
@@ -142,16 +147,14 @@ static void
 ppc_set_pc (generic_address_t pc)
 {
 	int i;
-	machine_config_t* mach = get_current_mach();
-	PPC_CPU_State* cpu = mach->cpu_data;	
+	PPC_CPU_State* cpu = get_current_cpu();
 	cpu->core[0].pc = pc;
 	/* Fixme, for e500 core, the first instruction should be executed at 0xFFFFFFFC */
 	//gCPU.pc = 0xFFFFFFFC;
 }
-static generic_address_t
-ppc_get_pc(int core_id){
-	machine_config_t* mach = get_current_mach();
-	PPC_CPU_State* cpu = mach->cpu_data;	
+static uint32_t
+ppc_get_pc(){
+	PPC_CPU_State* cpu = get_current_cpu();
 	return cpu->core[0].pc;
 }
 /*
@@ -203,8 +206,7 @@ machine_config_t ppc_machines[] = {
 * @return the current step count for the core
 */
 static uint32 ppc_get_step(){
-	machine_config_t* mach = get_current_mach();
-	PPC_CPU_State* cpu = mach->cpu_data;	
+	PPC_CPU_State* cpu = get_current_cpu();
 	return cpu->core[0].step;
 }
 static char* ppc_get_regname_by_id(int id){
@@ -213,9 +215,7 @@ static char* ppc_get_regname_by_id(int id){
 static uint32 ppc_get_regval_by_id(int id){
 	/* we return the reg value of core 0 by default */
 	int core_id = 0;
-	machine_config_t* mach = get_current_mach();
-	PPC_CPU_State* cpu = mach->cpu_data;	
-
+	PPC_CPU_State* cpu = get_current_cpu();
 	if(id >= 0 && id < 32)
         	return cpu->core[core_id].gpr[id];
 
@@ -249,15 +249,15 @@ static exception_t ppc_mmu_read(short size, generic_address_t addr, uint32_t * v
          *  work around for ppc gdb remote debugger
          */
         if ((addr & 0xFFFFF000) == 0xBFFFF000)
-                return 0;
+                return No_exp;
 
 	switch(size){
                 case 8:
-                        ppc_read_effective_byte (addr, &result);
+                        ppc_read_effective_byte (addr, (uint8_t *)&result);
 			*(uint8_t *)value = (uint8_t)result;
                         break;
                 case 16:
-			ppc_read_effective_half(addr, &result);
+			ppc_read_effective_half(addr, (uint16_t *)&result);
                         *(uint16_t *)value = (uint16_t)result;
                         break;
                 case 32:

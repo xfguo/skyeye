@@ -35,6 +35,10 @@
 #include "skyeye_mach.h"
 #include "skyeye_signal.h"
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #define DEFAULT_CONFIG_FILE "skyeye.conf"
 #define MAX_FILE_NAME 256
 typedef struct
@@ -282,4 +286,9 @@ static skyeye_option_t skyeye_options[] = {
 
 exception_t skyeye_read_config (char* conf_filename);
 skyeye_config_t* get_current_config();
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif	/*__SKYEYE_CONFIG_H_*/

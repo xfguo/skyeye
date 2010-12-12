@@ -26,6 +26,11 @@
 #define __PPC_E500_CORE_H__
 #include "skyeye_types.h"
 #include "ppc_e500_core.h"
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* tlb entry */
 typedef struct ppc_tlb_entry_s{
 	uint32 v;
@@ -209,5 +214,11 @@ typedef struct e500_core_s{
 #define E500
 
 #define IPI0 (1 >> 0) 
+
+void ppc_core_init(e500_core_t * core, int core_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

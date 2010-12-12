@@ -23,6 +23,11 @@
 
 #include "skyeye_dyncom.h"
 #include "skyeye_types.h"
+#include "ppc_dyncom.h"
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 void ppc_translate_opc(cpu_t* cpu, uint32_t opc, BasicBlock *bb);
 void ppc_dec_init();
@@ -50,5 +55,11 @@ typedef void (*ppc_opc_function)(cpu_t* cpu, BasicBlock *bb);
 #define PPC_OPC_TEMPL_XO(opc, rS, rA, rB) {rS=((opc)>>21)&0x1f;rA=((opc)>>16)&0x1f;rB=((opc)>>11)&0x1f;}
 #define PPC_OPC_TEMPL_XL(opc, BO, BI, BD) {BO=((opc)>>21)&0x1f;BI=((opc)>>16)&0x1f;BD=((opc)>>11)&0x1f;}
 #define PPC_OPC_TEMPL_XFL(opc, rB, FM) {rB=((opc)>>11)&0x1f;FM=((opc)>>17)&0xff;}
+
+void ppc_dyncom_dec_init();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

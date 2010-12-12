@@ -688,7 +688,7 @@ void ppc_translate_opc(cpu_t* cpu, uint32_t opc, BasicBlock* bb)
 	ppc_opc_table_main[mainopc](cpu, bb);
 }
 
-void ppc_dec_init()
+void ppc_dyncom_dec_init()
 {
 	ppc_opc_init_group2();
 #if 0	

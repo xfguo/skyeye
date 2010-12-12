@@ -10,6 +10,7 @@
 
 #include "ppc_cpu.h"
 #include "ppc_dyncom.h"
+#include "ppc_dyncom_run.h"
 
 /* physical register for powerpc archtecture */
 static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
@@ -71,6 +72,12 @@ arch_powerpc_get_reg(cpu_t *cpu, void *reg, unsigned reg_no, uint64_t *value)
 	return (0);
 }
 
+static int arch_powerpc_disasm_instr(cpu_t *cpu, addr_t pc, char* line, unsigned int max_line){
+	return 0;
+}
+static int arch_powerpc_translate_loop_helper(cpu_t *cpu, addr_t pc, BasicBlock *bb_ret, BasicBlock *bb_next, BasicBlock *bb, BasicBlock *bb_zol_cond){
+	return 0;
+}
 static arch_func_t powerpc_arch_func = {
 	arch_powerpc_init,
 	arch_powerpc_done,
