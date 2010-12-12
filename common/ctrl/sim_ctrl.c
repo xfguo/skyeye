@@ -6,13 +6,15 @@
 #include "skyeye_module.h"
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
+#include "skyeye_cell.h"
 /* FIXME, we should get it from prefix varaible after ./configure */
 #ifndef SKYEYE_MODULE_DIR
 const char* default_lib_dir = "/opt/skyeye/lib/skyeye/";
 #else
 const char* default_lib_dir = SKYEYE_MODULE_DIR;
 #endif
-
+static skyeye_cell_t* default_cell = NULL;
+static bool_t SIM_running = False;
 void SIM_init_command_line(void){
 }
 
@@ -178,8 +180,8 @@ void SIM_start(void){
 	/* Call bootmach callback */
 	exec_callback(Bootmach_callback, arch_instance);	
 
-	pthread_t id;
-	create_thread(skyeye_loop, arch_instance, &id);
+		
+	//create_thread(skyeye_loop, arch_instance, &id);
 	
 	/* 
 	 * At this time, if we set conf file, then we parse it
@@ -205,7 +207,9 @@ void SIM_cli(){
 	skyeye_cli();
 }
 void SIM_run(){
-	skyeye_start();
+	//skyeye_start();
+	SIM_running = True;
+	start_all_cell();
 }
 #if 0
 void SIM_break_simulation(const char *msg){
@@ -215,11 +219,18 @@ void SIM_pause(){
 }
 #endif
 void SIM_continue(generic_arch_t* arch_instance){
-	skyeye_continue();
+	//skyeye_continue();
+	SIM_running = True;
+	start_all_cell();
 }
 
 void SIM_stop(generic_arch_t* arch_instance){
-	skyeye_pause();	
+	//skyeye_pause();
+	SIM_running = False;
+	stop_all_cell();
+}
+bool_t SIM_is_running(){
+	return SIM_running;
 }
 void SIM_fini(){
 	sky_pref_t *pref = get_skyeye_pref();

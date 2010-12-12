@@ -138,6 +138,7 @@ void ppc_fpu_unpack_single(ppc_single *res, uint32 d)
 
 uint32 ppc_fpu_round(ppc_double *d) 
 {
+        e500_core_t * current_core = get_current_core();
 	// .132
 	switch (FPSCR_RN(current_core->fpscr)) {
 	case FPSCR_RN_NEAR:
@@ -173,6 +174,7 @@ uint32 ppc_fpu_round(ppc_double *d)
 
 uint32 ppc_fpu_round_single(ppc_single *s) 
 {
+        e500_core_t * current_core = get_current_core();
 	switch (FPSCR_RN(current_core->fpscr)) {
 	case FPSCR_RN_NEAR:
 		if (s->m & 0x7) {
@@ -207,6 +209,7 @@ uint32 ppc_fpu_round_single(ppc_single *s)
 
 uint32 ppc_fpu_round_double(ppc_double *s) 
 {
+        e500_core_t * current_core = get_current_core();
 	switch (FPSCR_RN(current_core->fpscr)) {
 	case FPSCR_RN_NEAR:
 		if (s->m & 0x7) {
@@ -451,6 +454,7 @@ uint32 ppc_fpu_pack_double_as_single(ppc_double *d, uint64 *res)
 
 uint32 ppc_fpu_double_to_int(ppc_double *d)
 {
+        e500_core_t * current_core = get_current_core();
 	switch (d->type) {
 	case ppc_fpr_norm: {
 		if (d->e < 0) {

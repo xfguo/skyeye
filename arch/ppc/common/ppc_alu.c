@@ -53,6 +53,7 @@ static inline uint32 ppc_mask(int MB, int ME)
 void ppc_opc_addx()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	current_core->gpr[rD] = current_core->gpr[rA] + current_core->gpr[rB];
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -67,6 +68,7 @@ void ppc_opc_addx()
 void ppc_opc_addox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	current_core->gpr[rD] = current_core->gpr[rA] + current_core->gpr[rB];
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -83,6 +85,7 @@ void ppc_opc_addox()
 void ppc_opc_addcx()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint32 a = current_core->gpr[rA];
 	current_core->gpr[rD] = a + current_core->gpr[rB];
@@ -104,6 +107,7 @@ void ppc_opc_addcx()
 void ppc_opc_addcox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint32 a = current_core->gpr[rA];
 	current_core->gpr[rD] = a + current_core->gpr[rB];
@@ -127,6 +131,7 @@ void ppc_opc_addcox()
 void ppc_opc_addex()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint32 a = current_core->gpr[rA];
 	uint32 b = current_core->gpr[rB];
@@ -150,6 +155,7 @@ void ppc_opc_addex()
 void ppc_opc_addeox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint32 a = current_core->gpr[rA];
 	uint32 b = current_core->gpr[rB];
@@ -176,6 +182,7 @@ void ppc_opc_addi()
 {
 	int rD, rA;
 	uint32 imm;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
 	current_core->gpr[rD] = (rA ? current_core->gpr[rA] : 0) + imm;
 	//fprintf(stderr, "in %s,rD=0x%x,rA=0x%x,imm=0x%x,current_core->gpr[rD]=0x%x\n",__FUNCTION__, rD,rA,imm,current_core->gpr[rD]);
@@ -188,6 +195,7 @@ void ppc_opc_addic()
 {
 	int rD, rA;
 	uint32 imm;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
 	uint32 a = current_core->gpr[rA];
 	current_core->gpr[rD] = a + imm;	
@@ -206,6 +214,7 @@ void ppc_opc_addic_()
 {
 	int rD, rA;
 	uint32 imm;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
 	uint32 a = current_core->gpr[rA];
 	current_core->gpr[rD] = a + imm;
@@ -226,6 +235,7 @@ void ppc_opc_addis()
 {
 	int rD, rA;
 	uint32 imm;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_D_Shift16(current_core->current_opc, rD, rA, imm);
 	current_core->gpr[rD] = (rA ? current_core->gpr[rA] : 0) + imm;
 }
@@ -236,6 +246,7 @@ void ppc_opc_addis()
 void ppc_opc_addmex()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	uint32 a = current_core->gpr[rA];
@@ -258,6 +269,7 @@ void ppc_opc_addmex()
 void ppc_opc_addmeox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	uint32 a = current_core->gpr[rA];
@@ -282,6 +294,7 @@ void ppc_opc_addmeox()
 void ppc_opc_addzex()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	uint32 a = current_core->gpr[rA];
@@ -305,6 +318,7 @@ void ppc_opc_addzex()
 void ppc_opc_addzeox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	uint32 a = current_core->gpr[rA];
@@ -331,6 +345,7 @@ void ppc_opc_addzeox()
 void ppc_opc_andx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->gpr[rA] = current_core->gpr[rS] & current_core->gpr[rB];
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -345,6 +360,7 @@ void ppc_opc_andx()
 void ppc_opc_andcx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->gpr[rA] = current_core->gpr[rS] & ~current_core->gpr[rB];
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -360,6 +376,7 @@ void ppc_opc_andi_()
 {
 	int rS, rA;
 	uint32 imm;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_D_UImm(current_core->current_opc, rS, rA, imm);
 	current_core->gpr[rA] = current_core->gpr[rS] & imm;
 	// update cr0 flags
@@ -373,6 +390,7 @@ void ppc_opc_andis_()
 {
 	int rS, rA;
 	uint32 imm;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_D_Shift16(current_core->current_opc, rS, rA, imm);
 	current_core->gpr[rA] = current_core->gpr[rS] & imm;
 	// update cr0 flags
@@ -398,6 +416,7 @@ void ppc_opc_cmp()
 {
 	uint32 cr;
 	int rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, cr, rA, rB);
 	cr >>= 2;
 	sint32 a = current_core->gpr[rA];
@@ -423,6 +442,7 @@ void ppc_opc_cmpi()
 {
 	uint32 cr;
 	int rA;
+	e500_core_t* current_core = get_current_core();
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, cr, rA, imm);
 	cr >>= 2;
@@ -453,6 +473,7 @@ void ppc_opc_cmpi()
 void ppc_opc_cmpl()
 {
 	uint32 cr;
+	e500_core_t* current_core = get_current_core();
 	int rA, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, cr, rA, rB);
 	cr >>= 2;
@@ -478,6 +499,7 @@ void ppc_opc_cmpl()
 void ppc_opc_cmpli()
 {
 	uint32 cr;
+	e500_core_t* current_core = get_current_core();
 	int rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_UImm(current_core->current_opc, cr, rA, imm);
@@ -505,6 +527,7 @@ void ppc_opc_cmpli()
 void ppc_opc_cntlzwx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	PPC_OPC_ASSERT(rB==0);
 	uint32 n=0;
@@ -529,6 +552,7 @@ void ppc_opc_cntlzwx()
 void ppc_opc_crand()
 {
 	int crD, crA, crB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crA, crB);
 	if ((current_core->cr & (1<<(31-crA))) && (current_core->cr & (1<<(31-crB)))) {
 		current_core->cr |= (1<<(31-crD));
@@ -543,6 +567,7 @@ void ppc_opc_crand()
 void ppc_opc_crandc()
 {
 	int crD, crA, crB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crA, crB);
 	if ((current_core->cr & (1<<(31-crA))) && !(current_core->cr & (1<<(31-crB)))) {
 		current_core->cr |= (1<<(31-crD));
@@ -557,6 +582,7 @@ void ppc_opc_crandc()
 void ppc_opc_creqv()
 {
 	int crD, crA, crB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crA, crB);
 	if (((current_core->cr & (1<<(31-crA))) && (current_core->cr & (1<<(31-crB))))
 	  || (!(current_core->cr & (1<<(31-crA))) && !(current_core->cr & (1<<(31-crB))))) {
@@ -572,6 +598,7 @@ void ppc_opc_creqv()
 void ppc_opc_crnand()
 {
 	int crD, crA, crB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crA, crB);
 	if (!((current_core->cr & (1<<(31-crA))) && (current_core->cr & (1<<(31-crB))))) {
 		current_core->cr |= (1<<(31-crD));
@@ -586,6 +613,7 @@ void ppc_opc_crnand()
 void ppc_opc_crnor()
 {
 	int crD, crA, crB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crA, crB);
 	uint32 t = (1<<(31-crA)) | (1<<(31-crB));
 	if (!(current_core->cr & t)) {
@@ -601,6 +629,7 @@ void ppc_opc_crnor()
 void ppc_opc_cror()
 {
 	int crD, crA, crB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crA, crB);
 	uint32 t = (1<<(31-crA)) | (1<<(31-crB));
 	if (current_core->cr & t) {
@@ -616,6 +645,7 @@ void ppc_opc_cror()
 void ppc_opc_crorc()
 {
 	int crD, crA, crB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crA, crB);
 	if ((current_core->cr & (1<<(31-crA))) || !(current_core->cr & (1<<(31-crB)))) {
 		current_core->cr |= (1<<(31-crD));
@@ -630,6 +660,7 @@ void ppc_opc_crorc()
 void ppc_opc_crxor()
 {
 	int crD, crA, crB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crA, crB);
 	if ((!(current_core->cr & (1<<(31-crA))) && (current_core->cr & (1<<(31-crB))))
 	  || ((current_core->cr & (1<<(31-crA))) && !(current_core->cr & (1<<(31-crB))))) {
@@ -646,6 +677,7 @@ void ppc_opc_crxor()
 void ppc_opc_divwx()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	if (!current_core->gpr[rB]) {
 		PPC_ALU_WARN("division by zero @%08x\n", current_core->pc);
@@ -665,6 +697,7 @@ void ppc_opc_divwx()
 void ppc_opc_divwox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	if (!current_core->gpr[rB]) {
 		PPC_ALU_ERR("division by zero\n");
@@ -686,6 +719,7 @@ void ppc_opc_divwox()
 void ppc_opc_divwux()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	if (!current_core->gpr[rB]) {
 		PPC_ALU_WARN("division by zero @%08x\n", current_core->pc);
@@ -703,6 +737,7 @@ void ppc_opc_divwux()
 void ppc_opc_divwuox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	if (!current_core->gpr[rB]) {
 //		PPC_ALU_ERR("division by zero\n");
@@ -723,6 +758,7 @@ void ppc_opc_divwuox()
 void ppc_opc_eqvx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->gpr[rA] = ~(current_core->gpr[rS] ^ current_core->gpr[rB]);
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -738,6 +774,7 @@ void ppc_opc_eqvx()
 void ppc_opc_extsbx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	PPC_OPC_ASSERT(rB==0);
 	current_core->gpr[rA] = current_core->gpr[rS];
@@ -758,6 +795,7 @@ void ppc_opc_extsbx()
 void ppc_opc_extshx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	PPC_OPC_ASSERT(rB==0);
 	current_core->gpr[rA] = current_core->gpr[rS];
@@ -779,6 +817,7 @@ void ppc_opc_extshx()
 void ppc_opc_mulhwx()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	sint64 a = (sint32)current_core->gpr[rA];
 	sint64 b = (sint32)current_core->gpr[rB];
@@ -797,6 +836,7 @@ void ppc_opc_mulhwx()
 void ppc_opc_mulhwux()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint64 a = current_core->gpr[rA];
 	uint64 b = current_core->gpr[rB];
@@ -814,6 +854,7 @@ void ppc_opc_mulhwux()
 void ppc_opc_mulli()
 {
 	int rD, rA;
+	e500_core_t* current_core = get_current_core();
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
 	// FIXME: signed / unsigned correct?
@@ -826,6 +867,7 @@ void ppc_opc_mulli()
 void ppc_opc_mullwx()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	current_core->gpr[rD] = current_core->gpr[rA] * current_core->gpr[rB];
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -845,6 +887,7 @@ void ppc_opc_mullwx()
 void ppc_opc_nandx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->gpr[rA] = ~(current_core->gpr[rS] & current_core->gpr[rB]);
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -860,6 +903,7 @@ void ppc_opc_nandx()
 void ppc_opc_negx()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	current_core->gpr[rD] = -current_core->gpr[rA];
@@ -875,6 +919,7 @@ void ppc_opc_negx()
 void ppc_opc_negox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	current_core->gpr[rD] = -current_core->gpr[rA];
@@ -892,6 +937,7 @@ void ppc_opc_negox()
 void ppc_opc_norx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->gpr[rA] = ~(current_core->gpr[rS] | current_core->gpr[rB]);
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -907,6 +953,7 @@ void ppc_opc_norx()
 void ppc_opc_orx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->gpr[rA] = current_core->gpr[rS] | current_core->gpr[rB];
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -921,6 +968,7 @@ void ppc_opc_orx()
 void ppc_opc_orcx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->gpr[rA] = current_core->gpr[rS] | ~current_core->gpr[rB];
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -935,6 +983,7 @@ void ppc_opc_orcx()
 void ppc_opc_ori()
 {
 	int rS, rA;
+	e500_core_t* current_core = get_current_core();
 	uint32 imm;
 	PPC_OPC_TEMPL_D_UImm(current_core->current_opc, rS, rA, imm);
 	current_core->gpr[rA] = current_core->gpr[rS] | imm;
@@ -946,6 +995,7 @@ void ppc_opc_ori()
 void ppc_opc_oris()
 {
 	int rS, rA;
+	e500_core_t* current_core = get_current_core();
 	uint32 imm;
 	PPC_OPC_TEMPL_D_Shift16(current_core->current_opc, rS, rA, imm);
 	current_core->gpr[rA] = current_core->gpr[rS] | imm;
@@ -958,6 +1008,7 @@ void ppc_opc_oris()
 void ppc_opc_rlwimix()
 {
 	int rS, rA, SH, MB, ME;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_M(current_core->current_opc, rS, rA, SH, MB, ME);
 	uint32 v = ppc_word_rotl(current_core->gpr[rS], SH);
 	uint32 mask = ppc_mask(MB, ME);
@@ -975,6 +1026,7 @@ void ppc_opc_rlwimix()
 void ppc_opc_rlwinmx()
 {
 	int rS, rA, SH, MB, ME;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_M(current_core->current_opc, rS, rA, SH, MB, ME);
 	uint32 v = ppc_word_rotl(current_core->gpr[rS], SH);
 	uint32 mask = ppc_mask(MB, ME);
@@ -991,6 +1043,7 @@ void ppc_opc_rlwinmx()
 void ppc_opc_rlwnmx()
 {
 	int rS, rA, rB, MB, ME;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_M(current_core->current_opc, rS, rA, rB, MB, ME);
 	uint32 v = ppc_word_rotl(current_core->gpr[rS], current_core->gpr[rB]);
 	uint32 mask = ppc_mask(MB, ME);
@@ -1008,6 +1061,7 @@ void ppc_opc_rlwnmx()
 void ppc_opc_slwx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	uint32 s = current_core->gpr[rB] & 0x3f;
 	if (s > 31) {
@@ -1027,6 +1081,7 @@ void ppc_opc_slwx()
 void ppc_opc_srawx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	uint32 SH = current_core->gpr[rB] & 0x3f;
 	current_core->gpr[rA] = current_core->gpr[rS];
@@ -1059,6 +1114,7 @@ void ppc_opc_srawx()
 void ppc_opc_srawix()
 {
 	int rS, rA;
+	e500_core_t* current_core = get_current_core();
 	uint32 SH;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, SH);
 	current_core->gpr[rA] = current_core->gpr[rS];
@@ -1091,6 +1147,7 @@ void ppc_opc_srawix()
 void ppc_opc_srwx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	uint32 v = current_core->gpr[rB] & 0x3f;
 	if (v > 31) {
@@ -1111,6 +1168,7 @@ void ppc_opc_srwx()
 void ppc_opc_subfx()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	current_core->gpr[rD] = ~current_core->gpr[rA] + current_core->gpr[rB] + 1;
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -1125,6 +1183,7 @@ void ppc_opc_subfx()
 void ppc_opc_subfox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	current_core->gpr[rD] = ~current_core->gpr[rA] + current_core->gpr[rB] + 1;
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -1141,6 +1200,7 @@ void ppc_opc_subfox()
 void ppc_opc_subfcx()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint32 a = current_core->gpr[rA];
 	uint32 b = current_core->gpr[rB];
@@ -1163,6 +1223,7 @@ void ppc_opc_subfcx()
 void ppc_opc_subfcox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint32 a = current_core->gpr[rA];
 	uint32 b = current_core->gpr[rB];
@@ -1187,6 +1248,7 @@ void ppc_opc_subfcox()
 void ppc_opc_subfex()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint32 a = current_core->gpr[rA];
 	uint32 b = current_core->gpr[rB];
@@ -1210,6 +1272,7 @@ void ppc_opc_subfex()
 void ppc_opc_subfeox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	uint32 a = current_core->gpr[rA];
 	uint32 b = current_core->gpr[rB];
@@ -1235,6 +1298,7 @@ void ppc_opc_subfeox()
 void ppc_opc_subfic()
 {
 	int rD, rA;
+	e500_core_t* current_core = get_current_core();
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
 	uint32 a = current_core->gpr[rA];
@@ -1254,6 +1318,7 @@ void ppc_opc_subfic()
 void ppc_opc_subfmex()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	uint32 a = current_core->gpr[rA];
@@ -1277,6 +1342,7 @@ void ppc_opc_subfmex()
 void ppc_opc_subfmeox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	uint32 a = current_core->gpr[rA];
@@ -1302,6 +1368,7 @@ void ppc_opc_subfmeox()
 void ppc_opc_subfzex()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	uint32 a = current_core->gpr[rA];
@@ -1324,6 +1391,7 @@ void ppc_opc_subfzex()
 void ppc_opc_subfzeox()
 {
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
 	uint32 a = current_core->gpr[rA];
@@ -1349,6 +1417,7 @@ void ppc_opc_subfzeox()
 void ppc_opc_xorx()
 {
 	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->gpr[rA] = current_core->gpr[rS] ^ current_core->gpr[rB];
 	if (current_core->current_opc & PPC_OPC_Rc) {
@@ -1363,6 +1432,7 @@ void ppc_opc_xorx()
 void ppc_opc_xori()
 {
 	int rS, rA;
+	e500_core_t* current_core = get_current_core();
 	uint32 imm;
 	PPC_OPC_TEMPL_D_UImm(current_core->current_opc, rS, rA, imm);
 	current_core->gpr[rA] = current_core->gpr[rS] ^ imm;
@@ -1374,6 +1444,7 @@ void ppc_opc_xori()
 void ppc_opc_xoris()
 {
 	int rS, rA;
+	e500_core_t* current_core = get_current_core();
 	uint32 imm;
 	PPC_OPC_TEMPL_D_Shift16(current_core->current_opc, rS, rA, imm);
 	current_core->gpr[rA] = current_core->gpr[rS] ^ imm;
@@ -1381,6 +1452,7 @@ void ppc_opc_xoris()
 
 void ppc_opc_iseleq(){
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
         PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
         //int crb = 2;
         if(current_core->cr & CR_CR0_EQ)
@@ -1396,6 +1468,7 @@ void ppc_opc_iseleq(){
 }
 void ppc_opc_iselgt(){
         int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
         PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	int crb = ((current_core->current_opc)>>6)&0x1f;
         if(current_core->cr & CR_CR0_GT)
@@ -1412,6 +1485,7 @@ void ppc_opc_iselgt(){
 void ppc_opc_isel(){
 #ifdef E500
 	int rD, rA, rB;
+	e500_core_t* current_core = get_current_core();
         PPC_OPC_TEMPL_XO(current_core->current_opc, rD, rA, rB);
 	int crb = ((current_core->current_opc)>>6)&0x1f;
 	if(current_core->cr & (1 << (31 - crb)))

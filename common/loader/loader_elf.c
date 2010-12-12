@@ -239,6 +239,7 @@ out:
 #else //#ifndef HAVE_LIBBFD
 
 //teawater add for load elf 2005.07.31------------------------------------------
+#define ELF_LOADING_INFO 0
 #include <bfd.h>
 
 static exception_t
@@ -275,9 +276,13 @@ load_exec (const char *file, addr_type_t addr_type)
 	for (s = tmp_bfd->sections; s; s = s->next) {
 		if (bfd_get_section_flags (tmp_bfd, s) & (SEC_LOAD)) {
             		if (bfd_section_lma (tmp_bfd, s) != bfd_section_vma (tmp_bfd, s)) {
+#if ELF_LOADING_INFO	
                 printf ("load section %s: lma = 0x%08x (vma = 0x%08x)  size = 0x%08x.\n", bfd_section_name (tmp_bfd, s), (unsigned int) bfd_section_lma (tmp_bfd, s), (unsigned int) bfd_section_vma (tmp_bfd, s), (unsigned int) bfd_section_size (tmp_bfd, s));
+#endif
             } else {
+#if ELF_LOADING_INFO	
                 printf ("load section %s: addr = 0x%08x  size = 0x%08x.\n", bfd_section_name (tmp_bfd, s), (unsigned int) bfd_section_lma (tmp_bfd, s), (unsigned int) bfd_section_size (tmp_bfd, s));
+#endif
             }
 	if (bfd_section_size (tmp_bfd, s) > 0) {
 		tmp_str = (char *)malloc (bfd_section_size
@@ -315,7 +320,9 @@ load_exec (const char *file, addr_type_t addr_type)
 			}
 		}
 		else {
+#if ELF_LOADING_INFO	
 			printf ("not load section %s: addr = 0x%08x  size = 0x%08x .\n", bfd_section_name (tmp_bfd, s), (unsigned int) bfd_section_vma (tmp_bfd, s), (unsigned int) bfd_section_size (tmp_bfd, s));
+#endif
 		}
 	}
 

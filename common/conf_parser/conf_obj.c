@@ -38,7 +38,7 @@ struct hsearch_data *conf_tab = NULL;
 const static max_conf_obj = 1024;
 
 void init_conf_obj(){
-	conf_tab = malloc(sizeof(struct hsearch_data));
+	conf_tab = skyeye_mm(sizeof(struct hsearch_data));
 	memset(conf_tab, 0, sizeof(struct hsearch_data));
 	hcreate_r(max_conf_obj, conf_tab);
 }
@@ -72,7 +72,41 @@ void* get_conf_obj(char* objname){
 	else
 		return retval->data;
 }
+#define TYPE_CASTING(conf_obj, type_string) (##type_string##)get_cast_conf_obj(conf_obj, type_string)
 
+/**
+* @brief For type casting safely
+*
+* @param conf_obj
+* @param type_string
+*
+* @return 
+*/
+void* get_cast_conf_obj(conf_object_t* conf_obj, const char* type_string){
+	if(!strncmp(conf_obj->objname, type_string, strlen(type_string))){
+		return conf_obj->obj;
+	}
+	else{
+		printf("In %s,conf_obj=0x%x\n, conf_obj->objname=0x%x\n", __FUNCTION__, conf_obj, conf_obj->objname);
+		printf("In %s, conf_obj->objname=%s\n", __FUNCTION__, conf_obj->objname);
+		skyeye_log(Warnning_log, __FUNCTION__, "Type %s cast is failed!\n", type_string);
+		return NULL;
+	}
+}
+conf_object_t* get_conf_obj_by_cast(void* obj, const char* type_string){
+	//printf("In %s,sizeof(conf_object_t)=0x%x\n", __FUNCTION__, sizeof(conf_object_t));
+	conf_object_t* conf_obj = skyeye_mm(sizeof(struct conf_object_s));
+	/* Memory allocation failed. */
+	if(conf_obj == NULL)
+		return NULL;
+	conf_obj->obj = obj;
+	//printf("In %s, type_string=%s\n", __FUNCTION__, type_string);
+	conf_obj->objname = skyeye_strdup(type_string);
+	//printf("In %s, conf_obj->objname=%s\n", __FUNCTION__, conf_obj->objname);
+	//printf("In %s, conf_obj=0x%x, conf_obj->objname=0x%x\n", __FUNCTION__, conf_obj, conf_obj->obj);
+	//put_conf_obj(obj, type_string);
+	return conf_obj;
+}
 void* list_all_obj(){
 }
 

@@ -67,7 +67,7 @@ insn_bank_ptr (uint32_t addr)
  */
 int bus_read(short size, int addr, uint32_t * value){
 	mem_bank_t * bank;
-	generic_arch_t* arch_instance = get_arch_instance();
+	generic_arch_t* arch_instance = get_arch_instance("");
 
 	if((bank = bank_ptr(addr)) && (bank->bank_read))
 		bank->bank_read(size, addr, value);
@@ -86,7 +86,7 @@ int bus_read(short size, int addr, uint32_t * value){
  */
 int bus_write(short size, int addr, uint32_t value){
 	mem_bank_t * bank;
-	generic_arch_t* arch_instance = get_arch_instance();
+	generic_arch_t* arch_instance = get_arch_instance("");
 
 	bus_snoop(SIM_access_write, size ,addr, value, Before_act);
 	exec_callback(Bus_write_callback, arch_instance);

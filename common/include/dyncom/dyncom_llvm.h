@@ -1,5 +1,5 @@
-#ifndef _LIBCPU_LLVM_H_
-#define _LIBCPU_LLVM_H_
+#ifndef _DYNCOM_LLVM_H_
+#define _DYNCOM_LLVM_H_
 
 #include <limits.h>
 #include "llvm/ADT/APFloat.h"

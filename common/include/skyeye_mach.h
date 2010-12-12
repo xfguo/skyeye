@@ -60,11 +60,13 @@ typedef struct machine_config
 	int dev_count;
 	struct machine_config* next;
 
+	conf_object_t* cpu_data;			/* The pointer to cpu data */
 } machine_config_t;
  
 typedef	void (*mach_init_t) (void * state, struct machine_config * this_mach);	/*should be called when machine initialization */
 void register_mach(const char* mach_name, mach_init_t mach_init);
 machine_config_t * get_mach(const char* mach_name);
+machine_config_t * get_current_mach();
 
 #ifdef __cplusplus
 }

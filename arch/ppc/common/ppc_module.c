@@ -6,8 +6,11 @@
 const char* skyeye_module = "ppc";
 
 extern machine_config_t ppc_machines[];
+extern exception_t init_ppc_dyncom();
+
 void module_init(){
 	init_ppc_arch ();
+	init_ppc_dyncom();
 	 /*
          * register all the supported mach to the common library.
          */

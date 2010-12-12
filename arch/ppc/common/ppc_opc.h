@@ -21,10 +21,11 @@
 #ifndef __PPC_OPC_H__
 #define __PPC_OPC_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 
 static inline void ppc_update_cr0(uint32 r)
 {
+	e500_core_t* current_core = get_current_core();
 	current_core->cr &= 0x0fffffff;
 	if (!r) {
 		current_core->cr |= CR_CR0_EQ;

@@ -35,6 +35,10 @@
 #include "skyeye_mach.h"
 #include "skyeye_signal.h"
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #define DEFAULT_CONFIG_FILE "skyeye.conf"
 #define MAX_FILE_NAME 256
 typedef struct
@@ -170,7 +174,6 @@ typedef struct
 	void (*set_pc) (WORD addr);
 	WORD (*get_pc)();
 	uint32 (*get_step)();
-	//chy 2006-04-15
 	int (*ICE_write_byte) (WORD addr, uint8_t data);
 	int (*ICE_read_byte)(WORD addr, uint8_t *pv);	
 	uint32 (*get_regval_by_id)(int id);
@@ -196,6 +199,8 @@ typedef struct
 	 */
 	exception_t (*signal)(interrupt_signal_t* signal);
 
+	void (*exec) (uint32_t id);
+	void (*stop) (uint32_t id);
 } arch_config_t;
 
 typedef struct code_cov_option code_cov_t;
@@ -281,4 +286,9 @@ static skyeye_option_t skyeye_options[] = {
 
 exception_t skyeye_read_config (char* conf_filename);
 skyeye_config_t* get_current_config();
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif	/*__SKYEYE_CONFIG_H_*/

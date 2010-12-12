@@ -28,6 +28,7 @@
 #include "ppc_e500_exc.h"
 #include "sysendian.h"
 #include <ppc_cpu.h>
+#include <skyeye_exec.h>
 
 #ifdef __CYGWIN__
 #include <sys/time.h>
@@ -37,6 +38,7 @@
 #include <sys/time.h>
 #endif
 
+#include "skyeye_uart.h"
 typedef struct ccsr_reg_s
 {
 	//uint32_t ccsr; /* Configuration,control and status registers base address register */
@@ -137,8 +139,8 @@ typedef struct cpm_reg_s
 	uint32_t rtscr;
 	uint32_t rtsr;
 
-	byte *dpram;
-	byte *iram;		/* instruction RAM */
+	uint8_t *dpram;
+	uint8_t *iram;		/* instruction RAM */
 	cpm_scc_t scc[4];
 	cpm_mux_t mux;
 	uint32_t brgc[4];
@@ -262,11 +264,12 @@ typedef struct bd_s
 static int
 scc1_io_do_cycle (void *state, ppc_cpm_t * cpm)
 {
-	PPC_CPU_State *cpu = (PPC_CPU_State *) state;
+	//PPC_CPU_State *cpu = (PPC_CPU_State *) state;
+	PPC_CPU_State* cpu = get_current_cpu();
 	e500_core_t *core = &cpu->core[0];
 
 	mpc8560_io_t *io = &mpc8560_io;
-	byte *ram = &cpm->dpram[0];
+	uint8_t *ram = &cpm->dpram[0];
 	/* Param is stored at 0x8000 for SCC1 */
 	int rx_base = 0x8000;	/* Receive buffer base address */
 	int tx_base = 0x8002;	/* Transmit buffer base address */
@@ -816,7 +819,7 @@ mpc8560_io_write_byte (void *state, uint32_t offset, uint32_t data)
 	if (offset >= 0x80000 && offset < 0x8C000) {
 		//fprintf(prof_file,"DBG_CPM:in %s,offset=0x%x,data=0x%x,\n",__FUNCTION__, offset, data);
 
-		*((byte *) & io->cpm_reg.dpram[offset - 0x80000]) = data;
+		*((uint8_t *) & io->cpm_reg.dpram[offset - 0x80000]) = data;
 		return;
 	}
 	switch (offset) {
@@ -1335,8 +1338,6 @@ mpc8560_update_int (void *state)
 void
 mpc8560_mach_init (void *arch_instance, machine_config_t * this_mach)
 {
-	//PPC_CPU_State *cpu = (PPC_CPU_State *) state;
-
 	this_mach->mach_io_do_cycle = mpc8560_io_do_cycle;
 	this_mach->mach_io_reset = mpc8560_io_reset;
 	this_mach->mach_io_read_byte = mpc8560_io_read_byte;
@@ -1349,5 +1350,9 @@ mpc8560_mach_init (void *arch_instance, machine_config_t * this_mach)
 	//mpc8560_io.conf.ccsrbar = 0x000FF700;
 
 	//cpu->core_num = 1;
-
+	skyeye_exec_t* exec = create_exec();
+	exec->priv_data = get_conf_obj_by_cast(this_mach, "machine_config_t");
+	exec->run = mpc8560_io_do_cycle;
+	exec->stop = mpc8560_io_do_cycle;
+	add_to_default_cell(exec);
 }

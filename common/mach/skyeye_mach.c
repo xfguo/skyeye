@@ -61,3 +61,8 @@ machine_config_t* get_mach(skyeye_config_t* config){
 machine_config_t * get_mach_list(){
 	return mach_list;
 }
+
+machine_config_t *get_current_mach(){
+	skyeye_config_t* config = get_current_config();
+	return config->mach;
+}

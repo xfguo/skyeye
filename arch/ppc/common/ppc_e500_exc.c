@@ -27,7 +27,7 @@
 #include "ppc_mmu.h"
 #include "tracers.h"
 
-bool FASTCALL e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
+bool_t e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
 {
 	switch(type){
 		case CRI_INPUT:
@@ -149,7 +149,7 @@ bool FASTCALL e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, u
 		/**
 		 * set Valid bit
 		 */
-			core->mmu.mas[1] = current_core->mmu.mas[1] | 0x80000000;
+			core->mmu.mas[1] = core->mmu.mas[1] | 0x80000000;
 		/* update SPID with PID */
 			core->mmu.mas[6] = (core->mmu.mas[6] & 0xFF00FFFF) | ((core->mmu.pid[0] & 0xFF) << 16);
 			if(flags == PPC_MMU_WRITE)
@@ -222,5 +222,5 @@ bool FASTCALL e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, u
 	}
 	core->npc = (core->ivpr & 0xFFFF0000) | (core->ivor[type] & 0xFFF0);
 	//printf("In %s,npc=0x%x, &npc=0x%x\n", __FUNCTION__, core->npc, &core->npc);
-	return true;
+	return True;
 }

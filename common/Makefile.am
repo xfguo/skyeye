@@ -2,7 +2,7 @@
 common_breakpoint = breakpoint/breakpoint.c
 common_misc = misc/support.c
 common_module = module/skyeye_module.c
-common_ctrl = ctrl/thread_ctrl.c ctrl/sim_ctrl.c ctrl/step.c ctrl/scheduler.c
+common_ctrl = ctrl/thread_ctrl.c ctrl/sim_ctrl.c ctrl/step.c ctrl/scheduler.c ctrl/skyeye_thread.c ctrl/skyeye_cell.c ctrl/skyeye_exec.c
 common_conf_parser = conf_parser/skyeye_options.c conf_parser/skyeye_config.c conf_parser/misc_options.c conf_parser/conf_obj.c
 common_log = log/skyeye_log.c
 common_loader = loader/loader_elf.c loader/loader_file.c

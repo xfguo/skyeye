@@ -20,10 +20,14 @@
 
 #ifndef __PPC_CPU_H__
 #define __PPC_CPU_H__
+#include <skyeye_thread.h>
+#include <skyeye_obj.h>
+#include <skyeye_mach.h>
+#include <skyeye_exec.h>
 
 #include <stddef.h>
 #include <stdio.h>
-#include "types.h"
+//#include "types.h"
 #include "ppc_cpm.h"
 #include "ppc_e500_core.h"
 
@@ -44,11 +48,60 @@ typedef struct PPC_CPU_State_s {
 	uint32_t eebpcr;
 	uint32_t ccsr;
 	uint32_t core_num;
+	/* The core id that boot from  
+	 */
+	uint32_t boot_core_id;
 }PPC_CPU_State;
 
-extern PPC_CPU_State gCPU;
-extern e500_core_t * current_core;
+static inline PPC_CPU_State* get_current_cpu(){
+	machine_config_t* mach = get_current_mach();
+	/* Casting a conf_obj_t to PPC_CPU_State type */
+	PPC_CPU_State* cpu = (PPC_CPU_State*)get_cast_conf_obj(mach->cpu_data, "PPC_CPU_State");
 
+	return cpu;
+}
+
+/**
+* @brief Get the core instance boot from
+*
+* @return 
+*/
+static inline e500_core_t* get_boot_core(){
+	PPC_CPU_State* cpu = get_current_cpu();
+	return &cpu->core[cpu->boot_core_id];
+}
+/**
+* @brief Get the instance of running core
+*
+* @return the core instance
+*/
+static inline e500_core_t* get_current_core(){
+	/*
+	machine_config_t* mach = get_current_mach();
+	*/
+	/* Casting a conf_obj_t to PPC_CPU_State type */
+	//PPC_CPU_State* cpu = (PPC_CPU_State*)get_cast_conf_obj(mach->cpu_data, "PPC_CPU_State");
+	pthread_t id = pthread_self();
+	/* If thread is not in running mode, we should give the boot core */
+	if(get_thread_state(id) != Running_state){
+		return get_boot_core();
+	}
+	/* Judge if we are running in paralell or sequenial */
+	if(thread_exist(id)){
+		conf_object_t* conf_obj = get_current_exec_priv(id);
+		return (e500_core_t*)get_cast_conf_obj(conf_obj, "e500_core_t");
+	}
+	/* If we are in sequential mode, we have to depend on 
+	 * running_core_id to tell who am I
+	 */
+	#if 0
+	else
+		return &cpu->core[cpu->running_core_id];
+	#endif
+	return NULL;
+}
+
+#define CURRENT_CORE get_current_core()
 
 /*
 cr: .67
@@ -406,10 +459,10 @@ void ppc_cpu_atomic_cancel_ext_exception();
 extern uint32 gBreakpoint;
 extern uint32 gBreakpoint2;
 
-FILE * prof_file;
+extern FILE * prof_file;
 
-void ppc_set_singlestep_v(bool v, const char *file, int line, const char *format, ...);
-void ppc_set_singlestep_nonverbose(bool v);
+void ppc_set_singlestep_v(bool_t v, const char *file, int line, const char *format, ...);
+void ppc_set_singlestep_nonverbose(bool_t v);
 
 #endif
  

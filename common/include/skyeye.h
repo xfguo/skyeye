@@ -69,15 +69,20 @@
 #ifndef NULL
 #define		NULL	((void *)0)
 #endif
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
+void skyeye_exit(int ret);
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef DEBUG
 #define d_msg log_msg
 #else
 #define d_msg(args...)
 #endif
-//chy 2006-04-24
-extern void skyeye_exit(int ret);
 
 #define err_msg(fmt, args...)	fprintf(stderr, "%s %d: %s %s " fmt, __FILE__, __LINE__, __FUNCTION__, \
 						strerror(errno), ## args)

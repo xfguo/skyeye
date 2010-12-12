@@ -67,7 +67,7 @@ is_valid_vr_size(size_t size)
 //////////////////////////////////////////////////////////////////////
 
 cpu_t *
-cpu_new(uint32_t flags, uint32_t arch_flags, uint32_t cpu_id)
+cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 {
 	cpu_t *cpu;
 
@@ -81,17 +81,9 @@ cpu_new(uint32_t flags, uint32_t arch_flags, uint32_t cpu_id)
 	cpu->info.name = "noname";
 	cpu->info.common_flags = flags;
 	cpu->info.arch_flags = arch_flags;
-	cpu->id = cpu_id;
-#if 0 /* Move the following code to the arch dependent part */
-	switch (arch) {
-		case CPU_ARCH_XTENSA:
-			cpu->f = arch_func_xtensa;
-			break;
-		default:
-			LOG("illegal arch: %d\n", arch);
-			exit(1);
-	}
-#endif
+	assert(!arch_func);
+	cpu->f = arch_func;
+
 	cpu->dyncom_engine->code_start = 0;
 	cpu->dyncom_engine->code_end = 0;
 	cpu->dyncom_engine->code_entry = 0;

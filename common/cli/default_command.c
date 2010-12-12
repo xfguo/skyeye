@@ -321,7 +321,7 @@ int com_info(char* arg){
 	}
 	if(!strncmp(arg,info_target[0], strlen(info_target[0]))){
 	/* display the information of int register */
-		generic_arch_t* arch_instance = get_arch_instance();
+		generic_arch_t* arch_instance = get_arch_instance("");
 		if(arch_instance == NULL)
 			return;
 		if(arch_instance->get_regval_by_id){

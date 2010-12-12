@@ -31,30 +31,12 @@
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
 #include "breakpoint.h"
-
-//#include "armemu.h"
-//#include "skyeye2gdb.h"
-//extern ARMul_State * state;
-//extern struct SkyEye_ICE skyeye_ice;
-//extern int remote_debugmode;
-
-int running;
+#include "skyeye_obj.h"
+#include "skyeye_exec.h"
+#include "skyeye_thread.h"
+#include "skyeye_cell.h"
 
 #define MAX_THREAD_NUMBER 256
-typedef enum thread_state{
-	/* does not create. */
-	Blank_state,
-	/* Idle State */
-	Idle_state,
-	/* Running state */
-	Running_state,
-	/* waiting for cancel */
-	Dead_state,
-}thread_state_t;
-typedef struct work_thread_s{
-	pthread_t id;
-	thread_state_t state;
-}work_thread_t;
 static work_thread_t pthread_pool[MAX_THREAD_NUMBER];
 static exception_t alloc_thread(work_thread_t** thread){
 	int i;
@@ -70,96 +52,28 @@ static exception_t alloc_thread(work_thread_t** thread){
 		return No_exp;
 }
 
-void skyeye_pause(void){
-	running = 0;
-}
-
-void skyeye_continue(void){
-	running = 1;
-}
-
-void skyeye_start(void){
-	running = 1;
-}
-
-/* compatiable with old version */
-/* 
- * some unknown exception happened.we need to stop the simulator
- * and return to CLI.
- */
-void skyeye_exit(int ret){
-	skyeye_pause();
-	skyeye_log(Error_log, __FUNCTION__, "Some unknown exception happened.\n");
-}
-
-void skyeye_break(void){
-}
-
-#if 0
-static int exec_callback(){
-	/* test breakpoint and tracepoint */
+/**
+* @brief Get a pthread instance from thread pool
+*
+* @param id the given thread id
+*
+* @return  the pthread instance found
+*/
+work_thread_t* get_thread_by_id(pthread_t id){
 	int i;
-	address_t addr;
-	addr = arch_instance->get_pc();
-        for (i = 0;i < skyeye_ice.num_bps;i++){
-        	if(skyeye_ice.bps[i] == addr)
-                	return 1;
-	} /* for */
-
-	/* for remote debug, we need to detect the interrupt from remote side */
-	if(remote_debugmode){
-		/* to detect if Ctrl+c is pressed.. */
-		if(remote_interrupt()){
-			running = 0;
-			return 1;
-		}
+	for(i = 0; i < MAX_THREAD_NUMBER; i++){
+		if(pthread_equal(pthread_pool[i].id,id) != 0)
+			return &pthread_pool[i]; 
 	}
-//#if 0 /* FIXME, will move to tracepoint module */
-	addr = arch_instance->get_pc();
-	        if (skyeye_ice.tps_status==TRACE_STARTED)
-        {
-        	for (i=0;i<skyeye_ice.num_tps;i++)
-        arch_instance        {
-                       	if (((skyeye_ice.tps[i].tp_address==addr)&& (skyeye_ice.tps[i].status==TRACEPOINT_ENABLED))||(skyeye_ice.tps[i].status==TRACEPOINT_STEPPING))
-                        {
-         	              	handle_tracepoint(i);
-                         }
-                }
-	}
-//#endif
-	return 0;
-}
-#endif
-
-int skyeye_is_running(void){
-	return running;
-} 
-/*
- * mainloop of simulatior
- */
-void skyeye_loop(generic_arch_t *arch_instance){
-	for (;;) {
-		/* chech if we need to run some callback functions at this time */
-		exec_callback(Step_callback, arch_instance);
-        	while (!running) {
-                        /*
-                         * spin until it's time to go.  this is useful when
-                         * we're not auto-starting.
-                         */
-			usleep(100);
-                }
-	#if 0	
-		/* check callback function */	
-		int break_now_flag = exec_callback();
-		if(break_now_flag)
-			goto start;
-	#endif
-		/* run step once */
-		arch_instance->step_once ();
-	}
+	return NULL;
 }
 
-void create_thread(void *(*start_funcp)(void *), void * argp, pthread_t * idp)
+skyeye_cell_t* get_cell_by_thread_id(pthread_t id){
+	work_thread_t* thread = get_thread_by_id(id);
+	skyeye_cell_t* cell = (skyeye_cell_t*)get_cast_conf_obj(thread->priv_data, "skyeye_cell_t");
+	return cell;
+}
+void create_thread(void *(*start_funcp)(void *), void* argp, pthread_t * idp)
 {
         int res;
 	work_thread_t* pthread;
@@ -172,7 +86,7 @@ void create_thread(void *(*start_funcp)(void *), void * argp, pthread_t * idp)
                 pthread_attr_t attr;
                 pthread_attr_init(&attr); /* initialize attr with default attributes */
                 pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);     /* schedule like a process */
-                res = pthread_create( idp, &attr, start_funcp, argp );
+                res = pthread_create( idp, &attr, start_funcp, (void *)argp );
                 pthread_attr_destroy(&attr);
         } while (res == -1 && errno == EAGAIN);
 
@@ -183,8 +97,63 @@ void create_thread(void *(*start_funcp)(void *), void * argp, pthread_t * idp)
 	/* we have allocate and create pthread successfully until now */
 	pthread->state = Idle_state;
 	pthread->id = *idp;
+	pthread->priv_data = argp;
 }
 
+
+/**
+* @brief Running a thread with the given id
+*
+* @param id the thread id
+*/
+void start_thread_by_id(pthread_t id){
+	work_thread_t* thread = get_thread_by_id(id);
+	thread->state = Running_state;
+}
+
+/**
+* @brief stop a thread
+*
+* @param id the thread id
+*/
+void stop_thread_by_id(pthread_t id){
+	work_thread_t* thread = get_thread_by_id(id);
+	thread->state = Stopped_state;
+}
+
+void start_thread(work_thread_t* thread){
+	thread->state = Running_state;
+}
+
+void stop_thread(work_thread_t* thread){
+	thread->state = Stopped_state;
+}
+thread_state_t get_thread_state(pthread_t id){
+       work_thread_t* thread = get_thread_by_id(id);
+       if(thread != NULL)
+               return thread->state;
+       else
+               return Blank_state;
+}
+
+/**
+* @brief Judge if a pthread does exist in our thread pool
+*
+* @param id the judge thread id
+*
+* @return True means exists, and false means not.
+*/
+bool_t thread_exist(pthread_t id){
+	int i;
+	for(i = 0; i < MAX_THREAD_NUMBER; i++){
+		if(pthread_equal(pthread_pool[i].id,id) != 0)
+			return True; 
+	}
+	return False;
+}
+/**
+* @brief Initialization of pthread pool
+*/
 void
 init_threads(void)
 {
@@ -192,10 +161,11 @@ init_threads(void)
 	for(i = 0; i < MAX_THREAD_NUMBER; i++){
 		pthread_pool[i].state = Blank_state;
 	}
-	//generic_arch_t* arch_instance = get_arch_instance();
-        /* create the execution thread */
-        //create_thread(skyeye_loop, arch_instance, &id);
 }
+
+/**
+* @brief Destroy all the thread except itself
+*/
 void destroy_threads(void){
 	int i;
         for(i = 0; i < MAX_THREAD_NUMBER; i++){
@@ -209,4 +179,41 @@ void destroy_threads(void){
 			pthread_join(pthread_pool[i].id, NULL);
 		}
         }
+}
+
+/**
+* @brief Set all the thread to running mode
+*/
+void start_all_thread(){
+	int i;
+        for(i = 0; i < MAX_THREAD_NUMBER; i++){
+		/*
+		 * Before start a thread, check the data
+		 */
+                if((pthread_pool[i].state != Blank_state) && (pthread_pool[i].priv_data != NULL)){
+			printf("In %s, the thread %d is set to running\n", __FUNCTION__, i);
+			pthread_pool[i].state = Running_state;
+		}
+	}
+}
+
+/**
+* @brief stop all the running thread
+*/
+void stop_all_thread(){
+	int i;
+        for(i = 0; i < MAX_THREAD_NUMBER; i++){
+		/*
+		 * Before start a thread, check the data
+		 */
+                if((pthread_pool[i].state == Running_state) && (pthread_pool[i].priv_data != NULL)){
+			printf("In %s, the thread %d is set to stopped\n", __FUNCTION__, i);
+			pthread_pool[i].state = Stopped_state;
+		}
+	}
+}
+
+conf_object_t* get_thread_priv(pthread_t id){
+	work_thread_t* thread = get_thread_by_id(id);
+	return thread->priv_data;
 }

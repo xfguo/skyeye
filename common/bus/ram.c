@@ -29,6 +29,7 @@
 #include "skyeye_arch.h"
 #include "skyeye_pref.h"
 #include "skyeye_swapendian.h"
+#include "skyeye_mm.h"
 
 /* All the memory including rom and dram */
 static mem_state_t global_memory;

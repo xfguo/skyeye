@@ -21,7 +21,7 @@
 #ifndef __PPC_FPU_H__
 #define __PPC_FPU_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 
 #define FPU_SIGN_BIT (0x8000000000000000ULL)
 
@@ -71,7 +71,7 @@ typedef struct ppc_single_s {
 	ppc_fpr_type type;
 	int s;
 	int e;
-	uint m;
+	uint32 m;
 }ppc_single;
 
 

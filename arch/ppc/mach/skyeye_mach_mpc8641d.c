@@ -37,6 +37,7 @@
 #include <sys/time.h>
 #endif
 
+#include "skyeye_uart.h"
 #define UART_IRQ 26
 
 typedef struct ccsr_reg_s{
@@ -207,8 +208,7 @@ static void
 std8250_io_do_cycle (void * state)
 {
 	const int core_id = 0; /* currently, we only send uart interrupt to cpu0 */
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
+        e500_core_t * core = get_current_core();
 
         mpc8641d_io_t *io = &mpc8641d_io;
 
@@ -297,8 +297,7 @@ mpc8641d_io_reset (void *state)
 static uint32_t
 mpc8641d_io_read_byte (void *state, uint32_t offset)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
+	e500_core_t * core = get_current_core();
 
         mpc8641d_io_t *io = &mpc8641d_io;
 
@@ -317,12 +316,16 @@ mpc8641d_io_read_byte (void *state, uint32_t offset)
 			case 0xE0000:
 				return io->por_conf.porpllsr;
 			default:
+			{
+				e500_core_t * core = get_current_core();
 				fprintf (stderr,
 					 "in %s, error when read CCSR.addr=0x%x,pc=0x%x\n",
-					 __FUNCTION__, offset, current_core->pc);
+					 __FUNCTION__, offset, core->pc);
 				skyeye_exit (-1);
+			}
 		}
 	}
+	PPC_CPU_State* cpu = get_current_cpu();
 	switch (offset) {
 		case 0x0:
 			return cpu->ccsr;
@@ -340,7 +343,7 @@ mpc8641d_io_read_byte (void *state, uint32_t offset)
 				return io->uart[0].rbr;
 			}
 		case 0x4501:
-			//printf("In %s,read offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, current_core->pc);
+			//printf("In %s,read offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, core->pc);
 			if (io->uart[0].lcr & 0x80)
 				return io->uart[0].dmb;
 			else
@@ -351,7 +354,7 @@ mpc8641d_io_read_byte (void *state, uint32_t offset)
 			else {
 				uint32_t tmp = io->uart[0].iir;
 				io->uart[0].iir = (io->uart[0].iir & 0xf0) | 0x1;
-				//printf("In %s,read offset=0x%x,iir=0x%x, pc=0x%x\n", __FUNCTION__, offset, tmp, current_core->pc);
+				//printf("In %s,read offset=0x%x,iir=0x%x, pc=0x%x\n", __FUNCTION__, offset, tmp, core->pc);
 				return tmp;
 			}
 
@@ -370,7 +373,7 @@ mpc8641d_io_read_byte (void *state, uint32_t offset)
 		case 0x4600:
 			return io->uart[1].rbr;
 		case 0x4601:
-			//printf("In %s,read offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, current_core->pc);
+			//printf("In %s,read offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, core->pc);
 			if (io->uart[1].lcr & 0x80)
 				return io->uart[1].dmb;
 			else
@@ -389,28 +392,30 @@ mpc8641d_io_read_byte (void *state, uint32_t offset)
 		case 0x4607:
 			return io->uart[1].scr;
 		default:
+		{
+			e500_core_t* core = get_current_core();
 			fprintf (stderr,
 				 "in %s, error when read CCSR. offset=0x%x, pc=0x%x\n",
-				 __FUNCTION__, offset, current_core->pc);
+				 __FUNCTION__, offset, core->pc);
 		//skyeye_exit(-1);
+		}
 	}
 }
 static uint32_t
 mpc8641d_io_read_halfword (void *state, uint32_t offset)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
+        e500_core_t * core = get_current_core();
 
         mpc8641d_io_t *io = &mpc8641d_io;
 
 	//int offset = p - GET_CCSR_BASE (io->ccsr.ccsr);
-	//printf("DBG:read CCSR,offset=0x%x,pc=0x%x\n", offset, current_core->pc);
+	//printf("DBG:read CCSR,offset=0x%x,pc=0x%x\n", offset, core->pc);
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
 		switch (offset) {
 			default:
 				fprintf (stderr,
 					 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
-					 __FUNCTION__, offset, current_core->pc);
+					 __FUNCTION__, offset, core->pc);
 				skyeye_exit (-1);
 		}
 	}
@@ -422,12 +427,13 @@ mpc8641d_io_read_halfword (void *state, uint32_t offset)
 		default:
 			fprintf (stderr,
 				 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
-				 __FUNCTION__, offset, current_core->pc);
+				 __FUNCTION__, offset, core->pc);
 			skyeye_exit (-1);
 		}
 
 	}
 
+	PPC_CPU_State* cpu = get_current_cpu();
 	switch (offset) {
 		case 0x0:
 			return cpu->ccsr;
@@ -440,25 +446,23 @@ mpc8641d_io_read_halfword (void *state, uint32_t offset)
 		default:
 			fprintf (stderr,
 				 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
-				 __FUNCTION__, offset, current_core->pc);
+				 __FUNCTION__, offset, core->pc);
 			//skyeye_exit(-1);
 	}
 }
 static uint32_t
 mpc8641d_io_read_word (void *state, uint32_t offset)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
-
+        e500_core_t * core = get_current_core();	
         mpc8641d_io_t *io = &mpc8641d_io;
-	//printf("DBG:in %s,read CCSR,offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, current_core->pc);
+	//printf("DBG:in %s,read CCSR,offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, core->pc);
 
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
 		switch (offset) {
 			default:
 				fprintf (stderr,
 					 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
-					 __FUNCTION__, offset, current_core->pc);
+					 __FUNCTION__, offset, core->pc);
 				skyeye_exit (-1);
 		}
 	}
@@ -469,7 +473,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 			default:
 				fprintf (stderr,
 					 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
-					 __FUNCTION__, offset, current_core->pc);
+					 __FUNCTION__, offset, core->pc);
 				skyeye_exit (-1);
 		}
 	}
@@ -486,7 +490,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 			*result = io->pic_global.gcr & ~0x80000000;	/* we clear RST bit after finish initialization of PIC */
 			//*result = io->pic_global.gcr & ~0x1;
 			printf ("In %s,read gcr=0x%x, pc=0x%x\n",
-				__FUNCTION__, *result, current_core->pc);
+				__FUNCTION__, *result, core->pc);
 			return r;
 		}
 
@@ -503,7 +507,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 			/* source attribute register for DMA0 */
 			//printf("In %s,read gcr=0x%x\n", __FUNCTION__, *result);                        
 				return io->pic_global.gcr & ~0x80000000;	/* we clear RST bit after finish initialization of PIC */
-			//printf("In %s,read gcr=0x%x, pc=0x%x\n", __FUNCTION__, *result, current_core->pc);
+			//printf("In %s,read gcr=0x%x, pc=0x%x\n", __FUNCTION__, *result, core->pc);
 			case 0x410a0:
 			case 0x410b0:
 			case 0x410c0:
@@ -528,7 +532,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 			default:
 				/*
 				   fprintf(stderr,"in %s, error when read global.offset=0x%x, \
-				   pc=0x%x\n",__FUNCTION__, offset, current_core->pc);
+				   pc=0x%x\n",__FUNCTION__, offset, core->pc);
 				   return r;
 				 */
 				break;
@@ -576,7 +580,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 		}
 		fprintf (stderr,
 			 "in %s, error when read pic ram,offset=0x%x,pc=0x%x\n",
-			 __FUNCTION__, offset, current_core->pc);
+			 __FUNCTION__, offset, core->pc);
 
 	}
 
@@ -591,7 +595,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 		default:
 			fprintf (stderr, "in %s, error when read dma.offset=0x%x, \
                                 pc=0x%x\n", __FUNCTION__, offset,
-				 current_core->pc);
+				 core->pc);
 			return;
 			//skyeye_exit(-1);
 
@@ -604,7 +608,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 		default:
 			fprintf (stderr, "in %s, error when read IO port.offset=0x%x, \
                                 pc=0x%x\n", __FUNCTION__, offset,
-				 current_core->pc);
+				 core->pc);
 			return;
 			//skyeye_exit(-1);
 		}
@@ -620,11 +624,12 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 			default:
 				fprintf (stderr,
 					 "in %s, error when read CCSR.addr=0x%x,pc=0x%x\n",
-					 __FUNCTION__, offset, current_core->pc);
+					 __FUNCTION__, offset, core->pc);
 				skyeye_exit (-1);
 		}
 	}
 
+	PPC_CPU_State* cpu = get_current_cpu();
 	switch (offset) {
 		case 0x0:
 			return cpu->ccsr;
@@ -649,7 +654,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 		default:
 			fprintf (stderr,
 				 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
-				 __FUNCTION__, offset, current_core->pc);
+				 __FUNCTION__, offset, core->pc);
 			//skyeye_exit(-1);
 	}
 }
@@ -750,7 +755,7 @@ mpc8641d_io_write_byte (void *state, uint32_t offset, uint32_t data)
 		default:
 			fprintf (stderr,
 				 "in %s, error when write to CCSR.addr=0x%x,offset=0x%x,ccsr=0x%x, pc=0x%x\n",
-				 __FUNCTION__, offset, offset, cpu->ccsr, current_core->pc);
+				 __FUNCTION__, offset, offset, cpu->ccsr, core->pc);
 		//skyeye_exit(-1);
 	}
 }
@@ -783,7 +788,7 @@ mpc8641d_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr, "in %s, error when read CCSR.offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
-					 current_core->pc);
+					 core->pc);
 				skyeye_exit (-1);
 		}
 	}
@@ -792,12 +797,12 @@ mpc8641d_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr,
 				 "in %s, error when write to CCSR.offset=0x%x,pc=0x%x\n",
-				 __FUNCTION__, offset, current_core->pc);
+				 __FUNCTION__, offset, core->pc);
 				//skyeye_exit(-1);
 		}
 	}
 	if (offset >= 0x80000 && offset < 0x8C000) {
-		//fprintf(prof_file,"DBG_CPM:in %s,offset=0x%x,data=0x%x,pc=0x%x\n",__FUNCTION__, offset, data, current_core->pc);
+		//fprintf(prof_file,"DBG_CPM:in %s,offset=0x%x,data=0x%x,pc=0x%x\n",__FUNCTION__, offset, data, core->pc);
 		return;
 	}
 
@@ -817,7 +822,7 @@ mpc8641d_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 		default:
 			fprintf (stderr,
 				 "in %s, error when write to CCSR.offset=0x%x,pc=0x%x\n",
-				 __FUNCTION__, offset, current_core->pc);
+				 __FUNCTION__, offset, core->pc);
 			//skyeye_exit(-1);
 	}
 }
@@ -847,7 +852,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr,
 					 "in %s, error when write ddr_ctrl,offset=0x%x,pc=0x%x\n",
-					 __FUNCTION__, offset, current_core->pc);
+					 __FUNCTION__, offset, core->pc);
 				skyeye_exit (-1);
 		}
 	}
@@ -859,12 +864,12 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 #if 0
 		switch (offset) {
 		case 0x50D0:
-			current_core->lb_ctrl.lbcr = data;
+			core->lb_ctrl.lbcr = data;
 			return r;
 		default:
 			fprintf (stderr, "in %s, error when read CCSR.addr=0x%x, \
                                 pc=0x%x\n", __FUNCTION__, addr,
-				 current_core->pc);
+				 core->pc);
 
 			skyeye_exit (-1);
 
@@ -872,7 +877,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 #endif
 
 		fprintf (stderr, "in %s, error when write lb_ctrl.addr=0x%x, \
-                                pc=0x%x\n", __FUNCTION__, offset, current_core->pc);
+                                pc=0x%x\n", __FUNCTION__, offset, core->pc);
 
 		return;
 	}
@@ -890,7 +895,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr, "in %s, error when write dma.addr=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
-					 current_core->pc);
+					 core->pc);
 				return;
 				//skyeye_exit(-1);
 		}
@@ -909,7 +914,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr, "in %s, error when write dma.addr=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
-					 current_core->pc);
+					 core->pc);
 				return;
 				//skyeye_exit(-1);
 		}
@@ -958,7 +963,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr, "in %s, error when write mpic global, offset=0x%x, \
 					pc=0x%x\n", __FUNCTION__, offset,
-					 current_core->pc);
+					 core->pc);
 				return;
 		}
 		return;
@@ -1014,7 +1019,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 
 		fprintf (stderr,
 			 "in %s, error when write pic ram,offset=0x%x,pc=0x%x\n",
-			 __FUNCTION__, offset, current_core->pc);
+			 __FUNCTION__, offset, core->pc);
 		return;
 	}
 
@@ -1068,13 +1073,13 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 				return;
 			case 0x600b0:
 				io->pic_ram.eoi0 = data;
-				if (current_core->ipr & (1 << UART_IRQ)) {
-					current_core->ipr &= ~(1 << UART_IRQ);
+				if (core->ipr & (1 << UART_IRQ)) {
+					core->ipr &= ~(1 << UART_IRQ);
 					//printf("In %s, writing to eoi1 for core 0,clear int\n", __FUNCTION__);
 				}
 				/* clear the interrupt with highest priority in ISR */
-				if (current_core->ipr & IPI0) {
-					current_core->ipr &= ~IPI0;
+				if (core->ipr & IPI0) {
+					core->ipr &= ~IPI0;
 					//printf("In %s, writing to eoi1 for core 0,clear int\n", __FUNCTION__);
 				}
 
@@ -1131,11 +1136,11 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 				io->pic_ram.eoi1 = data;
 				
 				/* clear the interrupt with highest priority in ISR */
-				if (current_core->ipr & (1 << UART_IRQ)) {
-                                        current_core->ipr &= ~(1 << UART_IRQ);
+				if (core->ipr & (1 << UART_IRQ)) {
+                                        core->ipr &= ~(1 << UART_IRQ);
                                 }
-				if (current_core->ipr & (1 << UART_IRQ)) {
-                                        current_core->ipr &= ~(1 << UART_IRQ);
+				if (core->ipr & (1 << UART_IRQ)) {
+                                        core->ipr &= ~(1 << UART_IRQ);
                                 }
 
 
@@ -1143,7 +1148,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr, "in %s, error when write mpic, offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
-					 current_core->pc);
+					 core->pc);
 				return;
 
 		}
@@ -1158,7 +1163,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr,
 					 "in %s, error when write interrupt controller,offset=0x%x,pc=0x%x\n",
-					 __FUNCTION__, offset, current_core->pc);
+					 __FUNCTION__, offset, core->pc);
 				return;
 		}
 	}
@@ -1168,7 +1173,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr,
 					 "in %s, error when write cpm_reg,offset=0x%x,pc=0x%x\n",
-					 __FUNCTION__, offset, current_core->pc);
+					 __FUNCTION__, offset, core->pc);
 				return;
 		}
 	}
@@ -1179,7 +1184,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr, "in %s, error when read CCSR.offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
-					 current_core->pc);
+					 core->pc);
 				skyeye_exit (-1);
 		}
 	}
@@ -1190,7 +1195,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr, "in %s, error when read CCSR.offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
-					 current_core->pc);
+					 core->pc);
 				skyeye_exit (-1);
 		}
 	}
@@ -1200,7 +1205,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			default:
 				fprintf (stderr, "in %s, error when write io port.offset=0x%x, \
                 	                pc=0x%x\n", __FUNCTION__, offset,
-					 current_core->pc);
+					 core->pc);
 				return;
 				//skyeye_exit(-1);
 		}
@@ -1226,7 +1231,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 		default:
 			fprintf (stderr,
 				 "in %s, error when write to PCI_ATMU.offset=0x%x,pc=0x%x\n",
-				 __FUNCTION__, offset, current_core->pc);
+				 __FUNCTION__, offset, core->pc);
 			//skyeye_exit(-1);
 			return;
 		}
@@ -1268,7 +1273,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 		default:
 			fprintf (stderr,
 				 "in %s, error when write global.offset=0x%x,pc=0x%x\n",
-				 __FUNCTION__, offset, current_core->pc);
+				 __FUNCTION__, offset, core->pc);
 			return;
 		}
 	}
@@ -1312,7 +1317,7 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 	default:
 		fprintf (stderr,
 			 "in %s, error when write to CCSR.offset=0x%x,pc=0x%x\n",
-			 __FUNCTION__, offset, current_core->pc);
+			 __FUNCTION__, offset, core->pc);
 		//skyeye_exit(-1);
 	}
 

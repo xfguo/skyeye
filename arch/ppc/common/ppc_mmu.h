@@ -22,10 +22,14 @@
 #ifndef __PPC_MMU_H__
 #define __PPC_MMU_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 #include "ppc_e500_core.h"
 
-extern byte *gMemory;
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+extern uint8 *gMemory;
 extern uint32 gMemorySize;
 
 #define PPC_MMU_READ  1
@@ -38,39 +42,39 @@ extern uint32 gMemorySize;
 #define PPC_MMU_EXC 1
 #define PPC_MMU_FATAL 2
 
-int FASTCALL ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
-int FASTCALL e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
-int FASTCALL e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
-bool FASTCALL ppc_mmu_set_sdr1(uint32 newval, bool quiesce);
+int   ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
+int   e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
+int   e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
+bool_t   ppc_mmu_set_sdr1(uint32 newval, bool_t quiesce);
 void ppc_mmu_tlb_invalidate();
 
-int FASTCALL ppc_read_physical_dword(uint32 addr, uint64 *result);
-int FASTCALL ppc_read_physical_word(uint32 addr, uint32 *result);
-int FASTCALL ppc_read_physical_half(uint32 addr, uint16 *result);
-int FASTCALL ppc_read_physical_byte(uint32 addr, uint8 *result);
+int   ppc_read_physical_dword(uint32 addr, uint64 *result);
+int   ppc_read_physical_word(uint32 addr, uint32 *result);
+int   ppc_read_physical_half(uint32 addr, uint16 *result);
+int   ppc_read_physical_byte(uint32 addr, uint8 *result);
  
-int FASTCALL ppc_read_effective_code(uint32 addr, uint32 *result);
-int FASTCALL ppc_read_effective_dword(uint32 addr, uint64 *result);
-int FASTCALL ppc_read_effective_word(uint32 addr, uint32 *result);
-int FASTCALL ppc_read_effective_half(uint32 addr, uint16 *result);
-int FASTCALL ppc_read_effective_byte(uint32 addr, uint8 *result);
+int   ppc_read_effective_code(uint32 addr, uint32 *result);
+int   ppc_read_effective_dword(uint32 addr, uint64 *result);
+int   ppc_read_effective_word(uint32 addr, uint32 *result);
+int   ppc_read_effective_half(uint32 addr, uint16 *result);
+int   ppc_read_effective_byte(uint32 addr, uint8 *result);
 
-int FASTCALL ppc_write_physical_dword(uint32 addr, uint64 data);
-int FASTCALL ppc_write_physical_word(uint32 addr, uint32 data);
-int FASTCALL ppc_write_physical_half(uint32 addr, uint16 data);
-int FASTCALL ppc_write_physical_byte(uint32 addr, uint8 data);
+int   ppc_write_physical_dword(uint32 addr, uint64 data);
+int   ppc_write_physical_word(uint32 addr, uint32 data);
+int   ppc_write_physical_half(uint32 addr, uint16 data);
+int   ppc_write_physical_byte(uint32 addr, uint8 data);
 
-int FASTCALL ppc_write_effective_dword(uint32 addr, uint64 data);
-int FASTCALL ppc_write_effective_word(uint32 addr, uint32 data);
-int FASTCALL ppc_write_effective_half(uint32 addr, uint16 data);
-int FASTCALL ppc_write_effective_byte(uint32 addr, uint8 data);
+int   ppc_write_effective_dword(uint32 addr, uint64 data);
+int   ppc_write_effective_word(uint32 addr, uint32 data);
+int   ppc_write_effective_half(uint32 addr, uint16 data);
+int   ppc_write_effective_byte(uint32 addr, uint8 data);
 
-int FASTCALL ppc_direct_physical_memory_handle(uint32 addr, byte *ptr);
-int FASTCALL ppc_direct_effective_memory_handle(uint32 addr, byte *ptr);
-int FASTCALL ppc_direct_effective_memory_handle_code(uint32 addr, byte *ptr);
-bool FASTCALL ppc_mmu_page_create(uint32 ea, uint32 pa);
-bool FASTCALL ppc_mmu_page_free(uint32 ea);
-bool FASTCALL ppc_init_physical_memory(uint size);
+int   ppc_direct_physical_memory_handle(uint32 addr, uint8 *ptr);
+int   ppc_direct_effective_memory_handle(uint32 addr, uint8 *ptr);
+int   ppc_direct_effective_memory_handle_code(uint32 addr, uint8 *ptr);
+bool_t   ppc_mmu_page_create(uint32 ea, uint32 pa);
+bool_t   ppc_mmu_page_free(uint32 ea);
+bool_t   ppc_init_physical_memory(uint32 size);
 
 /*
 pte: (page table entry)
@@ -173,6 +177,9 @@ void ppc_opc_tlbwe();
 void ppc_opc_tlbrehi();
 void ppc_opc_wrteei();
 void ppc_opc_wrtee();
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

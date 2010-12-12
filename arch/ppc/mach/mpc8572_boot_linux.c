@@ -98,13 +98,14 @@ static void setup_boot_map(e500_mmu_t * mmu){
 void mpc8572_boot_linux(){
 	int i;
 	setup_boot_param(); /* MPC8572 */
-	for(i = 0; i < gCPU.core_num; i++){
-		e500_core_t * core = &gCPU.core[i];
+	PPC_CPU_State* cpu = get_current_cpu();
+	for(i = 0; i < cpu->core_num; i++){
+		e500_core_t * core = &cpu->core[i];
 		/* FIXME, will move it to skyeye.conf */
 		set_boot_param(core);
 		/* just for linux boot, so we need to do some map */
 		setup_boot_map(&core->mmu);
 	}
 	//gCPU.ccsr.ccsr = 0xE0000; /* Only for boot linux MPC8560 */
-	gCPU.ccsr = 0xFFE00; /* Only for boot MPC8572 linux */ 
+	cpu->ccsr = 0xFFE00; /* Only for boot MPC8572 linux */ 
 }

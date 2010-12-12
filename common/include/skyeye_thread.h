@@ -24,10 +24,46 @@
 
 #ifndef __SKYEYE_THREAD_H__
 #define __SKYEYE_THREAD_H__
-#include "skyeye_arch.h"
+#include <pthread.h>
+#include "skyeye_types.h"
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+typedef enum thread_state{
+	/* does not create. */
+	Blank_state,
+	/* Idle State */
+	Idle_state,
+	/* Running state */
+	Running_state,
+	/* Stopped state */
+	Stopped_state,
+	/* waiting for cancel */
+	Dead_state,
+}thread_state_t;
+
+typedef struct work_thread_s{
+	//conf_object_t* priv_data;
+	//skyeye_cell_t* cell;
+	pthread_t id;
+	thread_state_t state;
+	//skyeye_exec_t thread_ctrl;
+	//skyeye_cell_t cell;
+	conf_object_t* priv_data;
+}work_thread_t;
+
 /*
- * the utility for create a thread. start_funcp is the start function for the thread, argp  * is the argument for startfuncp, and idp is the id for the thread.
+ * the utility for create a thread. start_funcp is the start function for the thread, argp  
+ * is the argument for startfuncp, and idp is the id for the thread.
  */
 void create_thread(void *(*start_funcp)(void *), void * argp, pthread_t * idp);
+bool_t thread_exist(pthread_t id);
+conf_object_t* get_thread_priv(pthread_t id);
+thread_state_t get_thread_state(pthread_t id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

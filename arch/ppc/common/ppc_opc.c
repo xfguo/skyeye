@@ -26,6 +26,7 @@
 */
 
 #include <stdio.h>
+#include <skyeye_pref.h>
 
 #include "ppc_cpu.h"
 #include "ppc_exc.h"
@@ -37,6 +38,7 @@
 #include "debug.h"
 void ppc_set_msr(uint32 newmsr)
 {
+	e500_core_t* current_core = get_current_core();
 /*	if ((newmsr & MSR_EE) && !(current_core->msr & MSR_EE)) {
 		if (pic_check_interrupt()) {
 			current_core->exception_pending = true;
@@ -49,7 +51,7 @@ void ppc_set_msr(uint32 newmsr)
 		PPC_CPU_WARN("MSR[SE] (singlestep enable) set, but compiled w/o SE support.\n");
 	}
 #else 
-	current_core->singlestep_ignore = true;
+	current_core->singlestep_ignore = True;
 #endif
 	if (newmsr & PPC_CPU_UNSUPPORTED_MSR_BITS) {
 		PPC_CPU_ERR("unsupported bits in MSR set: %08x @%08x\n", newmsr & PPC_CPU_UNSUPPORTED_MSR_BITS, current_core->pc);
@@ -68,6 +70,7 @@ void ppc_set_msr(uint32 newmsr)
  */
 void ppc_opc_bx()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 li;
 	PPC_OPC_TEMPL_I(current_core->current_opc, li);
 	if (!(current_core->current_opc & PPC_OPC_AA)) {
@@ -85,14 +88,15 @@ void ppc_opc_bx()
  */
 void ppc_opc_bcx()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 BO, BI, BD;
 	PPC_OPC_TEMPL_B(current_core->current_opc, BO, BI, BD);
 	if (!(BO & 4)) {
 		current_core->ctr--;
 	}
-	bool bo2 = ((BO & 2)?1:0);
-	bool bo8 = ((BO & 8)?1:0); // branch condition true
-	bool cr = ((current_core->cr & (1<<(31-BI)))?1:0) ;
+	bool_t bo2 = ((BO & 2)?1:0);
+	bool_t bo8 = ((BO & 8)?1:0); // branch condition true
+	bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0) ;
 	if (((BO & 4) || ((current_core->ctr!=0) ^ bo2))
 	&& ((BO & 16) || (!(cr ^ bo8)))) {
 		if (!(current_core->current_opc & PPC_OPC_AA)) {
@@ -112,12 +116,13 @@ void ppc_opc_bcx()
  */
 void ppc_opc_bcctrx()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 BO, BI, BD;
 	PPC_OPC_TEMPL_XL(current_core->current_opc, BO, BI, BD);
 	PPC_OPC_ASSERT(BD==0);
 	PPC_OPC_ASSERT(!(BO & 2));     
-	bool bo8 = ((BO & 8)?1:0);
-	bool cr = ((current_core->cr & (1<<(31-BI)))?1:0);
+	bool_t bo8 = ((BO & 8)?1:0);
+	bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0);
 	if ((BO & 16) || (!(cr ^ bo8))) {
 		if (current_core->current_opc & PPC_OPC_LK) {
 			current_core->lr = current_core->pc + 4;
@@ -132,15 +137,16 @@ void ppc_opc_bcctrx()
  */
 void ppc_opc_bclrx()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 BO, BI, BD;
 	PPC_OPC_TEMPL_XL(current_core->current_opc, BO, BI, BD);
 	PPC_OPC_ASSERT(BD==0);
 	if (!(BO & 4)) {
 		current_core->ctr--;
 	}
-	bool bo2 = ((BO & 2)?1:0);
-	bool bo8 = ((BO & 8)?1:0);
-	bool cr = ((current_core->cr & (1<<(31-BI)))?1:0);
+	bool_t bo2 = ((BO & 2)?1:0);
+	bool_t bo8 = ((BO & 8)?1:0);
+	bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0);
 	if (((BO & 4) || ((current_core->ctr!=0) ^ bo2))
 	&& ((BO & 16) || (!(cr ^ bo8)))) {
 		BD = current_core->lr & 0xfffffffc;
@@ -165,6 +171,7 @@ void ppc_opc_dcbf()
  */
 void ppc_opc_dcbi()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -254,6 +261,7 @@ static uint32 ppc_cmp_and_mask[8] = {
  */
 void ppc_opc_mcrf()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 crD, crS, bla;
 	PPC_OPC_TEMPL_X(current_core->current_opc, crD, crS, bla);
 	// FIXME: bla == 0
@@ -287,6 +295,7 @@ void ppc_opc_mcrxr()
  */
 void ppc_opc_mfcr()
 {
+	e500_core_t* current_core = get_current_core();
 	int rD, rA, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	PPC_OPC_ASSERT(rA==0 && rB==0);
@@ -298,6 +307,7 @@ void ppc_opc_mfcr()
  */
 void ppc_opc_mffsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, rA, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, frD, rA, rB);
 	PPC_OPC_ASSERT(rA==0 && rB==0);
@@ -313,6 +323,7 @@ void ppc_opc_mffsx()
  */
 void ppc_opc_mfmsr()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -328,6 +339,7 @@ void ppc_opc_mfmsr()
  */
 void ppc_opc_mfspr()
 {
+	e500_core_t* current_core = get_current_core();
 	int rD, spr1, spr2;
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, spr1, spr2);
 	if (current_core->msr & MSR_PR) {
@@ -612,6 +624,7 @@ void ppc_opc_mfspr()
  */
 void ppc_opc_mfsr()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -627,6 +640,7 @@ void ppc_opc_mfsr()
  */
 void ppc_opc_mfsrin()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -642,6 +656,7 @@ void ppc_opc_mfsrin()
  */
 void ppc_opc_mftb()
 {
+	e500_core_t* current_core = get_current_core();
 	int rD, spr1, spr2;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, spr1, spr2);
 	switch (spr2) {
@@ -667,6 +682,7 @@ void ppc_opc_mftb()
  */
 void ppc_opc_mtcrf()
 {
+	e500_core_t* current_core = get_current_core();
 	
 	int rS;
 	uint32 crm;
@@ -682,6 +698,7 @@ void ppc_opc_mtcrf()
  */
 void ppc_opc_mtfsb0x()
 {
+	e500_core_t* current_core = get_current_core();
 	int crbD, n1, n2;
 	PPC_OPC_TEMPL_X(current_core->current_opc, crbD, n1, n2);
 	if (crbD != 1 && crbD != 2) {
@@ -698,6 +715,7 @@ void ppc_opc_mtfsb0x()
  */
 void ppc_opc_mtfsb1x()
 {
+	e500_core_t* current_core = get_current_core();
 	int crbD, n1, n2;
 	PPC_OPC_TEMPL_X(current_core->current_opc, crbD, n1, n2);
 	if (crbD != 1 && crbD != 2) {
@@ -714,6 +732,7 @@ void ppc_opc_mtfsb1x()
  */
 void ppc_opc_mtfsfx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frB;
 	uint32 fm, FM;
 	PPC_OPC_TEMPL_XFL(current_core->current_opc, frB, fm);
@@ -731,6 +750,7 @@ void ppc_opc_mtfsfx()
  */
 void ppc_opc_mtfsfix()
 {
+	e500_core_t* current_core = get_current_core();
 	int crfD, n1;
 	uint32 imm;
 	PPC_OPC_TEMPL_X(current_core->current_opc, crfD, n1, imm);
@@ -750,6 +770,7 @@ void ppc_opc_mtfsfix()
  */
 void ppc_opc_mtmsr()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -765,6 +786,7 @@ void ppc_opc_mtmsr()
  */
 void ppc_opc_mtspr()
 {
+	e500_core_t* current_core = get_current_core();
 	int rS, spr1, spr2;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, spr1, spr2);
 	/*
@@ -814,7 +836,7 @@ void ppc_opc_mtspr()
 			return;
 		}
 		case 25: 
-			if (!ppc_mmu_set_sdr1(current_core->gpr[rS], true)) {
+			if (!ppc_mmu_set_sdr1(current_core->gpr[rS], True)) {
 				PPC_OPC_ERR("cannot set sdr1\n");
 			}
 			return;
@@ -1125,6 +1147,7 @@ void ppc_opc_mtspr()
  */
 void ppc_opc_mtsr()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -1140,6 +1163,7 @@ void ppc_opc_mtsr()
  */
 void ppc_opc_mtsrin()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -1156,6 +1180,7 @@ void ppc_opc_mtsrin()
  */
 void ppc_opc_rfi()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -1172,13 +1197,18 @@ void ppc_opc_rfi()
 //#include "io/graphic/gcard.h"
 void ppc_opc_sc()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->gpr[3] == 0x113724fa && current_core->gpr[4] == 0x77810f9b) {
 		//gcard_osi(0);
 		return;
 	}
 	//ppc_exception(current_core, SYSCALL ,0 ,0);
 	//e600_ppc_exception(current_core, PPC_EXC_SC ,0 ,0);
-	ppc_exception(current_core, current_core->syscall_number ,0 ,0);
+	sky_pref_t* pref = get_skyeye_pref();
+	if(pref->user_mode_sim)
+		ppc_syscall(current_core);
+	else
+		ppc_exception(current_core, current_core->syscall_number ,0 ,0);
 }
 
 /*
@@ -1196,6 +1226,7 @@ void ppc_opc_sync()
  */
 void ppc_opc_tlbia()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -1212,6 +1243,7 @@ void ppc_opc_tlbia()
  */
 void ppc_opc_tlbie()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -1228,6 +1260,7 @@ void ppc_opc_tlbie()
  */
 void ppc_opc_tlbsync()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->msr & MSR_PR) {
 		ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		return;
@@ -1244,6 +1277,7 @@ void ppc_opc_tlbsync()
  */
 void ppc_opc_tw()
 {
+	e500_core_t* current_core = get_current_core();
 	int TO, rA, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, TO, rA, rB);
 	uint32 a = current_core->gpr[rA];
@@ -1263,6 +1297,7 @@ void ppc_opc_tw()
  */
 void ppc_opc_twi()
 {
+	e500_core_t* current_core = get_current_core();
 	int TO, rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, TO, rA, imm);

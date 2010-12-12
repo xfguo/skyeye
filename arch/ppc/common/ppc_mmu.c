@@ -71,10 +71,12 @@ int e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint3
 	ppc_tlb_entry_t *entry;
 	int tlb1_index;
 	int pid_match = 0;
+	e500_core_t* current_core = get_current_core();
+	PPC_CPU_State* cpu = get_current_cpu();
 
-	if((gCPU.bptr & 0x80000000) && (addr >> 12 == 0xFFFFF)){ /* if bootpage translation enabled? */
+	if((cpu->bptr & 0x80000000) && (addr >> 12 == 0xFFFFF)){ /* if bootpage translation enabled? */
 		//printf("do bootpage translation\n");
-		*result = (addr & 0xFFF) | (gCPU.bptr << 12); /* please refer to P259 of MPC8572UM */
+		*result = (addr & 0xFFF) | (cpu->bptr << 12); /* please refer to P259 of MPC8572UM */
 		return PPC_MMU_OK;
 	}
 	i = 0;
@@ -448,6 +450,7 @@ int e500_mmu_init(e500_mmu_t * mmu){
 
 void ppc_mmu_tlb_invalidate()
 {
+	e500_core_t* current_core = get_current_core();
 	current_core->effective_code_page = 0xffffffff;
 }
 
@@ -461,8 +464,9 @@ A PTEG contains eight
 PTEs of eight bytes each; therefore, each PTEG is 64 bytes long.
 */
 
-bool FASTCALL ppc_mmu_set_sdr1(uint32 newval, bool quiesce)
+bool_t   ppc_mmu_set_sdr1(uint32 newval, bool_t quiesce)
 {
+	e500_core_t* current_core = get_current_core();
 	/* if (newval == current_core->sdr1)*/ quiesce = false;
 	PPC_MMU_TRACE("new pagetable: sdr1 = 0x%08x\n", newval);
 	uint32 htabmask = SDR1_HTABMASK(newval);
@@ -494,8 +498,9 @@ bool FASTCALL ppc_mmu_set_sdr1(uint32 newval, bool quiesce)
 	return true;
 }
 
-bool FASTCALL ppc_mmu_page_create(uint32 ea, uint32 pa)
+bool_t   ppc_mmu_page_create(uint32 ea, uint32 pa)
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 sr = current_core->sr[EA_SR(ea)];
 	uint32 page_index = EA_PageIndex(ea);  // 16 bit
 	uint32 VSID = SR_VSID(sr);             // 24 bit
@@ -532,12 +537,12 @@ bool FASTCALL ppc_mmu_page_create(uint32 ea, uint32 pa)
 	return false;
 }
 
-inline bool FASTCALL ppc_mmu_page_free(uint32 ea)
+inline bool_t   ppc_mmu_page_free(uint32 ea)
 {
 	return true;
 }
 
-inline int FASTCALL ppc_direct_physical_memory_handle(uint32 addr, byte *ptr)
+inline int   ppc_direct_physical_memory_handle(uint32 addr, uint8 *ptr)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -548,19 +553,21 @@ inline int FASTCALL ppc_direct_physical_memory_handle(uint32 addr, byte *ptr)
 	return PPC_MMU_FATAL;
 }
 
-int FASTCALL ppc_direct_effective_memory_handle(uint32 addr, byte *ptr)
+int   ppc_direct_effective_memory_handle(uint32 addr, uint8 *ptr)
 {
 	uint32 ea;
 	int r;
+	e500_core_t* current_core = get_current_core();
 	if (!((r = ppc_effective_to_physical(current_core, addr, PPC_MMU_READ, &ea)))) {
 		return ppc_direct_physical_memory_handle(ea, ptr);
 	}
 	return r;
 }
 
-int FASTCALL ppc_direct_effective_memory_handle_code(uint32 addr, byte *ptr)
+int   ppc_direct_effective_memory_handle_code(uint32 addr, uint8 *ptr)
 {
 	uint32 ea;
+	e500_core_t* current_core = get_current_core();
 	int r;
 	if (!((r = ppc_effective_to_physical(current_core, addr, PPC_MMU_READ | PPC_MMU_CODE, &ea)))) {
 		return ppc_direct_physical_memory_handle(ea, ptr);
@@ -568,7 +575,7 @@ int FASTCALL ppc_direct_effective_memory_handle_code(uint32 addr, byte *ptr)
 	return r;
 }
 
-inline int FASTCALL ppc_read_physical_qword(uint32 addr, Vector_t *result)
+inline int   ppc_read_physical_qword(uint32 addr, Vector_t *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -581,7 +588,7 @@ inline int FASTCALL ppc_read_physical_qword(uint32 addr, Vector_t *result)
 	return io_mem_read128(addr, (uint128 *)result);
 }
 
-inline int FASTCALL ppc_read_physical_dword(uint32 addr, uint64 *result)
+inline int   ppc_read_physical_dword(uint32 addr, uint64 *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -596,7 +603,7 @@ inline int FASTCALL ppc_read_physical_dword(uint32 addr, uint64 *result)
 	return ret;
 }
 
-int FASTCALL ppc_read_physical_word(uint32 addr, uint32 *result)
+int   ppc_read_physical_word(uint32 addr, uint32 *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -610,7 +617,7 @@ int FASTCALL ppc_read_physical_word(uint32 addr, uint32 *result)
 	return PPC_MMU_OK;
 }
 
-inline int FASTCALL ppc_read_physical_half(uint32 addr, uint16 *result)
+inline int   ppc_read_physical_half(uint32 addr, uint16 *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -625,7 +632,7 @@ inline int FASTCALL ppc_read_physical_half(uint32 addr, uint16 *result)
 	return ret;
 }
 
-inline int FASTCALL ppc_read_physical_byte(uint32 addr, uint8 *result)
+inline int   ppc_read_physical_byte(uint32 addr, uint8 *result)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -640,13 +647,14 @@ inline int FASTCALL ppc_read_physical_byte(uint32 addr, uint8 *result)
 	return ret;
 }
 
-inline int FASTCALL ppc_read_effective_code(uint32 addr, uint32 *result)
+inline int   ppc_read_effective_code(uint32 addr, uint32 *result)
 {
 	if (addr & 3) {
 		// EXC..bla
 		return PPC_MMU_FATAL;
 	}
 	uint32 p;
+	e500_core_t* current_core = get_current_core();
 	int r;
 	if (!((r=ppc_effective_to_physical(current_core, addr, PPC_MMU_READ | PPC_MMU_CODE, &p)))) {
 		return ppc_read_physical_word(p, result);
@@ -654,12 +662,13 @@ inline int FASTCALL ppc_read_effective_code(uint32 addr, uint32 *result)
 	return r;
 }
 
-inline int FASTCALL ppc_read_effective_qword(uint32 addr, Vector_t *result)
+inline int   ppc_read_effective_qword(uint32 addr, Vector_t *result)
 {
 	uint32 p;
 	int r;
 
 	addr &= ~0x0f;
+	e500_core_t* current_core = get_current_core();
 
 	if (!(r = ppc_effective_to_physical(current_core, addr, PPC_MMU_READ, &p))) {
 		return ppc_read_physical_qword(p, result);
@@ -668,8 +677,9 @@ inline int FASTCALL ppc_read_effective_qword(uint32 addr, Vector_t *result)
 	return r;
 }
 
-inline int FASTCALL ppc_read_effective_dword(uint32 addr, uint64 *result)
+inline int   ppc_read_effective_dword(uint32 addr, uint64 *result)
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 p;
 	int r;
 	if (!(r = ppc_effective_to_physical(current_core, addr, PPC_MMU_READ, &p))) {
@@ -695,7 +705,7 @@ inline int FASTCALL ppc_read_effective_dword(uint32 addr, uint64 *result)
 	return r;
 
 }
-inline int FASTCALL ppc_write_physical_qword(uint32 addr, Vector_t *data)
+inline int   ppc_write_physical_qword(uint32 addr, Vector_t *data)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -712,7 +722,7 @@ inline int FASTCALL ppc_write_physical_qword(uint32 addr, Vector_t *data)
 	}
 }
 
-inline int FASTCALL ppc_write_physical_dword(uint32 addr, uint64 data)
+inline int   ppc_write_physical_dword(uint32 addr, uint64 data)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -728,7 +738,7 @@ inline int FASTCALL ppc_write_physical_dword(uint32 addr, uint64 data)
 	}
 }
 
-inline int FASTCALL ppc_write_physical_word(uint32 addr, uint32 data)
+inline int   ppc_write_physical_word(uint32 addr, uint32 data)
 {
 #if 0
 	if (addr < boot_romSize) {
@@ -739,10 +749,11 @@ inline int FASTCALL ppc_write_physical_word(uint32 addr, uint32 data)
 #endif
 	return io_mem_write(addr, ppc_bswap_word(data), 4);
 }
-inline int FASTCALL ppc_write_effective_qword(uint32 addr, Vector_t data)
+inline int   ppc_write_effective_qword(uint32 addr, Vector_t data)
 {
 	uint32 p;
 	int r;
+	e500_core_t* current_core = get_current_core();
 
 	addr &= ~0x0f;
 
@@ -752,8 +763,9 @@ inline int FASTCALL ppc_write_effective_qword(uint32 addr, Vector_t data)
 	return r;
 }
 
-inline int FASTCALL ppc_write_effective_dword(uint32 addr, uint64 data)
+inline int   ppc_write_effective_dword(uint32 addr, uint64 data)
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 p;
 	int r;
 	if (!((r=ppc_effective_to_physical(current_core, addr, PPC_MMU_WRITE, &p)))) {
@@ -782,7 +794,7 @@ inline int FASTCALL ppc_write_effective_dword(uint32 addr, uint64 data)
  *	DMA Interface
  */
 
-bool	ppc_dma_write(uint32 dest, const void *src, uint32 size)
+bool_t	ppc_dma_write(uint32 dest, const void *src, uint32 size)
 {
 #if 0
 	if (dest > boot_romSize || (dest+size) > boot_romSize) return false;
@@ -794,7 +806,7 @@ bool	ppc_dma_write(uint32 dest, const void *src, uint32 size)
 	return true;
 }
 
-bool	ppc_dma_read(void *dest, uint32 src, uint32 size)
+bool_t	ppc_dma_read(void *dest, uint32 src, uint32 size)
 {
 #if 0
 	if (src > boot_romSize || (src+size) > boot_romSize) return false;
@@ -806,7 +818,7 @@ bool	ppc_dma_read(void *dest, uint32 src, uint32 size)
 	return true;
 }
 
-bool	ppc_dma_set(uint32 dest, int c, uint32 size)
+bool_t	ppc_dma_set(uint32 dest, int c, uint32 size)
 {
 #if 0
 	if (dest > boot_romSize || (dest+size) > boot_romSize) return false;
@@ -822,18 +834,20 @@ bool	ppc_dma_set(uint32 dest, int c, uint32 size)
 /***************************************************************************
  *	DEPRECATED prom interface
  */
-bool ppc_prom_set_sdr1(uint32 newval, bool quiesce)
+bool_t ppc_prom_set_sdr1(uint32 newval, bool_t quiesce)
 {
 	return ppc_mmu_set_sdr1(newval, quiesce);
 }
 
-bool ppc_prom_effective_to_physical(uint32 *result, uint32 ea)
+bool_t ppc_prom_effective_to_physical(uint32 *result, uint32 ea)
 {
+	e500_core_t* current_core = get_current_core();
 	return ppc_effective_to_physical(current_core, ea, PPC_MMU_READ|PPC_MMU_SV|PPC_MMU_NO_EXC, result) == PPC_MMU_OK;
 }
 
-bool ppc_prom_page_create(uint32 ea, uint32 pa)
+bool_t ppc_prom_page_create(uint32 ea, uint32 pa)
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 sr = current_core->sr[EA_SR(ea)];
 	uint32 page_index = EA_PageIndex(ea);  // 16 bit
 	uint32 VSID = SR_VSID(sr);             // 24 bit
@@ -870,7 +884,7 @@ bool ppc_prom_page_create(uint32 ea, uint32 pa)
 	return false;
 }
 
-bool ppc_prom_page_free(uint32 ea)
+bool_t ppc_prom_page_free(uint32 ea)
 {
 	return true;
 }
@@ -888,6 +902,7 @@ bool ppc_prom_page_free(uint32 ea)
  */
 void ppc_opc_dcbz()
 {
+	e500_core_t* current_core = get_current_core();
 #ifdef E500
 	//printf("DBG:In %s, for e500,cache is not implemented.\n",__FUNCTION__);
         //PPC_L1_CACHE_LINE_SIZE
@@ -929,6 +944,7 @@ void ppc_opc_dcbtls(){
  */
 void ppc_opc_lbz()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -944,6 +960,7 @@ void ppc_opc_lbz()
  */
 void ppc_opc_lbzu()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -961,6 +978,7 @@ void ppc_opc_lbzu()
  */
 void ppc_opc_lbzux()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	// FIXME: check rA!=0 && rA!=rD
@@ -977,6 +995,7 @@ void ppc_opc_lbzux()
  */
 void ppc_opc_lbzx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint8 r;
@@ -991,6 +1010,7 @@ void ppc_opc_lbzx()
  */
 void ppc_opc_lfd()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1010,6 +1030,7 @@ void ppc_opc_lfd()
  */
 void ppc_opc_lfdu()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1031,6 +1052,7 @@ void ppc_opc_lfdu()
  */
 void ppc_opc_lfdux()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1051,6 +1073,7 @@ void ppc_opc_lfdux()
  */
 void ppc_opc_lfdx()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1069,6 +1092,7 @@ void ppc_opc_lfdx()
  */
 void ppc_opc_lfs()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1092,6 +1116,7 @@ void ppc_opc_lfs()
  */
 void ppc_opc_lfsu()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1117,6 +1142,7 @@ void ppc_opc_lfsu()
  */
 void ppc_opc_lfsux()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1141,6 +1167,7 @@ void ppc_opc_lfsux()
  */
 void ppc_opc_lfsx()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1163,6 +1190,7 @@ void ppc_opc_lfsx()
  */
 void ppc_opc_lha()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -1178,6 +1206,7 @@ void ppc_opc_lha()
  */
 void ppc_opc_lhau()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -1195,6 +1224,7 @@ void ppc_opc_lhau()
  */
 void ppc_opc_lhaux()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint16 r;
@@ -1211,6 +1241,7 @@ void ppc_opc_lhaux()
  */
 void ppc_opc_lhax()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint16 r;
@@ -1226,6 +1257,7 @@ void ppc_opc_lhax()
  */
 void ppc_opc_lhbrx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint16 r;
@@ -1240,6 +1272,7 @@ void ppc_opc_lhbrx()
  */
 void ppc_opc_lhz()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -1255,6 +1288,7 @@ void ppc_opc_lhz()
  */
 void ppc_opc_lhzu()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -1272,6 +1306,7 @@ void ppc_opc_lhzu()
  */
 void ppc_opc_lhzux()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint16 r;
@@ -1288,6 +1323,7 @@ void ppc_opc_lhzux()
  */
 void ppc_opc_lhzx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint16 r;
@@ -1302,6 +1338,7 @@ void ppc_opc_lhzx()
  */
 void ppc_opc_lmw()
 {
+	e500_core_t* current_core = get_current_core();
 	int rD, rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -1320,6 +1357,7 @@ void ppc_opc_lmw()
  */
 void ppc_opc_lswi()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, NB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, NB);
 	if (NB==0) NB=32;
@@ -1353,6 +1391,7 @@ void ppc_opc_lswi()
  */
 void ppc_opc_lswx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	int NB = XER_n(current_core->xer);
@@ -1387,6 +1426,7 @@ void ppc_opc_lswx()
  */
 void ppc_opc_lwarx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint32 r;
@@ -1403,6 +1443,7 @@ void ppc_opc_lwarx()
  */
 void ppc_opc_lwbrx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint32 r;
@@ -1417,6 +1458,7 @@ void ppc_opc_lwbrx()
  */
 void ppc_opc_lwz()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -1434,6 +1476,7 @@ void ppc_opc_lwz()
  */
 void ppc_opc_lwzu()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
@@ -1451,6 +1494,7 @@ void ppc_opc_lwzu()
  */
 void ppc_opc_lwzux()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	// FIXME: check rA!=0 && rA!=rD
@@ -1467,6 +1511,7 @@ void ppc_opc_lwzux()
  */
 void ppc_opc_lwzx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	uint32 r;
@@ -1481,6 +1526,7 @@ void ppc_opc_lwzx()
  */
 void ppc_opc_lvx()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -1505,6 +1551,7 @@ void ppc_opc_lvx()
  */
 void ppc_opc_lvxl()
 {
+	e500_core_t* current_core = get_current_core();
 	ppc_opc_lvx();
 	/* This instruction should hint to the cache that the value won't be
 	 *   needed again in memory anytime soon.  We don't emulate the cache,
@@ -1517,6 +1564,7 @@ void ppc_opc_lvxl()
  */
 void ppc_opc_lvebx()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -1540,6 +1588,7 @@ void ppc_opc_lvebx()
  */
 void ppc_opc_lvehx()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -1563,6 +1612,7 @@ void ppc_opc_lvehx()
  */
 void ppc_opc_lvewx()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -1605,6 +1655,7 @@ static byte lvsl_helper[] = {
  */
 void ppc_opc_lvsl()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -1631,6 +1682,7 @@ void ppc_opc_lvsl()
  */
 void ppc_opc_lvsr()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -1667,6 +1719,7 @@ void ppc_opc_dst()
  */
 void ppc_opc_stb()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rS, rA, imm);
@@ -1678,6 +1731,7 @@ void ppc_opc_stb()
  */
 void ppc_opc_stbu()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rS, rA, imm);
@@ -1693,6 +1747,7 @@ void ppc_opc_stbu()
  */
 void ppc_opc_stbux()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	// FIXME: check rA!=0
@@ -1707,6 +1762,7 @@ void ppc_opc_stbux()
  */
 void ppc_opc_stbx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	ppc_write_effective_byte((rA?current_core->gpr[rA]:0)+current_core->gpr[rB], (uint8)current_core->gpr[rS]) != PPC_MMU_FATAL;
@@ -1717,6 +1773,7 @@ void ppc_opc_stbx()
  */
 void ppc_opc_stfd()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1732,6 +1789,7 @@ void ppc_opc_stfd()
  */
 void ppc_opc_stfdu()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU ,0 ,0);
 		return;
@@ -1751,6 +1809,7 @@ void ppc_opc_stfdu()
  */
 void ppc_opc_stfdux()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -1769,6 +1828,7 @@ void ppc_opc_stfdux()
  */
 void ppc_opc_tlbivax()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD, rB;
         PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	int i = 0,j = 0;
@@ -1850,6 +1910,7 @@ void ppc_opc_tlbivax()
  */
 void ppc_opc_tlbwe()
 {
+	e500_core_t* current_core = get_current_core();
 	ppc_tlb_entry_t * entry;	
 	int offset;
 	if(TLBSEL(current_core->mmu.mas[0]) == 0x0){
@@ -1902,6 +1963,7 @@ void ppc_opc_tlbwe()
 }
 
 void ppc_opc_tlbsx(){
+	e500_core_t* current_core = get_current_core();
 	ppc_tlb_entry_t *entry;
         int tlb1_index;
 	int va,ea;
@@ -1976,6 +2038,7 @@ void ppc_opc_tlbsx(){
 }
 
 void ppc_opc_tlbrehi(){
+	e500_core_t* current_core = get_current_core();
 	ppc_tlb_entry_t * entry;
         int offset;
         if(TLBSEL(current_core->mmu.mas[0]) == 0x0){
@@ -2019,6 +2082,7 @@ void ppc_opc_tlbrehi(){
  */
 void ppc_opc_stfdx()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -2033,6 +2097,7 @@ void ppc_opc_stfdx()
  */
 void ppc_opc_stfiwx()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -2047,6 +2112,7 @@ void ppc_opc_stfiwx()
  */
 void ppc_opc_stfs()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -2066,6 +2132,7 @@ void ppc_opc_stfs()
  */
 void ppc_opc_stfsu()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -2089,6 +2156,7 @@ void ppc_opc_stfsu()
  */
 void ppc_opc_stfsux()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -2111,6 +2179,7 @@ void ppc_opc_stfsux()
  */
 void ppc_opc_stfsx()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0, 0);
 		return;
@@ -2129,6 +2198,7 @@ void ppc_opc_stfsx()
  */
 void ppc_opc_sth()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rS, rA, imm);
@@ -2143,6 +2213,7 @@ void ppc_opc_sth()
  */
 void ppc_opc_sthbrx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	ppc_write_effective_half((rA?current_core->gpr[rA]:0)+current_core->gpr[rB], ppc_bswap_half(current_core->gpr[rS])) != PPC_MMU_FATAL;
@@ -2153,6 +2224,7 @@ void ppc_opc_sthbrx()
  */
 void ppc_opc_sthu()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rS, rA, imm);
@@ -2168,6 +2240,7 @@ void ppc_opc_sthu()
  */
 void ppc_opc_sthux()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	// FIXME: check rA!=0
@@ -2182,6 +2255,7 @@ void ppc_opc_sthux()
  */
 void ppc_opc_sthx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	ppc_write_effective_half((rA?current_core->gpr[rA]:0)+current_core->gpr[rB], (uint16)current_core->gpr[rS]) != PPC_MMU_FATAL;
@@ -2192,6 +2266,7 @@ void ppc_opc_sthx()
  */
 void ppc_opc_stmw()
 {
+	e500_core_t* current_core = get_current_core();
 	int rS, rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rS, rA, imm);
@@ -2210,6 +2285,7 @@ void ppc_opc_stmw()
  */
 void ppc_opc_stswi()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, NB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, NB);
 	if (NB==0) NB=32;
@@ -2239,6 +2315,7 @@ void ppc_opc_stswi()
  */
 void ppc_opc_stswx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	int NB = XER_n(current_core->xer);
@@ -2268,6 +2345,7 @@ void ppc_opc_stswx()
  */
 void ppc_opc_stw()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rS, rA, imm);
@@ -2279,6 +2357,7 @@ void ppc_opc_stw()
  */
 void ppc_opc_stwbrx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	// FIXME: doppelt gemoppelt
@@ -2290,6 +2369,7 @@ void ppc_opc_stwbrx()
  */
 void ppc_opc_stwcx_()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	current_core->cr &= 0x0fffffff;
@@ -2316,6 +2396,7 @@ void ppc_opc_stwcx_()
  */
 void ppc_opc_stwu()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rS, rA, imm);
@@ -2331,6 +2412,7 @@ void ppc_opc_stwu()
  */
 void ppc_opc_stwux()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	// FIXME: check rA!=0
@@ -2345,6 +2427,7 @@ void ppc_opc_stwux()
  */
 void ppc_opc_stwx()
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	ppc_write_effective_word((rA?current_core->gpr[rA]:0)+current_core->gpr[rB], current_core->gpr[rS]) != PPC_MMU_FATAL;
@@ -2355,6 +2438,7 @@ void ppc_opc_stwx()
  */
 void ppc_opc_stvx()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -2387,6 +2471,7 @@ void ppc_opc_stvxl()
  */
 void ppc_opc_stvebx()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -2406,6 +2491,7 @@ void ppc_opc_stvebx()
  */
 void ppc_opc_stvehx()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -2425,6 +2511,7 @@ void ppc_opc_stvehx()
  */
 void ppc_opc_stvewx()
 {
+	e500_core_t* current_core = get_current_core();
 #ifndef __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC, 0, 0);
@@ -2457,12 +2544,14 @@ void ppc_opc_dss()
 	/* Since we are not emulating the cache, this is a nop */
 }
 void ppc_opc_wrteei(){
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->current_opc >> 15) & 0x1)
 		current_core->msr |= 0x00008000;
 	else
 		current_core->msr &= ~0x00008000;
 }
 void ppc_opc_wrtee(){
+	e500_core_t* current_core = get_current_core();
 	int rA, rS, rB;
         PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
         if ((current_core->gpr[rS] >> 15) & 0x1)
