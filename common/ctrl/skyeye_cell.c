@@ -19,9 +19,8 @@ static void cell_running(conf_object_t* argp){
 	struct skyeye_exec_s *iterator;
 	skyeye_cell_t* cell = (skyeye_cell_t *)get_cast_conf_obj(argp, "skyeye_cell_t");
 	assert(cell != NULL);
-	work_thread_t* thread = get_thread_by_id(pthread_self());
 	while(1){
-		while(thread->state != Running_state){
+		while(!SIM_is_running()){
 			usleep(100);
 		}
 		LIST_FOREACH(iterator, &cell->exec_head,list_entry){

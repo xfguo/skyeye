@@ -14,6 +14,7 @@ const char* default_lib_dir = "/opt/skyeye/lib/skyeye/";
 const char* default_lib_dir = SKYEYE_MODULE_DIR;
 #endif
 static skyeye_cell_t* default_cell = NULL;
+static bool_t SIM_running = False;
 void SIM_init_command_line(void){
 }
 
@@ -207,6 +208,7 @@ void SIM_cli(){
 }
 void SIM_run(){
 	//skyeye_start();
+	SIM_running = True;
 	start_all_cell();
 }
 #if 0
@@ -218,20 +220,17 @@ void SIM_pause(){
 #endif
 void SIM_continue(generic_arch_t* arch_instance){
 	//skyeye_continue();
+	SIM_running = True;
 	start_all_cell();
 }
 
 void SIM_stop(generic_arch_t* arch_instance){
 	//skyeye_pause();
+	SIM_running = False;
 	stop_all_cell();
 }
 bool_t SIM_is_running(){
-	skyeye_cell_t* cell = get_default_cell();
-	work_thread_t* thread = get_thread_by_cell(cell);
-	if(thread->state != Running_state)
-		return False;
-	else
-		return True;
+	return SIM_running;
 }
 void SIM_fini(){
 	sky_pref_t *pref = get_skyeye_pref();

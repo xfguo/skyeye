@@ -59,7 +59,7 @@ static exception_t alloc_thread(work_thread_t** thread){
 *
 * @return  the pthread instance found
 */
-static work_thread_t* get_thread_by_id(pthread_t id){
+work_thread_t* get_thread_by_id(pthread_t id){
 	int i;
 	for(i = 0; i < MAX_THREAD_NUMBER; i++){
 		if(pthread_equal(pthread_pool[i].id,id) != 0)
