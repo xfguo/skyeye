@@ -61,7 +61,7 @@ bool_t skyeye_is_running(void){
  */
 static void skyeye_loop(generic_arch_t *arch_instance){
 	for (;;) {
-		/* chech if we need to run some callback functions at this time */
+		/* check if we need to run some callback functions at this time */
 		exec_callback(Step_callback, arch_instance);
         	while (!skyeye_running) {
                         /*

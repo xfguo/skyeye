@@ -3,6 +3,10 @@
 #include "skyeye_thread.h"
 #include "skyeye_types.h"
 #include "skyeye_queue.h"
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 typedef struct skyeye_exec_s{
 	void (*run)(conf_object_t *obj);
 	void (*stop)(conf_object_t *obj);
@@ -19,4 +23,9 @@ typedef struct skyeye_exec_s{
 * @return 
 */
 conf_object_t* get_current_exec_priv(pthread_t id);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

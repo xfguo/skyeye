@@ -10,9 +10,13 @@ typedef struct skyeye_cell_s{
 	/* the id to identify the current running exec object */
 	int current_exec_id;
 	pthread_t thread_id;
+	int max_exec_id;
 }skyeye_cell_t;
-/*
+
+work_thread_t* get_thread_by_cell(skyeye_cell_t* cell);
 void add_to_cell(skyeye_exec_t* exec, skyeye_cell_t* cell);
+void add_to_default_cell(skyeye_exec_t* exec);
+/*
 void del_from_cell(skyeye_exec_t* exec, skyeye_cell_t* cell);
 void move_to_cell(skyeye_exec_t* exec, skyeye_cell_t* src, skyeye_cell_t* dst);
 */

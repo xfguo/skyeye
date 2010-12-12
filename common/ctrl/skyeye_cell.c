@@ -1,15 +1,25 @@
+#include <assert.h>
 #include "skyeye_thread.h"
 #include "skyeye_cell.h"
+
+static skyeye_cell_t* default_cell = NULL;
 void add_to_cell(skyeye_exec_t* exec, skyeye_cell_t* cell){
+	exec->exec_id = cell->max_exec_id++;
 	LIST_INSERT_HEAD(&cell->exec_head, exec, list_entry);
+}
+
+work_thread_t* get_thread_by_cell(skyeye_cell_t* cell){
+	return get_thread_by_id(cell->thread_id);
 }
 
 /**
 * @brief the default function for all the thread containing cell
 */
-static void cell_running(skyeye_cell_t* cell){
-	struct skyeye_exec_s *iterator ;
-	work_thread_t* thread = get_thread_by_cell(cell);
+static void cell_running(conf_object_t* argp){
+	struct skyeye_exec_s *iterator;
+	skyeye_cell_t* cell = (skyeye_cell_t *)get_cast_conf_obj(argp, "skyeye_cell_t");
+	assert(cell != NULL);
+	work_thread_t* thread = get_thread_by_id(pthread_self());
 	while(1){
 		while(thread->state != Running_state){
 			usleep(100);
@@ -22,29 +32,41 @@ static void cell_running(skyeye_cell_t* cell){
 }
 
 /**
-* @brief create a cell
+* @brief create a new cell with its thread
 *
 * @param cell
 */
 skyeye_cell_t* create_cell(){
 	pthread_t id;
 	skyeye_cell_t* cell = (skyeye_cell_t*)skyeye_mm(sizeof(skyeye_cell_t));
-	create_thread(cell_running, cell, &id);
+	conf_object_t* argp = get_conf_obj_by_cast(cell, "skyeye_cell_t");
+	create_thread(cell_running, argp, &id);
 	cell->thread_id = id;
-	cell->current_exec_id = 0;
+	cell->current_exec_id = cell->max_exec_id = 0;
+	LIST_INIT(&cell->exec_head);
 	return cell;
 }
 
 /**
-* @brief 
+* @brief  Get the default cell instance
 *
-* @return 
+* @return  the default cell instance
 */
-skyeye_cell_t* create_default_cell(conf_object_t* arch_instance){
-	skyeye_cell_t* cell = create_cell();
-	skyeye_exec_t* exec = get_default_exec(arch_instance);
-	add_to_cell(exec, cell);
-	return cell;
+skyeye_cell_t* get_default_cell(){
+	if(default_cell == NULL){
+		default_cell = create_cell();
+		//printf("In %s, default_cell->thread_id=%d\n", __FUNCTION__, default_cell->thread_id);
+	}
+	return default_cell;
+}
+
+/**
+* @brief add an exec object to the default cell
+*
+* @param exec
+*/
+void add_to_default_cell(skyeye_exec_t* exec){
+	add_to_cell(exec, get_default_cell());
 }
 /**
 * @brief start the running of a cell
@@ -76,9 +98,15 @@ void start_all_cell(){
 	return;
 }
 
+void stop_all_cell(){
+	stop_all_thread();
+	return;
+}
+
 conf_object_t* get_current_exec_priv(pthread_t id){
 	struct skyeye_exec_s *iterator ;
 	skyeye_cell_t* cell = get_cell_by_thread_id(id);
+	assert(cell != NULL);
 	LIST_FOREACH(iterator, &cell->exec_head,list_entry){
 		if(iterator->exec_id == cell->current_exec_id){
 			return iterator->priv_data;
@@ -86,4 +114,3 @@ conf_object_t* get_current_exec_priv(pthread_t id){
 	}
 	return NULL;
 }
-

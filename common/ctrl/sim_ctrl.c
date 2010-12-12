@@ -179,7 +179,6 @@ void SIM_start(void){
 	/* Call bootmach callback */
 	exec_callback(Bootmach_callback, arch_instance);	
 
-	default_cell = create_default_cell(arch_instance);
 		
 	//create_thread(skyeye_loop, arch_instance, &id);
 	
@@ -218,11 +217,21 @@ void SIM_pause(){
 }
 #endif
 void SIM_continue(generic_arch_t* arch_instance){
-	skyeye_continue();
+	//skyeye_continue();
+	start_all_cell();
 }
 
 void SIM_stop(generic_arch_t* arch_instance){
-	skyeye_pause();	
+	//skyeye_pause();
+	stop_all_cell();
+}
+bool_t SIM_is_running(){
+	skyeye_cell_t* cell = get_default_cell();
+	work_thread_t* thread = get_thread_by_cell(cell);
+	if(thread->state != Running_state)
+		return False;
+	else
+		return True;
 }
 void SIM_fini(){
 	sky_pref_t *pref = get_skyeye_pref();

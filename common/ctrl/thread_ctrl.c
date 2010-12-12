@@ -68,10 +68,6 @@ static work_thread_t* get_thread_by_id(pthread_t id){
 	return NULL;
 }
 
-work_thread_t* get_thread_by_cell(skyeye_cell_t* cell){
-	return get_thread_by_id(cell->thread_id);
-}
-
 skyeye_cell_t* get_cell_by_thread_id(pthread_t id){
 	work_thread_t* thread = get_thread_by_id(id);
 	skyeye_cell_t* cell = (skyeye_cell_t*)get_cast_conf_obj(thread->priv_data, "skyeye_cell_t");
@@ -192,10 +188,27 @@ void start_all_thread(){
 	int i;
         for(i = 0; i < MAX_THREAD_NUMBER; i++){
 		/*
-		 * Before cancel a thread, maybe we should stop it at first?
+		 * Before start a thread, check the data
 		 */
-                if((pthread_pool[i].state == Blank_state) & (pthread_pool[i].priv_data != NULL)){
+                if((pthread_pool[i].state != Blank_state) && (pthread_pool[i].priv_data != NULL)){
+			printf("In %s, the thread %d is set to running\n", __FUNCTION__, i);
 			pthread_pool[i].state = Running_state;
+		}
+	}
+}
+
+/**
+* @brief stop all the running thread
+*/
+void stop_all_thread(){
+	int i;
+        for(i = 0; i < MAX_THREAD_NUMBER; i++){
+		/*
+		 * Before start a thread, check the data
+		 */
+                if((pthread_pool[i].state == Running_state) && (pthread_pool[i].priv_data != NULL)){
+			printf("In %s, the thread %d is set to stopped\n", __FUNCTION__, i);
+			pthread_pool[i].state = Stopped_state;
 		}
 	}
 }

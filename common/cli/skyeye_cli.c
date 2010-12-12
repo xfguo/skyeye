@@ -85,7 +85,7 @@ void skyeye_cli ()
   /* Loop reading and executing lines until the user quits. */
   for ( ; done == 0; )
     {
-      if(skyeye_is_running())
+      if(SIM_is_running())
 	line = readline(running_prompt);
       else
         line = readline (skyeye_prompt);
