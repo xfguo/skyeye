@@ -212,7 +212,7 @@ x86_parse_cpu (cpu_config_t * cpu, const char *param[])
 }
 extern void pc_mach_init (void * arch_instance, machine_config_t * this_mach);
 machine_config_t x86_machines[] = {
-	{"pc", NULL, pc_mach_init, NULL, NULL, NULL},
+	{"pc", pc_mach_init, NULL, NULL, NULL},
 	{NULL, NULL, NULL, NULL, NULL, NULL},
 };
 

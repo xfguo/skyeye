@@ -82,14 +82,14 @@ static bool ppc_cpu_init()
 	}
 	else
 		skyeye_log(Info_log, __FUNCTION__, "Initilization for %d core\n", cpu->core_num);
-	
+		
 	int i;
-	for(i = 0; i < gCPU.core_num; i++){
+	for(i = 0; i < cpu->core_num; i++){
 		ppc_core_init(cpu->core[i], i);
 		ppc_dyncom_init(cpu->core[i]);
 	}
 
-	current_core = &cpu->core[0];
+	cpu->boot_core_id = 0;
 	/* initialize decoder */
 	ppc_dec_init();
 	return true;

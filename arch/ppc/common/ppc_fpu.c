@@ -31,6 +31,7 @@
 #define PPC_FPR_TYPE2(a,b) (((a)<<8)|(b))
 inline void ppc_fpu_add(ppc_double *res, ppc_double *a, ppc_double *b)
 {
+	e500_core_t* current_core = get_current_core();
 	switch (PPC_FPR_TYPE2(a->type, b->type)) {
 	case PPC_FPR_TYPE2(ppc_fpr_norm, ppc_fpr_norm): {
 		int diff = a->e - b->e;
@@ -183,6 +184,7 @@ inline void ppc_fpu_sub_quadro_m(ppc_quadro *res, const ppc_quadro *a, const ppc
 // res has 107 significant bits. a, b have 106 significant bits each.
 inline void ppc_fpu_add_quadro(ppc_quadro *res, ppc_quadro *a, ppc_quadro *b)
 {
+	e500_core_t* current_core = get_current_core();
 	// treat as 107 bit mantissa
 	if (a->type == ppc_fpr_norm) ppc_fpu_quadro_mshl(a, 1);
 	if (b->type == ppc_fpr_norm) ppc_fpu_quadro_mshl(b, 1);
@@ -603,6 +605,7 @@ inline void ppc_fpu_div(ppc_double *res, const ppc_double *a, const ppc_double *
 
 inline void ppc_fpu_sqrt(ppc_double *D, const ppc_double *B)
 {
+	e500_core_t* current_core = get_current_core();
 	switch (B->type) {
 	case ppc_fpr_norm:
 		if (B->s) {
@@ -741,6 +744,7 @@ double ppc_fpu_get_double(ppc_double *d)
  */
 void ppc_opc_fabsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, frD, frA, frB);
 	PPC_OPC_ASSERT(frA==0);
@@ -756,6 +760,7 @@ void ppc_opc_fabsx()
  */
 void ppc_opc_faddx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frC==0);
@@ -778,6 +783,7 @@ void ppc_opc_faddx()
  */
 void ppc_opc_faddsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frC==0);
@@ -810,6 +816,7 @@ static uint32 ppc_fpu_cmp_and_mask[8] = {
 };
 void ppc_opc_fcmpo()
 {
+	e500_core_t* current_core = get_current_core();
 	int crfD, frA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, crfD, frA, frB);
 	crfD >>= 2;
@@ -836,6 +843,7 @@ void ppc_opc_fcmpo()
  */
 void ppc_opc_fcmpu()
 {
+	e500_core_t* current_core = get_current_core();
 	int crfD, frA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, crfD, frA, frB);
 	crfD >>= 2;
@@ -861,6 +869,7 @@ void ppc_opc_fcmpu()
  */
 void ppc_opc_fctiwx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, frD, frA, frB);
 	PPC_OPC_ASSERT(frA==0);
@@ -878,6 +887,7 @@ void ppc_opc_fctiwx()
  */
 void ppc_opc_fctiwzx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, frD, frA, frB);
 	PPC_OPC_ASSERT(frA==0);
@@ -899,6 +909,7 @@ void ppc_opc_fctiwzx()
  */
 void ppc_opc_fdivx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frC==0);
@@ -928,6 +939,7 @@ void ppc_opc_fdivx()
  */
 void ppc_opc_fdivsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frC==0);
@@ -957,6 +969,7 @@ void ppc_opc_fdivsx()
  */
 void ppc_opc_fmaddx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A, B, C, D;
@@ -976,6 +989,7 @@ void ppc_opc_fmaddx()
  */
 void ppc_opc_fmaddsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A, B, C, D;
@@ -995,6 +1009,7 @@ void ppc_opc_fmaddsx()
  */
 void ppc_opc_fmrx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, rA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, frD, rA, frB);
 	PPC_OPC_ASSERT(rA==0);
@@ -1010,6 +1025,7 @@ void ppc_opc_fmrx()
  */
 void ppc_opc_fmsubx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A, B, C, D;
@@ -1030,6 +1046,7 @@ void ppc_opc_fmsubx()
  */
 void ppc_opc_fmsubsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A, B, C, D;
@@ -1049,6 +1066,7 @@ void ppc_opc_fmsubsx()
  */
 void ppc_opc_fmulx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frB==0);
@@ -1073,6 +1091,7 @@ void ppc_opc_fmulx()
  */
 void ppc_opc_fmulsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frB==0);
@@ -1096,6 +1115,7 @@ void ppc_opc_fmulsx()
  */
 void ppc_opc_fnabsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, frD, frA, frB);
 	PPC_OPC_ASSERT(frA==0);
@@ -1111,6 +1131,7 @@ void ppc_opc_fnabsx()
  */
 void ppc_opc_fnegx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, frD, frA, frB);
 	PPC_OPC_ASSERT(frA==0);
@@ -1126,6 +1147,7 @@ void ppc_opc_fnegx()
  */
 void ppc_opc_fnmaddx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A, B, C, D/*, E*/;
@@ -1146,6 +1168,7 @@ void ppc_opc_fnmaddx()
  */
 void ppc_opc_fnmaddsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A, B, C, D;
@@ -1166,6 +1189,7 @@ void ppc_opc_fnmaddsx()
  */
 void ppc_opc_fnmsubx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A, B, C, D;
@@ -1187,6 +1211,7 @@ void ppc_opc_fnmsubx()
  */
 void ppc_opc_fnmsubsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A, B, C, D;
@@ -1208,6 +1233,7 @@ void ppc_opc_fnmsubsx()
  */
 void ppc_opc_fresx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frA==0 && frC==0);
@@ -1223,6 +1249,7 @@ void ppc_opc_fresx()
  */
 void ppc_opc_frspx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, frD, frA, frB);
 	PPC_OPC_ASSERT(frA==0);
@@ -1240,6 +1267,7 @@ void ppc_opc_frspx()
  */
 void ppc_opc_frsqrtex()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frA==0 && frC==0);
@@ -1263,6 +1291,7 @@ void ppc_opc_frsqrtex()
  */
 void ppc_opc_fselx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	ppc_double A;
@@ -1283,6 +1312,7 @@ void ppc_opc_fselx()
  */
 void ppc_opc_fsqrtx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frA==0 && frC==0);
@@ -1302,6 +1332,7 @@ void ppc_opc_fsqrtx()
  */
 void ppc_opc_fsqrtsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frA==0 && frC==0);
@@ -1317,6 +1348,7 @@ void ppc_opc_fsqrtsx()
  */
 void ppc_opc_fsubx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frC==0);
@@ -1342,6 +1374,7 @@ void ppc_opc_fsubx()
  */
 void ppc_opc_fsubsx()
 {
+	e500_core_t* current_core = get_current_core();
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(current_core->current_opc, frD, frA, frB, frC);
 	PPC_OPC_ASSERT(frC==0);

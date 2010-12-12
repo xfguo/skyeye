@@ -28,6 +28,7 @@
 #include "ppc_e500_exc.h"
 #include "sysendian.h"
 #include <ppc_cpu.h>
+#include <skyeye_exec.h>
 
 #ifdef __CYGWIN__
 #include <sys/time.h>

@@ -75,16 +75,16 @@ void ppc_set_msr(uint32 newmsr)
  */
 void ppc_opc_bx(cpu_t* cpu, BasicBlock* bb)
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 li;
-	e500_core_t* core = (e500_core_t *)cpu->cpu_data;
-	PPC_OPC_TEMPL_I(core->current_opc, li);
+	PPC_OPC_TEMPL_I(current_core->current_opc, li);
 	if (!(current_core->current_opc & PPC_OPC_AA)) {
 		//li += current_core->pc;
-		arch_store(CONST(li + core->pc), cpu->ptr_PC, bb);
+		arch_store(CONST(li + current_core->pc), cpu->ptr_PC, bb);
 	}
 	if (current_core->current_opc & PPC_OPC_LK) {
 		current_core->lr = current_core->pc + 4;
-		LET(LR_REGNUM, CONST(core->pc + 4));
+		LET(LR_REGNUM, CONST(current_core->pc + 4));
 	}
 	//current_core->npc = li;
 }

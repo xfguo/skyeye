@@ -25,6 +25,10 @@
 #include "skyeye_types.h"
 #include "ppc_e500_core.h"
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 extern uint8 *gMemory;
 extern uint32 gMemorySize;
 
@@ -173,6 +177,9 @@ void ppc_opc_tlbwe();
 void ppc_opc_tlbrehi();
 void ppc_opc_wrteei();
 void ppc_opc_wrtee();
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

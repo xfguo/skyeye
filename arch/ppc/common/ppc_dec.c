@@ -44,6 +44,7 @@
 
 static void ppc_opc_invalid()
 {
+	e500_core_t* current_core = get_current_core();
 	/* FIXME by Michael.Kang
 	if (current_core->pc == gPromOSIEntry && current_core->current_opc == PROM_MAGIC_OPCODE) {
 		call_prom_osi();
@@ -130,6 +131,7 @@ static void ppc_opc_invalid()
 // main opcode 19
 static void ppc_opc_group_1()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 	//printf("DBG:in %s,before exec pc=0x%x,opc=0x%x,ext=0x%x\n", __FUNCTION__, current_core->pc, current_core->current_opc, ext);
 
@@ -171,7 +173,7 @@ ppc_opc_function ppc_opc_table_group2[1015];
 //ppc_opc_function * ppc_opc_table_group2;
 
 // main opcode 31
-static void ppc_opc_init_group2()
+static void ppc_opc_init_group2(e500_core_t* core)
 {
 	uint i;
 	//ppc_opc_table_group2 = (ppc_opc_function *)malloc(sizeof(ppc_opc_function) * 1015);
@@ -295,8 +297,7 @@ static void ppc_opc_init_group2()
 	ppc_opc_table_group2[983] = ppc_opc_stfiwx;
 	ppc_opc_table_group2[1014] = ppc_opc_dcbz;
 	ppc_opc_table_group2[822] = ppc_opc_dss;      /*Temporarily modify*/
-
-	if ((ppc_cpu_get_pvr(0) & 0xffff0000) == 0x000c0000) {
+	if ((ppc_cpu_get_pvr(core) & 0xffff0000) == 0x000c0000) {
 		/* Added for Altivec support */
 		ppc_opc_table_group2[6] = ppc_opc_lvsl;
 		ppc_opc_table_group2[7] = ppc_opc_lvebx;
@@ -319,6 +320,7 @@ static void ppc_opc_init_group2()
 // main opcode 31
 inline static void ppc_opc_group_2()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 	/*
 	if(current_core->pc >= 0xfff80100 && current_core->pc < 0xfffff000)
@@ -333,6 +335,7 @@ inline static void ppc_opc_group_2()
 // main opcode 59
 static void ppc_opc_group_f1()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU,0 ,0);
 		return;
@@ -356,6 +359,7 @@ static void ppc_opc_group_f1()
 // main opcode 63
 static void ppc_opc_group_f2()
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0 ,0);
 		return;
@@ -529,6 +533,7 @@ static void ppc_opc_init_groupv()
 // main opcode 04
 static void ppc_opc_group_v()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 #ifndef  __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
@@ -660,18 +665,19 @@ static ppc_opc_function ppc_opc_table_main[64] = {
 	&ppc_opc_group_f2,	// 63
 };
 
-void ppc_translate_opc()
+void FASTCALL ppc_exec_opc()
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 mainopc = PPC_OPC_MAIN(current_core->current_opc);
 //                        printf("DBG:before exec pc=0x%x,opc=0x%x,mainopc=0x%x\n", current_core->pc, current_core->current_opc,mainopc);
 	ppc_opc_table_main[mainopc]();
 }
 
-void ppc_dec_init()
+void ppc_dec_init(e500_core_t* core)
 {
-	ppc_opc_init_group2();
+	ppc_opc_init_group2(core);
 	
-	if ((ppc_cpu_get_pvr(0) & 0xffff0000) == 0x000c0000) {
+	if ((ppc_cpu_get_pvr(core) & 0xffff0000) == 0x000c0000) {
 		ppc_opc_table_main[4] = ppc_opc_group_v;
 		ppc_opc_init_groupv();
 	}

@@ -21,20 +21,20 @@
 #ifndef __SYSTEM_ARCH_SPECIFIC_SYSENDIAN_H__
 #define __SYSTEM_ARCH_SPECIFIC_SYSENDIAN_H__
 
-#include "types.h"
+#include "skyeye_types.h"
 //#include "config.h"
 
-static inline FUNCTION_CONST uint32 ppc_bswap_word(uint32 data)
+static inline uint32 ppc_bswap_word(uint32 data)
 {
 	return (data>>24)|((data>>8)&0xff00)|((data<<8)&0xff0000)|(data<<24);
 }
 
-static inline FUNCTION_CONST uint64 ppc_bswap_dword(uint64 data)
+static inline uint64 ppc_bswap_dword(uint64 data)
 {
 	return (((uint64)ppc_bswap_word(data)) << 32) | (uint64)ppc_bswap_word(data >> 32);
 }
 
-static inline FUNCTION_CONST uint16 ppc_bswap_half(uint16 data)
+static inline uint16 ppc_bswap_half(uint16 data)
 {
 	return (data<<8)|(data>>8);
 }

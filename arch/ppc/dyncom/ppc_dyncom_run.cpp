@@ -5,6 +5,7 @@
  */
 #include <skyeye_dyncom.h>
 #include <skyeye_types.h>
+#include <skyeye_obj.h>
 #include <skyeye.h>
 
 #include "ppc_cpu.h"
@@ -90,7 +91,7 @@ static arch_func_t powerpc_arch_func = {
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
 	cpu->cpu_data = core;
-	core->dyncom_cpu = cpu;
+	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	return;
 }
 

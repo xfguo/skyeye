@@ -149,7 +149,7 @@ bool_t e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a
 		/**
 		 * set Valid bit
 		 */
-			core->mmu.mas[1] = current_core->mmu.mas[1] | 0x80000000;
+			core->mmu.mas[1] = core->mmu.mas[1] | 0x80000000;
 		/* update SPID with PID */
 			core->mmu.mas[6] = (core->mmu.mas[6] & 0xFF00FFFF) | ((core->mmu.pid[0] & 0xFF) << 16);
 			if(flags == PPC_MMU_WRITE)

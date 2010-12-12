@@ -48,6 +48,7 @@
 
 static void ppc_opc_invalid(cpu_t* cpu, BasicBlock* bb)
 {
+	e500_core_t* current_core = get_current_core();
 	/* FIXME by Michael.Kang
 	if (current_core->pc == gPromOSIEntry && current_core->current_opc == PROM_MAGIC_OPCODE) {
 		call_prom_osi();
@@ -134,6 +135,7 @@ static void ppc_opc_invalid(cpu_t* cpu, BasicBlock* bb)
 // main opcode 19
 static void ppc_opc_group_1(cpu_t* cpu, BasicBlock* bb)
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 	//printf("DBG:in %s,before exec pc=0x%x,opc=0x%x,ext=0x%x\n", __FUNCTION__, current_core->pc, current_core->current_opc, ext);
 #if 0
@@ -327,6 +329,7 @@ static void ppc_opc_init_group2()
 // main opcode 31
 inline static void ppc_opc_group_2(cpu_t* cpu, BasicBlock* bb)
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 	/*
 	if(current_core->pc >= 0xfff80100 && current_core->pc < 0xfffff000)
@@ -341,6 +344,7 @@ inline static void ppc_opc_group_2(cpu_t* cpu, BasicBlock* bb)
 // main opcode 59
 static void ppc_opc_group_f1(cpu_t* cpu, BasicBlock* bb)
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU,0 ,0);
 		return;
@@ -364,6 +368,7 @@ static void ppc_opc_group_f1(cpu_t* cpu, BasicBlock* bb)
 // main opcode 63
 static void ppc_opc_group_f2(cpu_t* cpu, BasicBlock* bb)
 {
+	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0 ,0);
 		return;
@@ -541,6 +546,7 @@ static void ppc_opc_init_groupv()
 // main opcode 04
 static void ppc_opc_group_v(cpu_t* cpu, BasicBlock* bb)
 {
+	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 #ifndef  __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {

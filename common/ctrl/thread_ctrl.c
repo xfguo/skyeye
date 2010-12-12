@@ -68,11 +68,11 @@ static work_thread_t* get_thread_by_id(pthread_t id){
 	return NULL;
 }
 
-static work_thread_t* get_thread_by_cell(skyeye_cell_t* cell){
+work_thread_t* get_thread_by_cell(skyeye_cell_t* cell){
 	return get_thread_by_id(cell->thread_id);
 }
 
-static skyeye_cell_t* get_cell_by_thread_id(pthread_t id){
+skyeye_cell_t* get_cell_by_thread_id(pthread_t id){
 	work_thread_t* thread = get_thread_by_id(id);
 	skyeye_cell_t* cell = (skyeye_cell_t*)get_cast_conf_obj(thread->priv_data, "skyeye_cell_t");
 	return cell;
@@ -131,6 +131,13 @@ void start_thread(work_thread_t* thread){
 
 void stop_thread(work_thread_t* thread){
 	thread->state = Stopped_state;
+}
+thread_state_t get_thread_state(pthread_t id){
+       work_thread_t* thread = get_thread_by_id(id);
+       if(thread != NULL)
+               return thread->state;
+       else
+               return Blank_state;
 }
 
 /**

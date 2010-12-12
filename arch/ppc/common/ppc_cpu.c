@@ -35,18 +35,19 @@
 //#include "io/graphic/gcard.h"
 
 
-static bool_t gSinglestep = false;
+static bool_t gSinglestep = False;
 
 //uint32 gBreakpoint2 = 0x11b3acf4;
 uint32 gBreakpoint3 = 0xc016ee74&0;
 uint32 gBreakpoint = 0x11b3acf4&0;
 uint32 gBreakpoint2 = 0xc017a4f4&0;
 
-bool_t activate = false;
+bool_t activate = False;
 static inline void ppc_debug_hook()
 {
+	e500_core_t* current_core = get_current_core();
 	if (current_core->pc == gBreakpoint) {
-		gSinglestep = true;
+		gSinglestep = True;
 //		SINGLESTEP("breakpoint 1");
 	}
 	if (current_core->pc == gBreakpoint2) {
@@ -54,7 +55,7 @@ static inline void ppc_debug_hook()
 	}
 //	if (current_core->pc == gBreakpoint3 && current_core->gpr[5]==0x100004ec) {
 /*	if (current_core->pc == gBreakpoint3) {
-		activate = true;
+		activate = True;
 		SINGLESTEP("breakpoint 3");
 	}*/
 	/*
@@ -67,25 +68,28 @@ static inline void ppc_debug_hook()
 
 void ppc_cpu_atomic_raise_ext_exception()
 {
+	e500_core_t* current_core = get_current_core();
 	/*sys_lock_mutex(exception_mutex);*/
-	current_core->ext_exception = true;
-	current_core->exception_pending = true;
+	current_core->ext_exception = True;
+	current_core->exception_pending = True;
 	/*sys_unlock_mutex(exception_mutex);*/
 }
 
 void ppc_cpu_atomic_cancel_ext_exception()
 {
+	e500_core_t* current_core = get_current_core();
 	/* sys_lock_mutex(exception_mutex); */
-	current_core->ext_exception = false;
-	if (!current_core->dec_exception) current_core->exception_pending = false;
+	current_core->ext_exception = False;
+	if (!current_core->dec_exception) current_core->exception_pending = False;
 	/*sys_unlock_mutex(exception_mutex);*/
 }
 
 void ppc_cpu_atomic_raise_dec_exception()
 {
+	e500_core_t* current_core = get_current_core();
 	/*sys_lock_mutex(exception_mutex);*/
-	current_core->dec_exception = true;
-	current_core->exception_pending = true;
+	current_core->dec_exception = True;
+	current_core->exception_pending = True;
 	/*sys_unlock_mutex(exception_mutex);*/
 }
 
@@ -95,14 +99,15 @@ void ppc_cpu_wakeup()
 
 void ppc_cpu_run()
 {
+	e500_core_t* current_core = get_current_core();
 	/*gDebugger = new Debugger();
-	gDebugger->mAlwaysShowRegs = true;*/
+	gDebugger->mAlwaysShowRegs = True;*/
 	PPC_CPU_TRACE("execution started at %08x\n", current_core->pc);
 	uint ops=0;
 	current_core->effective_code_page = 0xffffffff;
 //	ppc_fpu_test();
 //	return;
-	while (true) {
+	while (True) {
 		current_core->npc = current_core->pc+4;
 		if ((current_core->pc & ~0xfff) == current_core->effective_code_page) {
 			current_core->current_opc = ppc_word_from_BE(*((uint32*)(&current_core->physical_code_page[current_core->pc & 0xfff])));
@@ -124,16 +129,16 @@ void ppc_cpu_run()
 		ops++;
 		current_core->ptb++;
 		if (current_core->pdec == 0) {
-			current_core->exception_pending = true;
-			current_core->dec_exception = true;
+			current_core->exception_pending = True;
+			current_core->dec_exception = True;
 			current_core->pdec=0xffffffff*TB_TO_PTB_FACTOR;
 		} else {
 			current_core->pdec--;
 		}
 		if ((ops & 0x3ffff)==0) {
 /*			if (pic_check_interrupt()) {
-				current_core->exception_pending = true;
-				current_core->ext_exception = true;
+				current_core->exception_pending = True;
+				current_core->ext_exception = True;
 			}*/
 			if ((ops & 0x0fffff)==0) {
 //				uint32 j=0;
@@ -167,25 +172,25 @@ void ppc_cpu_run()
 		
 		if (current_core->exception_pending) {
 			if (current_core->stop_exception) {
-				current_core->stop_exception = false;
-				if (!current_core->dec_exception && !current_core->ext_exception) current_core->exception_pending = false;
+				current_core->stop_exception = False;
+				if (!current_core->dec_exception && !current_core->ext_exception) current_core->exception_pending = False;
 				break;
 			}
 			if (current_core->msr & MSR_EE) {
 				/*sys_lock_mutex(exception_mutex);*/
 				if (current_core->ext_exception) {
 					ppc_exception(current_core, PPC_EXC_EXT_INT,0,0);
-					current_core->ext_exception = false;
+					current_core->ext_exception = False;
 					current_core->pc = current_core->npc;
-					if (!current_core->dec_exception) current_core->exception_pending = false;
+					if (!current_core->dec_exception) current_core->exception_pending = False;
 					/*sys_unlock_mutex(exception_mutex);*/
 					continue;
 				}
 				if (current_core->dec_exception) {
 					ppc_exception(current_core, PPC_EXC_DEC,0,0);
-					current_core->dec_exception = false;
+					current_core->dec_exception = False;
 					current_core->pc = current_core->npc;
-					current_core->exception_pending = false;
+					current_core->exception_pending = False;
 					/*sys_unlock_mutex(exception_mutex);*/
 					continue;
 				}
@@ -196,7 +201,7 @@ void ppc_cpu_run()
 #ifdef PPC_CPU_ENABLE_SINGLESTEP
 		if (current_core->msr & MSR_SE) {
 			if (current_core->singlestep_ignore) {
-				current_core->singlestep_ignore = false;
+				current_core->singlestep_ignore = False;
 			} else {
 				ppc_exception(current_core, PPC_EXC_TRACE2);
 				current_core->pc = current_core->npc;
@@ -209,9 +214,10 @@ void ppc_cpu_run()
 
 void ppc_cpu_stop()
 {
+	e500_core_t* current_core = get_current_core();
 	/*sys_lock_mutex(exception_mutex);*/
-	current_core->stop_exception = true;
-	current_core->exception_pending = true;
+	current_core->stop_exception = True;
+	current_core->exception_pending = True;
 	/*sys_unlock_mutex(exception_mutex);*/
 }
 
@@ -238,36 +244,42 @@ void ppc_machine_check_exception()
 
 uint32	ppc_cpu_get_gpr(int cpu, int i)
 {
+	e500_core_t* current_core = get_current_core();
 	return current_core->gpr[i];
 }
 
 void	ppc_cpu_set_gpr(int cpu, int i, uint32 newvalue)
 {
+	e500_core_t* current_core = get_current_core();
 	current_core->gpr[i] = newvalue;
 }
 
 void	ppc_cpu_set_msr(int cpu, uint32 newvalue)
 {
+	e500_core_t* current_core = get_current_core();
 	current_core->msr = newvalue;
 }
 
 void	ppc_cpu_set_pc(int cpu, uint32 newvalue)
 {
+	e500_core_t* current_core = get_current_core();
 	current_core->pc = newvalue;
 }
 
 uint32	ppc_cpu_get_pc(int cpu)
 {
+	e500_core_t* current_core = get_current_core();
 	return current_core->pc;
 }
 
-uint32	ppc_cpu_get_pvr(int cpu)
+uint32	ppc_cpu_get_pvr(e500_core_t* core)
 {
-	return current_core->pvr;
+	return core->pvr;
 }
 
 void ppc_cpu_map_framebuffer(uint32 pa, uint32 ea)
 {
+	e500_core_t* current_core = get_current_core();
 	// use BAT for framebuffer
 	current_core->dbatu[0] = ea|(7<<2)|0x3;
 	current_core->dbat_bl17[0] = ~(BATU_BL(current_core->dbatu[0])<<17);
@@ -332,7 +344,7 @@ bool ppc_cpu_init()
 	PPC_CPU_WARN("should only be used for debugging purposes or if there's\n");
 	PPC_CPU_WARN("no just-in-time compiler for your platform.\n");
 	
-	return true;
+	return True;
 }
 #endif
 void ppc_cpu_init_config()

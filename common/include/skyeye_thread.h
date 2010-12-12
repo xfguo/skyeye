@@ -60,6 +60,7 @@ typedef struct work_thread_s{
 void create_thread(void *(*start_funcp)(void *), void * argp, pthread_t * idp);
 bool_t thread_exist(pthread_t id);
 conf_object_t* get_thread_priv(pthread_t id);
+thread_state_t get_thread_state(pthread_t id);
 
 #ifdef __cplusplus
 }
