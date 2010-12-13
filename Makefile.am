@@ -1,5 +1,46 @@
 
-SUBDIRS =  arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device/ utils/ arch/sparc/ libltdl common/ soc/arm/
+#SUBDIRS =  arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device/ utils/ arch/sparc/ libltdl common/ soc/arm/
+SUBDIRS =  device/ utils/  libltdl common/ soc/arm/
+
+if BUILD_ARM
+SUBDIRS += arch/arm
+endif
+
+if BUILD_BFIN
+SUBDIRS += arch/bfin
+endif
+
+
+if BUILD_COLDFIRE
+SUBDIRS += arch/coldfire
+endif
+
+
+if BUILD_MIPS
+SUBDIRS += arch/mips
+endif
+
+
+if BUILD_SPARC
+SUBDIRS += arch/sparc
+endif
+
+
+if BUILD_PPC
+SUBDIRS += arch/ppc
+endif
+
+
+if BUILD_X86
+SUBDIRS += arch/x86
+endif
+
+if BUILD_ALL
+SUBDIRS += arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ arch/sparc
+endif
+
+DIST_SUBDIRS = $(SUBDIRS)
+
 
 #AM_LDFLAGS = $(LIBLS) --start-group $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/device/libdev.a $(top_srcdir)/utils/libutils.a --end-group
 #AM_LDFLAGS = $(LIBLS) -L$(top_srcdir)/arch/arm/ -L$(top_srcdir)/arch/bfin/ -L$(top_srcdir)/arch/coldfire/ -L$(top_srcdir)/arch/mips/ -L$(top_srcdir)/device/ -L$(top_srcdir)/utils/ --start-group  -larm -lbfin -lcoldfire  -lmips -L$(top_srcdir)/arch/ppc/ -lppc -ldev -lutils --end-group
