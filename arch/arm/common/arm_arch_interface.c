@@ -1,21 +1,22 @@
 #include "armdefs.h"
+#include "armcpu.h"
 #include "skyeye_types.h"
 #include "armemu.h"
 #include "arm_regformat.h"
 #include "skyeye_options.h"
 #include "skyeye_signal.h"
+#include "armcpu.h"
 
-ARMul_State *state;
-int stop_simulator = 0;
 int debugmode = 0;
-static int verbosity;
 //extern int big_endian;
 int big_endian = 0;
-static int mem_size = (1 << 21);
-static mem_config_t arm_mem;
 static cpu_config_t *p_arm_cpu;
 static ARMword preset_regfile[16];
 extern ARMword skyeye_cachetype;
+static void
+arm_core_init (ARMul_State *state, int i);
+static void
+arm_step_once ();
 //chy 2005-08-01, borrow from wlm's 2005-07-26's change
 ARMword
 ARMul_Debug (ARMul_State *state, ARMword pc, ARMword instr)
@@ -41,59 +42,88 @@ base_termios_exit (void)
 //end --------------------------------------------------------------------------
 }
 
+static per_cpu_step()
+{
+	arm_step_once();
+}
+
+static per_cpu_stop()
+{
+}
+
+static arm_cpu_init()
+{
+	ARM_CPU_State *cpu = skyeye_mm(sizeof(ARM_CPU_State));
+        machine_config_t *mach = get_current_mach();
+        mach->cpu_data = get_conf_obj_by_cast(cpu, "ARM_CPU_State");
+
+	cpu->core_num = 1;
+	if(!cpu->core_num){
+		fprintf(stderr, "ERROR:you need to set numbers of core in mach_init.\n");
+		skyeye_exit(-1);
+	}
+	else
+		cpu->core = skyeye_mm(sizeof(ARMul_State) * cpu->core_num);
+	/* TODO: zero the memory by malloc */
+
+	if(!cpu->core){
+		fprintf(stderr, "Can not allocate memory for arm core.\n");
+		skyeye_exit(-1);
+	}
+	else
+		printf("%d core is initialized.\n", cpu->core_num);
+
+	int i;
+	for(i = 0; i < cpu->core_num; i++){
+		ARMul_State* core = &cpu->core[i];
+		arm_core_init(core, i);
+		skyeye_exec_t* exec = create_exec();
+		exec->priv_data = get_conf_obj_by_cast(core, "ARMul_State");
+		exec->run = per_cpu_step;
+		exec->stop = per_cpu_stop;
+		add_to_default_cell(exec);
+	}
+
+	cpu->boot_core_id = 0;
+}
+
 static void
 arm_reset_state ()
 {
-	//chy 2003-01-14 seems another ARMul_Reset, the first is in ARMul_NewState
-	//chy 2003-08-19 mach_init should call ARMul_SelectProcess
-	//skyeye_config.mach->mach_init (state, skyeye_config.mach);
-	//chy:2003-08-19, after mach_init, because ARMul_Reset should after ARMul_SelectProcess
-	ARMul_Reset (state);
-	state->NextInstr = 0;
-	state->Emulate = 3;
+	int i;
+	ARMul_State *state;
 
-	// add step disassemble code here :teawater
-	//state->disassemble = skyeye_config.can_step_disassemble;
-	//io_reset (state);	/*from ARMul_Reset. */
-	/* set some register value */
-	if (preset_regfile[1])
-		state->Reg[1] = preset_regfile[1];
+	ARM_CPU_State *cpu = get_current_cpu();
+	for(i = 0; i < cpu->core_num; i++){
+		state = &cpu->core[i];
+		ARMul_Reset (state);
+		state->NextInstr = 0;
+		state->Emulate = 3;
+
+		/* set some register value */
+		if (preset_regfile[1])
+			state->Reg[1] = preset_regfile[1];
+	}
+
 
 }
+
 static void
 arm_init_state ()
 {
 	ARMul_EmulateInit ();
-	state = ARMul_NewState ();
-	state->cpu = p_arm_cpu;
-	state->mem_bank = &arm_mem;
-//chy 2005-08-01, borrow from wlm's 2005-07-26's change
+	arm_cpu_init();
+}
 
-	/*
-	 * 2007-01-24 removed the term-io functions by Anthony Lee,
-	 * moved to "device/uart/skyeye_uart_stdio.c".
-	 */
-
-	//it will be set in  skyeye_config.mach->mach_init(state, skyeye_config.mach);
+static void
+arm_core_init (ARMul_State *state, int i)
+{
+	ARMul_NewState (state);
 	state->abort_model = 0;
-//chy 2005-08-01 ---------------------------------------------
-
+	state->cpu = p_arm_cpu;
 	state->bigendSig = (big_endian ? HIGH : LOW);
-	ARMul_MemoryInit (state, mem_size);
 	ARMul_OSInit (state);
-	state->verbose = verbosity;
-	/*some option should init before read config. e.g. uart option. */
-//chy 2005-08-01 ---------------------------------------------
-//      skyeye_option_init (&skyeye_config);
-	//    skyeye_read_config ();
-	//chy 2005-08-01 commit and disable ksh's energy estimantion, will be recover in the future
-	/*added by ksh for energy estimation,in 2004-11-26 */
-	//state->energy.energy_prof = skyeye_config.energy.energy_prof;
-	/*mach init */
 
-	/* set the old default for all machines not doing it by their own yet */
-	//skyeye_config.mach->io_cycle_divisor = 50;
-	//skyeye_config.mach->mach_init (state, skyeye_config.mach);
 	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv3"))
 		ARMul_SelectProcessor (state, ARM_v4_Prop);
 	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv4"))
@@ -143,16 +173,15 @@ arm_init_state ()
 		state->lateabtSig = LOW;
 }
 
-static uint32 step = 0;
-static uint32 cycle = 0;
 static void
 arm_step_once ()
 {
 	//ARMul_DoInstr(state);
-	step++;
-	cycle++;
+	ARMul_State *state = get_current_core();
+	state->step++;
+	state->cycle++;
 	state->EndCondition = 0;
-  	stop_simulator = 0;
+	state->stop_simulator = 0;
 	state->NextInstr = RESUME;      /* treat as PC change */
         state->Reg[15] = ARMul_DoProg(state);
         //state->Reg[15] = ARMul_DoInstr(state);
@@ -161,10 +190,12 @@ arm_step_once ()
 static void
 arm_set_pc (WORD pc)
 {
+	ARMul_State *state = get_current_core();
 	state->Reg[15] = pc;
 }
 static WORD
 arm_get_pc(){
+	ARMul_State *state = get_current_core();
 	return (WORD)state->Reg[15];
 }
 static int
@@ -179,28 +210,7 @@ static int arm_ICE_read_byte (WORD addr, uint8_t *pv){
 	//printf("In %s,addr=0x%x,data=0x%x\n", __FUNCTION__, addr, data);
 	return bus_read(8, addr, pv);
 }
-//extern void at91_mach_init ();
-//extern void ep7312_mach_init ();
-//extern void lh79520_mach_init ();
-//extern void ep9312_mach_init ();
-//extern void s3c4510b_mach_init ();
-//extern void s3c44b0x_mach_init ();
-//extern void s3c3410x_mach_init ();
-//extern void sa1100_mach_init ();
-//extern void pxa250_mach_init ();
-//extern void pxa270_mach_init ();
-//extern void cs89712_mach_init ();
-//extern void at91rm92_mach_init ();
-//extern void s3c2410x_mach_init ();
-//extern void s3c2440_mach_init ();
-//extern void shp_mach_init ();
 extern void lpc_mach_init ();
-//extern void ns9750_mach_init ();
-//extern void lpc2210_mach_init();
-//extern void ps7500_mach_init();
-//extern void imx_mach_init();
-//extern void integrator_mach_init();
-//extern void omap5912_mach_init();
 
 //chy 2003-08-11: the cpu_id can be found in linux/arch/arm/boot/compressed/head.S
 cpu_config_t arm_cpus[] = {
@@ -269,59 +279,10 @@ do_cpu_option (skyeye_option_t *this_option, int num_params,
 
 machine_config_t arm_machines[] = {
 	/* machine define for cpu without mmu */
-//	{"at91", at91_mach_init, NULL, NULL, NULL},		/* ATMEL AT91X40 */
 	{"lpc", lpc_mach_init, NULL, NULL, NULL},		/* PHILIPS LPC2xxxx */
-//	{"s3c4510b", s3c4510b_mach_init, NULL, NULL, NULL},	/* Samsung s3c4510b */
-//	{"s3c44b0x", s3c44b0x_mach_init, NULL, NULL, NULL},	/* Samsung s3c44b0x */
-//	{"s3c44b0", s3c44b0x_mach_init, NULL, NULL, NULL},	/* Samsung s3c44b0x */
-//	{"s3c3410x", s3c3410x_mach_init, NULL, NULL, NULL},	/* Samsung s3c3410x */
-
-	/* machine define for cpu with mmu */
-//	{"ep7312", ep7312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP7312 */
-//	{"lh79520", lh79520_mach_init, NULL, NULL, NULL},	/* sharp LH79520 */
-//	{"ep9312", ep9312_mach_init, NULL, NULL, NULL},		/* Cirrus Logic EP9312 */
-//	{"cs89712", cs89712_mach_init, NULL, NULL, NULL},	/* cs89712 */
-//	{"sa1100", sa1100_mach_init, NULL, NULL, NULL},		/* sa1100 */
-//	{"pxa_lubbock", pxa250_mach_init, NULL, NULL, NULL},	/* xscale pxa250 lubbock developboard */
-//	{"pxa_mainstone", pxa270_mach_init, NULL, NULL, NULL},	/* xscale pxa270 mainstone developboard */
-//	{"at91rm92", at91rm92_mach_init, NULL, NULL, NULL},	/* at91RM9200 */
-	//{"s3c2410x", s3c2410x_mach_init, NULL, NULL, NULL},	/* s3c2410x */
-//	{"s3c2440", s3c2440_mach_init, NULL, NULL, NULL},	/* s3c2440 */
-//	{"sharp_lh7a400", shp_mach_init, NULL, NULL, NULL},	/* sharp lh7a400 developboard */
-//	{"ns9750", ns9750_mach_init, NULL, NULL, NULL},		/* NetSilicon ns9750 */
-//	{"lpc2210", lpc2210_mach_init, NULL, NULL, NULL},	/* Philips LPC2210 */
-//	{"ps7500", ps7500_mach_init, NULL, NULL, NULL},		/* Cirrus Logic PS7500FE */
-//	{"omap5912", omap5912_mach_init, NULL, NULL, NULL},	/* omap5912 osk */
 	{NULL, NULL, NULL, NULL, NULL},
 };
 
-#if 0
-static int
-arm_parse_mach (machine_config_t *mach, const char *params[])
-{
-	int i;
-	for (i = 0; i < (sizeof (arm_machines) / sizeof (machine_config_t));
-	     i++) {
-		if (!arm_machines[i].machine_name)
-			continue;
-		if (!strncmp
-		    (params[0], arm_machines[i].machine_name,
-		     MAX_PARAM_NAME)) {
-			skyeye_config.mach = &arm_machines[i];
-			SKYEYE_INFO
-				("mach info: name %s, mach_init addr %p\n",
-				 skyeye_config.mach->machine_name,
-				 skyeye_config.mach->mach_init);
-			return 0;
-		}
-	}
-
-	SKYEYE_ERR ("Error: Unkonw mach name \"%s\"\n", params[0]);
-	skyeye_exit(-1);
-	//return -1;
-
-}
-#endif
 /*mem bank*/
 extern ARMword real_read_word (ARMul_State *state, ARMword addr);
 extern void real_write_word (ARMul_State *state, ARMword addr, ARMword data);
@@ -338,103 +299,6 @@ extern void flash_write_halfword (ARMul_State *state, ARMword addr,
 extern ARMword flash_read_word (ARMul_State *state, ARMword addr);
 extern void flash_write_word (ARMul_State *state, ARMword addr,
 			      ARMword data);
-#if 0
-static int
-arm_parse_mem (int num_params, const char *params[])
-{
-	char name[MAX_PARAM_NAME], value[MAX_PARAM_NAME];
-	int i, num;
-//chy 2003-09-12, now support more io bank
-//      static int io_bank_num=0;
-	//state->mem_bank = (mem_config_t *)malloc(sizeof(mem_config_t));
-	mem_config_t *mc = &arm_mem;
-	mem_bank_t *mb = mc->mem_banks;
-
-	mc->bank_num = mc->current_num++;
-
-	num = mc->current_num - 1;	/*mem_banks should begin from 0. */
-	mb[num].filename[0] = '\0';
-	for (i = 0; i < num_params; i++) {
-		if (split_param (params[i], name, value) < 0)
-			SKYEYE_ERR
-				("Error: mem_bank %d has wrong parameter \"%s\".\n",
-				 num, name);
-
-		if (!strncmp ("map", name, strlen (name))) {
-			if (!strncmp ("M", value, strlen (value))) {
-				mb[num].read_byte = real_read_byte;
-				mb[num].write_byte = real_write_byte;
-				mb[num].read_halfword = real_read_halfword;
-				mb[num].write_halfword = real_write_halfword;
-				mb[num].read_word = real_read_word;
-				mb[num].write_word = real_write_word;
-				mb[num].type = MEMTYPE_RAM;
-			}
-			else if (!strncmp ("I", value, strlen (value))) {
-				mb[num].read_byte = io_read_byte;
-				mb[num].write_byte = io_write_byte;
-				mb[num].read_halfword = io_read_halfword;
-				mb[num].write_halfword = io_write_halfword;
-				mb[num].read_word = io_read_word;
-				mb[num].write_word = io_write_word;
-				mb[num].type = MEMTYPE_IO;
-
-				/*ywc 2005-03-30 */
-			}
-			else if (!strncmp ("F", value, strlen (value))) {
-				mb[num].read_byte = flash_read_byte;
-				mb[num].write_byte = flash_write_byte;
-				mb[num].read_halfword = flash_read_halfword;
-				mb[num].write_halfword = flash_write_halfword;
-				mb[num].read_word = flash_read_word;
-				mb[num].write_word = flash_write_word;
-				mb[num].type = MEMTYPE_FLASH;
-
-			}
-			else {
-				SKYEYE_ERR
-					("Error: mem_bank %d \"%s\" parameter has wrong value \"%s\"\n",
-					 num, name, value);
-			}
-		} else if (!strncmp ("type", name, strlen (name))) {
-			//chy 2003-09-21: process type
-			if (!strncmp ("R", value, strlen (value))) {
-				if (mb[num].type == MEMTYPE_RAM)
-					mb[num].type = MEMTYPE_ROM;
-				mb[num].write_byte = warn_write_byte;
-				mb[num].write_halfword = warn_write_halfword;
-				mb[num].write_word = warn_write_word;
-			}
-		} else if (!strncmp ("addr", name, strlen (name))) {
-
-			if (value[0] == '0' && value[1] == 'x')
-				mb[num].addr = strtoul (value, NULL, 16);
-			else
-				mb[num].addr = strtoul (value, NULL, 10);
-
-		} else if (!strncmp ("size", name, strlen (name))) {
-
-			if (value[0] == '0' && value[1] == 'x')
-				mb[num].len = strtoul (value, NULL, 16);
-			else
-				mb[num].len = strtoul (value, NULL, 10);
-
-		} else if (!strncmp ("file", name, strlen (name))) {
-			strncpy (mb[num].filename, value, strlen (value) + 1);
-		} else if (!strncmp ("boot", name, strlen (name))) {
-			/*this must be the last parameter. */
-			if (!strncmp ("yes", value, strlen (value)))
-				skyeye_config.start_address = mb[num].addr;
-		} else {
-			SKYEYE_ERR
-				("Error: mem_bank %d has unknow parameter \"%s\".\n",
-				 num, name);
-		}
-	}
-
-	return 0;
-}
-#endif
 static int
 arm_parse_regfile (int num_params, const char *params[]){	
 	char name[MAX_PARAM_NAME], value[MAX_PARAM_NAME];
@@ -465,6 +329,7 @@ arm_parse_regfile (int num_params, const char *params[]){
 }
 
 static uint32 arm_get_step(){
+	ARMul_State *state = get_current_core();
 	uint32 step = state->NumInstrs;
         return step;
 }
@@ -472,17 +337,20 @@ static char* arm_get_regname_by_id(int id){
         return arm_regstr[id];
 }
 static uint32 arm_get_regval_by_id(int id){
+	ARMul_State * state = get_current_core();
 	if (id == CPSR_REG)
 		return state->Cpsr;
 	else
         	return state->Reg[id];
 }
 static exception_t arm_set_register_by_id(int id, uint32 value){
+	ARMul_State *state = get_current_core();
         state->Reg[id] = value;
         return No_exp;
 }
 
 static exception_t arm_signal(interrupt_signal_t *signal){
+	ARMul_State *state = get_current_core();
 	arm_signal_t *arm_signal = &signal->arm_signal;
 	if (arm_signal->irq != Prev_level)
 		state->NirqSig = arm_signal->irq;

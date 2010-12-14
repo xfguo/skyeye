@@ -24,7 +24,6 @@
 
 extern mmu_ops_t xscale_mmu_ops;
 #define MMU_OPS (state->mmu.ops)
-static mmu_inited = 0;
 ARMword skyeye_cachetype = -1;
 
 int
@@ -79,14 +78,14 @@ mmu_init (ARMul_State * state)
 
 	};
 	ret = state->mmu.ops.init (state);
-	mmu_inited = (ret == 0);
+	state->mmu_inited = (ret == 0);
 	return ret;
 }
 
 int
 mmu_reset (ARMul_State * state)
 {
-	if (mmu_inited)
+	if (state->mmu_inited)
 		mmu_exit (state);
 	return mmu_init (state);
 }
@@ -95,7 +94,7 @@ void
 mmu_exit (ARMul_State * state)
 {
 	MMU_OPS.exit (state);
-	mmu_inited = 0;
+	state->mmu_inited = 0;
 }
 
 fault_t

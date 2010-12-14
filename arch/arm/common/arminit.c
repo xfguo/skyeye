@@ -25,7 +25,7 @@
 \***************************************************************************/
 
 void ARMul_EmulateInit (void);
-ARMul_State *ARMul_NewState (void);
+ARMul_State *ARMul_NewState (ARMul_State * state);
 void ARMul_Reset (ARMul_State * state);
 ARMword ARMul_DoCycle (ARMul_State * state);
 unsigned ARMul_DoCoPro (ARMul_State * state);
@@ -74,16 +74,10 @@ ARMul_EmulateInit (void)
 \***************************************************************************/
 
 ARMul_State *
-ARMul_NewState (void)
+ARMul_NewState (ARMul_State *state)
 {
-	ARMul_State *state;
 	unsigned i, j;
 
-	state = (ARMul_State *) malloc (sizeof (ARMul_State));
-	if (state == NULL) {
-		printf ("SKYEYE: ARMul_NewState malloc state error\n");
-		skyeye_exit (-1);
-	}
 	memset (state, 0, sizeof (ARMul_State));
 
 	state->Emulate = RUN;
@@ -139,23 +133,7 @@ ARMul_NewState (void)
 	state->LastTime = 0;
 	state->CP14R0_CCD = -1;
 
-	//ARMul_Reset (state);
-
-	/*ywc 2005-03-31 */
-	/*
-	   if(!skyeye_config.no_dbct){
-	   //teawater add for arm2x86 2005.02.14-------------------------------------------
-	   state->tea_break_ok = 0;
-	   state->tea_break_addr = 0;
-	   state->tea_pc = 0;
-	   if (arm2x86_init()) {
-	   printf("SKYEYE: arm2x86_init error\n");
-	   exit(-1);
-	   }
-	   //AJ2D--------------------------------------------------------------------------
-	   }
-	 */
-	state->cpu = (cpu_config_t *) malloc (sizeof (cpu_config_t));
+	//state->cpu = (cpu_config_t *) malloc (sizeof (cpu_config_t));
 	state->mem_bank = (mem_config_t *) malloc (sizeof (mem_config_t));
 	return (state);
 }

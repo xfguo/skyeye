@@ -70,8 +70,6 @@ static int ui_loop_hook_counter = UI_LOOP_POLL_INTERVAL;
 extern int (*ui_loop_hook) (int);
 #endif /* NEED_UI_LOOP_HOOK */
 
-extern int stop_simulator;
-
 /* Short-hand macros for LDR/STR.  */
 
 /* Store post decrement writeback.  */
@@ -331,7 +329,7 @@ int ARMul_ICE_debug(ARMul_State *state,ARMword instr,ARMword addr)
 	/* chech if we need to run some callback functions at this time */
 	generic_arch_t* arch_instance = get_arch_instance("");	
 	exec_callback(Step_callback, arch_instance);
-	if (!skyeye_is_running()) {
+	if (!SIM_is_running()) {
 		if (instr == ARMul_ABORTWORD) return 0;
 		state->EndCondition = 0;
 		state->Emulate = STOP;
@@ -363,9 +361,8 @@ ARMul_Emulate26 (ARMul_State * state)
 	ARMword decoded_addr=0;
 	ARMword loaded_addr=0;
 	ARMword have_bp=0;
-        static unsigned remote_interrupt_test_time=0;
-	/* Execute the next instruction.  */
 
+	/* Execute the next instruction.  */
 	if (state->NextInstr < PRIMEPIPE) {
 		decoded = state->decoded;
 		loaded = state->loaded;
@@ -4254,7 +4251,7 @@ TEST_EMULATE:
 		else if (state->Emulate != RUN)
 			break;
 	}
-	while (!stop_simulator);
+	while (!state->stop_simulator);
 
 	state->decoded = decoded;
 	state->loaded = loaded;
@@ -4490,7 +4487,7 @@ ARMul_Emulate32_dbct (ARMul_State * state)
 			break;
 		}
 	}
-	while (!stop_simulator);
+	while (!state->stop_simulator);
 
       out:
 	state->Reg[15] -= INSN_SIZE;

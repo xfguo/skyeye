@@ -317,6 +317,7 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 	int verbose;		/* non-zero means print various messages like the banner */
 
 	mmu_state_t mmu;
+	int mmu_inited;
 	//mem_state_t mem;
 	/*remove io_state to skyeye_mach_*.c files */
 	//io_state_t io;
@@ -384,6 +385,9 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 	uint32_t vector_remap_addr;
 	uint32_t vector_remap_size;
 
+	uint32_t step;
+	uint32_t cycle;
+	int stop_simulator;
 //teawater add DBCT_TEST_SPEED 2005.10.04---------------------------------------
 #ifdef DBCT_TEST_SPEED
 	uint64_t	instr_count;
@@ -391,6 +395,7 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 //AJ2D--------------------------------------------------------------------------
 };
 
+typedef ARMul_State arm_core_t;
 #define ResetPin NresetSig
 #define FIQPin NfiqSig
 #define IRQPin NirqSig
@@ -514,7 +519,7 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 \***************************************************************************/
 
 extern void ARMul_EmulateInit (void);
-extern ARMul_State *ARMul_NewState (void);
+extern ARMul_State *ARMul_NewState (ARMul_State * state);
 extern void ARMul_Reset (ARMul_State * state);
 extern ARMword ARMul_DoProg (ARMul_State * state);
 extern ARMword ARMul_DoInstr (ARMul_State * state);

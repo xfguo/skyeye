@@ -30,6 +30,7 @@
  * */
 
 #include "armdefs.h"
+#include "armcpu.h"
 #include "lpc.h"
 //zzc:2005-1-1
 #ifdef __CYGWIN__
@@ -197,7 +198,8 @@ lpc_io_do_cycle (ARMul_State * state)
 					io.timer[0].tc = 0;
 				}
 			}
-			extern ARMul_State * state;
+			//extern ARMul_State * state;
+			ARMul_State * state = get_current_core();
 			lpc_update_int (state);
 		}
 	}
@@ -216,7 +218,8 @@ lpc_io_do_cycle (ARMul_State * state)
 				io.uart[0].rbr = buf;
 				io.uart[0].lsr |= 0x1;
 				io.vic.risr |= IRQ_UART0;
-				extern ARMul_State * state;
+				//extern ARMul_State * state;
+				ARMul_State * state = get_current_core();
 				lpc_update_int (state);
 			}
 		}		/* if (rcr > 0 && ... */
@@ -267,7 +270,8 @@ lpc_uart_read (ARMul_State * state, ARMword addr, int i)
 			io.vic.risr &= ~IRQ_UART0;
 		else
 			io.vic.risr &= ~IRQ_UART1;
-		extern ARMul_State * state;
+		//extern ARMul_State * state;
+		ARMul_State * state = get_current_core();
 		lpc_update_int (state);
 		data = io.uart[i].rbr;
 		break;
@@ -370,7 +374,8 @@ lpc_io_read_word (ARMul_State * state, ARMword addr)
 
 	case 0xfffff014:	/* IECR */
 		data = io.vic.iecr;
-		extern ARMul_State * state;
+		//extern ARMul_State * state;
+		ARMul_State * state = get_current_core();
 		lpc_update_int (state);
 		break;
 	case 0xfffff034:	/* DVAR */
@@ -498,7 +503,8 @@ lpc_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
 	case 0xfffff010:	/* IER */
 		io.vic.ier = data;
 		io.vic.iecr = ~data;
-		extern ARMul_State * state;
+		//extern ARMul_State * state;
+		ARMul_State * state = get_current_core();
 		lpc_update_int (state);
 //              data = unfix_int(io.intmr);
 		DBG_PRINT ("write IER=%x,after update ier=%x\n", data,
@@ -507,8 +513,11 @@ lpc_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
 	case 0xfffff014:	/* IECR */
 		io.vic.iecr = data;
 		io.vic.ier = ~data;
-		extern ARMul_State * state;
-		lpc_update_int (state);
+		//extern ARMul_State * state;
+		{
+			ARMul_State * state = get_current_core();
+			lpc_update_int (state);
+		}
 		break;
 
 	case 0xfffff018:	/* SIR */
@@ -535,8 +544,11 @@ lpc_io_write_word (ARMul_State * state, ARMword addr, ARMword data)
 			io.timer[0].ir &= 0x0;
 			io.vic.risr &= ~IRQ_TC0;
 		}
-		extern ARMul_State * state;
-		lpc_update_int (state);
+		//extern ARMul_State * state;
+		{
+			ARMul_State * state = get_current_core();
+			lpc_update_int (state);
+		}
 		break;
 	case 0xe0004004:
 		io.timer[0].tcr = data;
