@@ -51,11 +51,12 @@ typedef struct skyeye_modules_s{
 static skyeye_modules_t* skyeye_modules;
 
 static void set_module_list(skyeye_module_t *node){
-	skyeye_modules->list = node;
+	skyeye_modules = node;
 }
 exception_t init_module_list(){
 	int errors = 0;
-	skyeye_modules = skyeye_mm(sizeof(skyeye_modules_t));
+	//skyeye_modules = skyeye_mm(sizeof(skyeye_modules_t));
+	skyeye_modules = NULL;
 	/* Initialise libltdl. */
 	errors = lt_dlinit ();
 
@@ -64,7 +65,7 @@ exception_t init_module_list(){
 	return No_exp;
 }
 skyeye_module_t* get_module_list(){
-	return skyeye_modules->list;
+	return skyeye_modules;
 }
 
 static exception_t register_skyeye_module(char* module_name, char* filename, void* handler){
@@ -72,6 +73,7 @@ static exception_t register_skyeye_module(char* module_name, char* filename, voi
 	skyeye_module_t* node;
 	skyeye_module_t* list;
 	list = get_module_list();
+	//skyeye_log(Debug_log, __FUNCTION__, "module_name = %s\n", module_name);
 	if(module_name == NULL|| filename == NULL)
 		return Invarg_exp;
 
@@ -96,7 +98,7 @@ static exception_t register_skyeye_module(char* module_name, char* filename, voi
 	
 	node->handler = handler;
 
-	node->next = list;;
+	node->next = list;
 	set_module_list(node);
 	return No_exp;
 }
@@ -218,6 +220,8 @@ void SKY_unload_all_modules(){
         while(list != NULL){
 		skyeye_module_t* node = list;
                 list = list->next;
+		
+		//skyeye_log(Debug_log, __FUNCTION__, "Free module %s\n", node->module_name);
 		/* unload a module and free its memory */
 		if(node->handler != NULL)
 			lt_dlclose(node->handler);
