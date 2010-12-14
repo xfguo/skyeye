@@ -218,6 +218,9 @@ typedef struct cpu_archrf {
 	void *storage;
 } cpu_archrf_t;
 
+
+
+
 typedef std::map<addr_t, BasicBlock *> bbaddr_map;
 typedef std::map<Function *, bbaddr_map> funcbb_map;
 /* This map save <address, native code function pointer> */
@@ -248,22 +251,29 @@ typedef struct dyncom_engine{
 	ExecutionEngine *exec_engine;
 	uint8_t *RAM;
 //for four memory region
-        tag_t *tag_array[4];
-        uint32_t code_size[4];
+    tag_t *tag_array[4];
+    uint32_t code_size[4];
 //for 545CK
-        uint8_t *system_ram;
-        uint8_t *system_rom;
-        uint8_t *data_ram;
-        uint8_t *instr_ram;
-	PointerType *type_pfunc_callout;
-        PointerType *type_pwindowcheck;
+    uint8_t *system_ram;
+    uint8_t *system_rom;
+    uint8_t *data_ram;
+    uint8_t *instr_ram;
+
 	PointerType *type_pread_memory;
 	PointerType *type_pwrite_memory;
-	Value *ptr_func_debug;
-        Value *ptr_func_windowcheck;
+
+	Value *ptr_RAM;
+	Value *ptr_grf; // gpr register file
+	Value *ptr_frf; // fp register file
 	Value *ptr_func_read_memory;
 	Value *ptr_func_write_memory;
 
+	/* arch functions are for each architecture to declare it's own functions
+	   which can be invoked in llvm IR.Usually,the functions to be invoked are
+	   C functions which are complex to be implemented by llvm IR.
+	   DEFAULT:ptr_arch_func[0] is debug function.*/
+	#define MAX_ARCH_FUNC_NUM 5
+	Value *ptr_arch_func[MAX_ARCH_FUNC_NUM];
 }dyncom_engine_t;
 
 typedef struct cpu {
@@ -279,15 +289,11 @@ typedef struct cpu {
 	bool redirection;
 
 	Value *ptr_PC;
-	Value *ptr_RAM;
-
-	Value *ptr_grf; // gpr register file
 	Value **ptr_gpr; // GPRs
 	Value **in_ptr_gpr;
 	Value **ptr_xr; // XRs
 	Value **in_ptr_xr;
 
-	Value *ptr_frf; // fp register file
 	Value **ptr_fpr; // FPRs
 	Value **in_ptr_fpr;
 
