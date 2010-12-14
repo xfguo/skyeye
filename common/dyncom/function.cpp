@@ -152,7 +152,7 @@ emit_decode_fp_reg_helper(cpu_t *cpu, uint32_t count, uint32_t width,
 #else
 	// just decode struct reg
 	for (uint32_t i = 0; i < count; i++) 
-		ptr_r[i] = get_struct_member_pointer(cpu->ptr_frf, i, bb);
+		ptr_r[i] = get_struct_member_pointer(cpu->dyncom_engine->ptr_frf, i, bb);
 #endif
 }
 
@@ -161,13 +161,13 @@ emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 {
 	// GPRs
 	emit_decode_reg_helper(cpu, cpu->info.register_count[CPU_REG_GPR],
-		cpu->info.register_size[CPU_REG_GPR], 0, cpu->ptr_grf,
+		cpu->info.register_size[CPU_REG_GPR], 0, cpu->dyncom_engine->ptr_grf,
 		cpu->in_ptr_gpr, cpu->ptr_gpr, "gpr", bb);
 
 	// XRs
 	emit_decode_reg_helper(cpu, cpu->info.register_count[CPU_REG_XR],
 		cpu->info.register_size[CPU_REG_XR],
-		cpu->info.register_count[CPU_REG_GPR], cpu->ptr_grf,
+		cpu->info.register_count[CPU_REG_GPR], cpu->dyncom_engine->ptr_grf,
 		cpu->in_ptr_xr, cpu->ptr_xr, "xr", bb);
 
 	// FPRs
@@ -302,25 +302,7 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	PointerType *type_intptr = PointerType::get(cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX()), 0);
 	// - uint32_t
 	const IntegerType *type_i32 = IntegerType::get(_CTX(), 32);
-	// - (*f)(cpu_t *) [debug_function() function pointer]
-	std::vector<const Type*>type_func_callout_args;
-	type_func_callout_args.push_back(type_intptr);	/* intptr *cpu */
-	FunctionType *type_func_callout = FunctionType::get(
-		XgetType(VoidTy),	/* Result */
-		type_func_callout_args,	/* Params */
-		false);		      	/* isVarArg */
-	cpu->dyncom_engine->type_pfunc_callout = PointerType::get(type_func_callout, 0);
 
-	std::vector<const Type*> type_func_windowcheck_args;
-	type_func_windowcheck_args.push_back(type_intptr);	/* intptr *cpu */
-	type_func_windowcheck_args.push_back(type_i32);	/* i32 */
-	type_func_windowcheck_args.push_back(type_i32);	/* i32 */
-	type_func_windowcheck_args.push_back(type_i32);	/* i32 */
-	FunctionType *type_func_windowcheck_callout = FunctionType::get(
-		getIntegerType(32),	/* Result */
-		type_func_windowcheck_args,	/* Params */
-		false);		      	/* isVarArg */
-	cpu->dyncom_engine->type_pwindowcheck = PointerType::get(type_func_windowcheck_callout, 0);
 	/* read memory in IR */
 	std::vector<const Type*> type_func_read_memory_args;
 	type_func_read_memory_args.push_back(type_intptr);	/* intptr *cpu */
@@ -349,8 +331,6 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	type_func_args.push_back(type_pi8);				/* uint8_t *RAM */
 	type_func_args.push_back(type_pstruct_reg_t);	/* reg_t *reg */
 	type_func_args.push_back(type_pstruct_fp_reg_t);	/* fp_reg_t *fp_reg */
-	type_func_args.push_back(cpu->dyncom_engine->type_pfunc_callout);	/* (*debug)(...) */
-	type_func_args.push_back(cpu->dyncom_engine->type_pwindowcheck);	/* (*windowcheck)(...) */
 	type_func_args.push_back(cpu->dyncom_engine->type_pread_memory);
 	type_func_args.push_back(cpu->dyncom_engine->type_pwrite_memory);
 	FunctionType* type_func = FunctionType::get(
@@ -378,16 +358,12 @@ cpu_create_function(cpu_t *cpu, const char *name,
 
 	// args
 	Function::arg_iterator args = func->arg_begin();
-	cpu->ptr_RAM = args++;
-	cpu->ptr_RAM->setName("RAM");
-	cpu->ptr_grf = args++;
-	cpu->ptr_grf->setName("grf");
-	cpu->ptr_frf = args++;
-	cpu->ptr_frf->setName("frf");
-	cpu->dyncom_engine->ptr_func_debug = args++;
-	cpu->dyncom_engine->ptr_func_debug->setName("debug");
-	cpu->dyncom_engine->ptr_func_windowcheck = args++;
-	cpu->dyncom_engine->ptr_func_windowcheck->setName("windowcheck");
+	cpu->dyncom_engine->ptr_RAM = args++;
+	cpu->dyncom_engine->ptr_RAM->setName("RAM");
+	cpu->dyncom_engine->ptr_grf = args++;
+	cpu->dyncom_engine->ptr_grf->setName("grf");
+	cpu->dyncom_engine->ptr_frf = args++;
+	cpu->dyncom_engine->ptr_frf->setName("frf");
 	cpu->dyncom_engine->ptr_func_read_memory = args++;
 	cpu->dyncom_engine->ptr_func_read_memory->setName("readmemory");
 	cpu->dyncom_engine->ptr_func_write_memory = args++;
