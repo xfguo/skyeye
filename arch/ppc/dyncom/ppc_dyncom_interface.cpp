@@ -28,7 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "tracers.h"
 #include "sysendian.h"
 #include "ppc_irq.h"
-//#include "ppc_regformat.h"
+#include "ppc_regformat.h"
 #include "bank_defs.h"
 #include "ppc_dyncom_run.h"
 #include "ppc_dyncom_dec.h"
@@ -224,8 +224,10 @@ static uint32 ppc_get_step(){
 	PPC_CPU_State* cpu = get_current_cpu();
 	return cpu->core[0].step;
 }
+
+extern char* ppc_regstr[];
 static char* ppc_get_regname_by_id(int id){
-        return NULL;
+        return ppc_regstr[id];
 }
 static uint32 ppc_get_regval_by_id(int id){
 	/* we return the reg value of core 0 by default */
@@ -235,7 +237,6 @@ static uint32 ppc_get_regval_by_id(int id){
         	return cpu->core[core_id].gpr[id];
 
 	switch(id){
-#if 0
 		case PC:
 			return cpu->core[core_id].pc;
 		case MSR:
@@ -250,7 +251,6 @@ static uint32 ppc_get_regval_by_id(int id){
 			return cpu->core[core_id].xer;
 		case FPSCR:
 			return cpu->core[core_id].fpscr;
-#endif
 		default:
 			/* can not find any corrsponding register */
 			return 0;
