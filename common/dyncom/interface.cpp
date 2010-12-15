@@ -84,6 +84,7 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 	assert(!arch_func);
 	cpu->f = arch_func;
 
+	cpu->dyncom_engine = new dyncom_engine_t;
 	cpu->dyncom_engine->code_start = 0;
 	cpu->dyncom_engine->code_end = 0;
 	cpu->dyncom_engine->code_entry = 0;
