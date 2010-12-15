@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 /* the number of supported architecture */
-#define MAX_SUPP_ARCH 8
+#define MAX_SUPP_ARCH 32
 static arch_config_t *skyeye_archs[MAX_SUPP_ARCH];
 
 /*
@@ -48,6 +48,7 @@ register_arch (arch_config_t * arch)
 			return;
 		}
 	}
+	fprintf(stderr, "In %s,can not register the arch since overflow the max arch number.\n", __FUNCTION__);
 }
 /*
  * get arch instance in running by its name.
