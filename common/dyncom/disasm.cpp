@@ -1,12 +1,20 @@
-/*
- * libcpu: disasm.cpp
+/**
+ * @file disasm.cpp
  *
- * Disassemble and print an instruction. This appends
- * instructions in a delay slot in square brackets.
+ * Disassemble and print an instruction.
+ *
+ * @author OS Center,TsingHua University (Ported from libcpu)
+ * @date 11/11/2010
  */
+
 #include "skyeye_dyncom.h"
 #include "dyncom/tag.h"
-
+/**
+ * @brief Disassemble and print an instruction
+ *
+ * @param cpu The CPU core structure
+ * @param pc The disassemble instruction's pc
+ */
 void disasm_instr(cpu_t *cpu, addr_t pc) {
 	char disassembly_line1[80];
 	char disassembly_line2[80];

@@ -1,7 +1,10 @@
-/*
- * libcpu: interface.cpp
- *
+/**
+ * @file interface.cpp
+ * 
  * This is the interface to the client.
+ * 
+ * @author OS Center,TsingHua University (Ported from libcpu)
+ * @date 11/11/2010
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,7 +68,15 @@ is_valid_vr_size(size_t size)
 //////////////////////////////////////////////////////////////////////
 // cpu_t
 //////////////////////////////////////////////////////////////////////
-
+/**
+ * @brief Create a new CPU core structure and initialize the llmv Module,ExectionEngine
+ *
+ * @param arch the architecture type of CPU core
+ * @param flags some flags,such as floating point,little/big endian 
+ * @param arch_flags target machine bits 
+ *
+ * @return pointer of CPU core structure 
+ */
 cpu_t *
 cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 {
@@ -182,7 +193,11 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 
 	return cpu;
 }
-
+/**
+ * @brief free CPU core structure
+ *
+ * @param cpu CPU core structure
+ */
 void
 cpu_free(cpu_t *cpu)
 {
@@ -212,31 +227,56 @@ cpu_free(cpu_t *cpu)
 
 	delete cpu;
 }
-
+/**
+ * @brief Set cpu RAM
+ *
+ * @param cpu CPU core structure
+ * @param r RAM base address
+ */
 void
 cpu_set_ram(cpu_t*cpu, uint8_t *r)
 {
 	cpu->dyncom_engine->RAM = r;
 }
-
+/**
+ * @brief Set cpu codegen flags
+ *
+ * @param cpu CPU core structure
+ * @param f flag
+ */
 void
 cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
 {
 	cpu->dyncom_engine->flags_codegen = f;
 }
-
+/**
+ * @brief set cpu debug flags
+ *
+ * @param cpu CPU core structure
+ * @param f flag
+ */
 void
 cpu_set_flags_debug(cpu_t *cpu, uint32_t f)
 {
 	cpu->dyncom_engine->flags_debug = f;
 }
-
+/**
+ * @brief Set cpu hint flags
+ *
+ * @param cpu CPU core structure
+ * @param f flag
+ */
 void
 cpu_set_flags_hint(cpu_t *cpu, uint32_t f)
 {
 	cpu->dyncom_engine->flags_hint = f;
 }
-
+/**
+ * @brief tag from pc and stop if necessary
+ *
+ * @param cpu CPU core structure
+ * @param pc start tagging address
+ */
 void
 cpu_tag(cpu_t *cpu, addr_t pc)
 {
@@ -244,7 +284,12 @@ cpu_tag(cpu_t *cpu, addr_t pc)
 	tag_start(cpu, pc);
 	update_timing(cpu, TIMER_TAG, false);
 }
-
+/**
+ * @brief Save the map from native code function to entry address.
+ *
+ * @param cpu CPU core structure
+ * @param native_code_func entry of the native code function
+ */
 void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 {
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
@@ -252,7 +297,12 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 	for (; i != bb_addr.end(); i++)
 		cpu->dyncom_engine->fmap[i->first] = native_code_func;
 }
-
+/**
+ * @brief Create llvm JIT Function and translate instructions to fill the JIT Function.
+ *	Optimize the llvm IR and save the function and its entry address to map.
+ *
+ * @param cpu CPU core structure
+ */
 static void
 cpu_translate_function(cpu_t *cpu)
 {
@@ -303,7 +353,11 @@ cpu_translate_function(cpu_t *cpu)
 	cpu->dyncom_engine->functions++;/* Bug."functions" member could not be reset. */
 }
 
-/* forces ahead of time translation (e.g. for benchmarking the run) */
+/**
+ * @brief forces ahead of time translation (e.g. for benchmarking the run)
+ *
+ * @param cpu CPU core structure
+ */
 void
 cpu_translate(cpu_t *cpu)
 {
@@ -324,7 +378,14 @@ asm("nop");
 #else
 void breakpoint() {}
 #endif
-
+/**
+ * @brief search the function of current address in map.If find,run it.Other wise,return.
+ *
+ * @param cpu CPU core structure
+ * @param debug_function debug function 
+ *
+ * @return the return value of JIT Function
+ */
 int
 cpu_run(cpu_t *cpu, debug_function_t debug_function)
 {
@@ -400,7 +461,11 @@ cpu_run(cpu_t *cpu, debug_function_t debug_function)
 	}
 }
 //LOG("%d\n", __LINE__);
-
+/**
+ * @brief Clear the function:address map and free the memory of all the native code function.
+ *
+ * @param cpu CPU core structure
+ */
 void
 cpu_flush(cpu_t *cpu)
 {
@@ -415,7 +480,11 @@ cpu_flush(cpu_t *cpu)
 //	delete cpu->dyncom_engine->mod;
 //	cpu->dyncom_engine->mod = NULL;
 }
-
+/**
+ * @brief print statistics,will be invoked when benchmark exits.
+ *
+ * @param cpu CPU core structure
+ */
 void
 cpu_print_statistics(cpu_t *cpu)
 {

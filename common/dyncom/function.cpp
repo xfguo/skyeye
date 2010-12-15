@@ -1,10 +1,12 @@
-/*
- * libcpu: function.cpp
+/**
+ * @file function.cpp
  *
  * Create the master function and fill it with the helper
- * basic blocks
+ * basic blocks* 
+ * 
+ * @author OS Center,TsingHua University (Ported from libcpu)
+ * @date 11/11/2010
  */
-
 #include <vector>
 
 #include "llvm/CallingConv.h"
@@ -78,7 +80,15 @@ get_struct_fp_reg(cpu_t *cpu) {
 
 	return getStructType(type_struct_fp_reg_t_fields, /*isPacked=*/true);
 }
-
+/**
+ * @brief Get the pointer of an element of a structure
+ *
+ * @param s start address
+ * @param index index into the struct from start address
+ * @param bb current basic block,store llvm IR
+ *
+ * @return pointer to the element
+ */
 static Value *
 get_struct_member_pointer(Value *s, int index, BasicBlock *bb) {
 	ConstantInt* const_0 = ConstantInt::get(XgetType(Int32Ty), 0);
@@ -276,7 +286,18 @@ spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 		cpu->info.register_size[CPU_REG_FPR], cpu->in_ptr_fpr,
 		cpu->ptr_fpr, bb);
 }
-
+/**
+ * @brief Create a llvm Function and fill it with some necessary basic blocks.
+ *	Every Function has the same entry,return and trap basic block.
+ *
+ * @param cpu CPU core structure
+ * @param name name of the Function to be created
+ * @param p_bb_ret return basic block
+ * @param p_bb_trap trap basic block
+ * @param p_label_entry entry basic block
+ *
+ * @return llvm Function pointer
+ */
 Function*
 cpu_create_function(cpu_t *cpu, const char *name,
 	BasicBlock **p_bb_ret,

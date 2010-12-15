@@ -1,9 +1,12 @@
-/*
- * libcpu: frontend.cpp
- *
+/**
+ * @file frontend.cpp
+ * 
  * This is the interface that frontends use. But frontends
  * don't use this directly, but go through the macros in
  * frontend.h
+ * 
+ * @author OS Center,TsingHua University (Ported from libcpu)
+ * @date 11/11/2010
  */
 
 #include <assert.h>
@@ -26,7 +29,16 @@
 #define HAS_SPECIAL_GPR0(cpu) ((cpu)->info.common_flags & CPU_FLAG_HARDWIRE_GPR0)
 #define HAS_SPECIAL_FPR0(cpu) ((cpu)->info.common_flags & CPU_FLAG_HARDWIRE_FPR0)
 
-// GET REGISTER
+/**
+ * @brief Generate the read register llvm instruction
+ *
+ * @param cpu The CPU core structrue
+ * @param index index of the register
+ * @param bits bits of register
+ * @param bb basic block to store the llvm instruction
+ *
+ * @return pointer of the llvm IR instruction
+ */
 Value *
 arch_get_reg(cpu_t *cpu, uint32_t index, uint32_t bits, BasicBlock *bb) {
 	Value *v;
@@ -72,7 +84,17 @@ arch_get_fp_reg(cpu_t *cpu, uint32_t index, uint32_t bits, BasicBlock *bb)
 	return new LoadInst(cpu->ptr_fpr[index], "", false, bb);
 }
 
-// PUT REGISTER
+/**
+ * @brief Generate the store register llvm instruction
+ *
+ * @param cpu The CPU core structrue
+ * @param index index of the register
+ * @param bits bits of register
+ * @param sext signed extend
+ * @param bb basic block to store the llvm instruction
+ *
+ * @return pointer of the llvm IR instruction
+ */
 Value *
 arch_put_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, bool sext,
 	BasicBlock *bb)
@@ -197,6 +219,14 @@ arch_load32_aligned(cpu_t *cpu, Value *a, BasicBlock *bb) {
 }
 
 /* store 32 bit ALIGNED value to RAM */
+/**
+ * @brief store 32 bit ALIGNED value to RAM
+ *
+ * @param cpu CPU core structure
+ * @param v value to store
+ * @param a address to store the value
+ * @param bb current basic block,to store the llvm IR
+ */
 void
 arch_store32_aligned(cpu_t *cpu, Value *v, Value *a, BasicBlock *bb) {
 	a = arch_gep32(cpu, a, bb);
@@ -238,7 +268,14 @@ arch_load16_aligned(cpu_t *cpu, Value *addr, BasicBlock *bb) {
 	Value *val = arch_load32_aligned(cpu, AND(addr, CONST(~3ULL)), bb);
 	return TRUNC16(LSHR(val, shift));
 }
-
+/**
+ * @brief store 8 bit value to RAM.The IR is stored in basic block bb
+ *
+ * @param cpu CPU core structure
+ * @param val Value to store
+ * @param addr Address to store the value
+ * @param bb current basic block,which hold the llvm IR
+ */
 void
 arch_store8(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 	Value *shift = arch_get_shift8(cpu, addr, bb);
@@ -248,7 +285,14 @@ arch_store8(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 	val = OR(old, SHL(AND(val, CONST(255)), shift));
 	arch_store32_aligned(cpu, val, addr, bb);
 }
-
+/**
+ * @brief store 16 bit value RAM.The IR is stored in basic block bb
+ *
+ * @param cpu CPU core structure
+ * @param val Value to store
+ * @param addr Address to store the value
+ * @param bb current basic block,which hold the llvm IR
+ */
 void
 arch_store16(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 	Value *shift = arch_get_shift16(cpu, addr, bb);
@@ -351,7 +395,15 @@ arch_adc(cpu_t *cpu, Value *dst, Value *src, Value *v, bool plus_carry, bool plu
 }
 
 // branches
-
+/**
+ * @brief Generate the branch llvm instruction
+ *
+ * @param flag_state jump direction
+ * @param target1 basic block 1
+ * @param target2 basic block 2
+ * @param v flag
+ * @param bb basic block to store the llvm instruction
+ */
 void
 arch_branch(bool flag_state, BasicBlock *target1, BasicBlock *target2, Value *v, BasicBlock *bb) {
 	if (!target1) {
@@ -367,7 +419,12 @@ arch_branch(bool flag_state, BasicBlock *target1, BasicBlock *target2, Value *v,
 	else
 		BranchInst::Create(target2, target1, v, bb);
 }
-
+/**
+ * @brief Generate the jump llvm instruction
+ *
+ * @param bb basic block to store the llvm instruction
+ * @param bb_target target basic block of the jump instruction
+ */
 void
 arch_jump(BasicBlock *bb, BasicBlock *bb_target) {
 	if (!bb_target) {
@@ -431,14 +488,24 @@ arch_sqrt(cpu_t *cpu, size_t width, Value *v, BasicBlock *bb) {
 	return CallInst::Create(v, "", bb);
 	//return CallInst::Create(Intrinsic::getDeclaration(cpu->dyncom_engine->mod, Intrinsic::sqrt, &ty, 1), v, "", bb);
 }
-
+/**
+ * @brief Generate the llvm instruction to increase ICOUNTER
+ *
+ * @param cpu CPU core structure
+ * @param bb basic block to store the llvm instruction
+ */
 void arch_inc_icounter(cpu_t *cpu, BasicBlock *bb)
 {
 	//LET(SR(ICOUNTER), ADD(R(SR(ICOUNTER)), CONST(1)));
 }
 
 // Invoke debug_function
-
+/**
+ * @brief Generate the invoke debug_me llvm IR
+ *
+ * @param cpu CPU core structure
+ * @param bb basic block to store llvm IR
+ */
 void
 arch_debug_me(cpu_t *cpu, BasicBlock *bb)
 {
@@ -452,7 +519,15 @@ arch_debug_me(cpu_t *cpu, BasicBlock *bb)
 	// XXX synchronize cpu context!
 	CallInst::Create(cpu->dyncom_engine->ptr_arch_func[0], v_cpu_ptr, "", bb);
 }
-
+/**
+ * @brief Generate the write memory llvm IR 
+ *
+ * @param cpu CPU core structure
+ * @param bb current basic block
+ * @param addr address to store
+ * @param value value to be stored to the address
+ * @param size 8/16/32 bits
+ */
 void arch_write_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, Value *value, uint32_t size)
 {
 	if (cpu->dyncom_engine->ptr_func_write_memory == NULL) {
@@ -468,7 +543,17 @@ void arch_write_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, Value *value, ui
 	params.push_back(CONST(size));
 	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_func_write_memory, params.begin(), params.end(), "", bb);
 }
-
+/**
+ * @brief Generate the read memory llvm IR
+ *
+ * @param cpu CPU core structure
+ * @param bb current basic block
+ * @param addr address to read
+ * @param sign data to read is signed or not 
+ * @param size 8/16/32 bits
+ *
+ * @return data to read
+ */
 Value *arch_read_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, uint32_t sign, uint32_t size)
 {
 	if (cpu->dyncom_engine->ptr_func_read_memory == NULL) {

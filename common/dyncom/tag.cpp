@@ -1,11 +1,14 @@
-/*
- * libcpu: tag.cpp
+/**
+ * @file tag.cpp
  *
  * Do a depth search of all reachable code and associate
  * every reachable instruction with flags that indicate
  * instruction type (branch,call,ret, ...), flags
  * (conditional, ...) and code flow information (branch
  * target, ...)
+ *
+ * @author OS Center,TsingHua University (Ported from libcpu)
+ * @date 11/11/2010
  */
 #include "skyeye_dyncom.h"
 #include "dyncom/tag.h"
@@ -93,13 +96,26 @@ init_tagging(cpu_t *cpu)
 		#endif
 //	}
 }
-
+/**
+ * @brief Determine an address is in code area or not
+ *
+ * @param cpu CPU core structure
+ * @param a address
+ *
+ * @return true if in code area,false otherwise.
+ */
 bool
 is_inside_code_area(cpu_t *cpu, addr_t a)
 {
 	return a >= cpu->dyncom_engine->code_start && a < cpu->dyncom_engine->code_end;
 }
-
+/**
+ * @brief Give a tag to an address
+ *
+ * @param cpu CPU core structure
+ * @param a address to be tagged
+ * @param t tag
+ */
 void
 or_tag(cpu_t *cpu, addr_t a, tag_t t)
 {
@@ -119,6 +135,14 @@ void clear_tag(cpu_t *cpu)
 }
 
 /* access functions */
+/**
+ * @brief Get the tag of an address 
+ *
+ * @param cpu CPU core structure
+ * @param a address
+ *
+ * @return tag of the address
+ */
 tag_t
 get_tag(cpu_t *cpu, addr_t a)
 {
@@ -127,13 +151,27 @@ get_tag(cpu_t *cpu, addr_t a)
 	else
 		return TAG_UNKNOWN;
 }
-
+/**
+ * @brief Determine an address is code or not
+ *
+ * @param cpu CPU core structure
+ * @param a address
+ *
+ * @return true if is code,false otherwise
+ */
 bool
 is_code(cpu_t *cpu, addr_t a)
 {
 	return !!(get_tag(cpu, a) & TAG_CODE);
 }
-
+/**
+ * @brief Determine an address is translated or not
+ *
+ * @param cpu CPU core structure
+ * @param a address
+ *
+ * @return true if is translated,false otherwise
+ */
 bool
 is_translated(cpu_t *cpu, addr_t a)
 {
@@ -244,7 +282,12 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 	cpu->dyncom_engine->tag_end = pc;
 	LOG("tag end at %x\n", pc);
 }
-
+/**
+ * @brief Start tag from current pc.
+ *
+ * @param cpu CPU core structure
+ * @param pc current address start tagging
+ */
 void
 tag_start(cpu_t *cpu, addr_t pc)
 {

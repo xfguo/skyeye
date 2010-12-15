@@ -1,8 +1,11 @@
-/*
- * libcpu: translate_all.cpp
- *
+/**
+ * @file translate_all.cpp
+ * 
  * This translates all known code by creating basic blocks and
  * filling them with instructions.
+ *
+ * @author OS Center,TsingHua University (Ported from libcpu)
+ * @date 11/11/2010
  */
 
 #include "llvm/BasicBlock.h"
@@ -17,7 +20,15 @@
 #include "translate.h"
 //#include "libcpu_run.h"
 
-
+/**
+ * @brief translate all the instructions. 
+ *
+ * @param cpu CPU core structure
+ * @param bb_ret return basic block
+ * @param bb_trap trap basic block
+ *
+ * @return dispatch basic block 
+ */
 BasicBlock *
 cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 {

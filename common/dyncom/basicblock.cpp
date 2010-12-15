@@ -1,7 +1,10 @@
-/*
- * libcpu: basicblock.cpp
- *
+/**
+ * @file basicblock.cpp
+ * 
  * Basic block handling (create, lookup)
+ * 
+ * @author OS Center,TsingHua University (Ported from libcpu)
+ * @date 11/11/2010
  */
 
 #include "llvm/Constants.h"
@@ -13,6 +16,14 @@
 #include <dyncom/basicblock.h>
 #include <dyncom/tag.h>
 
+/**
+ * @brief Determine an address is the start of a basicblock or not.
+ *
+ * @param cpu The CPU core structure
+ * @param a The address to be determined
+ *
+ * @return true if start of a basicblock,false otherwise
+ */
 bool
 is_start_of_basicblock(cpu_t *cpu, addr_t a)
 {
@@ -27,21 +38,43 @@ is_start_of_basicblock(cpu_t *cpu, addr_t a)
 		 TAG_ENTRY))			/* client wants to enter guest code here */
 		&& (tag & TAG_CODE);	/* only if we actually tagged it */
 }
-
+/**
+ * @brief Store PC to cpu structure 
+ *
+ * @param cpu The CPU core structure
+ * @param bb_branch The basicblock to store the llvm instruction
+ * @param new_pc The PC to be stored
+ */
 void
 emit_store_pc(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc)
 {
 	Value *v_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
 	new StoreInst(v_pc, cpu->ptr_PC, bb_branch);
 }
-
+/**
+ * @brief Store PC to cpu structure,then jump to the ret basicblock
+ *
+ * @param cpu The CPU core structure
+ * @param bb_branch The basicblock to store the llvm instruction
+ * @param new_pc The PC to be stored
+ * @param bb_ret The ret basicblock of the current JIT Function
+ */
 void
 emit_store_pc_return(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc, BasicBlock *bb_ret)
 {
 	emit_store_pc(cpu, bb_branch, new_pc);
 	BranchInst::Create(bb_ret, bb_branch);
 }
-
+/**
+ * @brief Create a basicblock and put it to the current JIT Function.Add it to func_bb map.
+ *
+ * @param cpu The CPU core structure
+ * @param addr The address,to be used as the part of the name of the basicblock
+ * @param f The JIT Function to store the basicblock
+ * @param bb_type The type of the basicblock to be created.And used as part of the basicblock name.
+ *
+ * @return The pointer of the basicblock created 
+ */
 BasicBlock *
 create_basicblock(cpu_t *cpu, addr_t addr, Function *f, uint8_t bb_type) {
 	char label[17];
@@ -55,7 +88,18 @@ create_basicblock(cpu_t *cpu, addr_t addr, Function *f, uint8_t bb_type) {
 
 	return bb;
 }
-
+/**
+ * @brief Lookup the basicblock according to the address.If not find,create a basicblock and put
+ *			it into the map and return it.
+ *
+ * @param cpu The CPU core structure
+ * @param f If not find,create a basicblock and put it into JIT Function f.
+ * @param pc Address,used to find the basicblock
+ * @param bb_ret The ret basicblock of the current JIT Function
+ * @param bb_type The type of the basicblock to be created.And used as part of the basicblock name.
+ *
+ * @return The result basicblock,found or created. 
+ */
 const BasicBlock *
 lookup_basicblock(cpu_t *cpu, Function* f, addr_t pc, BasicBlock *bb_ret, uint8_t bb_type) {
 	// lookup for the basicblock associated to pc in specified function 'f'

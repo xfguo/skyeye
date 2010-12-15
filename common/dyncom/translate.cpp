@@ -1,9 +1,12 @@
-/*
- * libcpu: translate.cpp
- *
+/**
+ * @file translate.cpp
+ * 
  * This translates a single instruction by calling out into
  * the architecture dependent functions. It will optionally
  * create internal basic blocks if necessary.
+ *
+ * @author OS Center,TsingHua University (Ported from libcpu)
+ * @date 11/11/2010
  */
 
 #include "llvm/Instructions.h"
@@ -14,10 +17,21 @@
 #include "dyncom/basicblock.h"
 #include "dyncom/frontend.h"
 #include "dyncom/dyncom_llvm.h"
-/*
- * returns the basic block where code execution continues, or
- * NULL if the instruction always branches away
- * (The caller needs this to link the basic block)
+/**
+ * @brief translate a single instruction. 
+ *
+ * @param cpu CPU core structure
+ * @param pc current address to translate
+ * @param tag tag of the address
+ * @param bb_target target basic block for branch/call instruction
+ * @param bb_trap target basic block for trap
+ * @param bb_next non-taken for conditional,the next instruction's basic block
+ * @param bb_ret return basic block
+ * @param cur_bb current basic block
+ *
+ * @return returns the basic block where code execution continues, or
+ *	NULL if the instruction always branches away
+ *	(The caller needs this to link the basic block)
  */
 BasicBlock *
 translate_instr(cpu_t *cpu, addr_t pc, tag_t tag,
