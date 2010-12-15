@@ -38,12 +38,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "skyeye_arch.h"
 #include "skyeye_mm.h"
 #include <skyeye_log.h>
+#include <skyeye_exec.h>
+#include <skyeye_cell.h>
 
 #ifdef __CYGWIN__
 #include <sys/time.h>
 #endif
 
 //PPC_CPU_State gCPU;
+static void per_cpu_step(conf_object_t * core);
+static void per_cpu_stop(conf_object_t * core);
 
 static void
 ppc_reset_state ()
@@ -90,8 +94,15 @@ static bool ppc_cpu_init()
 		
 	int i;
 	for(i = 0; i < cpu->core_num; i++){
-		ppc_core_init(&cpu->core[i], i);
-		ppc_dyncom_init(&cpu->core[i]);
+		e500_core_t* core = &cpu->core[i];
+		ppc_core_init(core, i);
+		ppc_dyncom_init(core);
+
+		skyeye_exec_t* exec = create_exec();
+		exec->priv_data = get_conf_obj_by_cast(core, "e500_core_t");
+		exec->run = per_cpu_step;
+		exec->stop = per_cpu_stop;
+		add_to_default_cell(exec);
 	}
 
 	cpu->boot_core_id = 0;
@@ -114,13 +125,15 @@ ppc_init_state ()
 	arch_instance->endianess = Big_endian;
 }
 
-static void per_cpu_step(e500_core_t * core){
+static void per_cpu_step(conf_object_t * running_core){
+	e500_core_t *core = (e500_core_t *)get_cast_conf_obj(running_core, "e500_core_t");
 	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "e500_core_t"));
+}
+static void per_cpu_stop(conf_object_t * core){
 }
 
 /* Fixme later */
-e500_core_t * current_core;
-
+//e500_core_t * current_core;
 static void
 ppc_step_once ()
 {
@@ -129,6 +142,7 @@ ppc_step_once ()
 	PPC_CPU_State* cpu = get_current_cpu();
 	/* workaround boot sequence for dual core, we need the first core initialize some variable for second core. */
 	e500_core_t* core;
+#if 0
 	for(i = 0; i < cpu->core_num; i++ ){
 		core = &cpu->core[i];
 		/* if CPU1_EN is set? */
@@ -137,6 +151,7 @@ ppc_step_once ()
 	}
 	/* for peripheral */
 	mach->mach_io_do_cycle(cpu);
+#endif
 }
 
 static void ppc_stop(uint32_t id){

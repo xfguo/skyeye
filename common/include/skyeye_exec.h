@@ -24,6 +24,7 @@ typedef struct skyeye_exec_s{
 */
 conf_object_t* get_current_exec_priv(pthread_t id);
 
+skyeye_exec_t* create_exec();
 #ifdef __cplusplus
 }
 #endif
