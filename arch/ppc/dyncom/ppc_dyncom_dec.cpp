@@ -44,6 +44,7 @@
 #include "ppc_mmu.h"
 #include "ppc_opc.h"
 
+#define BAD_INSTR {fprintf(stderr, "In %s, cannot parse instruction 0x%x\n", __FUNCTION__, instr);exit(-1);}
 //#include "io/prom/promosi.h"
 #if 0
 static void ppc_opc_invalid(cpu_t* cpu, BasicBlock* bb)
@@ -132,7 +133,23 @@ static void ppc_opc_invalid(cpu_t* cpu, BasicBlock* bb)
 	//SINGLESTEP("unknown instruction\n");
 }
 #endif
-static ppc_opc_func_t ppc_opc_invalid;
+int opc_invalid_tag(cpu_t *cpu, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	BAD_INSTR;
+	return -1;
+}
+int opc_invalid_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	BAD_INSTR;
+	return -1;
+}
+Value* opc_invalid_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	BAD_INSTR;
+	return NULL;
+}
+static ppc_opc_func_t ppc_opc_invalid = {
+	opc_invalid_tag,
+	opc_invalid_translate,
+	opc_invalid_translate_cond,
+};
 
 // main opcode 19
 static ppc_opc_func_t* ppc_opc_group_1(cpu_t* cpu, BasicBlock* bb)
@@ -695,6 +712,11 @@ ppc_opc_func_t* ppc_get_opc_func(uint32_t opc)
 void ppc_dyncom_dec_init()
 {
 	ppc_opc_init_group2();
+	int i;
+	for (i=0; i<(sizeof ppc_opc_table_main / sizeof ppc_opc_table_main[0]); i++) {
+                ppc_opc_table_main[i] = ppc_opc_invalid;
+        }
+
 #if 0	
 	if ((ppc_cpu_get_pvr(0) & 0xffff0000) == 0x000c0000) {
 		ppc_opc_table_main[4] = ppc_opc_group_v;

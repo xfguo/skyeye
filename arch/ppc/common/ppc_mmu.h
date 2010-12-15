@@ -42,6 +42,7 @@ extern uint32 gMemorySize;
 #define PPC_MMU_EXC 1
 #define PPC_MMU_FATAL 2
 
+uint32_t get_end_of_page(uint32 phys_addr);
 int   ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
 int   e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
 int   e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);

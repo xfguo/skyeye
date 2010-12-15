@@ -34,7 +34,7 @@ void ppc_dec_init();
 
 typedef int (*tag_func_t)(cpu_t *cpu, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
 typedef int (*translate_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
-typedef Value* (*translate_cond_func_t)(cpu_t *cpu, addr_t pc, BasicBlock *bb);
+typedef Value* (*translate_cond_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 typedef struct ppc_opc_func_s{
 	tag_func_t tag;
 	translate_func_t translate;

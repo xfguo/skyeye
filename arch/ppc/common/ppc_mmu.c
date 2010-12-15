@@ -159,7 +159,10 @@ int e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint3
 	return PPC_MMU_FATAL;
 	
 }
-
+uint32_t get_end_of_page(uint32 phys_addr){
+	const uint32 page_size = 4 * 1024;
+	return (phys_addr + page_size) & (~(page_size - 1));
+}
 int e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result)
 {
 	

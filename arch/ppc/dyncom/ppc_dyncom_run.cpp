@@ -16,6 +16,7 @@
 #include <dyncom/dyncom_llvm.h>
 
 #include "ppc_cpu.h"
+#include "ppc_mmu.h"
 #include "ppc_dyncom.h"
 #include "ppc_dyncom_run.h"
 
@@ -138,13 +139,23 @@ debug_function(cpu_t *cpu) {
 }
 void ppc_dyncom_run(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	addr_t phys_pc = core->pc;
+	if(ppc_effective_to_physical(core, core->pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
+		/* we donot allow mmu exception in tagging state */
+		fprintf(stderr, "In %s, can not translate the pc 0x%x\n", __FUNCTION__, core->pc);
+		exit(-1);
+	}
+	cpu->dyncom_engine->code_start = phys_pc;
+        cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);
+        cpu->dyncom_engine->code_entry = phys_pc;
+
 	int rc = cpu_run(cpu, debug_function);
 	switch (rc) {   
                 case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
                         break;  
                 case JIT_RETURN_SINGLESTEP:
                 case JIT_RETURN_FUNCNOTFOUND:
-                        cpu_tag(cpu, core->pc);
+                        cpu_tag(cpu, phys_pc);
                         cpu->dyncom_engine->functions = 0;
                         cpu_translate(cpu);
 		 /*
