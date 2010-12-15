@@ -182,7 +182,7 @@ RAM32LE(uint8_t *RAM, addr_t a) {
 /* get a RAM pointer to a 32 bit value */
 static Value *
 arch_gep32(cpu_t *cpu, Value *a, BasicBlock *bb) {
-	a = GetElementPtrInst::Create(cpu->ptr_RAM, a, "", bb);
+	a = GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
 	return new BitCastInst(a, PointerType::get(XgetType(Int32Ty), 0), "", bb);
 }
 
@@ -442,7 +442,7 @@ void arch_inc_icounter(cpu_t *cpu, BasicBlock *bb)
 void
 arch_debug_me(cpu_t *cpu, BasicBlock *bb)
 {
-	if (cpu->dyncom_engine->ptr_func_debug == NULL)
+	if (cpu->dyncom_engine->ptr_arch_func[0] == NULL)
 		return;
 
 	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
@@ -450,30 +450,7 @@ arch_debug_me(cpu_t *cpu, BasicBlock *bb)
 	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
 
 	// XXX synchronize cpu context!
-	CallInst::Create(cpu->dyncom_engine->ptr_func_debug, v_cpu_ptr, "", bb);
-}
-
-void
-arch_windowcheck(cpu_t *cpu, BasicBlock *bb, BasicBlock *bb_ret, BasicBlock *bb_instr)
-{
-	if (cpu->dyncom_engine->ptr_func_windowcheck == NULL)
-		return;
-
-	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
-	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
-	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
-	std::vector<Value *> params;
-	params.push_back(v_cpu_ptr);
-	/*
-	params.push_back(CONST(cpu->dyncom_engine->wr));
-	params.push_back(CONST(cpu->dyncom_engine->ws));
-	params.push_back(CONST(cpu->dyncom_engine->wt));
-	*/
-	// XXX synchronize cpu context!
-	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_func_windowcheck, params.begin(), params.end(), "", bb);
-//	cout << *ret << '\n';
-	Value *cmp = ICMP_EQ(ret, CONST(0));
-	BranchInst::Create(bb_instr, bb_ret, cmp, bb);
+	CallInst::Create(cpu->dyncom_engine->ptr_arch_func[0], v_cpu_ptr, "", bb);
 }
 
 void arch_write_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, Value *value, uint32_t size)
