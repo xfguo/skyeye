@@ -3,14 +3,37 @@
  *
  * 08/22/2010 Michael.Kang (blackfin.kang@gmail.com)
  */
+#include <llvm/LLVMContext.h>
+#include <llvm/Type.h>
+#include <llvm/Function.h>
+#include <llvm/Module.h>
+#include <llvm/Constant.h>
+
 #include <skyeye_dyncom.h>
 #include <skyeye_types.h>
 #include <skyeye_obj.h>
 #include <skyeye.h>
+#include <dyncom/dyncom_llvm.h>
 
 #include "ppc_cpu.h"
 #include "ppc_dyncom.h"
 #include "ppc_dyncom_run.h"
+
+extern "C" void debug_ppc(){
+}; 
+
+/* init the callout functions of PowerPC.By default the first callout function is debug function*/
+static void arch_func_init(cpu_t *cpu){
+	//types
+	Constant *debug_const = cpu->dyncom_engine->mod->getOrInsertFunction("debug_ppc",	//function name
+															Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
+															NULL);
+	if(debug_const == NULL)
+		fprintf(stderr, "Error:cannot insert function:debug.\n");
+	Function *debug_func = cast<Function>(debug_const);
+	debug_func->setCallingConv(CallingConv::C);
+	cpu->dyncom_engine->ptr_arch_func[0] = debug_func;
+}
 
 /* physical register for powerpc archtecture */
 static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
@@ -45,6 +68,7 @@ static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf
 	e500_core_t* core = (e500_core_t*)cpu->cpu_data;
 	cpu->rf.pc = &core->pc;
 	cpu->rf.grf = core->gpr;
+
 }
 
 static void
@@ -99,6 +123,7 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
+	arch_func_init(cpu);
 	return;
 }
 
