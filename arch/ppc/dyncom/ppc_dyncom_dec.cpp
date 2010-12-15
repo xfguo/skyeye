@@ -45,7 +45,7 @@
 #include "ppc_opc.h"
 
 //#include "io/prom/promosi.h"
-
+#if 0
 static void ppc_opc_invalid(cpu_t* cpu, BasicBlock* bb)
 {
 	e500_core_t* current_core = get_current_core();
@@ -131,9 +131,11 @@ static void ppc_opc_invalid(cpu_t* cpu, BasicBlock* bb)
 	skyeye_exit(-1);
 	//SINGLESTEP("unknown instruction\n");
 }
+#endif
+static ppc_opc_func_t ppc_opc_invalid;
 
 // main opcode 19
-static void ppc_opc_group_1(cpu_t* cpu, BasicBlock* bb)
+static ppc_opc_func_t* ppc_opc_group_1(cpu_t* cpu, BasicBlock* bb)
 {
 	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
@@ -171,19 +173,19 @@ static void ppc_opc_group_1(cpu_t* cpu, BasicBlock* bb)
 		}
 	}
 #endif
-	ppc_opc_invalid(cpu, bb);
+	return &ppc_opc_invalid;
 }
 
-ppc_opc_function ppc_opc_table_group2[1015];
-//ppc_opc_function * ppc_opc_table_group2;
+ppc_opc_func_t* ppc_opc_table_group2[1015];
+//ppc_opc_func_t * ppc_opc_table_group2;
 
 // main opcode 31
 static void ppc_opc_init_group2()
 {
 	uint i;
-	//ppc_opc_table_group2 = (ppc_opc_function *)malloc(sizeof(ppc_opc_function) * 1015);
+	//ppc_opc_table_group2 = (ppc_opc_func_t *)malloc(sizeof(ppc_opc_func_t) * 1015);
 	for (i=0; i<(sizeof ppc_opc_table_group2 / sizeof ppc_opc_table_group2[0]); i++) {
-		ppc_opc_table_group2[i] = ppc_opc_invalid;
+		ppc_opc_table_group2[i] = &ppc_opc_invalid;
 	}
 #if 0
 	ppc_opc_table_group2[0] = ppc_dyncom_cmp;
@@ -327,7 +329,7 @@ static void ppc_opc_init_group2()
 }
 
 // main opcode 31
-inline static void ppc_opc_group_2(cpu_t* cpu, BasicBlock* bb)
+inline static ppc_opc_func_t* ppc_opc_group_2(cpu_t* cpu, BasicBlock* bb)
 {
 	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
@@ -336,20 +338,21 @@ inline static void ppc_opc_group_2(cpu_t* cpu, BasicBlock* bb)
                         printf("DBG:before exec pc=0x%x,opc=0x%x,ext=0x%x\n", current_core->pc, current_core->current_opc, ext);
 	*/
 	if (ext >= (sizeof ppc_opc_table_group2 / sizeof ppc_opc_table_group2[0])) {
-		ppc_opc_invalid(cpu, bb);
+		return &ppc_opc_invalid;
 	}
-	ppc_opc_table_group2[ext](cpu, bb);
+	return ppc_opc_table_group2[ext];
 }
 
 // main opcode 59
-static void ppc_opc_group_f1(cpu_t* cpu, BasicBlock* bb)
+static ppc_opc_func_t* ppc_opc_group_f1(cpu_t* cpu, BasicBlock* bb)
 {
 	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU,0 ,0);
-		return;
+		return NULL;
 	}
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
+#if 0
 	switch (ext & 0x1f) {
 		case 18: ppc_opc_fdivsx(); return;
 		case 20: ppc_opc_fsubsx(); return;
@@ -362,16 +365,17 @@ static void ppc_opc_group_f1(cpu_t* cpu, BasicBlock* bb)
 		case 30: ppc_opc_fnmsubsx(); return;
 		case 31: ppc_opc_fnmaddsx(); return;
 	}
-	ppc_opc_invalid(cpu, bb);
+#endif
+	return &ppc_opc_invalid;
 }
 
 // main opcode 63
-static void ppc_opc_group_f2(cpu_t* cpu, BasicBlock* bb)
+static ppc_opc_func_t* ppc_opc_group_f2(cpu_t* cpu, BasicBlock* bb)
 {
 	e500_core_t* current_core = get_current_core();
 	if ((current_core->msr & MSR_FP) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_FPU, 0 ,0);
-		return;
+		return NULL;
 	}
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 #if 0
@@ -410,11 +414,11 @@ static void ppc_opc_group_f2(cpu_t* cpu, BasicBlock* bb)
 		}
 	}
 #endif
-	ppc_opc_invalid(cpu, bb);
+	return &ppc_opc_invalid;
 }
 
-ppc_opc_function ppc_opc_table_groupv[965];
-//ppc_opc_function * ppc_opc_table_groupv;
+ppc_opc_func_t ppc_opc_table_groupv[965];
+//ppc_opc_func_t * ppc_opc_table_groupv;
 
 static void ppc_opc_init_groupv()
 {
@@ -544,14 +548,14 @@ static void ppc_opc_init_groupv()
 }
 
 // main opcode 04
-static void ppc_opc_group_v(cpu_t* cpu, BasicBlock* bb)
+static ppc_opc_func_t* ppc_opc_group_v(cpu_t* cpu, BasicBlock* bb)
 {
 	e500_core_t* current_core = get_current_core();
 	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 #ifndef  __VEC_EXC_OFF__
 	if ((current_core->msr & MSR_VEC) == 0) {
 		ppc_exception(current_core, PPC_EXC_NO_VEC,0 ,0);
-		return;
+		return NULL;
 	}
 #endif
 #if 0
@@ -607,12 +611,12 @@ static void ppc_opc_group_v(cpu_t* cpu, BasicBlock* bb)
 	}
 #endif
 	if (ext >= (sizeof ppc_opc_table_groupv / sizeof ppc_opc_table_groupv[0])) {
-		return ppc_opc_invalid(cpu, bb);
+		return &ppc_opc_invalid;
 	}
-	return ppc_opc_table_groupv[ext](cpu, bb);
+	return &ppc_opc_table_groupv[ext];
 }
 
-static ppc_opc_function ppc_opc_table_main[64] = {
+static ppc_opc_func_t ppc_opc_table_main[64] = {
 #if 0
 	&ppc_opc_invalid,	//  0
 	&ppc_opc_invalid,	//  1
@@ -681,11 +685,11 @@ static ppc_opc_function ppc_opc_table_main[64] = {
 #endif
 };
 
-void ppc_translate_opc(cpu_t* cpu, uint32_t opc, BasicBlock* bb)
+ppc_opc_func_t* ppc_get_opc_func(uint32_t opc)
 {
 	uint32 mainopc = PPC_OPC_MAIN(opc);
 //                        printf("DBG:before exec pc=0x%x,opc=0x%x,mainopc=0x%x\n", current_core->pc, current_core->current_opc,mainopc);
-	ppc_opc_table_main[mainopc](cpu, bb);
+	return &ppc_opc_table_main[mainopc];
 }
 
 void ppc_dyncom_dec_init()

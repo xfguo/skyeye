@@ -32,8 +32,15 @@
 void ppc_translate_opc(cpu_t* cpu, uint32_t opc, BasicBlock *bb);
 void ppc_dec_init();
 
-typedef void (*ppc_opc_function)(cpu_t* cpu, BasicBlock *bb);
-
+typedef int (*tag_func_t)(cpu_t *cpu, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
+typedef int (*translate_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+typedef Value* (*translate_cond_func_t)(cpu_t *cpu, addr_t pc, BasicBlock *bb);
+typedef struct ppc_opc_func_s{
+	tag_func_t tag;
+	translate_func_t translate;
+	translate_cond_func_t translate_cond;
+}ppc_opc_func_t;
+ppc_opc_func_t* ppc_get_opc_func(uint32_t opc);
 #define PPC_OPC_ASSERT(v)
 
 #define PPC_OPC_MAIN(opc)		(((opc)>>26)&0x3f)
