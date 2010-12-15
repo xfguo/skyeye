@@ -97,7 +97,7 @@ static arch_func_t powerpc_arch_func = {
 
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
-	cpu->cpu_data = core;
+	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	return;
 }
@@ -112,7 +112,7 @@ debug_function(cpu_t *cpu) {
 	return;
 }
 void ppc_dyncom_run(cpu_t* cpu){
-	e500_core_t* core = (e500_core_t*)cpu->cpu_data;
+	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	int rc = cpu_run(cpu, debug_function);
 	switch (rc) {   
                 case JIT_RETURN_NOERR: /* JIT code wants us to end execution */

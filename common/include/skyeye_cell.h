@@ -3,6 +3,9 @@
 #include <pthread.h>
 #include "skyeye_exec.h"
 #include <skyeye_queue.h>
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 typedef struct skyeye_cell_s{
 	/* The list used to store all the exec object in the cell */
@@ -20,4 +23,9 @@ void add_to_default_cell(skyeye_exec_t* exec);
 void del_from_cell(skyeye_exec_t* exec, skyeye_cell_t* cell);
 void move_to_cell(skyeye_exec_t* exec, skyeye_cell_t* src, skyeye_cell_t* dst);
 */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

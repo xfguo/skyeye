@@ -127,7 +127,7 @@ ppc_init_state ()
 
 static void per_cpu_step(conf_object_t * running_core){
 	e500_core_t *core = (e500_core_t *)get_cast_conf_obj(running_core, "e500_core_t");
-	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "e500_core_t"));
+	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 }
 static void per_cpu_stop(conf_object_t * core){
 }

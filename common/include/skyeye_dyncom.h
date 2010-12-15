@@ -29,6 +29,7 @@
 
 #include "config.h"
 #include "skyeye_platform.h"
+#include "skyeye_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -268,7 +269,7 @@ typedef struct dyncom_engine{
 typedef struct cpu {
 	cpu_archinfo_t info;
 	cpu_archrf_t rf;
-	void* cpu_data;
+	conf_object_t* cpu_data;
 	arch_func_t f;
 
 	uint16_t pc_offset;
