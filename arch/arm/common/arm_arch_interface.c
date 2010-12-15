@@ -13,10 +13,7 @@ int big_endian = 0;
 static cpu_config_t *p_arm_cpu;
 static ARMword preset_regfile[16];
 extern ARMword skyeye_cachetype;
-static void
-arm_core_init (ARMul_State *state, int i);
-static void
-arm_step_once ();
+static void arm_step_once ();
 //chy 2005-08-01, borrow from wlm's 2005-07-26's change
 ARMword
 ARMul_Debug (ARMul_State *state, ARMword pc, ARMword instr)
@@ -104,8 +101,6 @@ arm_reset_state ()
 		if (preset_regfile[1])
 			state->Reg[1] = preset_regfile[1];
 	}
-
-
 }
 
 static void
@@ -115,7 +110,7 @@ arm_init_state ()
 	arm_cpu_init();
 }
 
-static void
+void
 arm_core_init (ARMul_State *state, int i)
 {
 	ARMul_NewState (state);

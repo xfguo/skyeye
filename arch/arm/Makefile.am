@@ -3,7 +3,7 @@ arm_mmu = common/mmu/arm7100_mmu.c common/mmu/arm920t_mmu.c common/mmu/arm926ejs
 arm_dbct = dbct/arm2x86.c dbct/arm2x86_coproc.c dbct/arm2x86_dp.c dbct/arm2x86_mem.c dbct/arm2x86_movl.c dbct/arm2x86_mul.c dbct/arm2x86_other.c dbct/arm2x86_psr.c dbct/arm2x86_shift.c dbct/arm2x86_test.c dbct/tb.c 
 arm_mach = \
 mach/skyeye_mach_lpc.c
-arm_dyncom = dyncom/arm_arch.cpp dyncom/arm_disasm.cpp dyncom/arm_translate.cpp
+arm_dyncom = dyncom/arm_dyncom_interface.cpp dyncom/arm_disasm.cpp dyncom/arm_translate.cpp dyncom/arm_dyncom_run.cpp
 libarm_la_SOURCES = $(arm_comm) $(arm_mmu) $(arm_mach) $(arm_dyncom)
 
 if DBCT

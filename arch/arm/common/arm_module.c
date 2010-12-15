@@ -29,6 +29,7 @@
 #include <stdlib.h>
 const char* skyeye_module = "arm";
 extern void init_arm_arch();
+extern void init_arm_dyncom ();
 extern machine_config_t arm_machines[];
 extern ARMul_State* state;
 
@@ -39,6 +40,7 @@ do_cpu_option (skyeye_option_t * this_option, int num_params,
 void module_init(){
 	/* register the arm core to the common library */
 	init_arm_arch ();
+	init_arm_dyncom ();
 
 	/*
 	 * register all the supported mach to the common library.

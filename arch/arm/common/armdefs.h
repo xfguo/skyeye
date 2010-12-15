@@ -388,6 +388,7 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 	uint32_t step;
 	uint32_t cycle;
 	int stop_simulator;
+	conf_object_t *dyncom_cpu;
 //teawater add DBCT_TEST_SPEED 2005.10.04---------------------------------------
 #ifdef DBCT_TEST_SPEED
 	uint64_t	instr_count;
