@@ -53,7 +53,7 @@ static fault_t sa_mmu_read (ARMul_State * state, ARMword va, ARMword * data,
 			    ARMword datatype);
 static fault_t update_cache (ARMul_State * state, ARMword va, ARMword data,
 			     ARMword datatype, cache_line_t * cache,
-			     cache_t * cache_t, ARMword real_va);
+			     cache_s * cache_t, ARMword real_va);
 
 int
 sa_mmu_init (ARMul_State * state)
@@ -338,7 +338,7 @@ sa_mmu_read (ARMul_State * state, ARMword va, ARMword * data,
 
 	/*alloc cache or mem_read */
 	if (tlb_c_flag (tlb) && MMU_DCacheEnabled) {
-		cache_t *cache_t;
+		cache_s *cache_t;
 
 		if (tlb_b_flag (tlb))
 			cache_t = MAIN_D_CACHE ();
@@ -542,7 +542,7 @@ sa_mmu_write (ARMul_State * state, ARMword va, ARMword data, ARMword datatype)
 
 static fault_t
 update_cache (ARMul_State * state, ARMword va, ARMword data, ARMword datatype,
-	      cache_line_t * cache, cache_t * cache_t, ARMword real_va)
+	      cache_line_t * cache, cache_s * cache_t, ARMword real_va)
 {
 	ARMword temp, offset;
 

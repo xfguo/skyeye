@@ -21,12 +21,12 @@
 
 typedef struct arm920t_mmu_s
 {
-	tlb_t i_tlb;
-	cache_t i_cache;
+	tlb_s i_tlb;
+	cache_s i_cache;
 
-	tlb_t d_tlb;
-	cache_t d_cache;
-	wb_t wb_t;
+	tlb_s d_tlb;
+	cache_s d_cache;
+	wb_s wb_t;
 } arm920t_mmu_t;
 
 extern mmu_ops_t arm920t_mmu_ops;

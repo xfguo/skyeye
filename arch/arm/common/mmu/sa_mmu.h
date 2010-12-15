@@ -23,14 +23,14 @@
 
 typedef struct sa_mmu_s
 {
-	tlb_t i_tlb;
-	cache_t i_cache;
+	tlb_s i_tlb;
+	cache_s i_cache;
 
-	tlb_t d_tlb;
-	cache_t main_d_cache;
-	cache_t mini_d_cache;
-	rb_t rb_t;
-	wb_t wb_t;
+	tlb_s d_tlb;
+	cache_s main_d_cache;
+	cache_s mini_d_cache;
+	rb_s rb_t;
+	wb_s wb_t;
 } sa_mmu_t;
 
 #define I_TLB() (&state->mmu.u.sa_mmu.i_tlb)

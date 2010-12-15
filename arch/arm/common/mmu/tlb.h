@@ -55,7 +55,7 @@ typedef struct tlb_s
 	int num;		/*num of tlb entry */
 	int cycle;		/*current tlb cycle */
 	tlb_entry_t *entrys;
-} tlb_t;
+} tlb_s;
 
 
 #define tlb_c_flag(tlb) \
@@ -76,19 +76,19 @@ check_access (ARMul_State * state, ARMword virt_addr, tlb_entry_t * tlb,
 	      int read);
 
 fault_t
-translate (ARMul_State * state, ARMword virt_addr, tlb_t * tlb_t,
+translate (ARMul_State * state, ARMword virt_addr, tlb_s * tlb_t,
 	   tlb_entry_t ** tlb);
 
-int mmu_tlb_init (tlb_t * tlb_t, int num);
+int mmu_tlb_init (tlb_s * tlb_t, int num);
 
-void mmu_tlb_exit (tlb_t * tlb_t);
+void mmu_tlb_exit (tlb_s * tlb_t);
 
-void mmu_tlb_invalidate_all (ARMul_State * state, tlb_t * tlb_t);
+void mmu_tlb_invalidate_all (ARMul_State * state, tlb_s * tlb_t);
 
 void
-mmu_tlb_invalidate_entry (ARMul_State * state, tlb_t * tlb_t, ARMword addr);
+mmu_tlb_invalidate_entry (ARMul_State * state, tlb_s * tlb_t, ARMword addr);
 
-tlb_entry_t *mmu_tlb_search (ARMul_State * state, tlb_t * tlb_t,
+tlb_entry_t *mmu_tlb_search (ARMul_State * state, tlb_s * tlb_t,
 			     ARMword virt_addr);
 
 #endif	    /*_MMU_TLB_H_*/

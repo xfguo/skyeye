@@ -21,8 +21,8 @@
 
 typedef struct arm7100_mmu_s
 {
-	cache_t cache_t;
-	tlb_t tlb_t;
+	cache_s cache_t;
+	tlb_s tlb_t;
 } arm7100_mmu_t;
 
 extern mmu_ops_t arm7100_mmu_ops;

@@ -772,7 +772,7 @@ static fault_t
 #endif
 	/*alloc cache or mem_read */
 	if (tlb_c_flag (tlb) && MMU_DCacheEnabled) {
-		cache_t *cache_t;
+		cache_s *cache_t;
 
 		if (tlb_b_flag (tlb))
 			cache_t = MAIN_D_CACHE ();
@@ -845,7 +845,7 @@ static fault_t
 {
 	tlb_entry_t *tlb;
 	cache_line_t *cache;
-	cache_t *cache_t;
+	cache_s *cache_t;
 	int b;
 	ARMword pa, real_va, temp, offset;
 	fault_t fault;

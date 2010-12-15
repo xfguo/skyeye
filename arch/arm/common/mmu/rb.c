@@ -13,7 +13,7 @@ ARMword rb_masks[] = {
  * @num		:number of entry
  * */
 int
-mmu_rb_init (rb_t * rb_t, int num)
+mmu_rb_init (rb_s * rb_t, int num)
 {
 	int i;
 	rb_entry_t *entrys;
@@ -35,7 +35,7 @@ mmu_rb_init (rb_t * rb_t, int num)
 
 /*mmu_rb_exit*/
 void
-mmu_rb_exit (rb_t * rb_t)
+mmu_rb_exit (rb_s * rb_t)
 {
 	free (rb_t->entrys);
 };
@@ -48,7 +48,7 @@ mmu_rb_exit (rb_t * rb_t)
  * 		NO-NULL:
  * */
 rb_entry_t *
-mmu_rb_search (rb_t * rb_t, ARMword va)
+mmu_rb_search (rb_s * rb_t, ARMword va)
 {
 	int i;
 	rb_entry_t *rb = rb_t->entrys;
@@ -66,13 +66,13 @@ mmu_rb_search (rb_t * rb_t, ARMword va)
 };
 
 void
-mmu_rb_invalidate_entry (rb_t * rb_t, int i)
+mmu_rb_invalidate_entry (rb_s * rb_t, int i)
 {
 	rb_t->entrys[i].type = RB_INVALID;
 }
 
 void
-mmu_rb_invalidate_all (rb_t * rb_t)
+mmu_rb_invalidate_all (rb_s * rb_t)
 {
 	int i;
 
@@ -81,7 +81,7 @@ mmu_rb_invalidate_all (rb_t * rb_t)
 };
 
 void
-mmu_rb_load (ARMul_State * state, rb_t * rb_t, int i_rb, int type, ARMword va)
+mmu_rb_load (ARMul_State * state, rb_s * rb_t, int i_rb, int type, ARMword va)
 {
 	rb_entry_t *rb;
 	int i;

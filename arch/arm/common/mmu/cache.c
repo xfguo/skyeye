@@ -11,7 +11,7 @@
  * 	 0: sucess
  */
 int
-mmu_cache_init (cache_t * cache_t, int width, int way, int set, int w_mode)
+mmu_cache_init (cache_s * cache_t, int width, int way, int set, int w_mode)
 {
 	int i, j;
 	cache_set_t *sets;
@@ -87,7 +87,7 @@ mmu_cache_init (cache_t * cache_t, int width, int way, int set, int w_mode)
  */
 
 void
-mmu_cache_exit (cache_t * cache_t)
+mmu_cache_exit (cache_s * cache_t)
 {
 	int i, j;
 	cache_set_t *sets, *set;
@@ -115,7 +115,7 @@ mmu_cache_exit (cache_t * cache_t)
  * 		cache	:cache matched
  */
 cache_line_t *
-mmu_cache_search (ARMul_State * state, cache_t * cache_t, ARMword va)
+mmu_cache_search (ARMul_State * state, cache_s * cache_t, ARMword va)
 {
 	int i;
 	int set = va_cache_set (va, cache_t);
@@ -141,7 +141,7 @@ mmu_cache_search (ARMul_State * state, cache_t * cache_t, ARMword va)
  * 		cache	:cache matched
  */
 cache_line_t *
-mmu_cache_search_by_index (ARMul_State * state, cache_t * cache_t,
+mmu_cache_search_by_index (ARMul_State * state, cache_s * cache_t,
 			   ARMword index)
 {
 	int way = cache_t->way;
@@ -168,7 +168,7 @@ mmu_cache_search_by_index (ARMul_State * state, cache_t * cache_t,
  * $	cache_alloced, always alloc OK
  */
 cache_line_t *
-mmu_cache_alloc (ARMul_State * state, cache_t * cache_t, ARMword va,
+mmu_cache_alloc (ARMul_State * state, cache_s * cache_t, ARMword va,
 		 ARMword pa)
 {
 	cache_line_t *cache;
@@ -213,7 +213,7 @@ mmu_cache_alloc (ARMul_State * state, cache_t * cache_t, ARMword va,
  * @cache : cache line
  */
 void
-mmu_cache_write_back (ARMul_State * state, cache_t * cache_t,
+mmu_cache_write_back (ARMul_State * state, cache_s * cache_t,
 		      cache_line_t * cache)
 {
 	ARMword pa = cache->pa;
@@ -255,7 +255,7 @@ mmu_cache_write_back (ARMul_State * state, cache_t * cache_t,
  * @va		:virtaul address
  */
 void
-mmu_cache_clean (ARMul_State * state, cache_t * cache_t, ARMword va)
+mmu_cache_clean (ARMul_State * state, cache_s * cache_t, ARMword va)
 {
 	cache_line_t *cache;
 
@@ -271,7 +271,7 @@ mmu_cache_clean (ARMul_State * state, cache_t * cache_t, ARMword va)
  * @va		:set/index format value
  */
 void
-mmu_cache_clean_by_index (ARMul_State * state, cache_t * cache_t,
+mmu_cache_clean_by_index (ARMul_State * state, cache_s * cache_t,
 			  ARMword index)
 {
 	cache_line_t *cache;
@@ -288,7 +288,7 @@ mmu_cache_clean_by_index (ARMul_State * state, cache_t * cache_t,
  * @va		:virt_addr to invalid
  */
 void
-mmu_cache_invalidate (ARMul_State * state, cache_t * cache_t, ARMword va)
+mmu_cache_invalidate (ARMul_State * state, cache_s * cache_t, ARMword va)
 {
 	cache_line_t *cache;
 
@@ -306,7 +306,7 @@ mmu_cache_invalidate (ARMul_State * state, cache_t * cache_t, ARMword va)
  * @index	:set/index data
  */
 void
-mmu_cache_invalidate_by_index (ARMul_State * state, cache_t * cache_t,
+mmu_cache_invalidate_by_index (ARMul_State * state, cache_s * cache_t,
 			       ARMword index)
 {
 	cache_line_t *cache;
@@ -324,7 +324,7 @@ mmu_cache_invalidate_by_index (ARMul_State * state, cache_t * cache_t,
  * @cache_t
  * */
 void
-mmu_cache_invalidate_all (ARMul_State * state, cache_t * cache_t)
+mmu_cache_invalidate_all (ARMul_State * state, cache_s * cache_t)
 {
 	int i, j;
 	cache_set_t *set;
@@ -341,7 +341,7 @@ mmu_cache_invalidate_all (ARMul_State * state, cache_t * cache_t)
 };
 
 void
-mmu_cache_soft_flush (ARMul_State * state, cache_t * cache_t, ARMword pa)
+mmu_cache_soft_flush (ARMul_State * state, cache_s * cache_t, ARMword pa)
 {
 	ARMword set, way;
 	cache_line_t *cache;

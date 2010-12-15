@@ -21,12 +21,12 @@
 
 typedef struct arm926ejs_mmu_s
 {
-	tlb_t main_tlb;
-	tlb_t lockdown_tlb;
+	tlb_s main_tlb;
+	tlb_s lockdown_tlb;
 
-	cache_t i_cache;
-	cache_t d_cache;
-	wb_t wb_t;
+	cache_s i_cache;
+	cache_s d_cache;
+	wb_s wb_t;
 } arm926ejs_mmu_t;
 
 extern mmu_ops_t arm926ejs_mmu_ops;

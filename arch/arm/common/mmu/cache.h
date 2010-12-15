@@ -36,7 +36,7 @@ typedef struct cache_s
 	int w_mode;		/*write back or write through */
 	//int a_mode;   /*alloc mode: random or round-bin*/
 	cache_set_t *sets;
-  /**/} cache_t;
+  /**/} cache_s;
 
 typedef struct cache_desc_s
 {
@@ -76,7 +76,7 @@ typedef struct cache_desc_s
  * 	 0: sucess
  */
 int
-mmu_cache_init (cache_t * cache_t, int width, int way, int set, int w_mode);
+mmu_cache_init (cache_s * cache_t, int width, int way, int set, int w_mode);
 
 /* free a cache_t's inner data, the ptr self is not freed,
  * when needed do like below:
@@ -85,7 +85,7 @@ mmu_cache_init (cache_t * cache_t, int width, int way, int set, int w_mode);
  *
  * @cache_t : the cache_t to free
  */
-void mmu_cache_exit (cache_t * cache_t);
+void mmu_cache_exit (cache_s * cache_t);
 
 /* mmu cache search
  *
@@ -96,7 +96,7 @@ void mmu_cache_exit (cache_t * cache_t);
  * $	NULL:	no cache match
  * 		cache	:cache matched
  * */
-cache_line_t *mmu_cache_search (ARMul_State * state, cache_t * cache_t,
+cache_line_t *mmu_cache_search (ARMul_State * state, cache_s * cache_t,
 				ARMword va);
 
 /*  mmu cache search by set/index 
@@ -110,7 +110,7 @@ cache_line_t *mmu_cache_search (ARMul_State * state, cache_t * cache_t,
  * */
 
 cache_line_t *mmu_cache_search_by_index (ARMul_State * state,
-					 cache_t * cache_t, ARMword index);
+					 cache_s * cache_t, ARMword index);
 
 /* mmu cache alloc
  *
@@ -121,7 +121,7 @@ cache_line_t *mmu_cache_search_by_index (ARMul_State * state,
  *
  * $	cache_alloced, always alloc OK
  */
-cache_line_t *mmu_cache_alloc (ARMul_State * state, cache_t * cache_t,
+cache_line_t *mmu_cache_alloc (ARMul_State * state, cache_s * cache_t,
 			       ARMword va, ARMword pa);
 
 /* mmu_cache_write_back write cache data to memory
@@ -131,7 +131,7 @@ cache_line_t *mmu_cache_alloc (ARMul_State * state, cache_t * cache_t,
  * @cache : cache line
  */
 void
-mmu_cache_write_back (ARMul_State * state, cache_t * cache_t,
+mmu_cache_write_back (ARMul_State * state, cache_s * cache_t,
 		      cache_line_t * cache);
 
 /* mmu_cache_clean: clean a cache of va in cache_t
@@ -140,9 +140,9 @@ mmu_cache_write_back (ARMul_State * state, cache_t * cache_t,
  * @cache_t	:cache_t to clean
  * @va		:virtaul address
  */
-void mmu_cache_clean (ARMul_State * state, cache_t * cache_t, ARMword va);
+void mmu_cache_clean (ARMul_State * state, cache_s * cache_t, ARMword va);
 void
-mmu_cache_clean_by_index (ARMul_State * state, cache_t * cache_t,
+mmu_cache_clean_by_index (ARMul_State * state, cache_s * cache_t,
 			  ARMword index);
 
 /* mmu_cache_invalidate : invalidate a cache of va
@@ -152,15 +152,15 @@ mmu_cache_clean_by_index (ARMul_State * state, cache_t * cache_t,
  * @va		:virt_addr to invalid
  */
 void
-mmu_cache_invalidate (ARMul_State * state, cache_t * cache_t, ARMword va);
+mmu_cache_invalidate (ARMul_State * state, cache_s * cache_t, ARMword va);
 
 void
-mmu_cache_invalidate_by_index (ARMul_State * state, cache_t * cache_t,
+mmu_cache_invalidate_by_index (ARMul_State * state, cache_s * cache_t,
 			       ARMword index);
 
-void mmu_cache_invalidate_all (ARMul_State * state, cache_t * cache_t);
+void mmu_cache_invalidate_all (ARMul_State * state, cache_s * cache_t);
 
 void
-mmu_cache_soft_flush (ARMul_State * state, cache_t * cache_t, ARMword pa);
+mmu_cache_soft_flush (ARMul_State * state, cache_s * cache_t, ARMword pa);
 
 #endif /*_MMU_CACHE_H_*/

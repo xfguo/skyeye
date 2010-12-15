@@ -25,16 +25,16 @@ typedef struct rb_s
 {
 	int num;
 	rb_entry_t *entrys;
-} rb_t;
+} rb_s;
 
 /*mmu_rb_init
  * @rb_t	:rb_t to init
  * @num		:number of entry
  * */
-int mmu_rb_init (rb_t * rb_t, int num);
+int mmu_rb_init (rb_s * rb_t, int num);
 
 /*mmu_rb_exit*/
-void mmu_rb_exit (rb_t * rb_t);
+void mmu_rb_exit (rb_s * rb_t);
 
 
 /*mmu_rb_search
@@ -44,12 +44,12 @@ void mmu_rb_exit (rb_t * rb_t);
  * $	NULL :not match
  * 		NO-NULL:
  * */
-rb_entry_t *mmu_rb_search (rb_t * rb_t, ARMword va);
+rb_entry_t *mmu_rb_search (rb_s * rb_t, ARMword va);
 
 
-void mmu_rb_invalidate_entry (rb_t * rb_t, int i);
-void mmu_rb_invalidate_all (rb_t * rb_t);
-void mmu_rb_load (ARMul_State * state, rb_t * rb_t, int i_rb,
+void mmu_rb_invalidate_entry (rb_s * rb_t, int i);
+void mmu_rb_invalidate_all (rb_s * rb_t);
+void mmu_rb_load (ARMul_State * state, rb_s * rb_t, int i_rb,
 		  int type, ARMword va);
 
 #endif /*_MMU_RB_H_*/

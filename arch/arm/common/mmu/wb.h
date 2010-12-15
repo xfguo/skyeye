@@ -16,7 +16,7 @@ typedef struct wb_s
 	int last;		//
 	int used;		//
 	wb_entry_t *entrys;
-} wb_t;
+} wb_s;
 
 typedef struct wb_desc_s
 {
@@ -32,13 +32,13 @@ typedef struct wb_desc_s
  * $	-1:error
  * 		 0:ok
  * */
-int mmu_wb_init (wb_t * wb_t, int num, int nb);
+int mmu_wb_init (wb_s * wb_t, int num, int nb);
 
 
 /* wb_exit
  * @wb_t :wb_t to exit
  * */
-void mmu_wb_exit (wb_t * wb);
+void mmu_wb_exit (wb_s * wb);
 
 
 /* wb_write_bytes :put bytess in Write Buffer
@@ -51,13 +51,13 @@ void mmu_wb_exit (wb_t * wb);
  * Note: write buffer merge is not implemented, can be done late
  * */
 void
-mmu_wb_write_bytess (ARMul_State * state, wb_t * wb_t, ARMword pa,
+mmu_wb_write_bytess (ARMul_State * state, wb_s * wb_t, ARMword pa,
 		     ARMbyte * data, int n);
 
 
 /* wb_drain_all
  * @wb_t wb_t to drain
  * */
-void mmu_wb_drain_all (ARMul_State * state, wb_t * wb_t);
+void mmu_wb_drain_all (ARMul_State * state, wb_s * wb_t);
 
 #endif /*_MMU_WB_H_*/

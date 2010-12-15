@@ -111,7 +111,7 @@ check_access (ARMul_State * state, ARMword virt_addr, tlb_entry_t * tlb,
 }
 
 fault_t
-translate (ARMul_State * state, ARMword virt_addr, tlb_t * tlb_t,
+translate (ARMul_State * state, ARMword virt_addr, tlb_s * tlb_t,
 	   tlb_entry_t ** tlb)
 {
 	*tlb = mmu_tlb_search (state, tlb_t, virt_addr);
@@ -236,7 +236,7 @@ translate (ARMul_State * state, ARMword virt_addr, tlb_t * tlb_t,
 }
 
 int
-mmu_tlb_init (tlb_t * tlb_t, int num)
+mmu_tlb_init (tlb_s * tlb_t, int num)
 {
 	tlb_entry_t *e;
 	int i;
@@ -258,13 +258,13 @@ mmu_tlb_init (tlb_t * tlb_t, int num)
 }
 
 void
-mmu_tlb_exit (tlb_t * tlb_t)
+mmu_tlb_exit (tlb_s * tlb_t)
 {
 	free (tlb_t->entrys);
 };
 
 void
-mmu_tlb_invalidate_all (ARMul_State * state, tlb_t * tlb_t)
+mmu_tlb_invalidate_all (ARMul_State * state, tlb_s * tlb_t)
 {
 	int entry;
 
@@ -275,7 +275,7 @@ mmu_tlb_invalidate_all (ARMul_State * state, tlb_t * tlb_t)
 }
 
 void
-mmu_tlb_invalidate_entry (ARMul_State * state, tlb_t * tlb_t, ARMword addr)
+mmu_tlb_invalidate_entry (ARMul_State * state, tlb_s * tlb_t, ARMword addr)
 {
 	tlb_entry_t *tlb;
 
@@ -286,7 +286,7 @@ mmu_tlb_invalidate_entry (ARMul_State * state, tlb_t * tlb_t, ARMword addr)
 }
 
 tlb_entry_t *
-mmu_tlb_search (ARMul_State * state, tlb_t * tlb_t, ARMword virt_addr)
+mmu_tlb_search (ARMul_State * state, tlb_s * tlb_t, ARMword virt_addr)
 {
 	int entry;
 

@@ -9,7 +9,7 @@
  * 		 0:ok
  * */
 int
-mmu_wb_init (wb_t * wb_t, int num, int nb)
+mmu_wb_init (wb_s * wb_t, int num, int nb)
 {
 	int i;
 	wb_entry_t *entrys, *wb;
@@ -49,7 +49,7 @@ mmu_wb_init (wb_t * wb_t, int num, int nb)
  * @wb_t :wb_t to exit
  * */
 void
-mmu_wb_exit (wb_t * wb_t)
+mmu_wb_exit (wb_s * wb_t)
 {
 	int i;
 	wb_entry_t *wb;
@@ -71,7 +71,7 @@ mmu_wb_exit (wb_t * wb_t)
  * Note: write buffer merge is not implemented, can be done late
  * */
 void
-mmu_wb_write_bytes (ARMul_State * state, wb_t * wb_t, ARMword pa,
+mmu_wb_write_bytes (ARMul_State * state, wb_s * wb_t, ARMword pa,
 		    ARMbyte * data, int n)
 {
 	int i;
@@ -126,7 +126,7 @@ mmu_wb_write_bytes (ARMul_State * state, wb_t * wb_t, ARMword pa,
  * @wb_t wb_t to drain
  * */
 void
-mmu_wb_drain_all (ARMul_State * state, wb_t * wb_t)
+mmu_wb_drain_all (ARMul_State * state, wb_s * wb_t)
 {
 	ARMword pa;
 	wb_entry_t *wb;
