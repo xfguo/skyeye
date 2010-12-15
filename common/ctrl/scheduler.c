@@ -55,7 +55,7 @@ static void thread_scheduler(void){
 	 * should execute the corresponding event.
 	 */
 	struct event *tmp ;
-	while(!(skyeye_is_running()))
+	while(!(SIM_is_running()))
 	{
 		/* set a thread cancelation-point */
 		usleep(100);

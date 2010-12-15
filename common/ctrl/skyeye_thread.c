@@ -53,9 +53,12 @@ void skyeye_exit(int ret){
 void skyeye_break(void){
 }
 
+#if 0
 bool_t skyeye_is_running(void){
 	return skyeye_running;
 } 
+#endif
+
 /*
  * mainloop of simulatior
  */
