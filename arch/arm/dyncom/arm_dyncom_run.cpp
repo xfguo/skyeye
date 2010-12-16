@@ -44,11 +44,12 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	arm_core_t* core = (arm_core_t*)cpu->cpu_data;
 	cpu->rf.pc = &core->pc;
 	cpu->rf.grf =(Value*) core->Reg;
-/*	cpu->ptr_PC = (Value*)&core->pc;
+#if 0
+	cpu->ptr_PC = (Value*)&core->pc;
 	cpu->ptr_gpr =(Value**) &core->Reg;
 	cpu->ptr_xr = (Value**)&core->Cpsr;
-	cpu->in_ptr_xr = (Value**)&core->Spsr; */
-
+	cpu->in_ptr_xr = (Value**)&core->Spsr;
+#endif
 	cpu->ptr_N = (Value*)&core->NFlag;
 	cpu->ptr_V = (Value*)&core->VFlag;
 	cpu->ptr_Z = (Value*)&core->ZFlag;
