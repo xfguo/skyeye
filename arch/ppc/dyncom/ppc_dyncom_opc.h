@@ -22,6 +22,9 @@
 #define __PPC_OPC_H__
 
 #include "skyeye_types.h"
+#include <dyncom/tag.h>
+
+#include "ppc_dyncom_run.h"
 
 static inline void ppc_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
 {
@@ -37,7 +40,7 @@ static inline void ppc_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
 	if (current_core->xer & XER_SO) current_core->cr |= CR_CR0_SO;
 }
 
-void ppc_opc_bx();
+extern ppc_opc_func_t ppc_opc_bx_func;
 void ppc_opc_bcx();
 void ppc_opc_bcctrx();
 void ppc_opc_bclrx();

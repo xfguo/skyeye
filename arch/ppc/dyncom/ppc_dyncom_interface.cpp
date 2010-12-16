@@ -111,6 +111,7 @@ static bool ppc_cpu_init()
 	return true;
 }
 
+
 /**
 * @brief Initalization for powerpc architecture
 */

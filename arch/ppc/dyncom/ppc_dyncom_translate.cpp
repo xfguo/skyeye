@@ -40,13 +40,17 @@ arch_powerpc_translate_cond(cpu_t *cpu, addr_t phys_pc, BasicBlock *bb){
 int arch_powerpc_tag_instr(cpu_t *cpu, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	int instr_size = 4;
 	uint32_t instr;
+#define END_ADDR 0x14
 	printf("In %s, pc=0x%x\n", __FUNCTION__, phys_pc);
 	bus_read(32, phys_pc, &instr);
 	ppc_opc_func_t* opc_func = ppc_get_opc_func(instr);
 	if(!opc_func)
 		BAD_INSTR;
 	assert(!opc_func->tag);
-	opc_func->tag(cpu, instr, tag, new_pc, next_pc);
+	opc_func->tag(cpu, instr, phys_pc, tag, new_pc, next_pc);
+	*next_pc = phys_pc + instr_size;
+	if(phys_pc == END_ADDR)
+		*tag |= TAG_STOP;
 	return instr_size;
 }
 

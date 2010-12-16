@@ -31,6 +31,7 @@
 #include <skyeye_dyncom.h>
 #include <dyncom/dyncom_llvm.h>
 #include <dyncom/frontend.h>
+#include <dyncom/tag.h>
 
 #include "ppc_cpu.h"
 #include "ppc_exc.h"
@@ -41,6 +42,8 @@
 #include "tracers.h"
 #include "debug.h"
 #include "ppc_dyncom.h"
+#include "ppc_dyncom_run.h"
+#include "ppc_dyncom_dec.h"
 #if 0
 void ppc_set_msr(uint32 newmsr)
 {
@@ -69,13 +72,26 @@ void ppc_set_msr(uint32 newmsr)
 	
 }
 #endif
+int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
+	uint32 li;
+	PPC_OPC_TEMPL_I(instr, li);
+	*tag = TAG_BRANCH;
+	/*if the branch target is out of the page, stop the tagging */
+	if(li > get_end_of_page(current_core->pc)){
+		*tag |= TAG_STOP;
+	}
+	*new_pc = li + phys_pc;
+	printf("In %s, new_pc=0x%x\n", __FUNCTION__, *new_pc);
+	return PPC_INSN_SIZE;
+}
 /*
  *	bx		Branch
  *	.435
  */
-void ppc_opc_bx(cpu_t* cpu, BasicBlock* bb)
+static int opc_bx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	uint32 li;
 	PPC_OPC_TEMPL_I(current_core->current_opc, li);
 	if (!(current_core->current_opc & PPC_OPC_AA)) {
@@ -83,8 +99,14 @@ void ppc_opc_bx(cpu_t* cpu, BasicBlock* bb)
 		arch_store(CONST(li + current_core->pc), cpu->ptr_PC, bb);
 	}
 	if (current_core->current_opc & PPC_OPC_LK) {
-		current_core->lr = current_core->pc + 4;
+		//current_core->lr = current_core->pc + 4;
 		LET(LR_REGNUM, CONST(current_core->pc + 4));
 	}
 	//current_core->npc = li;
+	return PPC_INSN_SIZE;
 }
+ppc_opc_func_t ppc_opc_bx_func = {
+	opc_bx_tag,
+	opc_bx_translate,
+	opc_invalid_translate_cond,
+};

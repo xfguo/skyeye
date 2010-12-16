@@ -20,6 +20,11 @@
 #include "ppc_dyncom.h"
 #include "ppc_dyncom_run.h"
 
+e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
+	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	return core;
+}
+
 extern "C" void debug_ppc(){
 }; 
 
@@ -64,12 +69,6 @@ static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf
 	info->register_count[CPU_REG_XR] = 0;
 	info->register_size[CPU_REG_XR] = 32;
 	cpu->redirection = false;
-
-	/* Initilize different register set for different core */
-	e500_core_t* core = (e500_core_t*)cpu->cpu_data;
-	cpu->rf.pc = &core->pc;
-	cpu->rf.grf = core->gpr;
-
 }
 
 static void
@@ -123,6 +122,10 @@ static arch_func_t powerpc_arch_func = {
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
+	/* Initilize different register set for different core */
+	cpu->rf.pc = &core->pc;
+	cpu->rf.grf = core->gpr;
+
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	arch_func_init(cpu);
 	return;

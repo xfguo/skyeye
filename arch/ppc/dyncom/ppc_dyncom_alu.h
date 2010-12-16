@@ -18,8 +18,9 @@
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __PPC_ALU_H__
-#define __PPC_ALU_H__
+#ifndef __PPC_DYNCOM_ALU_H__
+#define __PPC_DYNCOM_ALU_H__
+#include "ppc_dyncom_dec.h"
 
 void ppc_opc_addx();
 void ppc_opc_addcx();
@@ -99,5 +100,8 @@ void ppc_opc_iseleq();
 void ppc_opc_iselgt();
 void ppc_opc_isel();
 void ppc_opc_tlbsx();
+
+extern ppc_opc_func_t ppc_opc_addis_func;
+extern ppc_opc_func_t ppc_opc_addi_func;
+
 #endif
- 

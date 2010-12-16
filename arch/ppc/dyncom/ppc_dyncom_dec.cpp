@@ -38,6 +38,8 @@
 #include "ppc_alu.h"
 #include "ppc_cpu.h"
 #include "ppc_dyncom_dec.h"
+#include "ppc_dyncom_opc.h"
+#include "ppc_dyncom_alu.h"
 #include "ppc_exc.h"
 #include "ppc_fpu.h"
 #include "ppc_vec.h"
@@ -133,7 +135,13 @@ static void ppc_opc_invalid(cpu_t* cpu, BasicBlock* bb)
 	//SINGLESTEP("unknown instruction\n");
 }
 #endif
-int opc_invalid_tag(cpu_t *cpu, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+int opc_default_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	return PPC_INSN_SIZE;
+}
+
+
+int opc_invalid_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	BAD_INSTR;
 	return -1;
 }
@@ -705,7 +713,7 @@ static ppc_opc_func_t ppc_opc_table_main[64] = {
 ppc_opc_func_t* ppc_get_opc_func(uint32_t opc)
 {
 	uint32 mainopc = PPC_OPC_MAIN(opc);
-//                        printf("DBG:before exec pc=0x%x,opc=0x%x,mainopc=0x%x\n", current_core->pc, current_core->current_opc,mainopc);
+	printf("In %s,opc=0x%x,mainopc=0x%x\n", __FUNCTION__, opc, mainopc);
 	return &ppc_opc_table_main[mainopc];
 }
 
@@ -716,6 +724,9 @@ void ppc_dyncom_dec_init()
 	for (i=0; i<(sizeof ppc_opc_table_main / sizeof ppc_opc_table_main[0]); i++) {
                 ppc_opc_table_main[i] = ppc_opc_invalid;
         }
+	ppc_opc_table_main[14] = ppc_opc_addi_func;
+	ppc_opc_table_main[15] = ppc_opc_addis_func;
+	ppc_opc_table_main[18] = ppc_opc_bx_func;
 
 #if 0	
 	if ((ppc_cpu_get_pvr(0) & 0xffff0000) == 0x000c0000) {

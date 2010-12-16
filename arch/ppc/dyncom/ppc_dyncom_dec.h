@@ -18,8 +18,8 @@
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __PPC_DEC_H__
-#define __PPC_DEC_H__
+#ifndef __PPC_DYNCOM_DEC_H__
+#define __PPC_DYNCOM_DEC_H__
 
 #include "skyeye_dyncom.h"
 #include "skyeye_types.h"
@@ -29,10 +29,12 @@
  extern "C" {
 #endif
 
+#define PPC_INSN_SIZE 4
+
 void ppc_translate_opc(cpu_t* cpu, uint32_t opc, BasicBlock *bb);
 void ppc_dec_init();
 
-typedef int (*tag_func_t)(cpu_t *cpu, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
+typedef int (*tag_func_t)(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
 typedef int (*translate_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 typedef Value* (*translate_cond_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 typedef struct ppc_opc_func_s{
@@ -40,6 +42,13 @@ typedef struct ppc_opc_func_s{
 	translate_func_t translate;
 	translate_cond_func_t translate_cond;
 }ppc_opc_func_t;
+/**
+ * The default handler for the functions
+ */
+int opc_default_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc);
+int opc_invalid_tag(cpu_t *cpu, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
+int opc_invalid_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+Value* opc_invalid_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 ppc_opc_func_t* ppc_get_opc_func(uint32_t opc);
 #define PPC_OPC_ASSERT(v)
 

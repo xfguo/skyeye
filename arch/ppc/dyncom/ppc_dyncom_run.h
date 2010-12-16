@@ -14,6 +14,8 @@ void ppc_dyncom_run(cpu_t* cpu);
 
 void ppc_dyncom_init(e500_core_t* core);
 
+e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu);
+
 #ifdef __cplusplus
 }
 #endif
