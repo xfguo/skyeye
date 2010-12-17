@@ -208,7 +208,7 @@ static void
 std8250_io_do_cycle (void * state)
 {
 	const int core_id = 0; /* currently, we only send uart interrupt to cpu0 */
-        e500_core_t * core = get_current_core();
+        e500_core_t * core = get_boot_core();
 
         mpc8641d_io_t *io = &mpc8641d_io;
 
@@ -661,8 +661,8 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 static void
 mpc8641d_io_write_byte (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
+	PPC_CPU_State* cpu = get_current_cpu();
+        e500_core_t * core = get_current_core();
 
         mpc8641d_io_t *io = &mpc8641d_io;
 
@@ -763,8 +763,8 @@ mpc8641d_io_write_byte (void *state, uint32_t offset, uint32_t data)
 static void
 mpc8641d_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
+	PPC_CPU_State* cpu = get_current_cpu();
+        e500_core_t * core = get_current_core();
 
         mpc8641d_io_t *io = &mpc8641d_io;
 
@@ -830,8 +830,8 @@ mpc8641d_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 static void
 mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
+	PPC_CPU_State* cpu = get_current_cpu();
+        e500_core_t * core = get_current_core();
 
         mpc8641d_io_t *io = &mpc8641d_io;
 
@@ -1347,5 +1347,9 @@ mpc8641d_mach_init (void *arch_instance, machine_config_t * this_mach)
 	this_mach->mach_set_intr = mpc8641d_set_intr;
 	//mpc8641d_io.conf.ccsrbar = 0x000FF700;
 	//cpu->core_num = 2;
-
+	skyeye_exec_t* exec = create_exec();
+	exec->priv_data = get_conf_obj_by_cast(this_mach, "machine_config_t");
+	exec->run = mpc8641d_io_do_cycle;
+	exec->stop = mpc8641d_io_do_cycle;
+	add_to_default_cell(exec);
 }

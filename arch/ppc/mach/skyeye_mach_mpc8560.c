@@ -418,8 +418,8 @@ mpc8560_io_reset (void *state){
 static uint32_t
 mpc8560_io_read_byte (void *state, uint32_t offset)
 {
-	PPC_CPU_State *cpu = (PPC_CPU_State *) state;
-	e500_core_t *core = &cpu->core[0];
+	PPC_CPU_State* cpu = get_current_cpu();
+	e500_core_t *core = get_current_core();
 
 	mpc8560_io_t *io = &mpc8560_io;
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
@@ -473,7 +473,7 @@ mpc8560_io_read_byte (void *state, uint32_t offset)
 static uint32_t
 mpc8560_io_read_halfword (void *state, uint32_t offset)
 {
-	PPC_CPU_State *cpu = (PPC_CPU_State *) state;
+	PPC_CPU_State* cpu = get_current_cpu();
 	e500_core_t *core = &cpu->core[0];
 
 	mpc8560_io_t *io = &mpc8560_io;
@@ -552,7 +552,7 @@ mpc8560_io_read_halfword (void *state, uint32_t offset)
 static uint32_t
 mpc8560_io_read_word (void *state, uint32_t offset)
 {
-	PPC_CPU_State *cpu = (PPC_CPU_State *) state;
+	PPC_CPU_State* cpu = get_current_cpu();
 	e500_core_t *core = &cpu->core[0];
 
 	mpc8560_io_t *io = &mpc8560_io;
@@ -802,7 +802,7 @@ mpc8560_io_read_word (void *state, uint32_t offset)
 static void
 mpc8560_io_write_byte (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State *cpu = (PPC_CPU_State *) state;
+	PPC_CPU_State* cpu = get_current_cpu();
 	e500_core_t *core = &cpu->core[0];
 
 	mpc8560_io_t *io = &mpc8560_io;
@@ -860,7 +860,7 @@ mpc8560_io_write_byte (void *state, uint32_t offset, uint32_t data)
 static void
 mpc8560_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State *cpu = (PPC_CPU_State *) state;
+	PPC_CPU_State* cpu = get_current_cpu();
 	e500_core_t *core = &cpu->core[0];
 
 	mpc8560_io_t *io = &mpc8560_io;
@@ -953,7 +953,7 @@ mpc8560_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 static void
 mpc8560_io_write_word (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State *cpu = (PPC_CPU_State *) state;
+	PPC_CPU_State* cpu = get_current_cpu();
 	e500_core_t *core = &cpu->core[0];
 
 	mpc8560_io_t *io = &mpc8560_io;

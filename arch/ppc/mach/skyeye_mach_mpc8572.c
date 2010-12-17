@@ -203,7 +203,7 @@ static void
 std8250_io_do_cycle (void * state)
 {
 	const int core_id = 0; /* currently, we only send uart interrupt to cpu0 */
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
+	PPC_CPU_State* cpu = get_current_cpu();
         e500_core_t * core = &cpu->core[0];
 
         mpc8572_io_t *io = &mpc8572_io;
@@ -292,6 +292,7 @@ mpc8572_io_reset (void *state)
 static uint32_t
 mpc8572_io_read_byte (void *state, uint32_t offset)
 {
+	PPC_CPU_State* cpu = get_current_cpu();
         mpc8572_io_t *io = &mpc8572_io;
 
 	if (offset >= 0x919C0 && offset <= 0x919E0) {
@@ -321,9 +322,7 @@ mpc8572_io_read_byte (void *state, uint32_t offset)
 	}
 	switch (offset) {
 		case 0x0:
-			//return cpu->ccsr;
-			TODO("ccsr");
-			return 0;
+			return cpu->ccsr;
 		case 0x90C80:
 			return io->sccr;
 		case 0x300C:
@@ -395,6 +394,8 @@ mpc8572_io_read_byte (void *state, uint32_t offset)
 static uint32_t
 mpc8572_io_read_halfword (void *state, uint32_t offset)
 {
+	PPC_CPU_State* cpu = get_current_cpu();
+	e500_core_t *current_core = get_current_core();
         mpc8572_io_t *io = &mpc8572_io;
 
 	//int offset = p - GET_CCSR_BASE (io->ccsr.ccsr);
@@ -428,9 +429,7 @@ mpc8572_io_read_halfword (void *state, uint32_t offset)
 
 	switch (offset) {
 		case 0x0:
-			TODO("ccsr");
-			//return cpu->ccsr;
-			return 0;
+			return cpu->ccsr;
 		case 0x90C80:
 			return io->sccr;
 		case 0x8004:
@@ -438,12 +437,9 @@ mpc8572_io_read_halfword (void *state, uint32_t offset)
 		case 0x8006:
 			return io->pci_cfg.cfg_data;
 		default:
-			/*
 			fprintf (stderr,
 				 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
-			*/
-			TODO("error_handler");
 			return 0;
 			//skyeye_exit(-1);
 	}
@@ -451,6 +447,8 @@ mpc8572_io_read_halfword (void *state, uint32_t offset)
 static uint32_t
 mpc8572_io_read_word (void *state, uint32_t offset)
 {
+	PPC_CPU_State* cpu = get_current_cpu();
+	e500_core_t *current_core = get_current_core();
         mpc8572_io_t *io = &mpc8572_io;
 	//printf("DBG:in %s,read CCSR,offset=0x%x,pc=0x%x\n", __FUNCTION__, offset, current_core->pc);
 
@@ -640,17 +638,11 @@ mpc8572_io_read_word (void *state, uint32_t offset)
 
 	switch (offset) {
 		case 0x0:
-			TODO("ccsr");
-			//return cpu->ccsr;
-			return 0;
+			return cpu->ccsr;
 		case 0x20:
-			TODO("bptr");
-			//return cpu->bptr;
-			return 0;
+			return cpu->bptr;
 		case 0x1010:
-			TODO("eebpcr");
-			//return cpu->eebpcr;
-			return 0;
+			return cpu->eebpcr;
 		case 0xC28:
 			return io->law.lawbar[1];
 		case 0xC30:
@@ -666,21 +658,18 @@ mpc8572_io_read_word (void *state, uint32_t offset)
 		case 0x8004:
 			return io->pci_cfg.cfg_data;
 		default:
-			/*
 			fprintf (stderr,
 				 "in %s, error when read CCSR.offset=0x%x,pc=0x%x\n",
 				 __FUNCTION__, offset, current_core->pc);
-			*/
-			//skyeye_exit(-1);
-			TODO("error_handler");
+			skyeye_exit(-1);
 			return 0;
 	}
 }
 static void
 mpc8572_io_write_byte (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
+	PPC_CPU_State* cpu = get_current_cpu();
+        e500_core_t * core = get_current_core();
 
         mpc8572_io_t *io = &mpc8572_io;
 
@@ -784,7 +773,7 @@ mpc8572_io_write_byte (void *state, uint32_t offset, uint32_t data)
 static void
 mpc8572_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
+	PPC_CPU_State* cpu = get_current_cpu();
         e500_core_t * core = &cpu->core[0];
 
         mpc8572_io_t *io = &mpc8572_io;
@@ -859,8 +848,8 @@ mpc8572_io_write_halfword (void *state, uint32_t offset, uint32_t data)
 static void
 mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 {
-	PPC_CPU_State* cpu = (PPC_CPU_State *)state;
-        e500_core_t * core = &cpu->core[0];
+	PPC_CPU_State* cpu = get_current_cpu();
+	e500_core_t *current_core = get_current_core();
 
         mpc8572_io_t *io = &mpc8572_io;
 
@@ -1045,12 +1034,10 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 				return;
 			case 0x600b0:
 				io->pic_ram.eoi0 = data;
-				TODO("Write IO register");
-				/*
 				if (current_core->ipr & (1 << UART_IRQ)) {
 					current_core->ipr &= ~(1 << UART_IRQ);
 					//printf("In %s, writing to eoi1 for core 0,clear int\n", __FUNCTION__);
-				}*/
+				}
 				/* clear the interrupt with highest priority in ISR */
 				return;
 			case 0x61080:
@@ -1217,12 +1204,12 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 	case 0x20:
 		//io->ccsr.bptr = data;
 		cpu->bptr = data;
-		//printf("In %s, write bptr=0x%x\n", __FUNCTION__, data);
+		printf("In %s, write bptr=0x%x\n", __FUNCTION__, data);
 		break;
 	case 0x1010:
 		//io->ecm.eebpcr = data;
 		cpu->eebpcr = data;
-		//printf("In %s, write eebpcr=0x%x\n", __FUNCTION__, data);
+		printf("In %s, write eebpcr=0x%x\n", __FUNCTION__, data);
 		if (data & 0x2000000)	/* enable CPU1 */
 			cpu->core[1].pc = 0xFFFFF000;
 		break;
@@ -1283,5 +1270,9 @@ mpc8572_mach_init (void *arch_instance, machine_config_t * this_mach)
 	this_mach->mach_set_intr = mpc8572_set_intr;
 	//mpc8572_io.conf.ccsrbar = 0x000FF700;
 	//cpu->core_num = 2;
-
+	skyeye_exec_t* exec = create_exec();
+	exec->priv_data = get_conf_obj_by_cast(this_mach, "machine_config_t");
+	exec->run = mpc8572_io_do_cycle;
+	exec->stop = mpc8572_io_do_cycle;
+	add_to_default_cell(exec);
 }

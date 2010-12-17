@@ -181,6 +181,12 @@ ppc_init_state ()
 static void per_cpu_step(conf_object_t * running_core){
 	uint32 real_addr;
 	e500_core_t *core = (e500_core_t *)get_cast_conf_obj(running_core, "e500_core_t");
+	PPC_CPU_State* cpu = get_current_cpu();
+	/* Check the second core and boot flags */
+	if(core->pir){
+		if(cpu->eebpcr & 0x2000000)
+			return;
+	}
 	/* sometimes, core->npc will be changed by another core */
 	if(core->ipi_flag){
 		core->pc = core->npc;
