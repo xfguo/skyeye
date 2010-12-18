@@ -97,7 +97,7 @@ FILE * prof_file;
 
 static bool ppc_cpu_init()
 {
-	PPC_CPU_State *cpu = skyeye_mm(sizeof(PPC_CPU_State));
+	PPC_CPU_State *cpu = skyeye_mm_zero(sizeof(PPC_CPU_State));
 	machine_config_t *mach = get_current_mach();
 	mach->cpu_data = get_conf_obj_by_cast(cpu, "PPC_CPU_State");
 	if(!mach->cpu_data)
@@ -117,7 +117,7 @@ static bool ppc_cpu_init()
 		skyeye_exit(-1);
 	}
 	else
-		cpu->core = skyeye_mm(sizeof(e500_core_t) * cpu->core_num);
+		cpu->core = skyeye_mm_zero(sizeof(e500_core_t) * cpu->core_num);
 	/* TODO: zero the memory by malloc */
 
 	if(!cpu->core){
