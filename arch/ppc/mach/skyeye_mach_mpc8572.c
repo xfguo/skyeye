@@ -1268,6 +1268,7 @@ mpc8572_mach_init (void *arch_instance, machine_config_t * this_mach)
 	this_mach->mach_io_write_word = mpc8572_io_write_word;
 	this_mach->mach_update_int = mpc8572_update_int;
 	this_mach->mach_set_intr = mpc8572_set_intr;
+	memset(&mpc8572_io, 0, sizeof(mpc8572_io_t));
 	//mpc8572_io.conf.ccsrbar = 0x000FF700;
 	//cpu->core_num = 2;
 	skyeye_exec_t* exec = create_exec();

@@ -1345,6 +1345,7 @@ mpc8641d_mach_init (void *arch_instance, machine_config_t * this_mach)
 	this_mach->mach_io_write_word = mpc8641d_io_write_word;
 	this_mach->mach_update_int = mpc8641d_update_int;
 	this_mach->mach_set_intr = mpc8641d_set_intr;
+	memset(&mpc8641d_io, 0, sizeof(mpc8641d_io_t));
 	//mpc8641d_io.conf.ccsrbar = 0x000FF700;
 	//cpu->core_num = 2;
 	skyeye_exec_t* exec = create_exec();
