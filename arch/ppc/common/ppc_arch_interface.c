@@ -184,7 +184,7 @@ static void per_cpu_step(conf_object_t * running_core){
 	PPC_CPU_State* cpu = get_current_cpu();
 	/* Check the second core and boot flags */
 	if(core->pir){
-		if(cpu->eebpcr & 0x2000000)
+		if(!(cpu->eebpcr & 0x2000000))
 			return;
 	}
 	/* sometimes, core->npc will be changed by another core */
