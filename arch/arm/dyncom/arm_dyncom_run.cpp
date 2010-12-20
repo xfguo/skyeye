@@ -38,12 +38,15 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	//info->register_count[CPU_REG_XR] = PPC_XR_SIZE;
 	info->register_count[CPU_REG_XR] = 16;
 	info->register_size[CPU_REG_XR] = 32;
+	info->register_count[CPU_REG_SPR] = 7;
+	info->register_size[CPU_REG_SPR] = 32;
 	cpu->redirection = false;
 
 	/* Initilize different register set for different core */
 	arm_core_t* core = (arm_core_t*)cpu->cpu_data;
 	cpu->rf.pc = &core->pc;
 	cpu->rf.grf =(Value*) core->Reg;
+	cpu->rf.srf =(Value*) core->Spsr;
 #if 0
 	cpu->ptr_PC = (Value*)&core->pc;
 	cpu->ptr_gpr =(Value**) &core->Reg;

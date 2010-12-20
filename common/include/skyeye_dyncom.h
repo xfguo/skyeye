@@ -122,10 +122,11 @@ enum {
 	CPU_REG_GPR, // General Purpose
 	CPU_REG_FPR, // Floating Point
 	CPU_REG_VR,  // Vector
-	CPU_REG_XR   // Extra Registers, the core expects these to follow
+	CPU_REG_XR,  // Extra Registers, the core expects these to follow
 	 			 // GPRs in the memory layout, they are kept separate
 				 // to avoid confusing the client about the number of
 				 // registers available.
+	CPU_REG_SPR
 };
 // @@@END_DEPRECATION
 
@@ -212,6 +213,7 @@ typedef struct cpu_archrf {
 	// @@@BEGIN_DEPRECATION
 	void *pc;  // Program Counter
 	void *grf; // GP register file
+	void *srf; // SP register file
 	void *frf; // FP register file
 	void *vrf; // Vector register file
 	// @@@END_DEPRECATION
@@ -264,6 +266,7 @@ typedef struct dyncom_engine{
 
 	Value *ptr_RAM;
 	Value *ptr_grf; // gpr register file
+	Value *ptr_srf; // gpr register file
 	Value *ptr_frf; // fp register file
 	Value *ptr_func_read_memory;
 	Value *ptr_func_write_memory;
@@ -293,6 +296,10 @@ typedef struct cpu {
 	Value **in_ptr_gpr;
 	Value **ptr_xr; // XRs
 	Value **in_ptr_xr;
+
+	Value *ptr_srf;  //spr register file
+	Value **ptr_spr; // SPRs
+	Value **in_ptr_spr;
 
 	Value **ptr_fpr; // FPRs
 	Value **in_ptr_fpr;

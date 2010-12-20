@@ -148,6 +148,15 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 		cpu->in_ptr_xr = NULL;
 	}
 
+	count = cpu->info.register_count[CPU_REG_SPR];
+	if (count != 0) {
+		cpu->ptr_spr = (Value **)calloc(count, sizeof(Value *));
+		cpu->in_ptr_spr = (Value **)calloc(count, sizeof(Value *));
+	} else {
+		cpu->ptr_spr = NULL;
+		cpu->in_ptr_spr = NULL;
+	}
+
 	count = cpu->info.register_count[CPU_REG_FPR];
 	if (count != 0) {
 		cpu->ptr_fpr = (Value **)calloc(count, sizeof(Value *));
@@ -368,7 +377,8 @@ cpu_translate(cpu_t *cpu)
 	cpu->dyncom_engine->tags_dirty = false;
 }
 
-typedef int (*fp_t)(uint8_t *RAM, void *grf, void *frf, read_memory_t readfp, write_memory_t writefp);
+//typedef int (*fp_t)(uint8_t *RAM, void *grf, void *frf, read_memory_t readfp, write_memory_t writefp);
+typedef int (*fp_t)(uint8_t *RAM, void *grf, void *srf, void *frf, read_memory_t readfp, write_memory_t writefp);
 
 #ifdef __GNUC__
 void __attribute__((noinline))
@@ -426,7 +436,8 @@ cpu_run(cpu_t *cpu, debug_function_t debug_function)
 		LOG("############### Begin to execute JIT\n");
 		#endif
 		//ret = FP(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.frf, debug_function, WindowCheck, xtensa_read_memory, xtensa_write_memory);
-		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.frf, read_memory, write_memory);
+//		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.frf, read_memory, write_memory);
+		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, read_memory, write_memory);
 		//*(uint32_t*)((uint8_t*)cpu->rf.grf + 8) = 0;
 		//ret = FP(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.frf, debug_function);
 		#if PRINT_REG

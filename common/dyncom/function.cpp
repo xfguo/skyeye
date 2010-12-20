@@ -48,6 +48,21 @@ get_struct_reg(cpu_t *cpu) {
 }
 
 static StructType *
+get_struct_spr_reg(cpu_t *cpu) {
+	std::vector<const Type*>type_struct_reg_t_fields;
+
+	uint32_t count, size;
+
+	// spr
+	count = cpu->info.register_count[CPU_REG_SPR];
+	size  = cpu->info.register_size[CPU_REG_SPR];
+	for (uint32_t n = 0; n < count; n++)
+		type_struct_reg_t_fields.push_back(getIntegerType(size));
+
+	return getStructType(type_struct_reg_t_fields, /*isPacked=*/true);
+}
+
+static StructType *
 get_struct_fp_reg(cpu_t *cpu) {
 	std::vector<const Type*>type_struct_fp_reg_t_fields;
 
@@ -123,6 +138,29 @@ emit_decode_reg_helper(cpu_t *cpu, uint32_t count, uint32_t width,
 #endif
 }
 
+static void
+emit_decode_spr_reg_helper(cpu_t *cpu, uint32_t count, uint32_t width,
+	uint32_t offset, Value *rf, Value **in_ptr_r, Value **ptr_r,
+	char const *rcname, BasicBlock *bb)
+{
+#ifdef OPT_LOCAL_REGISTERS
+	// decode struct reg and copy the registers into local variables
+	for (uint32_t i = 0; i < count; i++) {
+		char reg_name[16];
+		snprintf(reg_name, sizeof(reg_name), "%s_%u", rcname, i);
+
+		in_ptr_r[i] = get_struct_member_pointer(rf, i + offset, bb);
+		ptr_r[i] = new AllocaInst(getIntegerType(width), reg_name, bb);
+		LoadInst* v = new LoadInst(in_ptr_r[i], "", false, bb);
+		new StoreInst(v, ptr_r[i], false, bb);
+	}
+#else
+	// just decode struct reg
+	for (uint32_t i = 0; i < count; i++)
+		ptr_r[i] = get_struct_member_pointer(rf, i + offset, bb);
+#endif
+}
+
 static inline unsigned
 fp_alignment(unsigned width) {
 	return ((width == 80 ? 128 : width) >> 3);
@@ -179,6 +217,10 @@ emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 		cpu->info.register_size[CPU_REG_XR],
 		cpu->info.register_count[CPU_REG_GPR], cpu->dyncom_engine->ptr_grf,
 		cpu->in_ptr_xr, cpu->ptr_xr, "xr", bb);
+	//SPRs
+	emit_decode_spr_reg_helper(cpu, cpu->info.register_count[CPU_REG_SPR],
+		cpu->info.register_size[CPU_REG_SPR], 0, cpu->dyncom_engine->ptr_srf,
+		cpu->in_ptr_spr, cpu->ptr_spr, "spr", bb);
 
 	// FPRs
 	emit_decode_fp_reg_helper(cpu, cpu->info.register_count[CPU_REG_FPR],
@@ -239,6 +281,18 @@ spill_reg_state_helper(uint32_t count, Value **in_ptr_r, Value **ptr_r,
 }
 
 static void
+spill_spr_reg_state_helper(uint32_t count, Value **in_ptr_r, Value **ptr_r,
+	BasicBlock *bb)
+{
+#ifdef OPT_LOCAL_REGISTERS
+	for (uint32_t i = 0; i < count; i++) {
+		LoadInst* v = new LoadInst(ptr_r[i], "", false, bb);
+		new StoreInst(v, in_ptr_r[i], false, bb);
+	}
+#endif
+}
+
+static void
 spill_fp_reg_state_helper(cpu_t *cpu, uint32_t count, uint32_t width,
 	Value **in_ptr_r, Value **ptr_r, BasicBlock *bb)
 {
@@ -281,6 +335,10 @@ spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 	spill_reg_state_helper(cpu->info.register_count[CPU_REG_XR],
 		cpu->in_ptr_xr, cpu->ptr_xr, bb);
 
+	// SPRs
+	spill_spr_reg_state_helper(cpu->info.register_count[CPU_REG_SPR],
+		cpu->in_ptr_spr, cpu->ptr_spr, bb);
+
 	// FPRs
 	spill_fp_reg_state_helper(cpu, cpu->info.register_count[CPU_REG_FPR],
 		cpu->info.register_size[CPU_REG_FPR], cpu->in_ptr_fpr,
@@ -312,11 +370,19 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	cpu->dyncom_engine->mod->addTypeName("struct.reg_t", type_struct_reg_t);
 	// - struct reg *
 	PointerType *type_pstruct_reg_t = PointerType::get(type_struct_reg_t, 0);
+
+	// - struct spr_reg
+	StructType *type_struct_spr_reg_t = get_struct_spr_reg(cpu);
+	cpu->dyncom_engine->mod->addTypeName("struct.spr_reg_t", type_struct_reg_t);
+	// - struct spr_reg *
+	PointerType *type_pstruct_spr_reg_t = PointerType::get(type_struct_spr_reg_t, 0);
+
 	// - struct fp_reg
 	StructType *type_struct_fp_reg_t = get_struct_fp_reg(cpu);
 	cpu->dyncom_engine->mod->addTypeName("struct.fp_reg_t", type_struct_fp_reg_t);
 	// - struct fp_reg *
 	PointerType *type_pstruct_fp_reg_t = PointerType::get(type_struct_fp_reg_t, 0);
+
 	// - uint8_t *
 	PointerType *type_pi8 = PointerType::get(getIntegerType(8), 0);
 	// - intptr *
@@ -351,6 +417,7 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	std::vector<const Type*>type_func_args;
 	type_func_args.push_back(type_pi8);				/* uint8_t *RAM */
 	type_func_args.push_back(type_pstruct_reg_t);	/* reg_t *reg */
+	type_func_args.push_back(type_pstruct_spr_reg_t);	/* spr_reg_t  */
 	type_func_args.push_back(type_pstruct_fp_reg_t);	/* fp_reg_t *fp_reg */
 	type_func_args.push_back(cpu->dyncom_engine->type_pread_memory);
 	type_func_args.push_back(cpu->dyncom_engine->type_pwrite_memory);
@@ -383,6 +450,8 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	cpu->dyncom_engine->ptr_RAM->setName("RAM");
 	cpu->dyncom_engine->ptr_grf = args++;
 	cpu->dyncom_engine->ptr_grf->setName("grf");
+	cpu->dyncom_engine->ptr_srf = args++;
+	cpu->dyncom_engine->ptr_srf->setName("srf");
 	cpu->dyncom_engine->ptr_frf = args++;
 	cpu->dyncom_engine->ptr_frf->setName("frf");
 	cpu->dyncom_engine->ptr_func_read_memory = args++;

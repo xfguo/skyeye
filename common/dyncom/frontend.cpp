@@ -77,6 +77,27 @@ arch_get_reg(cpu_t *cpu, uint32_t index, uint32_t bits, BasicBlock *bb) {
 }
 
 Value *
+arch_get_spr_reg(cpu_t *cpu, uint32_t index, uint32_t bits, BasicBlock *bb) {
+	Value *v;
+	Value **regs = cpu->ptr_spr;
+	uint32_t count = cpu->info.register_count[CPU_REG_SPR];
+
+	/*
+	 * XXX If the index is past the number of the available GPRs,
+	 * then it's considered an XR.  This is in order to maintain
+	 * compatibility with the current implementation.
+	 */
+	if (index >= count) {
+		assert(0 && "GPR/XR register index is out of range!");
+		return NULL;
+	}
+	/* get the register */
+	v = new LoadInst(regs[index], "", false, bb);
+
+	return v;
+}
+
+Value *
 arch_get_fp_reg(cpu_t *cpu, uint32_t index, uint32_t bits, BasicBlock *bb)
 {
 	assert(index < cpu->info.register_count[CPU_REG_FPR]);
@@ -133,6 +154,30 @@ arch_put_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, bool sext,
 	/* store value, unless it's R0 (on certain RISCs) */
 	if (regs == cpu->ptr_xr || !HAS_SPECIAL_GPR0(cpu) || index != 0)
 		new StoreInst(v, regs[index], bb);
+
+	return v;
+}
+
+// PUT REGISTER
+Value *
+arch_put_spr_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, bool sext,
+	BasicBlock *bb)
+{
+	Value **regs = cpu->ptr_gpr;
+	uint32_t count = cpu->info.register_count[CPU_REG_SPR];
+
+	/*
+	 * XXX If the index is past the number of the available GPRs,
+	 * then it's considered an XR.  This is in order to maintain
+	 * compatibility with the current implementation.
+	 */
+	if (index >= count) {
+		assert(0 && "GPR/XR register index is out of range!");
+		return NULL;
+	}
+
+	/* store value */
+	new StoreInst(v, regs[index], bb);
 
 	return v;
 }
