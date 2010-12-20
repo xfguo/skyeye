@@ -3,25 +3,432 @@
   *
   * The implementation of powerpc system call for simulate user mode
   *
-  * @author Michael.Kang
+  * @author Michael.Kang, ZhijieLi
   * @Version
   * @Date: 2010-11-22
   */
 
 /**
-* @brief The implementation of system call for user mode
-*
-* @param core the e500 core.
-*
-* @return 
+* gpr[0]:syscall number
+* gpr[3]~:syscall arguments
+* gpr[3]:return value of syscall
+* FIXME:Where is ERRNO to write in PowerPC ???
 */
 #include "ppc_cpu.h"
-int ppc_syscall(e500_core_t* core){
-	int syscall_number = core->gpr[3];
-	switch(syscall_number){
+#include "syscall_nr.h"
+#include <bank_defs.h>
+#include <skyeye_ram.h>
+#include <skyeye_config.h>
+
+#include <sys/types.h>
+#include <unistd.h>			//read,write...
+#include <string.h>
+#include <fcntl.h>
+#include <sys/utsname.h>	//uname
+#include <time.h>
+#include <sys/uio.h>		//writev
+#include <sys/mman.h>		//mmap
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+
+#define SYSCALL_DEBUG 0
+#define debug(...) do { if (SYSCALL_DEBUG) printf(__VA_ARGS__); } while(0)
+
+/**
+ * @brief write a string to memory
+ *
+ * @param buf target string buffer
+ * @param str source string buffer
+ */
+ void bus_write_string(char *buf, char *str){
+	int len = strlen(str);
+	int i = 0;
+	for (i = 0; i < len; i++)
+		bus_write(8, buf + i, *((char *)(str + i)));
+	bus_write(8, buf + i, '\0');
+}
+/**
+ * @brief read a string from memory
+ *
+ * @param buf target string buffer
+ * @param str source string buffer
+ */
+static void bus_read_string(char *buf, char *str){
+	int i = 0;
+	char tmp[1024];
+	while(1){
+		bus_read(8, str + i ,tmp + i);
+		if(tmp[i] != '\0'){
+			i++;
+		}else{
+			buf[i + 1] = '\0';
+			strcpy(buf, tmp);
+			debug("string is:%s\n",tmp);
+			break;
+		}
+	}
+}
+
+//For debug
+static void memory_view(){
+	mem_config_t *mem_config = get_global_memmap();
+	int bank_num = mem_config->bank_num;
+	printf("There are %d memory banks.\n", mem_config->bank_num);
+	int i = 0;
+	for (; i<bank_num; i++){
+		printf("BANK:name=%s,addr=0x%x,len=%x\n",mem_config->mem_banks[i].objname,
+											mem_config->mem_banks[i].addr,
+											mem_config->mem_banks[i].len);
+	}
+}
+
+/**
+ * @brief For mmap syscall.A mmap_area is a memory bank.
+ */
+typedef struct mmap_area{
+	mem_bank_t bank;
+	void *mmap_addr;
+	struct mmap_area *next;
+}mmap_area_t;
+mmap_area_t *mmap_global = NULL;
+
+#define mmap_base 0x50000000
+static long mmap_next_base = mmap_base;
+
+static char mmap_mem_write(short size, int addr, uint32_t value);
+static char mmap_mem_read(short size, int addr, uint32_t * value);
+
+static mmap_area_t* new_mmap_area(int sim_addr, int len){
+	mmap_area_t *area = (mmap_area_t *)malloc(sizeof(mmap_area_t));
+	if(area == NULL){
+		printf("error ,failed %s\n",__FUNCTION__);
+		exit(0);
+	}
+	area->bank.addr = mmap_next_base;
+	area->bank.len = len;
+	area->bank.bank_write = mmap_mem_write;
+	area->bank.bank_read = mmap_mem_read;
+	area->bank.type = MEMTYPE_RAM;
+	area->bank.objname = "mmap";
+	addr_mapping(&area->bank);
+
+	mmap_next_base = mmap_next_base + len + 4;
+
+	area->mmap_addr = malloc(len);
+	if(area->mmap_addr == NULL){
+		printf("error mmap malloc\n");
+		exit(0);
+	}
+	area->next = NULL;
+	if(mmap_global){
+		area->next = mmap_global->next;
+		mmap_global->next = area;
+	}else{
+		mmap_global = area;
+	}
+	return area;
+}
+
+static mmap_area_t *get_mmap_area(int addr){
+	mmap_area_t *tmp = mmap_global;
+	while(tmp){
+		if ((tmp->bank.addr <= addr) && (tmp->bank.addr + tmp->bank.len > addr)){
+			return tmp;	
+		}
+		tmp = tmp->next;
+	}
+	printf("cannot get mmap area:addr=0x%x\n", addr);
+	return NULL;
+}
+
+/**
+ * @brief the mmap_area bank write function.
+ *
+ * @param size size to write, 8/16/32
+ * @param addr address to write
+ * @param value value to write
+ *
+ * @return sucess return 1,otherwise 0.
+ */
+static char mmap_mem_write(short size, int addr, uint32_t value){
+	mmap_area_t *area_tmp = get_mmap_area(addr);
+	mem_bank_t *bank_tmp = &area_tmp->bank;
+	int offset = addr - bank_tmp->addr;
+	switch(size){
+		case 8:
+			*(char *)&(((char *)area_tmp->mmap_addr)[offset]) = value;
+			debug("in %s,size=%d,addr=0x%x,value=%c\n",__FUNCTION__,size,addr,(char)value);
+			break;
+		case 16:
+			*(short *)&(((char *)area_tmp->mmap_addr)[offset]) = value;
+			break;
+		case 32:
+			*(int *)&(((char *)area_tmp->mmap_addr)[offset]) = value;
+			debug("in %s,size=%d,addr=0x%x,value=%c\n",__FUNCTION__,size,addr,(int)value);
+			break;
 		default:
-			printf("In %s, syscall number is %d, not implemented.\n", __FUNCTION__, core->gpr[3]);
+			printf("invalid size %d\n",size);
+			return 0;
+	}
+	return 1;
+}
+
+/**
+ * @brief the mmap_area bank read function.
+ *
+ * @param size size to read, 8/16/32
+ * @param addr address to read
+ * @param value value to read
+ *
+ * @return sucess return 1,otherwise 0.
+ */
+static char mmap_mem_read(short size, int addr, uint32_t * value){
+	mmap_area_t *area_tmp = get_mmap_area(addr);
+	mem_bank_t *bank_tmp = &area_tmp->bank;
+	int offset = addr - bank_tmp->addr;
+	switch(size){
+		case 8:
+			*value = *(int *)&(((char *)area_tmp->mmap_addr)[offset]);
+			debug("in %s,size=%d,addr=0x%x,value=%c\n",__FUNCTION__,size,addr,*(char*)value);
+			break;
+		case 16:
+			*value = *(short *)&(((char *)area_tmp->mmap_addr)[offset]);
+			break;
+		case 32:
+			*value = *(int *)&(((char *)area_tmp->mmap_addr)[offset]);
+			debug("in %s,size=%d,addr=0x%x,value=%d\n",__FUNCTION__,size,addr,*(int*)value);
+			break;
+		default:
+			printf("invalid size %d\n",size);
+			return 0;
+	}
+	return 1;
+}
+
+/**
+ * @brief The implementation of system call for user mode
+ *
+ * @param core powerpc e500 core
+ *
+ * @return 0 if sucess 
+ */
+int ppc_syscall(e500_core_t* core){
+	int syscall_number = core->gpr[0];
+	switch(syscall_number){
+		case TARGET_NR_read:{		/* 3 */
+			int fd = core->gpr[3];
+			void * buff = core->gpr[4];
+			int count = core->gpr[5];
+			debug("fd=%d,count=%d\n", fd, count);
+			void *tmp = malloc(count);
+			if(tmp == NULL){
+				printf("error: syscall read (malloc return NULL)\n");
+				exit(0);
+			}
+			int size = read(fd, tmp, count);
+			int i = 0;
+			for (; i < count; i++){
+				bus_write(8, buff + i, ((char*)tmp)[i]);
+			}
+			core->gpr[3] = size;
+			free(tmp);
+			break;
+		}
+		case TARGET_NR_write:{		/* 4 */
+			int fd = core->gpr[3];
+			void *buff = (void*)core->gpr[4];
+			int bytes = core->gpr[5];
+			debug("write:fd=%d,bytes=%d\n", fd, bytes);
+			void *tmp = malloc(bytes);
+			if(tmp == NULL){
+				printf("error: syscall write (malloc return NULL)\n");
+				exit(0);
+			}
+			int i = 0;
+			for (; i<bytes; i++){
+				bus_read(8, buff + i, tmp + i);
+			}
+			int result = write(fd, tmp, bytes);
+			core->gpr[3] = result;
+			free(tmp);
+			break;
+		}
+		case TARGET_NR_open:{		/* 5 */
+			char *path = (char *)core->gpr[3];
+			int flags = core->gpr[4];
+			int mode = core->gpr[5];
+			char path_name[1024];
+			bus_read_string(path_name, path);
+			debug("path=%s,flag=%d,mode=%d\n",path_name,flags,mode);
+			//FIXME:how about open without mode ???
+			core->gpr[3] = open(path_name, flags, mode);
+			break;
+		}
+		case TARGET_NR_close:{		/* 6 */
+			int fd = core->gpr[3];
+			debug("syscall: close fd=%d\n", fd);
+			close(fd);
+			core->gpr[3] = 0;
+			break;
+		}
+		case TARGET_NR_time:{		/* 13 */
+			time_t t;
+			time(&t);
+			bus_write(32, core->gpr[3], t);
+			core->gpr[3] = t;
+			break;
+		}
+		case TARGET_NR_getuid32:	/* 24 */
+			core->gpr[3] = getuid();
+			break;
+		case TARGET_NR_brk:{		/* 45 */
+			void *addr = core->gpr[3];
+			debug("set data segment to 0x%x\n", addr);
+			//NOTE:powerpc brk syscall return end of data segment address instead of zero when success??
+			core->gpr[3] = addr;
+			break;
+		}
+		case TARGET_NR_getgid32:	/* 47 */
+			core->gpr[3] = getgid();
+			break;
+		case TARGET_NR_geteuid32:	/* 49 */
+			core->gpr[3] = geteuid();
+			break;
+		case TARGET_NR_getegid32:	/* 50 */
+			core->gpr[3] = getegid();
+			break;
+		case TARGET_NR_ioctl:{		/* 54 */
+			int fd = core->gpr[3];
+			int cmd = core->gpr[4];
+			/* FIXME:cannot deal with arguments more than two! */
+			/* TODO:...*/
+			debug("ioctl:fd=%d,cmd=0x%x\n", fd, cmd);
+			core->gpr[3] = 0;
+			break;
+		}
+		case TARGET_NR_mmap:{		/* 90 */
+			int mmap_dbg = 1;
+			int addr = core->gpr[3];
+			int len = core->gpr[4];
+			int prot = core->gpr[5];
+			int flag = core->gpr[6];
+			int fd = core->gpr[7];
+			int offset = core->gpr[8];
+			if (mmap_dbg){
+				debug("mmap(0x%x,%x,%d,%d,%d,%d)\n",
+						core->gpr[3], core->gpr[4],
+						core->gpr[5], core->gpr[6],
+						core->gpr[7], core->gpr[8]);
+				debug("prot: ");
+				if (prot & PROT_READ)
+					debug("PROT_READ ");
+				if (prot & PROT_WRITE)
+					debug("PROT_WRITE ");
+				if (prot & PROT_EXEC)
+					debug("PROT_EXEC");
+				debug("\n");
+				debug("flag: ");
+				/* FIXME:other flags!! */
+				if (flag & MAP_SHARED)
+					debug("MAP_SHARED ");
+				if (flag & MAP_PRIVATE)
+					debug("MAP_PRIVATE ");
+				if (flag & MAP_FIXED)
+					debug("MAP_FIXED ");
+				if (flag & MAP_ANONYMOUS)
+					debug("MAP_ANONYMOUS ");
+				debug("\n");
+			}
+			mmap_area_t *area = new_mmap_area(addr, len);
+			core->gpr[3] = area->bank.addr;
+			//memory_view();
+			break;
+		}
+		case TARGET_NR_munmap:{		/* 91 */
+			core->gpr[3] = 0;
+			break;
+		}
+		case TARGET_NR_uname:{		/* 122 */
+			struct utsname *tmp = (struct utsname *)core->gpr[3];
+			struct utsname uname_tmp;
+			int result = uname(&uname_tmp);
+			if (result == 0){
+				bus_write_string(tmp->sysname, uname_tmp.sysname);
+				bus_write_string(tmp->nodename, uname_tmp.nodename);
+				bus_write_string(tmp->release, uname_tmp.release);
+				bus_write_string(tmp->version, uname_tmp.version);
+				bus_write_string(tmp->machine, uname_tmp.machine);
+				core->gpr[3] = result;
+			}else{
+				core->gpr[3] = -1;
+				//TODO:ERROR handle
+			}
+			break;
+		}
+		case TARGET_NR_writev:{		/* 146 */
+			int fd = core->gpr[3];
+			struct iovec *tmp_iovec = (struct iovec *)core->gpr[4];
+			int count = core->gpr[5];
+			debug("syscall writev:fd=%d,count=%d\n", fd, count);
+			if(count < 0 || count > UIO_MAXIOV){
+				printf("error iov count:%d\n", count);
+				exit(0);
+			}
+			int i = 0;
+			int j = 0;
+			for (i = 0; i < count; i++){
+				int len = 0;
+				char str[1024];
+				bus_read(32, &tmp_iovec[i].iov_len, &len);
+				debug("iovec[%d].iov_len=%d\n", i, len);
+				for (j=0; j<len; j++){
+					bus_read(8, &((tmp_iovec[i].iov_base)[j]), str + j);
+					debug("%c\n",str[j]);
+				}
+				debug("string:%s\n", str);
+				write(fd, str, len);
+			}
+			break;
+		}
+		case TARGET_NR_fstat64:{		/* 197 */
+			int fd = core->gpr[3];
+			debug("syscall fstat64:fd=%d\n", fd);
+			struct stat64 * buff = (struct stat64 *)core->gpr[4];	
+			struct stat64 tmp;
+			if (fstat64(fd, &tmp) != 0){
+				fprintf(stderr, "SYSCALL:Failed fstat64.\n");
+				exit(0);
+			}
+			debug("st_dev=%lld,st_ino=%lld\n",tmp.st_dev,tmp.st_ino);
+			//TODO:Write tmp to buff!
+			bus_write(32, &buff->st_dev, tmp.st_dev);
+			bus_write(32, &buff->st_ino, tmp.st_ino);
+			bus_write(32, &buff->st_mode, tmp.st_mode);
+			bus_write(32, &buff->st_nlink, tmp.st_nlink);
+			bus_write(32, &buff->st_uid, tmp.st_uid);
+			bus_write(32, &buff->st_gid, tmp.st_gid);
+			bus_write(32, &buff->st_rdev, tmp.st_rdev);
+			//bus_write(32, &buff->__pad1, tmp.__pad1);
+			bus_write(32, &buff->st_size, tmp.st_size);
+			bus_write(32, &buff->st_blksize, tmp.st_blksize);
+			//bus_write(32, &buff->__pad2, tmp.__pad2);
+			bus_write(32, &buff->st_blocks, tmp.st_blocks);
+			bus_write(32, &buff->st_atime, tmp.st_atime);
+			//bus_write(32, &buff->st_atime_nsec, tmp.st_atime_nsec);
+			bus_write(32, &buff->st_mtime, tmp.st_mtime);
+			//bus_write(32, &buff->st_mtime_nsec, tmp.st_mtime_nsec);
+			bus_write(32, &buff->st_ctime, tmp.st_ctime);
+			//bus_write(32, &buff->st_ctime_nsec, tmp.st_ctime_nsec);
+			//bus_write(32, &buff->__unused4, tmp.__unused4);
+			//bus_write(32, &buff->__unused5, tmp.__unused5);
+
+			core->gpr[3] = 0;
+			break;
+		}
+		default:
+			printf("In %s, syscall number is %d, not implemented.\n", __FUNCTION__, syscall_number);
 			exit(-1);
 	}
+	debug("[SYSCALL] syscall number=%d, ruturn number=0x%x\n", syscall_number, core->gpr[3]);
 	return 0;
 }
