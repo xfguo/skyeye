@@ -57,7 +57,7 @@ typedef struct machine_config
 	 * we just temporarily put devices here
 	 * */
 	struct device_desc **devices;
-	int dev_count;
+	unsigned int dev_count;
 	struct machine_config* next;
 
 	conf_object_t* cpu_data;			/* The pointer to cpu data */

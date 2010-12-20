@@ -29,7 +29,7 @@ void init_mach(){
 }
 void register_mach(const char* mach_name, mach_init_t mach_init){
 	machine_config_t * mach;
-	mach = skyeye_mm(sizeof(machine_config_t));
+	mach = skyeye_mm_zero(sizeof(machine_config_t));
 	mach->machine_name =  skyeye_strdup(mach_name);
 	mach->mach_init = mach_init;
 	mach->next = mach_list;
