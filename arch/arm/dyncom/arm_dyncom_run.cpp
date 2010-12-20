@@ -11,6 +11,11 @@
 #include "armdefs.h"
 #include "arm_translate.h"
 #define MAX_REGNUM 15
+
+uint32_t get_end_of_page(uint32 phys_addr){
+	const uint32 page_size = 4 * 1024;
+	return (phys_addr + page_size) & (~(page_size - 1));
+}
 /* physical register for arm archtecture */
 static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 {
@@ -122,6 +127,19 @@ debug_function(cpu_t *cpu) {
 
 void arm_dyncom_run(cpu_t* cpu){
 	arm_core_t* core = (arm_core_t*)cpu->cpu_data;
+	addr_t phys_pc = core->pc;
+#if 0
+	if(mmu_read_(core, core->pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
+		/* we donot allow mmu exception in tagging state */
+		fprintf(stderr, "In %s, can not translate the pc 0x%x\n", __FUNCTION__, core->pc);
+		exit(-1);
+	}
+#endif
+
+	cpu->dyncom_engine->code_start = phys_pc;
+        cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);
+        cpu->dyncom_engine->code_entry = phys_pc;
+
 	int rc = cpu_run(cpu, debug_function);
 	switch (rc) {
                 case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
