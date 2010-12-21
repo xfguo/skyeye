@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "armdefs.h"
+#include "bank_defs.h"
 
 ARMword tlb_masks[] = {
 	0x00000000,		/* TLB_INVALID */

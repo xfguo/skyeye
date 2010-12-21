@@ -1,4 +1,5 @@
 #include "armdefs.h"
+#include "bank_defs.h"
 
 /*chy 2004-06-06, fix bug found by wenye@cs.ucsb.edu*/
 ARMword rb_masks[] = {

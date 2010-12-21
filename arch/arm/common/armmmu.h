@@ -228,4 +228,16 @@ void mmu_mcr (ARMul_State * state, ARMword instr, ARMword value);
 int mmu_v2p_dbct (ARMul_State * state, ARMword virt_addr,
 		  ARMword * phys_addr);
 
+fault_t
+mmu_read_byte (ARMul_State * state, ARMword virt_addr, ARMword * data);
+fault_t
+mmu_read_halfword (ARMul_State * state, ARMword virt_addr, ARMword * data);
+fault_t
+mmu_read_word (ARMul_State * state, ARMword virt_addr, ARMword * data);
+fault_t
+mmu_write_byte (ARMul_State * state, ARMword virt_addr, ARMword data);
+fault_t
+mmu_write_halfword (ARMul_State * state, ARMword virt_addr, ARMword data);
+fault_t
+mmu_write_word (ARMul_State * state, ARMword virt_addr, ARMword data);
 #endif /* _ARMMMU_H_ */

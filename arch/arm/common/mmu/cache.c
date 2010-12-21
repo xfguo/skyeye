@@ -1,4 +1,5 @@
 #include "armdefs.h"
+#include "bank_defs.h"
 
 /* mmu cache init
  *

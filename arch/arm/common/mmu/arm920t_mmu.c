@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "armdefs.h"
+#include "bank_defs.h"
 
 #define ARM920T_I_TLB() (&state->mmu.u.arm920t_mmu.i_tlb)
 #define ARM920T_I_CACHE() (&state->mmu.u.arm920t_mmu.i_cache)
@@ -60,7 +61,9 @@ static fault_t arm920t_mmu_read (ARMul_State * state, ARMword va,
 static fault_t update_cache (ARMul_State * state, ARMword va, ARMword data,
 			     ARMword datatype, cache_line_t * cache,
 			     cache_s * cache_t, ARMword real_va);
-
+extern void                            
+mmu_wb_write_bytes (ARMul_State * state, wb_s * wb_t, ARMword pa,
+                    ARMbyte * data, int n);
 int
 arm920t_mmu_init (ARMul_State * state)
 {

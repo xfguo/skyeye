@@ -18,7 +18,8 @@
 #include "armdefs.h"
 #include "armemu.h"
 #include "ansidecl.h"
-
+unsigned xscale_cp15_cp_access_allowed (ARMul_State * state, unsigned reg,
+                                        unsigned cpnum);
 //extern int skyeye_instr_debug;
 /* Definitions for the support routines.  */
 

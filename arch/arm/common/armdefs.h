@@ -174,7 +174,7 @@ struct ARMul_Energy
 	/*record CCCR,to get current core frequency */
 	ARMword cccr;
 };
-
+#if 0
 #define MAX_BANK 8
 #define MAX_STR  1024
 
@@ -191,13 +191,13 @@ typedef struct mem_bank
 	char filename[MAX_STR];
 	unsigned type;		//chy 2003-09-21: maybe io,ram,rom
 } mem_bank_t;
-
 typedef struct
 {
 	int bank_num;
 	int current_num;	/*current num of bank */
 	mem_bank_t mem_banks[MAX_BANK];
 } mem_config_t;
+#endif
 struct ARMul_State
 {
 	ARMword Emulate;	/* to start and stop emulation */
@@ -378,7 +378,7 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 
 /*added by ksh in 2005-10-1*/
 	cpu_config_t *cpu;
-	mem_config_t *mem_bank;
+	//mem_config_t *mem_bank;
 
 /* added LPC remap function */
 	int vector_remap_flag;

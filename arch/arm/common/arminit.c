@@ -134,7 +134,7 @@ ARMul_NewState (ARMul_State *state)
 	state->CP14R0_CCD = -1;
 
 	//state->cpu = (cpu_config_t *) malloc (sizeof (cpu_config_t));
-	state->mem_bank = (mem_config_t *) malloc (sizeof (mem_config_t));
+	//state->mem_bank = (mem_config_t *) malloc (sizeof (mem_config_t));
 	return (state);
 }
 

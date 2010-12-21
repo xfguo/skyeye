@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "armdefs.h"
+#include "bank_defs.h"
 
 typedef struct sa_mmu_desc_s
 {
@@ -55,6 +56,9 @@ static fault_t update_cache (ARMul_State * state, ARMword va, ARMword data,
 			     ARMword datatype, cache_line_t * cache,
 			     cache_s * cache_t, ARMword real_va);
 
+void
+mmu_wb_write_bytes (ARMul_State * state, wb_s * wb_t, ARMword pa,
+		    ARMbyte * data, int n);
 int
 sa_mmu_init (ARMul_State * state)
 {

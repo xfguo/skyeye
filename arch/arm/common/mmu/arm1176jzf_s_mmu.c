@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "armdefs.h"
+#include "bank_defs.h"
 
 #if 0
 fault_t

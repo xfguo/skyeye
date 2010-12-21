@@ -12,7 +12,7 @@ endif
 libarm_la_LDFLAGS = -module
 pkglib_LTLIBRARIES = libarm.la
 #noinst_LIBRARIES =      libarm.a
-DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DNO_LCD
+DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DNO_LCD @COMMON_CFLAGS@
 
 libarm_la_LIBADD = armemu32.lo
 INCLUDES = -I$(top_srcdir)/arch/arm/common -I$(top_srcdir)/arch/arm/mach/ -I$(top_srcdir)/common/dyncom/ `llvm-config --cflags` @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/

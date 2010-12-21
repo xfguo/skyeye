@@ -20,7 +20,7 @@
 
 #include <assert.h>
 #include <string.h>
-
+#include "bank_defs.h"
 #include "armdefs.h"
 
 #ifdef CACHE

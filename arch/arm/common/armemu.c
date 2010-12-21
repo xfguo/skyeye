@@ -21,6 +21,8 @@
 #include "armos.h"
 
 #include "skyeye_callback.h"
+#include "skyeye_bus.h"
+#include "sim_control.h"
 //#include "skyeye2gdb.h"
 //#include "code_cov.h"
 
@@ -50,6 +52,12 @@ static unsigned Multiply64 (ARMul_State *, ARMword, int, int);
 static unsigned MultiplyAdd64 (ARMul_State *, ARMword, int, int);
 static void Handle_Load_Double (ARMul_State *, ARMword);
 static void Handle_Store_Double (ARMul_State *, ARMword);
+void
+XScale_set_fsr_far (ARMul_State * state, ARMword fsr, ARMword _far);
+int             
+XScale_debug_moe (ARMul_State * state, int moe);
+unsigned xscale_cp15_cp_access_allowed (ARMul_State * state, unsigned reg,
+                                        unsigned cpnum);
 
 static int
 handle_v6_insn (ARMul_State * state, ARMword instr);
@@ -294,6 +302,7 @@ extern int (*ui_loop_hook) (int);
 ARMword isize;
 
 extern int debugmode;
+int ARMul_ICE_debug(ARMul_State *state,ARMword instr,ARMword addr);
 #ifdef MODE32
 //chy 2006-04-12, for ICE debug
 int ARMul_ICE_debug(ARMul_State *state,ARMword instr,ARMword addr)

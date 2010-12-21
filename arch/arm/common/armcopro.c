@@ -79,10 +79,8 @@ extern unsigned xscale_cp15_read_reg (ARMul_State * state, unsigned reg,
 				      ARMword * data);
 extern unsigned xscale_cp15_write_reg (ARMul_State * state, unsigned reg,
 				       ARMword data);
-
-
-
-
+extern unsigned xscale_cp15_cp_access_allowed (ARMul_State * state, unsigned reg,
+					unsigned cpnum);
 
 /* Dummy Co-processors.  */
 

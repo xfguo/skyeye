@@ -1,11 +1,16 @@
 #include "armdefs.h"
 #include "armcpu.h"
-#include "skyeye_types.h"
 #include "armemu.h"
 #include "arm_regformat.h"
+
+#include "skyeye_arch.h"
 #include "skyeye_options.h"
+#include "skyeye_types.h"
 #include "skyeye_signal.h"
-#include "armcpu.h"
+#include "skyeye_mm.h"
+#include "skyeye_cell.h"
+#include "bank_defs.h"
+#include "skyeye_log.h"
 
 int debugmode = 0;
 //extern int big_endian;
@@ -13,6 +18,8 @@ int big_endian = 0;
 static cpu_config_t *p_arm_cpu;
 static ARMword preset_regfile[16];
 extern ARMword skyeye_cachetype;
+static void arm_core_init (ARMul_State *state, int i);
+
 static void arm_step_once ();
 //chy 2005-08-01, borrow from wlm's 2005-07-26's change
 ARMword
@@ -110,7 +117,7 @@ arm_init_state ()
 	arm_cpu_init();
 }
 
-void
+static void
 arm_core_init (ARMul_State *state, int i)
 {
 	ARMul_NewState (state);

@@ -23,6 +23,7 @@
 
 #include "armdefs.h"
 #include "armemu.h"
+#include "bank_defs.h"
 /*#include "pxa.h" */
 
 /* chy 2005-09-19 */

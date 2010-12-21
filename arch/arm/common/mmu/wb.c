@@ -1,4 +1,5 @@
 #include "armdefs.h"
+#include "bank_defs.h"
 
 /* wb_init
  * @wb_t	:wb_t to init
