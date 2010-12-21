@@ -459,10 +459,9 @@ int e500_mmu_init(e500_mmu_t * mmu){
 	mmu->tlbcfg[1] = 0x101bc010;
 }
 
-void ppc_mmu_tlb_invalidate()
+void ppc_mmu_tlb_invalidate(e500_core_t* core)
 {
-	e500_core_t* current_core = get_current_core();
-	current_core->effective_code_page = 0xffffffff;
+	core->effective_code_page = 0xffffffff;
 }
 
 /*

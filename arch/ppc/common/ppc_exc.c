@@ -144,7 +144,7 @@ bool_t e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a
 		PPC_EXC_ERR("unknown\n");
 		return False;
 	}
-	ppc_mmu_tlb_invalidate();
+	ppc_mmu_tlb_invalidate(core);
 	core->msr = 0;
 	core->npc = type;
 	return True;
