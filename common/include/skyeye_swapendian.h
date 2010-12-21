@@ -31,7 +31,7 @@ static inline uint32 bswap_word(uint32 data)
 
 static inline uint64 bswap_dword(uint64 data)
 {
-	return (((uint64)ppc_bswap_word(data)) << 32) | (uint64)ppc_bswap_word(data >> 32);
+	return (((uint64)bswap_word(data)) << 32) | (uint64)bswap_word(data >> 32);
 }
 
 static inline uint16 bswap_half(uint16 data)

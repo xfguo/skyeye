@@ -26,7 +26,6 @@
 #define __SKYEYE_THREAD_H__
 #include <pthread.h>
 #include "skyeye_types.h"
-
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -62,6 +61,11 @@ bool_t thread_exist(pthread_t id);
 conf_object_t* get_thread_priv(pthread_t id);
 thread_state_t get_thread_state(pthread_t id);
 
+void start_all_thread();
+void stop_all_thread();
+void start_thread(work_thread_t* thread);
+void stop_thread(work_thread_t* thread);
+work_thread_t* get_thread_by_id(pthread_t id);
 #ifdef __cplusplus
 }
 #endif

@@ -29,8 +29,10 @@
 #include "skyeye_types.h"
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 #include <signal.h>
 #include "skyeye_thread.h"
+#include "sim_control.h"
 #include "skyeye_lock.h"
 #include "skyeye_mm.h"
 

@@ -24,6 +24,7 @@
  *
  *		walimis <wlm@student.dlut.edu.cn> 
  * */
+#include "stdlib.h"
 #include "skyeye_device.h"
 #include "skyeye_config.h"
 #include "skyeye_options.h"

@@ -21,9 +21,11 @@
 /*
  * 12/16/2006   Michael.Kang  <blackfin.kang@gmail.com>
  */
+#include <stdlib.h>
 
 #include "skyeye_config.h"
 #include "skyeye_options.h"
+#include "skyeye_log.h"
 #include "bank_defs.h"
 #include "io.h"
 #include "skyeye_ram.h"

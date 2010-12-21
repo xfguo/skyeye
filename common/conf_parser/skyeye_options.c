@@ -38,6 +38,8 @@
 
 #include "skyeye_types.h"
 #include "skyeye_callback.h"
+#include "skyeye_mm.h"
+#include "skyeye_log.h"
 
 /* 2007-01-18 added by Anthony Lee: for new uart device frame */
 /*#include "skyeye_uart.h"

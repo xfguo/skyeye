@@ -41,6 +41,13 @@ typedef int(*do_option_t)(skyeye_option_t *option, int num_params, const char *p
 exception_t register_option(char* option_name, do_option_t do_option_func, char* helper);
 int do_deprecated_option (skyeye_option_t * this_option, int num_params,
                  const char *params[]);
+
+int
+split_param (const char *param, char *name, char *value);
+int
+parse_line_formatted (int num_params, const char *params[]);
+int get_interrupts (char value[], uint32 * interrupts);
+
 #ifdef __cplusplus
 }
 #endif

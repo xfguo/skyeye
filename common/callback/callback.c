@@ -22,7 +22,7 @@
  * 06/22/2009   Michael.Kang  <blackfin.kang@gmail.com>
  */
 #include <stdio.h>
-
+#include "skyeye_mm.h"
 #include "skyeye_callback.h"
 
 typedef struct callback_queue{

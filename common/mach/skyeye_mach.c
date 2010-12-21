@@ -3,6 +3,7 @@
 #include "skyeye_mach.h"
 #include "skyeye_options.h"
 #include "skyeye_config.h"
+#include "skyeye_log.h"
 static machine_config_t* mach_list;
 int
 do_mach_option (skyeye_option_t * this_option, int num_params,

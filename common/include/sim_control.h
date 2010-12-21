@@ -47,7 +47,11 @@ void SIM_continue(generic_arch_t* arch_instance);
  */
 void SIM_stop(generic_arch_t* arch_instance);
 
+bool_t SIM_is_running();
+
+void SIM_fini();
 void skyeye_loop();
+void skyeye_stepi(int steps);
 #ifdef __cplusplus
 }
 #endif 

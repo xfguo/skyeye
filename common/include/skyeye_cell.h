@@ -17,6 +17,7 @@ typedef struct skyeye_cell_s{
 }skyeye_cell_t;
 
 work_thread_t* get_thread_by_cell(skyeye_cell_t* cell);
+skyeye_cell_t* get_cell_by_thread_id(pthread_t id);
 void add_to_cell(skyeye_exec_t* exec, skyeye_cell_t* cell);
 void add_to_default_cell(skyeye_exec_t* exec);
 /*

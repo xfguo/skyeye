@@ -26,6 +26,7 @@
 #include "skyeye_types.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #ifndef _GUN_HASH_LIST
 #define _GNU_HASH_LIST
@@ -33,6 +34,8 @@
 #include <string.h>
 #define __USE_GNU
 #include <search.h>
+#include "skyeye_mm.h"
+#include "skyeye_log.h"
 
 struct hsearch_data *conf_tab = NULL;
 const static max_conf_obj = 1024;

@@ -22,4 +22,5 @@ int com_load_conf(char* arg);
 int com_show_map(char* arg);
 int com_info(char* arg);
 int com_x(char* arg);
+exception_t run_command(char* command_str);
 #endif

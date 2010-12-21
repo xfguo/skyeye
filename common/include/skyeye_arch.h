@@ -64,6 +64,7 @@ typedef struct generic_core_s
  */
 void register_arch(arch_config_t * arch);
 generic_arch_t * get_arch_instance(const char* arch_name);
+generic_arch_t* get_default_arch();
 #ifdef __cplusplus
 }
 #endif

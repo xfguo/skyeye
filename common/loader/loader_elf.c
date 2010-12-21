@@ -24,9 +24,11 @@
 #include "portable/mman.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <skyeye_config.h>
 #include "bank_defs.h"
 #include "skyeye_pref.h"
+#include "skyeye_ram.h"
 #include "skyeye_arch.h"
 #include "elf.h"
 /** 

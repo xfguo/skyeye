@@ -25,6 +25,7 @@
 
 #include <errno.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <stdint.h>
 
 #include "skyeye_types.h"
@@ -35,6 +36,7 @@
 #include "skyeye_exec.h"
 #include "skyeye_thread.h"
 #include "skyeye_cell.h"
+#include "skyeye_log.h"
 
 #define MAX_THREAD_NUMBER 256
 static work_thread_t pthread_pool[MAX_THREAD_NUMBER];

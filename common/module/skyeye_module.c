@@ -25,9 +25,11 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <string.h>
 #include <dirent.h>
 #include <ltdl.h>
-
+#include "skyeye_mm.h"
+#include "skyeye_log.h"
 #include "skyeye_module.h"
 #if 0
 mmi_bool_t   mmi_register_instance_creator (const char * modname, mmi_instance_creator fn){

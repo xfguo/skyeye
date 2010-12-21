@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include "skyeye_pref.h"
+#include "skyeye_log.h"
 static sky_pref_t *skyeye_pref;
 static exception_t init_skyeye_pref(sky_pref_t** pref){
 	*pref = malloc(sizeof(sky_pref_t));

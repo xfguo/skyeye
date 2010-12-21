@@ -22,9 +22,9 @@
    GNU Readline library.  This application interactively allows users
    to manipulate files and their modes. */
 
-
+#include <stdlib.h>
 #include "skyeye_cli.h"
-
+#include "sim_control.h"
 extern char *xmalloc ();
 
 /* The names of functions that actually do the manipulation. */
@@ -183,7 +183,7 @@ char **skyeye_completion PARAMS((const char *, int, int));
 /* Tell the GNU Readline library how to complete.  We want to try to complete
    on command names if this is the first word in the line, or on filenames
    if not. */
-initialize_readline ()
+void initialize_readline ()
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
   rl_readline_name = "skyeye";

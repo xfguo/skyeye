@@ -255,7 +255,7 @@ mem_write_word (uint32_t addr, uint32_t data)
  * allocate memory space for the banks
  */
 exception_t
-mem_reset (void * state)
+mem_reset ()
 {
 	int i, num, bank;
 	FILE *f;

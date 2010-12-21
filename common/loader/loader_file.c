@@ -23,8 +23,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
+#include "skyeye_log.h"
 #include "skyeye_loader.h"
+#include "bank_defs.h"
 
 /*
  * load a block of data to the memory.

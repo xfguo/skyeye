@@ -21,10 +21,12 @@
 /*
  * 11/25/2010   Michael.Kang  <blackfin.kang@gmail.com>
  */
+#include <unistd.h>
 #include <skyeye_types.h>
 #include <skyeye_thread.h>
 #include <skyeye_callback.h>
 #include <skyeye_exec.h>
+#include <skyeye_log.h>
 static bool_t skyeye_running;
 static skyeye_exec_t* default_exec;
 

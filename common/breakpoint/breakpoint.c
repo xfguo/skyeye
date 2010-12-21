@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "skyeye_arch.h"
 #include "breakpoint.h"
 #include "skyeye_types.h"
 #include "skyeye_callback.h"
+#include "skyeye_command.h"
+#include "sim_control.h"
 
 //const int max_bp_number = 255;
 #define MAX_BP_NUMBER 255

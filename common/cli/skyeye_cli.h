@@ -37,7 +37,8 @@
 #  include <readline/history.h>
 #endif
 #include "skyeye_types.h"
-
+#include "skyeye_module.h"
+#include "skyeye_options.h"
 /* A structure which contains information on the commands this program
    can understand. */
 struct command_s{
@@ -47,9 +48,13 @@ struct command_s{
   struct command_s *next;
 };
 typedef struct command_s  COMMAND;
+char *dupstr (char* s);
 
-void skyeye_cli();
-
-typedef int (*command_func_t)(char* arg);
-exception_t add_command(char* command_name, command_func_t func, char* helper);
+void initialize_readline ();
+int execute_line (char* line);
+COMMAND *find_command (char* name);
+skyeye_module_t* get_module_list();
+skyeye_option_t* get_option_list();
+int valid_argument (char* caller, char *arg);
+void too_dangerous (char *caller);
 #endif

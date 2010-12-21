@@ -24,9 +24,12 @@
  *		walimis <walimi@peoplemail.com.cn> 		
  * */
 
+#include <ctype.h>
 #include "skyeye_defs.h"
 #include "skyeye_config.h"
 #include "skyeye_options.h"
+#include "skyeye_log.h"
+#include "skyeye_arch.h"
 
 //chy 2005-07-30
 //int skyeye_instr_debug=0;

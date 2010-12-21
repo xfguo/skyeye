@@ -1,9 +1,10 @@
 #include "skyeye_options.h"
 #include "skyeye_config.h"
 #include "skyeye_pref.h"
-
+#include "skyeye_log.h"
 #include "skyeye_types.h"
 #include "skyeye_callback.h"
+#include "skyeye_loader.h"
 #ifdef DBCT_TEST_SPEED
 int
 do_dbct_test_speed_sec(struct skyeye_option_t *this_opion, int num_params, const char *params[])

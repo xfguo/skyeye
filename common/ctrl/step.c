@@ -2,6 +2,10 @@
 
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
+#include "skyeye_command.h"
+#include "sim_control.h"
+#include "skyeye_log.h"
+
 /*
  * That is an absolute value for step. Simulator should stop when hit this value 
  */
@@ -16,7 +20,7 @@ static void check_steps(generic_arch_t* arch_instance){
 	if(!stopped_step)
 		return;
 	if(current_step == stopped_step){
-		SIM_stop();
+		SIM_stop(arch_instance);
 		stopped_step = 0;
 	}
 	return;
@@ -52,5 +56,5 @@ void skyeye_stepi(int steps){
 	}
 	stopped_step  = arch_instance->get_step() + steps;
 	skyeye_log(Debug_log, __FUNCTION__, "stopped_step=%d\n", stopped_step);
-	SIM_continue();
+	SIM_continue(arch_instance);
 }

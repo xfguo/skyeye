@@ -1,12 +1,16 @@
 #include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "skyeye_cli.h"
 #include "skyeye_module.h"
 #include "skyeye_options.h"
+#include "sim_control.h"
 #include "skyeye_mach.h"
 #include "skyeye_pref.h"
 #include "skyeye_arch.h"
 #include "bank_defs.h"
+#include "default_command.h"
 //#include "arm_regformat.h"
 /*
  * Run SkyEye from the beginning 
@@ -16,8 +20,8 @@ com_run (arg)
 {
   if (!arg)
     arg = "";
-  int flag = SIM_run();
-  return flag;
+  SIM_run();
+  return 0;
 
   //sprintf (syscom, "ls -FClg %s", arg);
   //return (system (syscom));
@@ -31,8 +35,8 @@ com_cont (arg)
 {
   if (!arg)
     arg = "";
-  int flag = SIM_continue();
-  return flag;
+  SIM_continue(NULL);
+  return 0;
   //sprintf (syscom, "ls -FClg %s", arg);
   //return (system (syscom));
 }
@@ -45,8 +49,8 @@ com_stop (arg)
 {
   if (!arg)
     arg = "";
-  int flag = SIM_stop();
-  return flag;
+  SIM_stop(NULL);
+  return 0;
   //sprintf (syscom, "ls -FClg %s", arg);
   //return (system (syscom));
 }

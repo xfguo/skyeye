@@ -1,6 +1,11 @@
 #include <assert.h>
+#include <unistd.h>
+#include "skyeye_obj.h"
+#include "skyeye_internal.h"
 #include "skyeye_thread.h"
 #include "skyeye_cell.h"
+#include "skyeye_mm.h"
+#include "sim_control.h"
 
 static skyeye_cell_t* default_cell = NULL;
 void add_to_cell(skyeye_exec_t* exec, skyeye_cell_t* cell){

@@ -47,5 +47,5 @@ void bus_snoop(access_t rw, short size, int addr, uint32_t value, before_after_t
 
 /* get the bus access information */
 bus_recorder_t* get_last_bus_access();
-
+void io_do_cycle (void * state);
 #endif

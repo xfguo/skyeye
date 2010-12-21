@@ -35,6 +35,9 @@
 #include "skyeye_types.h"
 #include "skyeye_cli.h"
 #include "default_command.h"
+#include "skyeye_command.h"
+
+
 /* **************************************************************** */
 /*                                                                  */
 /*                       predefined  commands                       */

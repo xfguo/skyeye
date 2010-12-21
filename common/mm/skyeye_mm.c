@@ -1,3 +1,4 @@
+#include <string.h>
 #include "skyeye_mm.h"
 void* skyeye_mm(size_t sz){
 	//printf("In %s, sz=0x%x\n", __FUNCTION__, sz);

@@ -25,6 +25,8 @@
 #include "skyeye_arch.h"
 #include "skyeye_config.h"
 #include "skyeye_options.h"
+#include "skyeye_mm.h"
+#include "skyeye_log.h"
 #include <stdlib.h>
 
 /* the number of supported architecture */

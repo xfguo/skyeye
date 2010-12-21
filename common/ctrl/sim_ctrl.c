@@ -7,6 +7,11 @@
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
 #include "skyeye_cell.h"
+#include "skyeye_internal.h"
+#include "skyeye_mm.h"
+#include "skyeye_command.h"
+#include "skyeye_loader.h"
+#include "skyeye_log.h"
 /* FIXME, we should get it from prefix varaible after ./configure */
 #ifndef SKYEYE_MODULE_DIR
 const char* default_lib_dir = "/opt/skyeye/lib/skyeye/";
