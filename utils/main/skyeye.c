@@ -45,6 +45,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 //#include "skyeye_uart.h"
 #include "config.h"
 #include <setjmp.h>
+#include <ctype.h>
+#include <sim_control.h>
+#include <skyeye_loader.h>
 #if 0
 struct _sky_pref_s{
 	//generic_address_t elf_load_base;

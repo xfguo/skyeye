@@ -62,7 +62,7 @@ skyeye_LDADD = -lc
 skyeye_LDFLAGS = -L./common -lcommon `llvm-config --libs ` -lrt -L`llvm-config --libdir`
 
 INCLUDES = @COMMON_INCLUDES@ -Ithird-party/bfd/
-DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0   
+DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@ 
 AM_CFLAGS = -W -Wall -Wstrict-prototypes -Wmissing-prototypes 
 ACLOCAL_AMFLAGS=-I m4
 bin_PROGRAMS = skyeye uart_instance mknandflashdump prof_convert
