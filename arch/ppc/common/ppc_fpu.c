@@ -24,6 +24,7 @@
 #include "ppc_cpu.h"
 #include "ppc_dec.h"
 #include "ppc_fpu.h"
+#include "ppc_tools.h"
 #include "tracers.h"
 // .121
 

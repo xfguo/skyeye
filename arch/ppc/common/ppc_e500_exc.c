@@ -27,6 +27,8 @@
 #include "ppc_mmu.h"
 #include "tracers.h"
 
+#include "skyeye.h"
+
 bool_t e500_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
 {
 	switch(type){

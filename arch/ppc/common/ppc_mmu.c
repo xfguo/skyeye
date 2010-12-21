@@ -25,6 +25,7 @@
  *		Programming Environments Manual
  */
 
+#include "string.h"
 #include "debug.h"
 #include "tracers.h"
 #include "sysendian.h"
@@ -38,6 +39,8 @@
 #include "ppc_memory.h"
 #include "ppc_e500_exc.h"
 
+#include "bank_defs.h"
+#include "skyeye.h"
 /*
 ea = effective address
 if translation is an instruction address then

@@ -36,6 +36,7 @@
 #include "debug/tracers.h"
 */
 #include "types.h"
+#include "ppc_cpu.h"
 #define IO_MEM_ACCESS_OK	0
 #define IO_MEM_ACCESS_EXC	1
 #define IO_MEM_ACCESS_FATAL	2

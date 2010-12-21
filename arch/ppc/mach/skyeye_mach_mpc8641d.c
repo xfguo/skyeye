@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include "skyeye_config.h"
+#include "skyeye_cell.h"
 
 #include "sysendian.h"
 #include <ppc_cpu.h>
@@ -265,6 +266,8 @@ mpc8641d_io_do_cycle (void *state)
 {
 	std8250_io_do_cycle (state);
 }
+
+extern void mpc8641d_boot_linux();
 static void
 mpc8641d_io_reset (void *state)
 {

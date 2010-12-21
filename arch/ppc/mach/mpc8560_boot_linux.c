@@ -23,6 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "ppc_cpu.h"
 #include "ppc_boot.h"

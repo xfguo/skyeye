@@ -22,7 +22,7 @@
 #define __PPC_TOOLS_H__
 
 #include "skyeye_types.h"
-
+#include "ppc_fpu.h"
 static inline bool_t ppc_carry_3(uint32 a, uint32 b, uint32 c)
 {
 	if ((a+b) < a) {
@@ -40,4 +40,14 @@ static inline uint32 ppc_word_rotl(uint32 data, int n)
 	return (data << n) | (data >> (32-n));
 }
 
+void ppc_fpu_single_to_double(ppc_single *s, ppc_double *d); 
+uint32 ppc_fpu_pack_single(ppc_double *d, uint32 *res);
+void ppc_fpu_unpack_single(ppc_single *res, uint32 d);
+uint32 ppc_fpu_pack_double(ppc_double *d, uint64 *res);
+uint32 ppc_fpu_unpack_double(ppc_double *d, uint64 *res);
+int ppc_fpu_normalize(ppc_double *d);
+int ppc_fpu_normalize_single(ppc_single *s);
+int ppc_fpu_normalize_quadro(ppc_quadro *d);
+uint32 ppc_fpu_pack_double_as_single(ppc_double *d, uint64 *res);
+uint32 ppc_fpu_double_to_int(ppc_double *d);
 #endif

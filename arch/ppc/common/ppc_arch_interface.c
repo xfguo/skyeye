@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 /*
  * 12/06/2007   Michael.Kang  <blackfin.kang@gmail.com>
  */
+#include <string.h>
 
 #include "ppc_cpu.h"
 #include "ppc_mmu.h"
@@ -27,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "tracers.h"
 #include "sysendian.h"
 #include "ppc_irq.h"
+#include "ppc_dec.h"
 #include "ppc_regformat.h"
 #include "bank_defs.h"
 
@@ -34,7 +36,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "skyeye_config.h"
 #include "skyeye_callback.h"
 #include "skyeye_arch.h"
+#include "skyeye.h"
 #include "skyeye_exec.h"
+#include "skyeye_mm.h"
+#include "skyeye_cell.h"
 
 #ifdef __CYGWIN__
 #include <sys/time.h>

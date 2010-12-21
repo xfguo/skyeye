@@ -28,6 +28,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "types.h"
 #include "tracers.h"
@@ -40,6 +41,7 @@
 #include "ppc_mmu.h"
 #include "ppc_opc.h"
 
+#include "skyeye.h"
 //#include "io/prom/promosi.h"
 
 static void ppc_opc_invalid()

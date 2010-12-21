@@ -24,10 +24,12 @@
 
 #include <stdint.h>
 #include "skyeye_config.h"
+#include "skyeye_cell.h"
 
 #include "sysendian.h"
 #include <ppc_cpu.h>
 #include <ppc_e500_exc.h>
+#include <ppc_exc.h>
 
 #ifdef __CYGWIN__
 #include <sys/time.h>
@@ -199,6 +201,7 @@ typedef struct mpc8572_io_s{
 
 static mpc8572_io_t mpc8572_io;
 
+extern void mpc8572_boot_linux();
 static void
 std8250_io_do_cycle (void * state)
 {

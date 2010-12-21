@@ -24,7 +24,10 @@
 
 #include <stdint.h>
 #include "skyeye_config.h"
+#include "bank_defs.h"
+#include "skyeye_cell.h"
 #include "ppc_irq.h"
+#include "ppc_exc.h"
 #include "ppc_e500_exc.h"
 #include "sysendian.h"
 #include <ppc_cpu.h>
@@ -253,6 +256,7 @@ typedef struct mpc8560_io_s
 static mpc8560_io_t mpc8560_io;
 #define MPC8650_DPRAM_SIZE 0xC000
 
+extern void mpc8560_boot_linux();
 
 typedef struct bd_s
 {

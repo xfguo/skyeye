@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <skyeye_pref.h>
+#include <skyeye.h>
 
 #include "ppc_cpu.h"
 #include "ppc_exc.h"
@@ -36,6 +37,8 @@
 #include "ppc_dec.h"
 #include "tracers.h"
 #include "debug.h"
+#include "ppc_syscall.h"
+
 void ppc_set_msr(uint32 newmsr)
 {
 	e500_core_t* current_core = get_current_core();

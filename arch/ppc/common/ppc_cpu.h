@@ -27,6 +27,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 //#include "types.h"
 #include "ppc_cpm.h"
 #include "ppc_e500_core.h"
@@ -464,5 +465,7 @@ extern FILE * prof_file;
 void ppc_set_singlestep_v(bool_t v, const char *file, int line, const char *format, ...);
 void ppc_set_singlestep_nonverbose(bool_t v);
 
+void ppc_machine_check_exception();
+uint32	ppc_cpu_get_pvr(e500_core_t* core);
 #endif
  
