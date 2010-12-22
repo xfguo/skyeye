@@ -55,7 +55,7 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 
 	// create dispatch basicblock
 	BasicBlock* bb_dispatch = BasicBlock::Create(_CTX(), "dispatch", cpu->dyncom_engine->cur_func, 0);
-	Value *v_pc = new LoadInst(cpu->ptr_PC, "", false, bb_dispatch);
+	Value *v_pc = new LoadInst(cpu->ptr_PHYS_PC, "", false, bb_dispatch);
 	SwitchInst* sw = SwitchInst::Create(v_pc, bb_ret, bbs, bb_dispatch);
 
 	// translate basic blocks
@@ -104,11 +104,10 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 			if (tag & (TAG_CONDITIONAL | TAG_ZEROVERHEADLOOP | TAG_POSTCOND | TAG_WINDOWCHECK | TAG_LAST_INST))
  				bb_next = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, next_pc, bb_ret, BB_TYPE_NORMAL);
 			//update pc
-			//if (tag & (TAG_WINDOWCHECK | TAG_TRAP)) {
-				emit_store_pc(cpu, cur_bb, pc);
-			//}
+			printf("In %s, save pc = 0x%x\n", __FUNCTION__, pc);
+			emit_store_pc(cpu, cur_bb, pc);
 		       arch_inc_icounter(cpu, cur_bb);
-#if 0// Only for debug all the execution instructions
+#if 1// Only for debug all the execution instructions
 			arch_debug_me(cpu, cur_bb);
 #endif
 

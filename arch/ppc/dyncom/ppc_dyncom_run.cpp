@@ -62,10 +62,12 @@ arch_powerpc_done(cpu_t *cpu)
 }
 
 static addr_t
-arch_powerpc_get_pc(cpu_t *, void *reg)
+arch_powerpc_get_pc(cpu_t *cpu, void *reg)
 {
+	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+
+	return core->phys_pc;
 	//return ((reg_powerpc_t *)reg)->pc;
-	return 0;
 }
 
 static uint64_t
@@ -108,7 +110,12 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
 	/* Initilize different register set for different core */
 	cpu->rf.pc = &core->pc;
+	cpu->rf.phys_pc = &core->phys_pc;
 	cpu->rf.grf = core->gpr;
+	cpu_set_flags_debug(cpu, 0
+                | CPU_DEBUG_PRINT_IR
+                | CPU_DEBUG_LOG
+                );
 
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	return;
@@ -125,12 +132,13 @@ debug_function(cpu_t *cpu) {
 }
 void ppc_dyncom_run(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
-	addr_t phys_pc = core->pc;
+	addr_t phys_pc = 0;
 	if(ppc_effective_to_physical(core, core->pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
 		/* we donot allow mmu exception in tagging state */
 		fprintf(stderr, "In %s, can not translate the pc 0x%x\n", __FUNCTION__, core->pc);
 		exit(-1);
 	}
+	core->phys_pc = phys_pc;
 	cpu->dyncom_engine->code_start = phys_pc;
         cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);
         cpu->dyncom_engine->code_entry = phys_pc;

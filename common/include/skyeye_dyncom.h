@@ -212,6 +212,7 @@ typedef struct cpu_archinfo {
 typedef struct cpu_archrf {
 	// @@@BEGIN_DEPRECATION
 	void *pc;  // Program Counter
+	void *phys_pc;  // Physical Program Counter
 	void *grf; // GP register file
 	void *srf; // SP register file
 	void *frf; // FP register file
@@ -292,6 +293,7 @@ typedef struct cpu {
 	bool redirection;
 
 	Value *ptr_PC;
+	Value *ptr_PHYS_PC; /* The physical pc */
 	Value **ptr_gpr; // GPRs
 	Value **in_ptr_gpr;
 	Value **ptr_xr; // XRs

@@ -196,6 +196,7 @@ typedef struct e500_core_s{
 
 	uint32 spefscr;
 	e500_mmu_t mmu;
+	uint32 phys_pc;
 
 	uint32 ipr;
 	uint32 iack;
