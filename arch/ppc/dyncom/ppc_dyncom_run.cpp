@@ -25,22 +25,6 @@ e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	return core;
 }
 
-extern "C" void debug_ppc(){
-}; 
-
-/* init the callout functions of PowerPC.By default the first callout function is debug function*/
-static void arch_func_init(cpu_t *cpu){
-	//types
-	Constant *debug_const = cpu->dyncom_engine->mod->getOrInsertFunction("debug_ppc",	//function name
-															Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
-															NULL);
-	if(debug_const == NULL)
-		fprintf(stderr, "Error:cannot insert function:debug.\n");
-	Function *debug_func = cast<Function>(debug_const);
-	debug_func->setCallingConv(CallingConv::C);
-	cpu->dyncom_engine->ptr_arch_func[0] = debug_func;
-}
-
 /* physical register for powerpc archtecture */
 static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 {
@@ -127,7 +111,6 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->rf.grf = core->gpr;
 
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
-	arch_func_init(cpu);
 	return;
 }
 

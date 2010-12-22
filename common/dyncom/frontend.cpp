@@ -556,13 +556,13 @@ arch_debug_me(cpu_t *cpu, BasicBlock *bb)
 {
 	if (cpu->dyncom_engine->ptr_arch_func[0] == NULL)
 		return;
-
+#if 0
 	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
 	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
 	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
-
+#endif
 	// XXX synchronize cpu context!
-	CallInst::Create(cpu->dyncom_engine->ptr_arch_func[0], v_cpu_ptr, "", bb);
+	CallInst::Create(cpu->dyncom_engine->ptr_arch_func[0], "", bb);
 }
 /**
  * @brief Generate the write memory llvm IR 

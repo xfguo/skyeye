@@ -30,6 +30,7 @@
 
 #include "memory.h"
 
+static void debug_func_init(cpu_t *cpu);
 #define IS_LITTLE_ENDIAN(cpu) (((cpu)->info.common_flags & CPU_FLAG_ENDIAN_MASK) == CPU_FLAG_ENDIAN_LITTLE)
 
 static inline bool
@@ -200,6 +201,7 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 	cpu->timer_total[TIMER_BE] = 0;
 	cpu->timer_total[TIMER_RUN] = 0;
 
+	debug_func_init(cpu);
 	return cpu;
 }
 /**
@@ -505,4 +507,25 @@ cpu_print_statistics(cpu_t *cpu)
 	printf("be  = %8lld\n", cpu->timer_total[TIMER_BE]);
 	printf("run = %8lld\n", cpu->timer_total[TIMER_RUN]);
 }
+
+extern "C" void debug_output(){
+	printf("###########In %s\n\n\n", __FUNCTION__);
+}; 
+
+/* 
+ * init the global functions.
+ * By default the first callout function is debug function
+ */
+static void debug_func_init(cpu_t *cpu){
+	//types
+	Constant *debug_const = cpu->dyncom_engine->mod->getOrInsertFunction("debug_output",	//function name
+		Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
+	NULL);
+	if(debug_const == NULL)
+		fprintf(stderr, "Error:cannot insert function:debug.\n");
+	Function *debug_func = cast<Function>(debug_const);
+	debug_func->setCallingConv(CallingConv::C);
+	cpu->dyncom_engine->ptr_arch_func[0] = debug_func;
+}
+
 //LOG("%s:%d\n", __func__, __LINE__);
