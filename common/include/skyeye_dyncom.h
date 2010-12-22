@@ -51,7 +51,7 @@ namespace llvm {
 
 using namespace llvm;
 
-struct cpu;
+typedef struct cpu cpu_t;
 
 typedef void        (*fp_init)(struct cpu *cpu, struct cpu_archinfo *info, struct cpu_archrf *rf);
 typedef void        (*fp_done)(struct cpu *cpu);
@@ -221,8 +221,11 @@ typedef struct cpu_archrf {
 	void *storage;
 } cpu_archrf_t;
 
-
-
+/*
+ * type of the debug callback; second parameter is
+ * pointer to CPU specific register struct
+ */
+typedef void (*debug_function_t)(cpu_t*);
 
 typedef std::map<addr_t, BasicBlock *> bbaddr_map;
 typedef std::map<Function *, bbaddr_map> funcbb_map;
@@ -318,6 +321,7 @@ typedef struct cpu {
 
 	void *feptr; /* This pointer can be used freely by the frontend. */
 	dyncom_engine_t* dyncom_engine;
+	debug_function_t debug_func;
 } cpu_t;
 
 enum {
@@ -374,11 +378,6 @@ enum {
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-/*
- * type of the debug callback; second parameter is
- * pointer to CPU specific register struct
- */
-typedef void (*debug_function_t)(cpu_t*);
 
 //////////////////////////////////////////////////////////////////////
 

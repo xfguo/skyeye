@@ -510,6 +510,8 @@ cpu_print_statistics(cpu_t *cpu)
 
 extern "C" void debug_output(cpu_t* cpu){
 	printf("###########In %s\n\n\n", __FUNCTION__);
+	if(cpu->debug_func != NULL)
+		cpu->debug_func(cpu);
 }; 
 
 /* 

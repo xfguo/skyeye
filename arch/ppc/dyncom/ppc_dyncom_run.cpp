@@ -105,6 +105,15 @@ static arch_func_t powerpc_arch_func = {
 	NULL
 };
 
+/**
+* @brief Place all the powerpc debug output here.
+*
+* @param cpu the instance of cpu_t
+*/
+static void ppc_debug_func(cpu_t* cpu){
+	printf("In %s, phys_pc=0x%x\n", __FUNCTION__, *(addr_t*)cpu->rf.phys_pc);
+	return;
+}
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
@@ -116,7 +125,7 @@ void ppc_dyncom_init(e500_core_t* core){
                 | CPU_DEBUG_PRINT_IR
                 | CPU_DEBUG_LOG
                 );
-
+	cpu->debug_func = ppc_debug_func;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	return;
 }
