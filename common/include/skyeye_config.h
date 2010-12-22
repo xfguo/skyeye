@@ -178,7 +178,7 @@ typedef struct
 	int (*ICE_read_byte)(WORD addr, uint8_t *pv);	
 	uint32 (*get_regval_by_id)(int id);
         exception_t (*set_regval_by_id)(int id, uint32 value);
-
+	uint32 (*get_regnum)();
 	char* (*get_regname_by_id)(int id);
 
 	int (*parse_cpu) (const char *param[]);

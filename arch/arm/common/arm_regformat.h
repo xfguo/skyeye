@@ -19,6 +19,7 @@ enum arm_regno{
 	LR,
 	R15, //PC,
 	CPSR_REG,
+	MAX_REG_NUM,
 };
 const char* arm_regstr[] = {
 	"R0",

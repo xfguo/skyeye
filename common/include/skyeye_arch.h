@@ -22,6 +22,7 @@ typedef struct generic_arch_s
 	//int (*ICE_write_byte) (generic_address_t addr, uint8_t v);
 	//int (*ICE_read_byte)(generic_address_t addr, uint8_t *pv);
 	uint32 (*get_regval_by_id)(int id);
+	uint32 (*get_regnum)();
 	char* (*get_regname_by_id)(int id);
 	exception_t (*set_regval_by_id)(int id, uint32 value);
 	/*
