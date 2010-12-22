@@ -508,7 +508,7 @@ cpu_print_statistics(cpu_t *cpu)
 	printf("run = %8lld\n", cpu->timer_total[TIMER_RUN]);
 }
 
-extern "C" void debug_output(){
+extern "C" void debug_output(cpu_t* cpu){
 	printf("###########In %s\n\n\n", __FUNCTION__);
 }; 
 
@@ -518,9 +518,15 @@ extern "C" void debug_output(){
  */
 static void debug_func_init(cpu_t *cpu){
 	//types
-	Constant *debug_const = cpu->dyncom_engine->mod->getOrInsertFunction("debug_output",	//function name
+	std::vector<const Type*> type_func_debug_args;
+	PointerType *type_intptr = PointerType::get(cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX()), 0);
+	type_func_debug_args.push_back(type_intptr);	/* intptr *cpu */
+	FunctionType *type_func_debug_callout = FunctionType::get(
 		Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
-	NULL);
+		type_func_debug_args,	/* Params */
+		false);		      	/* isVarArg */
+	Constant *debug_const = cpu->dyncom_engine->mod->getOrInsertFunction("debug_output",	//function name
+		type_func_debug_callout);	//return
 	if(debug_const == NULL)
 		fprintf(stderr, "Error:cannot insert function:debug.\n");
 	Function *debug_func = cast<Function>(debug_const);
