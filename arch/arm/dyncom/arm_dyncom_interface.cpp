@@ -35,6 +35,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "skyeye_dyncom.h"
 #include "arm_dyncom_run.h"
 #include "arm_arch_interface.h"
+#include "arm_dyncom_translate.h"
 
 static void
 arm_reset_state ()
@@ -80,6 +81,7 @@ static bool arm_cpu_init()
 	for(i = 0; i < cpu->core_num; i++){
 		arm_core_t* core = &cpu->core[i];
 		arm_core_init(core, i);
+		printf("init core_num core->Reg is %x\n", core->Reg);
 		arm_dyncom_init(core);
 
 		skyeye_exec_t* exec = create_exec();
@@ -131,12 +133,13 @@ arm_set_pc (generic_address_t pc)
 {
 	int i;
 	ARM_CPU_State* cpu = get_current_cpu();
-	cpu->core[0].pc = pc;
+	cpu->core[0].Reg[15] = pc;
 }
+
 static uint32_t
 arm_get_pc(){
 	ARM_CPU_State* cpu = get_current_cpu();
-	return cpu->core[0].pc;
+	return cpu->core[0].Reg[15];
 }
 /*
  * Since mmu of arm always enabled, so we can write virtual address here

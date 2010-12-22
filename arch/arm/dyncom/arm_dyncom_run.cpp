@@ -9,7 +9,7 @@
 #include <skyeye.h>
 
 #include "armdefs.h"
-#include "arm_translate.h"
+#include "arm_dyncom_translate.h"
 #define MAX_REGNUM 15
 
 uint32_t get_end_of_page(uint32 phys_addr){
@@ -19,6 +19,7 @@ uint32_t get_end_of_page(uint32 phys_addr){
 /* physical register for arm archtecture */
 static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 {
+	arm_opc_func_init();
 	// Basic Information
 	info->name = "arm";
 	info->full_name = "arm_dyncom";
@@ -47,25 +48,17 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	info->register_size[CPU_REG_SPR] = 32;
 	cpu->redirection = false;
 
+	//debug
+	cpu_set_flags_debug(cpu, 0
+               | CPU_DEBUG_PRINT_IR
+               | CPU_DEBUG_LOG
+               );
+
 	/* Initilize different register set for different core */
-	arm_core_t* core = (arm_core_t*)cpu->cpu_data;
-	cpu->rf.pc = &core->pc;
-	cpu->rf.grf =(Value*) core->Reg;
-	cpu->rf.srf =(Value*) core->Spsr;
-#if 0
-	cpu->ptr_PC = (Value*)&core->pc;
-	cpu->ptr_gpr =(Value**) &core->Reg;
-	cpu->ptr_xr = (Value**)&core->Cpsr;
-	cpu->in_ptr_xr = (Value**)&core->Spsr;
-#endif
-	cpu->ptr_N = (Value*)&core->NFlag;
-	cpu->ptr_V = (Value*)&core->VFlag;
-	cpu->ptr_Z = (Value*)&core->ZFlag;
-	cpu->ptr_C = (Value*)&core->CFlag;
 }
 
 static void
-arch_powerpc_done(cpu_t *cpu)
+arch_arm_done(cpu_t *cpu)
 {
 	//free(cpu->rf.grf);
 }
@@ -73,8 +66,8 @@ arch_powerpc_done(cpu_t *cpu)
 static addr_t
 arch_arm_get_pc(cpu_t *, void *reg)
 {
-	//return ((reg_powerpc_t *)reg)->pc;
-	return 0;
+	unsigned int *grf =(unsigned int *) reg;
+	return grf[15];
 }
 
 static uint64_t
@@ -97,8 +90,7 @@ static int arch_arm_translate_loop_helper(cpu_t *cpu, addr_t pc, BasicBlock *bb_
 }
 static arch_func_t arm_arch_func = {
 	arch_arm_init,
-//	arch_arm_done,
-	NULL,
+	arch_arm_done,
 	arch_arm_get_pc,
 	NULL,
 	NULL,
@@ -115,6 +107,12 @@ static arch_func_t arm_arch_func = {
 
 void arm_dyncom_init(arm_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, arm_arch_func);
+
+	/* init the reg structure */
+	cpu->rf.pc = &core->Reg[15];
+	cpu->rf.grf = core->Reg;
+	cpu->rf.srf = core->Spsr;
+
 	cpu->cpu_data = (conf_object_t*)core;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	return;
@@ -127,7 +125,7 @@ debug_function(cpu_t *cpu) {
 
 void arm_dyncom_run(cpu_t* cpu){
 	arm_core_t* core = (arm_core_t*)cpu->cpu_data;
-	addr_t phys_pc = core->pc;
+	addr_t phys_pc = core->Reg[15];
 #if 0
 	if(mmu_read_(core, core->pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
 		/* we donot allow mmu exception in tagging state */
@@ -146,7 +144,7 @@ void arm_dyncom_run(cpu_t* cpu){
                         break;
                 case JIT_RETURN_SINGLESTEP:
                 case JIT_RETURN_FUNCNOTFOUND:
-                        cpu_tag(cpu, core->pc);
+                        cpu_tag(cpu, core->Reg[15]);
                         cpu->dyncom_engine->functions = 0;
                         cpu_translate(cpu);
 		 /*
