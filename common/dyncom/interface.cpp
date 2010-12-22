@@ -420,11 +420,6 @@ cpu_run(cpu_t *cpu, debug_function_t debug_function)
 		} else
 			return JIT_RETURN_FUNCNOTFOUND;
 
-		if (do_translate) {
-			cpu_translate(cpu);
-			pc = cpu->f.get_pc(cpu, cpu->rf.grf);
-		}
-
 		//orig_pc = pc;
 		//orig_icounter = REG(SR(ICOUNTER));
 		success = false;
