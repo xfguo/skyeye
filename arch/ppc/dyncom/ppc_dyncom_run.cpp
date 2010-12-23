@@ -158,7 +158,8 @@ void ppc_dyncom_run(cpu_t* cpu){
                         break;  
                 case JIT_RETURN_SINGLESTEP:
                 case JIT_RETURN_FUNCNOTFOUND:
-                        cpu_tag(cpu, phys_pc);
+			printf("In %s, function not found at 0x%x\n", __FUNCTION__, core->phys_pc);
+                        cpu_tag(cpu, core->phys_pc);
                         cpu->dyncom_engine->functions = 0;
                         cpu_translate(cpu);
 		 /*

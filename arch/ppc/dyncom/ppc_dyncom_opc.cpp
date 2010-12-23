@@ -93,14 +93,14 @@ static int opc_bx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
 	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	uint32 li;
-	PPC_OPC_TEMPL_I(current_core->current_opc, li);
-	if (!(current_core->current_opc & PPC_OPC_AA)) {
+	PPC_OPC_TEMPL_I(instr, li);
+	if (!(instr & PPC_OPC_AA)) {
 		//li += current_core->pc;
-		arch_store(CONST(li + current_core->pc), cpu->ptr_PC, bb);
+		arch_store(CONST(li + current_core->phys_pc), cpu->ptr_PHYS_PC, bb);
 	}
-	if (current_core->current_opc & PPC_OPC_LK) {
+	if (instr & PPC_OPC_LK) {
 		//current_core->lr = current_core->pc + 4;
-		LET(LR_REGNUM, CONST(current_core->pc + 4));
+		LET(LR_REGNUM, CONST(4 + current_core->phys_pc));
 	}
 	//current_core->npc = li;
 	return PPC_INSN_SIZE;
