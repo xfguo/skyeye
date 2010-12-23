@@ -328,6 +328,9 @@ static uint32 ppc_get_step(){
 	PPC_CPU_State* cpu = get_current_cpu();
 	return cpu->core[0].step;
 }
+static uint32 ppc_get_regnum(){
+	return PPC_MAX_REGNUM;
+}
 static char* ppc_get_regname_by_id(int id){
         return ppc_regstr[id];
         //return NULL;
@@ -426,6 +429,7 @@ init_ppc_arch ()
 	ppc_arch.parse_cpu = ppc_parse_cpu;
 	ppc_arch.get_regval_by_id = ppc_get_regval_by_id;
         ppc_arch.get_regname_by_id = ppc_get_regname_by_id;
+	ppc_arch.get_regnum = ppc_get_regnum;
 	ppc_arch.mmu_read = ppc_mmu_read;
 	ppc_arch.mmu_write = ppc_mmu_write;
 	//ppc_arch.parse_mach = ppc_parse_mach;

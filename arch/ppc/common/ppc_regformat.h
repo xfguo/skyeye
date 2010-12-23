@@ -41,6 +41,7 @@ enum ppc_regno{
 	CTR,
 	XER,
 	FPSCR,
+	PPC_MAX_REGNUM,
 };
 
 #endif
