@@ -24,9 +24,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
 #include "skyeye_options.h"
+#include "skyeye_mm.h"
 //#include "arm_regformat.h"
 
 /* flag to enable log function. */
@@ -39,7 +41,8 @@ static const char* log_option_name = "instr_log";
 static const char log_filename[30];
 
 static uint32 range_begin = 0, range_end = ~0, trigger_start = ~0, trigger_stop = ~0;
-
+typedef uint32 reg_size_t;
+static reg_size_t* reg_array = NULL;
 /* fd of log_filename */
 static FILE* log_fd;
 
@@ -72,7 +75,7 @@ int instr_log_parse(struct skyeye_option_t *option, int num_params, const char *
 
 		else if (!strncmp ("filename", name, strlen (name))) {
 			strcpy(log_filename, value);
-			 log_fd = fopen(log_filename, "w");
+			log_fd = fopen(log_filename, "w");
 			if(log_fd == NULL){
 				fprintf(stderr, "Can not open the file %s for log-pc module.\n", log_filename);
 				return;
@@ -87,6 +90,20 @@ int instr_log_parse(struct skyeye_option_t *option, int num_params, const char *
 
 /* callback function for step exeuction. Will record pc here. */
 static void log_pc_callback(generic_arch_t* arch_instance){
+	if(SIM_is_running() != True)
+		return;
+	assert(arch_instance->get_regnum());
+	uint32 regnum = arch_instance->get_regnum();
+	if(reg_array == NULL){
+		reg_array = skyeye_mm_zero(regnum * sizeof(reg_size_t));
+		if(reg_array != NULL){
+			//printf("In %s, allocate the memory %d, reg_array=0x%x\n", __FUNCTION__, regnum * sizeof(reg_size_t), reg_array);
+		}
+		else{
+			fprintf(stderr, "In %s, memory allocation failed.\n", __FUNCTION__);
+			return;
+		}
+	}
 	generic_address_t pc = arch_instance->get_pc();
 	if(trigger_start == pc || (trigger_start == trigger_stop)){
 		enable_log_flag =True;
@@ -96,35 +113,28 @@ static void log_pc_callback(generic_arch_t* arch_instance){
 	if(enable_log_flag == True){
 		if((pc >= range_begin) && (pc < range_end)){
 			fprintf(log_fd, "pc=0x%x\n", arch_instance->get_pc());
+			int i;
+			for(i = 0; i < regnum; i++){
+				char* regname = arch_instance->get_regname_by_id(i);
+				if(regname == NULL)
+					break;
+				/*
+				 * Compare the current register value 
+				 * with the last register state. output to the log 
+				 * when different value 
+				 */
+				reg_size_t regval = arch_instance->get_regval_by_id(i);
+				if(reg_array[i] == regval){
+					continue;
+				}
+				else{
+					reg_array[i] = regval;
+				}
+				fprintf(log_fd,"%s=0x%x,", regname, regval);
+			}
+			fprintf(log_fd,"\n");
 		}
-#if 0
-		//fprintf(skyeye_logfd, "pc=0x%x,r3=0x%x\n", pc, state->Reg[3]);
-		 if(arch_instance->get_regval_by_id){
-                        /* only for arm */
-                        int i = 0;
-                        uint32 reg_value = 0;
-                        while(arch_instance->get_regname_by_id){
-                                reg_value = arch_instance->get_regval_by_id(i);
-                                printf("%s\t0x%x\n", arch_instance->get_regname_by_id, reg_value);
-                                i++;
-                        }
-                }
-		else{
-		}
-#endif
 	}
-}
-
-/* enable log functionality */
-static void com_log_pc(char* arg){
-	enable_log_flag = 1;
-	/* open file for record pc */
-	log_fd = fopen(log_filename, "w");	
-	if(log_fd == NULL){
-		fprintf(stderr, "Can not open the file %s for log-pc module.\n", log_filename);
-		return;
-	}
-
 }
 
 /* some initialization for log functionality */
@@ -133,13 +143,15 @@ int log_init(){
 	register_option(log_option_name, instr_log_parse, "Log every executed instruction");
 	/* register callback function */
 	register_callback(log_pc_callback, Step_callback);
-	/* add correspinding command */
-	add_command("log-pc", com_log_pc, "record the every pc to log file.\n");
 }
 
 /* destruction function for log functionality */
 int log_fini(){
 	if(log_fd != NULL){
 		fclose(log_fd);
+	}
+	if(reg_array != NULL){
+		skyeye_free(reg_array);
+		reg_array = NULL;
 	}
 }
