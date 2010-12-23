@@ -26,21 +26,77 @@
 #include <stdio.h>
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
+#include "skyeye_options.h"
 //#include "arm_regformat.h"
 
 /* flag to enable log function. */
-static int enable_log_flag;
+static bool_t enable_log_flag;
 
 /* the log file for record. */
-static const char* log_filename = "./pc.log";
+//static const char* log_filename = "./pc.log";
+
+static const char* log_option_name = "instr_log";
+static const char log_filename[30];
+
+static uint32 range_begin = 0, range_end = ~0, trigger_start = ~0, trigger_stop = ~0;
 
 /* fd of log_filename */
 static FILE* log_fd;
 
+/**
+ *parse the configuration file
+ */
+int instr_log_parse(struct skyeye_option_t *option, int num_params, const char *params[]) 
+{
+	int i;
+	char *p;
+	char name[MAX_PARAM_NAME], value[MAX_PARAM_NAME];
+
+	for (i = 0; i < num_params; i++) {
+		if (split_param (params[i], name, value) < 0)
+			SKYEYE_ERR
+				("Error: %s option has wrong parameter \"%s\".\n", log_option_name,
+				 name);
+		if (!strncmp ("range_begin", name, strlen (name))) {
+			sscanf (value, "%x", &range_begin);
+		}
+		else if (!strncmp ("trigger_start", name, strlen (name))) {
+			sscanf (value, "%x", &trigger_start);
+		}
+		else if (!strncmp ("range_end", name, strlen (name))) {
+			sscanf (value, "%x", &range_end);
+		}
+		else if (!strncmp ("trigger_stop", name, strlen (name))) {
+			sscanf (value, "%x", &trigger_stop);
+		}
+
+		else if (!strncmp ("filename", name, strlen (name))) {
+			strcpy(log_filename, value);
+			 log_fd = fopen(log_filename, "w");
+			if(log_fd == NULL){
+				fprintf(stderr, "Can not open the file %s for log-pc module.\n", log_filename);
+				return;
+			}
+		}
+		else
+			SKYEYE_ERR ("%s Error: Unkonw load_addr option  \"%s\"\n", log_option_name, params[i]);
+	}
+	return 0;
+}
+
+
 /* callback function for step exeuction. Will record pc here. */
 static void log_pc_callback(generic_arch_t* arch_instance){
-	if(enable_log_flag){
-		fprintf(log_fd, "pc=0x%x\n", arch_instance->get_pc());
+	generic_address_t pc = arch_instance->get_pc();
+	if(trigger_start == pc || (trigger_start == trigger_stop)){
+		enable_log_flag =True;
+	}
+	if(trigger_stop == pc)
+		enable_log_flag = False;
+	if(enable_log_flag == True){
+		if((pc >= range_begin) && (pc < range_end)){
+			fprintf(log_fd, "pc=0x%x\n", arch_instance->get_pc());
+		}
 #if 0
 		//fprintf(skyeye_logfd, "pc=0x%x,r3=0x%x\n", pc, state->Reg[3]);
 		 if(arch_instance->get_regval_by_id){
@@ -74,6 +130,7 @@ static void com_log_pc(char* arg){
 /* some initialization for log functionality */
 int log_init(){
 	exception_t exp;
+	register_option(log_option_name, instr_log_parse, "Log every executed instruction");
 	/* register callback function */
 	register_callback(log_pc_callback, Step_callback);
 	/* add correspinding command */

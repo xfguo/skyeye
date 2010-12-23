@@ -199,8 +199,10 @@ static void per_cpu_step(conf_object_t * running_core){
 	}
 
 	/* check if we need to run some callback functions at this time */
-	generic_arch_t *arch_instance = get_arch_instance("");
-	exec_callback(Step_callback, arch_instance);
+	if(!core->pir){
+		generic_arch_t *arch_instance = get_arch_instance("");
+		exec_callback(Step_callback, arch_instance);
+	}
 
 	core->step++;
 	core->npc = core->pc + 4;
