@@ -110,3 +110,4 @@ ppc_opc_func_t ppc_opc_bx_func = {
 	opc_bx_translate,
 	opc_invalid_translate_cond,
 };
+ppc_opc_func_t ppc_opc_bcx_func;

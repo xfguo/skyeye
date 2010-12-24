@@ -1,8 +1,8 @@
 /*
- *	PearPC
- *	ppc_alu.h
+ *	ppc_dyncom_alu.h - Definition of some translation function for 
+ *	powerpc dyncom. 
  *
- *	Copyright (C) 2003 Sebastian Biallas (sb@biallas.net)
+ *	Copyright (C) 2010 Michael.kang (blackfin.kang@gmail.com)
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License version 2 as
@@ -17,91 +17,64 @@
  *	along with this program; if not, write to the Free Software
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+/*
+ * 05/16/2010   Michael.Kang  <blackfin.kang@gmail.com>
+ */
 
 #ifndef __PPC_DYNCOM_ALU_H__
 #define __PPC_DYNCOM_ALU_H__
 #include "ppc_dyncom_dec.h"
 
-void ppc_opc_addx();
-void ppc_opc_addcx();
-void ppc_opc_addex();
-void ppc_opc_addi();
-void ppc_opc_addic();
-void ppc_opc_addic_();
-void ppc_opc_addis();
-void ppc_opc_addmex();
-void ppc_opc_addzex();
-
-void ppc_opc_andx();
-void ppc_opc_andcx();
-void ppc_opc_andi_();
-void ppc_opc_andis_();
-
-void ppc_opc_cmp();
-void ppc_opc_cmpi();
-void ppc_opc_cmpl();
-void ppc_opc_cmpli();
-
-void ppc_opc_cntlzwx();
-
-void ppc_opc_crand();
-void ppc_opc_crandc();
-void ppc_opc_creqv();
-void ppc_opc_crnand();
-void ppc_opc_crnor();
-void ppc_opc_cror();
-void ppc_opc_crorc();
-void ppc_opc_crxor();
-
-void ppc_opc_divwx();
-void ppc_opc_divwux();
-
-void ppc_opc_eqvx();
-
-void ppc_opc_extsbx();
-void ppc_opc_extshx();
-
-void ppc_opc_mulhwx();
-void ppc_opc_mulhwux();
-void ppc_opc_mulli();
-void ppc_opc_mullwx();
-
-void ppc_opc_nandx();
-
-void ppc_opc_negx();
-void ppc_opc_norx();
-
-void ppc_opc_orx();
-void ppc_opc_orcx();
-void ppc_opc_ori();
-void ppc_opc_oris();
-
-void ppc_opc_rlwimix();
-void ppc_opc_rlwinmx();
-void ppc_opc_rlwnmx();
-
-void ppc_opc_slwx();
-void ppc_opc_srawx();
-void ppc_opc_srawix();
-void ppc_opc_srwx();
-
-void ppc_opc_subfx();
-void ppc_opc_subfcx();
-void ppc_opc_subfex();
-void ppc_opc_subfic();
-void ppc_opc_subfmex();
-void ppc_opc_subfzex();
-
-void ppc_opc_xorx();
-void ppc_opc_xori();
-void ppc_opc_xoris();
-
-void ppc_opc_iseleq();
-void ppc_opc_iselgt();
-void ppc_opc_isel();
-void ppc_opc_tlbsx();
-
 extern ppc_opc_func_t ppc_opc_addis_func;
 extern ppc_opc_func_t ppc_opc_addi_func;
+extern ppc_opc_func_t ppc_opc_orx_func;
+extern ppc_opc_func_t ppc_opc_rlwinmx_func;
+
+extern ppc_opc_func_t ppc_opc_twi_func;		//  3
+extern ppc_opc_func_t ppc_opc_mulli_func;		//  7
+extern ppc_opc_func_t ppc_opc_subfic_func;	//  8
+extern ppc_opc_func_t ppc_opc_cmpli_func;
+extern ppc_opc_func_t ppc_opc_cmpi_func;
+extern ppc_opc_func_t ppc_opc_addic_func;		
+extern ppc_opc_func_t ppc_opc_addic__func;		
+extern ppc_opc_func_t ppc_opc_addi_func;
+extern ppc_opc_func_t ppc_opc_addis_func;
+extern ppc_opc_func_t ppc_opc_bcx_func;
+extern ppc_opc_func_t ppc_opc_sc_func;
+extern ppc_opc_func_t ppc_opc_rlwimix_func;
+extern ppc_opc_func_t ppc_opc_rlwinmx_func;
+extern ppc_opc_func_t ppc_opc_rlwnmx_func;
+extern ppc_opc_func_t ppc_opc_ori_func;
+extern ppc_opc_func_t ppc_opc_oris_func;
+extern ppc_opc_func_t ppc_opc_xori_func;
+extern ppc_opc_func_t ppc_opc_xoris_func;
+extern ppc_opc_func_t ppc_opc_andi__func;
+extern ppc_opc_func_t ppc_opc_andis__func;
+extern ppc_opc_func_t ppc_opc_lwz_func;
+extern ppc_opc_func_t ppc_opc_lwzu_func;
+extern ppc_opc_func_t ppc_opc_lbz_func;
+extern ppc_opc_func_t ppc_opc_lbzu_func;
+extern ppc_opc_func_t ppc_opc_stw_func;
+extern ppc_opc_func_t ppc_opc_stwu_func;
+extern ppc_opc_func_t ppc_opc_stb_func;
+extern ppc_opc_func_t ppc_opc_stbu_func;
+extern ppc_opc_func_t ppc_opc_lhz_func;
+extern ppc_opc_func_t ppc_opc_lhzu_func;
+extern ppc_opc_func_t ppc_opc_lha_func;
+extern ppc_opc_func_t ppc_opc_lhau_func;
+extern ppc_opc_func_t ppc_opc_sth_func;
+extern ppc_opc_func_t ppc_opc_sthu_func;
+extern ppc_opc_func_t ppc_opc_lmw_func;
+extern ppc_opc_func_t ppc_opc_stmw_func;
+extern ppc_opc_func_t ppc_opc_lfs_func;
+extern ppc_opc_func_t ppc_opc_lfsu_func;
+extern ppc_opc_func_t ppc_opc_lfd_func;
+extern ppc_opc_func_t ppc_opc_lfdu_func;
+extern ppc_opc_func_t ppc_opc_stfs_func;
+extern ppc_opc_func_t ppc_opc_stfsu_func;
+extern ppc_opc_func_t ppc_opc_stfd_func;
+extern ppc_opc_func_t ppc_opc_stfdu_func;
+extern ppc_opc_func_t ppc_opc_mtspr_func;
+extern ppc_opc_func_t ppc_opc_mfspr_func;
 
 #endif

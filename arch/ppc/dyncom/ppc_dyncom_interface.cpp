@@ -128,6 +128,13 @@ ppc_init_state ()
 
 static void per_cpu_step(conf_object_t * running_core){
 	e500_core_t *core = (e500_core_t *)get_cast_conf_obj(running_core, "e500_core_t");
+	PPC_CPU_State* cpu = get_current_cpu();
+	/* Check the second core and boot flags */
+	if(core->pir){
+		if(!(cpu->eebpcr & 0x2000000))
+			return;
+	}
+	printf("In %s, core[%d].pc=0x%x\n", __FUNCTION__, core->pir, core->pc);
 	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 }
 static void per_cpu_stop(conf_object_t * core){

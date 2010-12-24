@@ -147,6 +147,7 @@ void ppc_dyncom_run(cpu_t* cpu){
 		fprintf(stderr, "In %s, can not translate the pc 0x%x\n", __FUNCTION__, core->pc);
 		exit(-1);
 	}
+	printf("In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, phys_pc);
 	core->phys_pc = phys_pc;
 	cpu->dyncom_engine->code_start = phys_pc;
         cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);

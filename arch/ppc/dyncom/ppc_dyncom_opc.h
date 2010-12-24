@@ -24,9 +24,10 @@
 #include "skyeye_types.h"
 #include <dyncom/tag.h>
 
+#include "ppc_tools.h"
 #include "ppc_dyncom_run.h"
 
-static inline void ppc_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
+static inline void ppc_dyncom_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
 {
 	e500_core_t* current_core = get_current_core();
 	current_core->cr &= 0x0fffffff;
@@ -38,6 +39,20 @@ static inline void ppc_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
 		current_core->cr |= CR_CR0_GT;
 	}
 	if (current_core->xer & XER_SO) current_core->cr |= CR_CR0_SO;
+}
+static inline uint32 ppc_mask(int MB, int ME)
+{
+	uint32 mask;
+	if (MB <= ME) {
+		if (ME-MB == 31) {
+			mask = 0xffffffff;
+		} else {
+			mask = ((1<<(ME-MB+1))-1)<<(31-ME);
+		}
+	} else {
+		mask = ppc_word_rotl((1<<(32-MB+ME+1))-1, 31-ME);
+	}
+	return mask;
 }
 
 extern ppc_opc_func_t ppc_opc_bx_func;

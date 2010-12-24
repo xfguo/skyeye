@@ -4,6 +4,7 @@
 
 #include "bank_defs.h"
 #include "skyeye_dyncom.h"
+#include "skyeye.h"
 #include "dyncom/dyncom_llvm.h"
 #include "dyncom/frontend.h"
 #include "ppc_dyncom.h"
@@ -12,7 +13,7 @@
 
 #include "ppc_dyncom_dec.h"
 
-#define BAD_INSTR {fprintf(stderr, "In %s, cannot parse instruction 0x%x\n", __FUNCTION__, instr);exit(-1);}
+#define BAD_INSTR {fprintf(stderr, "In %s, cannot parse instruction 0x%x\n", __FUNCTION__, instr);skyeye_exit(-1);}
 
 using namespace llvm;
 

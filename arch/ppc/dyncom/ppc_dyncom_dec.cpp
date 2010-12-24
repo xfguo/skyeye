@@ -46,7 +46,7 @@
 #include "ppc_mmu.h"
 #include "ppc_opc.h"
 
-#define BAD_INSTR {fprintf(stderr, "In %s, cannot parse instruction 0x%x\n", __FUNCTION__, instr);exit(-1);}
+#define BAD_INSTR {fprintf(stderr, "In %s, cannot parse instruction 0x%x\n", __FUNCTION__, instr);skyeye_exit(-1);}
 //#include "io/prom/promosi.h"
 #if 0
 static void ppc_opc_invalid(cpu_t* cpu, BasicBlock* bb)
@@ -160,10 +160,8 @@ static ppc_opc_func_t ppc_opc_invalid = {
 };
 
 // main opcode 19
-static ppc_opc_func_t* ppc_opc_group_1(cpu_t* cpu, BasicBlock* bb)
+static ppc_opc_func_t* ppc_opc_group_1(uint32 instr)
 {
-	e500_core_t* current_core = get_current_core();
-	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
 	//printf("DBG:in %s,before exec pc=0x%x,opc=0x%x,ext=0x%x\n", __FUNCTION__, current_core->pc, current_core->current_opc, ext);
 #if 0
 	if (ext & 1) {
@@ -212,6 +210,9 @@ static void ppc_opc_init_group2()
 	for (i=0; i<(sizeof ppc_opc_table_group2 / sizeof ppc_opc_table_group2[0]); i++) {
 		ppc_opc_table_group2[i] = &ppc_opc_invalid;
 	}
+	ppc_opc_table_group2[339] = &ppc_opc_mfspr_func;
+	ppc_opc_table_group2[444] = &ppc_opc_orx_func;
+	ppc_opc_table_group2[467] = &ppc_opc_mtspr_func;
 #if 0
 	ppc_opc_table_group2[0] = ppc_dyncom_cmp;
 	ppc_opc_table_group2[4] = ppc_opc_tw;
@@ -354,14 +355,14 @@ static void ppc_opc_init_group2()
 }
 
 // main opcode 31
-inline static ppc_opc_func_t* ppc_opc_group_2(cpu_t* cpu, BasicBlock* bb)
+inline static ppc_opc_func_t* ppc_opc_group_2(uint32 opc)
 {
-	e500_core_t* current_core = get_current_core();
-	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
+	uint32 ext = PPC_OPC_EXT(opc);
 	/*
 	if(current_core->pc >= 0xfff80100 && current_core->pc < 0xfffff000)
                         printf("DBG:before exec pc=0x%x,opc=0x%x,ext=0x%x\n", current_core->pc, current_core->current_opc, ext);
 	*/
+	printf("In %s, ext=0x%x\n", __FUNCTION__, ext);
 	if (ext >= (sizeof ppc_opc_table_group2 / sizeof ppc_opc_table_group2[0])) {
 		return &ppc_opc_invalid;
 	}
@@ -369,14 +370,9 @@ inline static ppc_opc_func_t* ppc_opc_group_2(cpu_t* cpu, BasicBlock* bb)
 }
 
 // main opcode 59
-static ppc_opc_func_t* ppc_opc_group_f1(cpu_t* cpu, BasicBlock* bb)
+static ppc_opc_func_t* ppc_opc_group_f1(uint32 instr)
 {
-	e500_core_t* current_core = get_current_core();
-	if ((current_core->msr & MSR_FP) == 0) {
-		ppc_exception(current_core, PPC_EXC_NO_FPU,0 ,0);
-		return NULL;
-	}
-	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
+	uint32 ext = PPC_OPC_EXT(instr);
 #if 0
 	switch (ext & 0x1f) {
 		case 18: ppc_opc_fdivsx(); return;
@@ -395,14 +391,9 @@ static ppc_opc_func_t* ppc_opc_group_f1(cpu_t* cpu, BasicBlock* bb)
 }
 
 // main opcode 63
-static ppc_opc_func_t* ppc_opc_group_f2(cpu_t* cpu, BasicBlock* bb)
+static ppc_opc_func_t* ppc_opc_group_f2(uint32 instr)
 {
-	e500_core_t* current_core = get_current_core();
-	if ((current_core->msr & MSR_FP) == 0) {
-		ppc_exception(current_core, PPC_EXC_NO_FPU, 0 ,0);
-		return NULL;
-	}
-	uint32 ext = PPC_OPC_EXT(current_core->current_opc);
+	uint32 ext = PPC_OPC_EXT(instr);
 #if 0
 	if (ext & 16) {
 		switch (ext & 0x1f) {
@@ -714,7 +705,17 @@ ppc_opc_func_t* ppc_get_opc_func(uint32_t opc)
 {
 	uint32 mainopc = PPC_OPC_MAIN(opc);
 	printf("In %s,opc=0x%x,mainopc=0x%x\n", __FUNCTION__, opc, mainopc);
-	return &ppc_opc_table_main[mainopc];
+	if(mainopc == 31){
+		return ppc_opc_group_2(opc);
+	}
+	else if(mainopc == 19)
+		return ppc_opc_group_1(opc);
+	else if(mainopc == 59)
+		return ppc_opc_group_f1(opc);
+	else if(mainopc == 63)
+		return ppc_opc_group_f2(opc);
+	else
+		return &ppc_opc_table_main[mainopc];
 }
 
 void ppc_dyncom_dec_init()
@@ -724,11 +725,56 @@ void ppc_dyncom_dec_init()
 	for (i=0; i<(sizeof ppc_opc_table_main / sizeof ppc_opc_table_main[0]); i++) {
                 ppc_opc_table_main[i] = ppc_opc_invalid;
         }
+	ppc_opc_table_main[3] = ppc_opc_twi_func;		//  3
+	ppc_opc_table_main[7] = ppc_opc_mulli_func;		//  7
+	ppc_opc_table_main[8] = ppc_opc_subfic_func;	//  8
+	ppc_opc_table_main[10] = ppc_opc_cmpli_func;
+	ppc_opc_table_main[11] = ppc_opc_cmpi_func;
+	ppc_opc_table_main[12] = ppc_opc_addic_func;		
+	ppc_opc_table_main[13] = ppc_opc_addic__func;		
 	ppc_opc_table_main[14] = ppc_opc_addi_func;
 	ppc_opc_table_main[15] = ppc_opc_addis_func;
+	ppc_opc_table_main[16] = ppc_opc_bcx_func;
+	ppc_opc_table_main[17] = ppc_opc_sc_func;
 	ppc_opc_table_main[18] = ppc_opc_bx_func;
-
+	ppc_opc_table_main[20] = ppc_opc_rlwimix_func;
+	ppc_opc_table_main[21] = ppc_opc_rlwinmx_func;
+	ppc_opc_table_main[23] = ppc_opc_rlwnmx_func;
+	ppc_opc_table_main[24] = ppc_opc_ori_func;
+	ppc_opc_table_main[25] = ppc_opc_oris_func;
+	ppc_opc_table_main[26] = ppc_opc_xori_func;
+	ppc_opc_table_main[27] = ppc_opc_xoris_func;
+	ppc_opc_table_main[28] = ppc_opc_andi__func;
+	ppc_opc_table_main[29] = ppc_opc_andis__func;
+	ppc_opc_table_main[32] = ppc_opc_lwz_func;
+	ppc_opc_table_main[33] = ppc_opc_lwzu_func;
+	ppc_opc_table_main[34] = ppc_opc_lbz_func;
+	ppc_opc_table_main[35] = ppc_opc_lbzu_func;
+	ppc_opc_table_main[36] = ppc_opc_stw_func;
+	ppc_opc_table_main[37] = ppc_opc_stwu_func;
+	ppc_opc_table_main[38] = ppc_opc_stb_func;
+	ppc_opc_table_main[39] = ppc_opc_stbu_func;
+	ppc_opc_table_main[40] = ppc_opc_lhz_func;
+	ppc_opc_table_main[41] = ppc_opc_lhzu_func;
+	ppc_opc_table_main[42] = ppc_opc_lha_func;
+	ppc_opc_table_main[43] = ppc_opc_lhau_func;
+	ppc_opc_table_main[44] = ppc_opc_sth_func;
+	ppc_opc_table_main[45] = ppc_opc_sthu_func;
+	ppc_opc_table_main[46] = ppc_opc_lmw_func;
+	ppc_opc_table_main[47] = ppc_opc_stmw_func;
+	ppc_opc_table_main[48] = ppc_opc_lfs_func;
+	ppc_opc_table_main[49] = ppc_opc_lfsu_func;
+	ppc_opc_table_main[50] = ppc_opc_lfd_func;
+	ppc_opc_table_main[51] = ppc_opc_lfdu_func;
+	ppc_opc_table_main[52] = ppc_opc_stfs_func;
+	ppc_opc_table_main[53] = ppc_opc_stfsu_func;
+	ppc_opc_table_main[54] = ppc_opc_stfd_func;
+	ppc_opc_table_main[55] = ppc_opc_stfdu_func;
 #if 0	
+	&ppc_opc_group_f1,	// 59
+	&ppc_opc_group_f2,	// 63
+
+
 	if ((ppc_cpu_get_pvr(0) & 0xffff0000) == 0x000c0000) {
 		ppc_opc_table_main[4] = ppc_opc_group_v;
 		ppc_opc_init_groupv();
