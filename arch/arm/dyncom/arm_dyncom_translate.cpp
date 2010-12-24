@@ -14,6 +14,12 @@
 #include "dyncom/tag.h"
 #include "bank_defs.h"
 #include "arm_dyncom_dec.h"
+
+#define ptr_N	cpu->ptr_N
+#define ptr_Z	cpu->ptr_Z
+#define ptr_C	cpu->ptr_C
+#define ptr_V	cpu->ptr_V
+#define ptr_I 	cpu->ptr_I
 using namespace llvm;
 
 typedef int (*tag_func_t)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
@@ -79,7 +85,11 @@ int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t
 	uint32_t instr;
 	bus_read(32, pc, &instr);
 	arm_opc_func_t *opc_func = arm_get_opc_func(instr);
-	opc_func->tag(cpu, pc, instr, tag, new_pc, next_pc);
+	printf("pc is %x\n",  pc);
+	if (instr)
+		opc_func->tag(cpu, pc, instr, tag, new_pc, next_pc);
+	else
+		*tag |= TAG_STOP;
 	return instr_size;
 }
 
@@ -130,12 +140,6 @@ void arm_opc_func_init()
 	init_arm_opc_group15(&arm_opc_table[0xf0]);
 }
 
-#define ptr_N			((ccarm_t*)cpu->feptr)->ptr_N
-#define ptr_Z			((ccarm_t*)cpu->feptr)->ptr_Z
-#define ptr_C			((ccarm_t*)cpu->feptr)->ptr_C
-#define ptr_V			((ccarm_t*)cpu->feptr)->ptr_V
-#define ptr_I			((ccarm_t*)cpu->feptr)->ptr_I
-#define ptr_CPSR	cpu->ptr_xr[0]
 
 Value *
 arm_translate_cond(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
@@ -197,12 +201,13 @@ int arm_tag_ret(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_p
 		*tag |= TAG_CONDITIONAL;
 }
 
-#define ARM_BRANCH_TARGET (((BITS(0,23) << 8) >> 6) + pc + 8)
+#define ARM_BRANCH_TARGET (BIT(23)?(pc - ((~(BITS(0,23) << 8) >> 6) + 1) + 8):(((BITS(0,23) << 8) >> 6) + pc + 8))
 int arm_tag_call(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	uint32_t opc = instr;
 	*tag = TAG_CALL;
 	*new_pc = ARM_BRANCH_TARGET;
+	*next_pc = pc + instr_size;
 	if(instr >> 28 != 0xe)
 		*tag |= TAG_CONDITIONAL;
 }
@@ -212,8 +217,11 @@ int arm_tag_branch(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *ne
 	uint32_t opc = instr;
 	*tag = TAG_BRANCH;
 	*new_pc = ARM_BRANCH_TARGET;
+	*next_pc = pc + instr_size;
 	if(instr >> 28 != 0xe)
+	{
 		*tag |= TAG_CONDITIONAL;
+	}
 }
 
 int init_arm_opc_group0(arm_opc_func_t* arm_opc_table)
@@ -1125,7 +1133,7 @@ int init_arm_opc_group10(arm_opc_func_t* arm_opc_table)
 
 	{
 		(arm_opc_table)[0xf].translate = arm_opc_trans_af;
-		(arm_opc_table)[0xf].tag = arm_tag_continue;
+		(arm_opc_table)[0xf].tag = arm_tag_branch;
 	}
 }
 
@@ -1133,7 +1141,7 @@ int init_arm_opc_group11(arm_opc_func_t* arm_opc_table)
 {
 	{
 		(arm_opc_table)[0x0].translate = arm_opc_trans_b0;
-		(arm_opc_table)[0x0].tag = arm_tag_continue;
+		(arm_opc_table)[0x0].tag = arm_tag_call;
 	}
 
 	{

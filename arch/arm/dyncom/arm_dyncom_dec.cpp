@@ -9,7 +9,68 @@
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 #define BIT(n) ((instr >> (n)) & 1)
 #define BAD
+#define ptr_N	cpu->ptr_N
+#define ptr_Z	cpu->ptr_Z
+#define ptr_C	cpu->ptr_C
+#define ptr_V	cpu->ptr_V
+#define ptr_I 	cpu->ptr_I
+#define	ptr_CPSR cpu->ptr_gpr[16]
+
+/*xxxx xxxx xxxx xxxx 1111 xxxx xxxx xxxx */
+#define RD ((instr >> 12) & 0xF)
+/*xxxx xxxx xxxx 1111 xxxx xxxx xxxx xxxx */
+#define RN ((instr >> 16) & 0xF)
+/*xxxx xxxx xxxx xxxx xxxx xxxx xxxx 1111 */
+#define RM (instr & 0xF)
+#define BIT(n) ((instr >> (n)) & 1)
+#define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
+/*xxxx xx1x xxxx xxxx xxxx xxxx xxxx xxxx */
+#define I ((instr >> 25) & 1)
+/*xxxx xxxx xxx1 xxxx xxxx xxxx xxxx xxxx */
+#define S BIT(20)
+
+
+
 using namespace llvm;
+Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
+{
+        if (I) { /* 32-bit immediate */
+                //XXX TODO: shifter carry out
+                uint32_t immed_8 = instr & 0xFF;
+                int rotate_imm = ((instr >> 8) & 0xF) << 1;
+                return CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm)));
+        } else {
+                if (!BIT(4)) { /* Immediate shifts */
+                        int shift = BITS(5,6);
+                        int shift_imm = BITS(7,11);
+                        LOG("shift=%x\n", shift);
+                        LOG("shift_imm=%x\n", shift_imm);
+                        if (!shift && !shift_imm) { /* Register */
+                                return R(RM);
+                        } else {
+                                BAD;
+                        }
+                } else {
+                        if (!BIT(7)) { /* Register shifts */
+                                BAD;
+                        } else { /* arithmetic or Load/Store instruction extension space */
+                                BAD;
+                        }
+                }
+        }
+}
+
+Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
+{
+                int rotate_imm = (instr << 2);
+		if(instr &  0x1000000)
+			rotate_imm |= 0xfc000000;
+		else
+			rotate_imm &= 0x06ffffff;
+}
+#define OPERAND operand(cpu,instr,bb)
+#define BOPERAND boperand(cpu,instr,bb)
+
 int arm_opc_trans_00(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* AND Reg I = 0 S = 0*/
@@ -86,13 +147,38 @@ int arm_opc_trans_03(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	else {
 		/* EORS */
 	}
+	if(RD == 15){
+		new StoreInst(SUB(R(14), CONST(4)), cpu->ptr_PC, bb);
+	}
+	LET(RD, OPERAND);
 	return 0;
 }
 
 int arm_opc_trans_04(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* SUB reg  I = 0 S = 0*/
+	if (BITS (4, 7) == 0xB) {
+		/* STRH immediate offset, no write-back, down, post indexed.  */
+		/* P = 0 ,  U = 0, I = 1, W = 0 */
+		return 0;
+	}
+	if (BITS (4, 7) == 0xD) {
+		/* LDRD */
+		/* P = 0 ,  U = 0, I = 1, W = 0 */
+		return 0;
+	}
+	if (BITS (4, 7) == 0xF) {
+		/* LDRD */
+		/* P = 0 ,  U = 0, I = 1, W = 0 */
+		return 0;
+	}
 
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *res = SUB(op1, op2);
+	LET(RD, res);
 
+	return 0;
 }
 
 int arm_opc_trans_05(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -266,6 +352,9 @@ int arm_opc_trans_12(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	}
 	//}
 
+	/* ~MODET */
+	new StoreInst(OPERAND, cpu->ptr_PC, bb);
+
 	return 0;
 }
 
@@ -283,8 +372,15 @@ int arm_opc_trans_14(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_15(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/* CMP reg I = 0 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = SUB(op1, op2);
+	/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+	/* C */ new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
+	/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+	return 0;
 }
 
 int arm_opc_trans_16(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -467,8 +563,11 @@ int arm_opc_trans_23(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_24(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/* SUB immed I = 0, $ = 0 */
+	Value* op1 = R(RN);
+	Value* op2 = OPERAND;
+	LET(RD,SUB(op1, op2));
+	return 0;
 }
 
 int arm_opc_trans_25(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -492,6 +591,9 @@ int arm_opc_trans_27(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_28(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* ADD immed  I = 1 S = 0*/
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	LET(RD, ADD(op1, op2));
 	return 0;
 }
 
@@ -572,8 +674,15 @@ int arm_opc_trans_34(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_35(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/* CMPP immed I = 1, */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = SUB(op1,op2);
+	/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+	/* C */ new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
+	/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+	return 0;
 }
 
 int arm_opc_trans_36(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -603,6 +712,11 @@ int arm_opc_trans_39(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_3a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* MOV immed. I = 1, S = 0 */
+	if(RD == 15){
+		new StoreInst(SUB(R(14), CONST(4)), cpu->ptr_PC, bb);
+	}
+	LET(RD, OPERAND);
+
 	return 0;
 }
 
@@ -782,14 +896,20 @@ int arm_opc_trans_57(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_58(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/* Store Word, No WriteBack, Pre Inc, Immed. */
+	/* I = 0, P = 1, U = 1, W = 0 */
+	Value *addr = OPERAND;
+	arch_write_memory(cpu, bb, addr, R(RN), 32);
 }
 
 int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/* Load Word, No WriteBack, Pre Inc, Immed.  */
+	/* I = 0, P = 1, U = 0, W = 0 */
+	Value *addr = OPERAND;
+	Value *ret = arch_read_memory(cpu, bb, addr, 0, 32);
+	LET(RD,ret);
+	return 0;
 }
 
 int arm_opc_trans_5a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1004,8 +1124,15 @@ int arm_opc_trans_7c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_7d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* Load Byte, No WriteBack, Pre Inc, Reg. */
+	/* P = 1 , U = 1, W = 0 */
+	if(BIT(4)){
+		/* UNDEF INSTR */
+	}
 
-
+	Value *addr = OPERAND;
+	Value *ret = arch_read_memory(cpu, bb, addr, 0, 8);
+	LET(RD,ret);
 }
 
 int arm_opc_trans_7e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1257,8 +1384,8 @@ int arm_opc_trans_a7(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_a8(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* 0xa8 - 0xaf negative addr */
-
-
+	LET(14, ADD(R(15), CONST(4)));
+	LET(15, SUB(R(15),BOPERAND));
 }
 
 int arm_opc_trans_a9(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1299,7 +1426,8 @@ int arm_opc_trans_af(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_b0(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* b0 - b7 branch and link forward */
-
+	LET(14, AND(R(15),CONST(4)));
+	LET(15, AND(R(15),BOPERAND));
 }
 
 int arm_opc_trans_b1(cpu_t *cpu, uint32_t instr, BasicBlock *bb)

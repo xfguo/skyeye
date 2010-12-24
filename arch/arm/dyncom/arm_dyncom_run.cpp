@@ -16,6 +16,12 @@ uint32_t get_end_of_page(uint32 phys_addr){
 	const uint32 page_size = 4 * 1024;
 	return (phys_addr + page_size) & (~(page_size - 1));
 }
+
+void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
+{
+        cpu->dyncom_engine->flags_codegen = f;
+}
+
 /* physical register for arm archtecture */
 static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 {
@@ -53,7 +59,7 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
                | CPU_DEBUG_PRINT_IR
                | CPU_DEBUG_LOG
                );
-
+        cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
 	/* Initilize different register set for different core */
 }
 
