@@ -27,6 +27,7 @@
 #include <skyeye_callback.h>
 #include <skyeye_exec.h>
 #include <skyeye_log.h>
+#include <sim_control.h>
 static bool_t skyeye_running;
 static skyeye_exec_t* default_exec;
 
@@ -50,6 +51,7 @@ void skyeye_start(void){
 void skyeye_exit(int ret){
 	skyeye_pause();
 	skyeye_log(Error_log, __FUNCTION__, "Some unknown exception happened.\n");
+	SIM_fini();
 }
 
 void skyeye_break(void){
@@ -64,7 +66,7 @@ bool_t skyeye_is_running(void){
 /*
  * mainloop of simulatior
  */
-static void skyeye_loop(generic_arch_t *arch_instance){
+void skyeye_loop(generic_arch_t *arch_instance){
 	for (;;) {
 		/* check if we need to run some callback functions at this time */
 		exec_callback(Step_callback, arch_instance);

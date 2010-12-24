@@ -11,6 +11,7 @@
 #include "skyeye_mm.h"
 #include "skyeye_command.h"
 #include "skyeye_loader.h"
+#include "skyeye_symbol.h"
 #include "skyeye_log.h"
 /* FIXME, we should get it from prefix varaible after ./configure */
 #ifndef SKYEYE_MODULE_DIR
@@ -176,6 +177,7 @@ void SIM_start(void){
 		else
 			ret = load_elf(pref->exec_file, Phys_addr);
 	}
+	init_symbol_table(pref->exec_file);
 
 	/* set pc from config */
 	generic_address_t pc = (config->start_address & pref->exec_load_mask)|pref->exec_load_base; 

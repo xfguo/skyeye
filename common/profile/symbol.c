@@ -55,13 +55,13 @@ void init_symbol_table(char* filename)
 					//skyeye_exit(-1);
 		return;
 	}
-  abfd = bfd_openr (filename, 0);
+	abfd = bfd_openr (filename, "elf32-powerpc");
 
 
-  if (!bfd_check_format(abfd, bfd_object)) {
-    printf("Wrong format\n") ;
-    exit(0);
-  }
+	if (!bfd_check_format(abfd, bfd_object)) {
+		printf("Wrong format\n") ;
+		exit(0);
+	}
 
   storage_needed = bfd_get_symtab_upper_bound(abfd);
   if (storage_needed < 0){
@@ -136,7 +136,7 @@ void init_symbol_table(char* filename)
   If it exists, the corresponding pointer to the SYM_FUNC will
   be returned
 *************************************************************/
-char *get_sym(ARMword address)
+char *get_sym(generic_address_t address)
 {
   int j ;
   ENTRY entry, *ep;
@@ -144,6 +144,7 @@ char *get_sym(ARMword address)
   SYM_FUNC *symp;
 
   //printf("GetSym %x\n", address);
+	assert(!symbol_table);
   entry.key = text ;
   for (j=0;j<8;j++) {
     entry.key[j] = itoa_tab[(address >> (j << 2)) & 0xf] ;

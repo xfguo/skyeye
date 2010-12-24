@@ -18,8 +18,11 @@
 #ifndef ARMSYM_H
 #define ARMSYM_H
 
-#include "armdefs.h"
 #include <config.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "skyeye_types.h"
 struct sym_func {
   char *name;
   long long total_energy; // for all instances
@@ -32,8 +35,8 @@ typedef struct sym_func SYM_FUNC;
 struct sym_funcinst {
   /* Function Info */
   SYM_FUNC *func_symbol;
-  ARMword func_start_addr; // the address at which this function starts
-  ARMword ret_addr; // the  PC at which we make sub-routine call 
+  generic_address_t func_start_addr; // the address at which this function starts
+  generic_address_t ret_addr; // the  PC at which we make sub-routine call 
 
   /* Profiling Data */
   float tenergy;
@@ -43,7 +46,7 @@ struct sym_funcinst {
 #define MAX_LEVEL 1024
 
 struct sym_taskinst {
-  ARMword task_id; // Actually is the pointer to Linux struct task_struct 
+  generic_address_t task_id; // Actually is the pointer to Linux struct task_struct 
   /* Task call stack */
   struct sym_funcinst func_stack[MAX_LEVEL];
   int level;
@@ -63,15 +66,15 @@ typedef struct sym_taskinst TASK_STACK;
   Function declaration
 ******************************************************/
 //void ARMul_InitSymTable(bfd *abfd);
-SYM_FUNC *ARMul_GetSym(ARMword address);
-void ARMul_ProfInit(ARMul_State *state);
-FUNC_NODE *ARMul_CreateChild(ARMul_State *state);
-void ARMul_DestroyChild(ARMul_State *state);
-void ARMul_CallCheck(ARMul_State *state, ARMword cur_pc, ARMword to_pc, ARMword instr);
-void ARMul_TaskSwitch(ARMul_State *state);
-ARMword ARMul_TaskCreate(ARMul_State *state);
-void ARMul_ReportEnergy(ARMul_State *state, FILE* pf);
-void ARMul_Consolidate(ARMul_State *state);
+SYM_FUNC *ARMul_GetSym(generic_address_t address);
+void ARMul_ProfInit(void *state);
+FUNC_NODE *ARMul_CreateChild(void *state);
+void ARMul_DestroyChild(void *state);
+void ARMul_CallCheck(void *state, generic_address_t cur_pc, generic_address_t to_pc, generic_address_t instr);
+void ARMul_TaskSwitch(void *state);
+generic_address_t ARMul_TaskCreate(void *state);
+void ARMul_ReportEnergy(void *state, FILE* pf);
+void ARMul_Consolidate(void *state);
 
 #endif
 

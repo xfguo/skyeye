@@ -10,6 +10,7 @@ common_mm = mm/skyeye_mm.c
 common_cli = cli/skyeye_command.c cli/skyeye_cli.c cli/default_command.c
 common_portable = portable/mman.c portable/usleep.c portable/gettimeofday.c
 common_preference = preference/skyeye_pref.c
+common_profile = profile/symbol.c
 common_memory = bus/bank_ops.c  bus/io.c  bus/ram.c bus/flash.c bus/skyeye_bus.c bus/bus_recoder.c
 common_core = core/skyeye_arch.c
 common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c device/skyeye_signal.c
@@ -31,7 +32,7 @@ nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
 ./include/skyeye_queue.h
 
-libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_dyncom)
+libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_dyncom) $(common_profile)
 
 libcommon_la_LIBADD = -L$(top_builddir)/third-party/bfd/.libs/ -lbfd -L$(top_builddir)/third-party/libiberty/pic -liberty -lreadline @LIBLTDL@ @LIBADD_DL@
 
