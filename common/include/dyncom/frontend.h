@@ -101,6 +101,7 @@ uint32_t RAM32LE(uint8_t *RAM, addr_t a);
 #define XOR(a,b) BinaryOperator::Create(Instruction::Xor, a, b, "", bb)
 #define SHL(a,b) BinaryOperator::Create(Instruction::Shl, a, b, "", bb)
 #define LSHR(a,b) BinaryOperator::Create(Instruction::LShr, a, b, "", bb)
+#define ROTL(data,n)	OR(SHL(data, CONST(n & 0x1f)), LSHR(data, CONST(32 - n & 0x1f)));
 #define ASHR(a,b) BinaryOperator::Create(Instruction::AShr, a, b, "", bb)
 #define ICMP_EQ(a,b) new ICmpInst(*bb, ICmpInst::ICMP_EQ, a, b, "")
 #define ICMP_NE(a,b) new ICmpInst(*bb, ICmpInst::ICMP_NE, a, b, "")
