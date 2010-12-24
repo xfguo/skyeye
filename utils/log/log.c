@@ -29,6 +29,7 @@
 #include "skyeye_callback.h"
 #include "skyeye_options.h"
 #include "skyeye_mm.h"
+#include "skyeye_symbol.h"
 //#include "arm_regformat.h"
 
 /* flag to enable log function. */
@@ -41,6 +42,14 @@ static const char* log_option_name = "instr_log";
 static const char log_filename[30];
 
 static uint32 range_begin = 0, range_end = ~0, trigger_start = ~0, trigger_stop = ~0;
+/*
+ * The default only record the function flow.
+ * 0: turn off;
+ * 1: function flow;
+ * 2: pc flow;
+ * 3: pc flow with the changed register info
+ */
+static uint32 log_level = 0;
 typedef uint32 reg_size_t;
 static reg_size_t* reg_array = NULL;
 /* fd of log_filename */
@@ -60,7 +69,12 @@ int instr_log_parse(struct skyeye_option_t *option, int num_params, const char *
 			SKYEYE_ERR
 				("Error: %s option has wrong parameter \"%s\".\n", log_option_name,
 				 name);
-		if (!strncmp ("range_begin", name, strlen (name))) {
+		printf("name=%s, level=%s\n", name, value);
+		if (!strncmp ("level", name, strlen (name))) {
+			sscanf (value, "%x", &log_level);
+		}
+
+		else if (!strncmp ("range_begin", name, strlen (name))) {
 			sscanf (value, "%x", &range_begin);
 		}
 		else if (!strncmp ("trigger_start", name, strlen (name))) {
@@ -82,7 +96,7 @@ int instr_log_parse(struct skyeye_option_t *option, int num_params, const char *
 			}
 		}
 		else
-			SKYEYE_ERR ("%s Error: Unkonw load_addr option  \"%s\"\n", log_option_name, params[i]);
+			SKYEYE_ERR ("%s Error: Unknown option  \"%s\"\n", log_option_name, params[i]);
 	}
 	return 0;
 }
@@ -112,27 +126,36 @@ static void log_pc_callback(generic_arch_t* arch_instance){
 		enable_log_flag = False;
 	if(enable_log_flag == True){
 		if((pc >= range_begin) && (pc < range_end)){
-			fprintf(log_fd, "pc=0x%x\n", arch_instance->get_pc());
-			int i;
-			for(i = 0; i < regnum; i++){
-				char* regname = arch_instance->get_regname_by_id(i);
-				if(regname == NULL)
-					break;
+			if(log_level = 1){
+				char* symbol = get_sym(pc);
+				if(symbol)
+					fprintf(log_fd, "%s:0x%x\n", symbol, pc);
+			}
+			if(log_level >= 2){
+				fprintf(log_fd, "pc=0x%x\n", arch_instance->get_pc());
+			}
+			if(log_level >= 3){
+				int i;
+				for(i = 0; i < regnum; i++){
+					char* regname = arch_instance->get_regname_by_id(i);
+					if(regname == NULL)
+						break;
 				/*
 				 * Compare the current register value 
 				 * with the last register state. output to the log 
 				 * when different value 
 				 */
-				reg_size_t regval = arch_instance->get_regval_by_id(i);
-				if(reg_array[i] == regval){
-					continue;
+					reg_size_t regval = arch_instance->get_regval_by_id(i);
+					if(reg_array[i] == regval){
+						continue;
+					}
+					else{
+						reg_array[i] = regval;
+					}
+					fprintf(log_fd,"%s=0x%x,", regname, regval);
 				}
-				else{
-					reg_array[i] = regval;
-				}
-				fprintf(log_fd,"%s=0x%x,", regname, regval);
-			}
-			fprintf(log_fd,"\n");
+				fprintf(log_fd,"\n");
+			}//if(log_level >= 3)
 		}
 	}
 }
