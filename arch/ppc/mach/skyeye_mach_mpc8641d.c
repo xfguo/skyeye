@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "skyeye_config.h"
 #include "skyeye_cell.h"
+#include "skyeye_pref.h"
 
 #include "sysendian.h"
 #include <ppc_cpu.h>
@@ -268,6 +269,8 @@ mpc8641d_io_do_cycle (void *state)
 }
 
 extern void mpc8641d_boot_linux();
+extern void mpc8641d_boot_application();
+
 static void
 mpc8641d_io_reset (void *state)
 {
@@ -295,7 +298,11 @@ mpc8641d_io_reset (void *state)
 		io->pic_ram.iidr[i] = 0x1;
 		io->pic_ram.iivpr[i] = 0x80800000;
 	}
-	mpc8641d_boot_linux();
+	sky_pref_t* pref = get_skyeye_pref();
+	if(pref->user_mode_sim)
+		mpc8641d_boot_application();
+	else
+		mpc8641d_boot_linux();
 }
 static uint32_t
 mpc8641d_io_read_byte (void *state, uint32_t offset)
