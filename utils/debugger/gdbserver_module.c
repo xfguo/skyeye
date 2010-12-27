@@ -22,6 +22,8 @@
  * 01/02/2010   Michael.Kang  <blackfin.kang@gmail.com>
  */
 #include "skyeye_module.h"
+#include "skyeye_command.h"
+extern int init_register_type();
 const char* skyeye_module = "gdbserver";
 void com_remote_gdb();
 void module_init(){

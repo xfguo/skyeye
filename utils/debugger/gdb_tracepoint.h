@@ -185,5 +185,11 @@ struct SkyEye_ICE{
 };
 extern struct SkyEye_ICE skyeye_ice;
 */
+void set_mc_action_base_reg(action *action_p, unsigned int base_reg);
+
+void set_mc_action_offset(action *action_p, unsigned int offset);
+void set_mc_action_length(action *action_p, unsigned int length);
+void set_wa_remaining_steps (action *action_p, unsigned int remaining_steps);
+trace_status get_trace_status();
 #endif  //_GDB_TRACEPOINT_H_
 

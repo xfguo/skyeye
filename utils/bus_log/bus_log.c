@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
+#include "skyeye_command.h"
 #include "skyeye_bus.h"
 
 /* flag to enable log function. */

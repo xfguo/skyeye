@@ -25,6 +25,8 @@
 //#include "armdefs.h"
 
 #include "skyeye_types.h"
+#include "skyeye_ram.h"
+#include "sim_control.h"
 #include "skyeye_arch.h"
 #include "breakpoint.h"
 //#include "memory.h"
@@ -134,13 +136,13 @@ void gdbserver_cont(){
 		sim_resume(0);
 #endif
 	SIM_continue(0);
-	while(skyeye_is_running())
+	while(SIM_is_running())
 		;
 	return;
 }
 void gdbserver_step(){
 	skyeye_stepi(1);
-	while(skyeye_is_running())
+	while(SIM_is_running())
 		;
 #if 0
          if(!strcmp(skyeye_config.arch->arch_name,"arm")){

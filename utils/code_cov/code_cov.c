@@ -30,6 +30,7 @@
 #include "skyeye_config.h"
 #include "skyeye_types.h"
 #include "skyeye_arch.h"
+#include "skyeye_command.h"
 #include "skyeye_callback.h"
 #define COV_ON 1
 #define COV_OFF 0

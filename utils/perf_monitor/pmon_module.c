@@ -4,6 +4,8 @@
 #include "skyeye_arch.h"
 #include "skyeye_module.h"
 
+int pmon_init();
+int pmon_fini();
 /* module name */
 const char* skyeye_module = "perf-monitor";
 

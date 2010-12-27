@@ -29,6 +29,7 @@
 #include "skyeye_callback.h"
 #include "skyeye_bus.h"
 #include "skyeye_options.h"
+#include "skyeye_command.h"
 #include "skyeye_module.h"
 
 /*

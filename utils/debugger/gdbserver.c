@@ -15,11 +15,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "arch_regdefs.h"
+#include "skyeye_thread.h"
 #include "skyeye2gdb.h"
 #include "skyeye_types.h"
 #include "skyeye_arch.h"
 #include <setjmp.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
 
@@ -930,7 +933,7 @@ store_inferior_registers (int regno, unsigned char *memory)
 			current_reg_type->store_register (regno,
 					    &(memory[current_reg_type->register_byte (regno)]));
 	else
-		current_reg_typestore_register (regno, &(memory[current_reg_type->register_byte (regno)]));
+		current_reg_type->store_register (regno, &(memory[current_reg_type->register_byte (regno)]));
 }
 int
 sim_debug ()

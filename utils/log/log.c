@@ -28,6 +28,7 @@
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
 #include "skyeye_options.h"
+#include "sim_control.h"
 #include "skyeye_mm.h"
 #include "skyeye_symbol.h"
 //#include "arm_regformat.h"

@@ -26,6 +26,7 @@
 #ifndef __SKYEYE2GDB_H__
 #define __SKYEYE2GDB_H__
 
+#include <skyeye_types.h>
 #include "gdb_tracepoint.h"
 
 //chy 2006-04-12 add ICE Simulation
@@ -65,4 +66,17 @@ typedef struct register_defs{
 #define MAX_SUPP_ARCH 8
 int sim_debug();
 //typedef struct register_defs register_defs_t;
+int
+sim_read (generic_address_t addr, unsigned char *buffer, int size);
+int
+sim_write (generic_address_t addr, unsigned char *buffer, int size);
+int sim_ice_breakpoint_remove(generic_address_t addr);
+int sim_ice_breakpoint_insert(generic_address_t addr);
+void gdbserver_cont();
+void gdbserver_step();
+void
+tomem (unsigned char *memory, int val);
+int
+frommem (unsigned char *memory);
+void register_reg_type(register_defs_t * reg_type);
 #endif

@@ -26,9 +26,12 @@
 
 #include <dis-asm.h>
 #include <assert.h>
+#include <libiberty.h>
+#include <stdlib.h>
 
 #include "skyeye_types.h"
 #include "skyeye_arch.h"
+#include "skyeye_ram.h"
 
 /* The number of zeroes we want to see before we start skipping them.
    The number is arbitrarily chosen.  */

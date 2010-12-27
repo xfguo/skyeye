@@ -4,6 +4,8 @@
 #include "skyeye_arch.h"
 #include "skyeye_module.h"
 
+int bus_log_init();
+int bus_log_fini();
 /* module name */
 const char* skyeye_module = "bus-log";
 

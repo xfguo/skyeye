@@ -37,6 +37,6 @@ libdisasm_la_LDFLAGS = -module -L./$(top_builddir)/third-party/opcodes/.libs/ -L
 pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la
 #pkglib_LTLIBRARIES = libutils.la libgdbserver.la
 
-DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
+DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@
 
 INCLUDES =  -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/common @COMMON_INCLUDES@ 

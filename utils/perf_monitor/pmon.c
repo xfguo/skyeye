@@ -1,8 +1,11 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <pthread.h>
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
+#include "sim_control.h"
+#include "skyeye_command.h"
 #include "skyeye_thread.h"
 
 /* flag to enable performence monitor function. */
@@ -19,7 +22,7 @@ static void pmon_count(generic_arch_t* arch_instance){
 	uint32 steps = 0;
 	uint32 last_steps = 0;
 	/* Test if skyeye is in running state. */
-	while(!skyeye_is_running())
+	while(!SIM_is_running())
 		;
 	while(enable_pmon_flag){
 		last_steps = arch_instance->get_step();

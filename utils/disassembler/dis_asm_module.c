@@ -1,12 +1,15 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include "skyeye_types.h"
+#include "skyeye_command.h"
 #include "skyeye_arch.h"
 #include "skyeye_module.h"
 const char* skyeye_module = "disassemble";
 
 const int INSN_LENGTH = 4;
 
+void disassemble(generic_address_t addr);
 int com_disassemble(char* arg){
         char** endptr;
         generic_address_t addr;
