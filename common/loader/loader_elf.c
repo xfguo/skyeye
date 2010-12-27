@@ -322,9 +322,23 @@ load_exec (const char *file, addr_type_t addr_type)
 			}
 		}
 		else {
+			/* clear .bss section if simulate applications */
+			sky_pref_t* pref = get_skyeye_pref();
+			if(pref->user_mode_sim){
+				if(strcmp(bfd_section_name (tmp_bfd, s), ".bss") == 0){
+					unsigned int bss_addr = (unsigned int) bfd_section_vma (tmp_bfd, s);
+					unsigned int bss_size = (unsigned int) bfd_section_size (tmp_bfd, s);
+					printf ("find .bss section: addr = 0x%08x  size = 0x%08x .\n", bss_addr, bss_size);
+					int i;
+					for(i=0; i<bss_size; i++)
+						bus_write(8, bss_addr + i, 0);
+					printf("bss cleared.\n");
+				}
+			}else{
 #if ELF_LOADING_INFO	
-			printf ("not load section %s: addr = 0x%08x  size = 0x%08x .\n", bfd_section_name (tmp_bfd, s), (unsigned int) bfd_section_vma (tmp_bfd, s), (unsigned int) bfd_section_size (tmp_bfd, s));
+				printf ("not load section %s: addr = 0x%08x  size = 0x%08x .\n", bfd_section_name (tmp_bfd, s), (unsigned int) bfd_section_vma (tmp_bfd, s), (unsigned int) bfd_section_size (tmp_bfd, s));
 #endif
+			}
 		}
 	}
 
