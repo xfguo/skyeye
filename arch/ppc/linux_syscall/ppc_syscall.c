@@ -33,6 +33,7 @@
 #include <sys/mman.h>		//mmap
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/times.h>
 #include <linux/unistd.h>			//exit_group
 
 struct ppc_stat64{
@@ -286,7 +287,6 @@ int ppc_syscall(e500_core_t* core){
 			int fd = core->gpr[3];
 			unsigned long buff = core->gpr[4];
 			int bytes = core->gpr[5];
-			/* XXX bus_read bug! */
 			void *tmp = malloc(bytes);
 			if(tmp == NULL){
 				printf("error: syscall write (malloc return NULL)\n");
@@ -333,6 +333,18 @@ int ppc_syscall(e500_core_t* core){
 			core->gpr[3] = getuid();
 			dump("syscall %d getuid() = %d\n",TARGET_NR_getuid32, core->gpr[3]);
 			break;
+		case TARGET_NR_times:{		/* 43 */
+			struct tms *buff = core->gpr[3];
+			struct tms tmp;
+			uint32_t result = times(&tmp);
+			bus_write(32, buff->tms_utime, tmp.tms_utime);
+			bus_write(32, buff->tms_stime, tmp.tms_stime);
+			bus_write(32, buff->tms_cutime, tmp.tms_cutime);
+			bus_write(32, buff->tms_cstime, tmp.tms_cstime);
+			core->gpr[3] = result;
+			dump("syscall %d times(0x%x) = %d\n",TARGET_NR_times, buff, result);
+			break;
+		}
 		case TARGET_NR_brk:{		/* 45 */
 			void *addr = core->gpr[3];
 			debug("set data segment to 0x%x\n", addr);
