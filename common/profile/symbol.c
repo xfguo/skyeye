@@ -19,6 +19,7 @@
 #include <assert.h>
 #include "bfd.h"
 #include <search.h>
+#include "skyeye_symbol.h"
 #include "symbol.h"
 
 /*
@@ -26,9 +27,9 @@
  */
 
 static char itoa_tab[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'} ;
-static long storage_needed;
-static asymbol **symbol_table;
-static unsigned long number_of_symbols, kernel_number;
+static long storage_needed = 0;
+static asymbol **symbol_table = NULL;
+static unsigned long number_of_symbols = 0, kernel_number = 0;
 
 /**************************************************************************
   This function read the symbol list and store into a table
@@ -40,7 +41,7 @@ static unsigned long number_of_symbols, kernel_number;
 /***************
  * added by ksh
  ***************/ 
-void init_symbol_table(char* filename)
+void init_symbol_table(char* filename, char* arch_name)
 {
   long i,j, digit;
   ENTRY newentry, *oldentry;
@@ -55,7 +56,7 @@ void init_symbol_table(char* filename)
 					//skyeye_exit(-1);
 		return;
 	}
-	abfd = bfd_openr (filename, "elf32-powerpc");
+	abfd = bfd_openr (filename, get_bfd_target(arch_name));
 
 
 	if (!bfd_check_format(abfd, bfd_object)) {
@@ -144,6 +145,11 @@ char *get_sym(generic_address_t address)
   SYM_FUNC *symp;
 
   //printf("GetSym %x\n", address);
+	/*
+	 * If storage_needed is zero, means symbol table is not initialized.
+	 */
+	if(storage_needed == 0)
+		return NULL;
 	assert(!symbol_table);
   entry.key = text ;
   for (j=0;j<8;j++) {

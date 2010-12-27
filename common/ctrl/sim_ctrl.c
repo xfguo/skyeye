@@ -177,7 +177,7 @@ void SIM_start(void){
 		else
 			ret = load_elf(pref->exec_file, Phys_addr);
 	}
-	init_symbol_table(pref->exec_file);
+	init_symbol_table(pref->exec_file, arch_instance->arch_name);
 
 	/* set pc from config */
 	generic_address_t pc = (config->start_address & pref->exec_load_mask)|pref->exec_load_base; 
