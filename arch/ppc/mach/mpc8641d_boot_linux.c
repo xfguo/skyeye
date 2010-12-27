@@ -113,3 +113,13 @@ void mpc8641d_boot_linux(){
 	//gCPU.ccsr = 0xFFE00; /* Only for boot MPC8572 linux */ 
 	cpu->ccsr = 0xF80000; /* Only for boot MPC8641d linux */ 
 }
+
+void mpc8641d_boot_application(){
+	int i;
+	PPC_CPU_State* cpu = get_current_cpu();
+	for(i = 0; i < cpu->core_num; i++){
+		e500_core_t * core = &cpu->core[i];
+		core->gpr[1] = 0x00ff0000;	/* stack */
+	}
+	cpu->ccsr = 0xF80000;
+}
