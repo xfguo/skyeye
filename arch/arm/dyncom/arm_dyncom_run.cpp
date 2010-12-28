@@ -7,8 +7,10 @@
 #include <skyeye_types.h>
 #include <skyeye_obj.h>
 #include <skyeye.h>
+#include <bank_defs.h>
 
 #include "armdefs.h"
+#include "memory.h"
 #include "arm_dyncom_translate.h"
 #define MAX_REGNUM 15
 
@@ -20,6 +22,18 @@ uint32_t get_end_of_page(uint32 phys_addr){
 void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
 {
         cpu->dyncom_engine->flags_codegen = f;
+}
+
+static uint32_t arch_arm_read_memory(cpu_t *cpu, addr_t addr,uint32_t size)
+{
+	uint32_t value;
+	bus_read(size, (int)addr, &value);
+	return value;
+}
+
+static void arch_arm_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size)
+{
+	bus_write(size, (int)addr, value);
 }
 
 /* physical register for arm archtecture */
@@ -61,6 +75,8 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
                );
         cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
 	/* Initilize different register set for different core */
+
+	set_memory_operator(arch_arm_read_memory, arch_arm_write_memory);
 }
 
 static void
