@@ -44,6 +44,7 @@
 #include "ppc_dyncom.h"
 #include "ppc_dyncom_run.h"
 #include "ppc_dyncom_dec.h"
+#include "ppc_dyncom_debug.h"
 #if 0
 void ppc_set_msr(uint32 newmsr)
 {
@@ -72,6 +73,10 @@ void ppc_set_msr(uint32 newmsr)
 	
 }
 #endif
+/*
+ *	bx		Branch
+ *	.435
+ */
 int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	uint32 li;
@@ -82,13 +87,9 @@ int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *n
 		*tag |= TAG_STOP;
 	}
 	*new_pc = li + phys_pc;
-	printf("In %s, new_pc=0x%x\n", __FUNCTION__, *new_pc);
+	debug(DEBUG_TAG, "In %s, new_pc=0x%x\n", __FUNCTION__, *new_pc);
 	return PPC_INSN_SIZE;
 }
-/*
- *	bx		Branch
- *	.435
- */
 static int opc_bx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
 	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
@@ -110,4 +111,46 @@ ppc_opc_func_t ppc_opc_bx_func = {
 	opc_bx_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_bcx_func;
+/*
+ *	bcx		Branch Conditional
+ *	.436
+ */
+int opc_bcx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
+	*tag = TAG_COND_BRANCH;
+	*new_pc = NEW_PC_NONE;
+	debug(DEBUG_TAG, "In %s, new_pc=0x%x\n", __FUNCTION__, *new_pc);
+	return PPC_INSN_SIZE;
+}
+static int opc_bcx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
+{
+	return 0;
+#if 0
+	e500_core_t* current_core = get_current_core();
+	uint32 BO, BI, BD;
+	PPC_OPC_TEMPL_B(current_core->current_opc, BO, BI, BD);
+	if (!(BO & 4)) {
+		current_core->ctr--;
+	}
+	bool_t bo2 = ((BO & 2)?1:0);
+	bool_t bo8 = ((BO & 8)?1:0); // branch condition true
+	bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0) ;
+	if (((BO & 4) || ((current_core->ctr!=0) ^ bo2))
+	&& ((BO & 16) || (!(cr ^ bo8)))) {
+		if (!(current_core->current_opc & PPC_OPC_AA)) {
+			BD += current_core->pc;
+		}
+		if (current_core->current_opc & PPC_OPC_LK) {
+			current_core->lr = current_core->pc + 4;
+		}
+		current_core->npc = BD;
+	}
+	//fprintf(stderr,"in %s,BO=0x%x,BI=0x%x,BD=0x%x,cr=0x%x,cr^bo8=0x%x,ctr=0x%x,pc=0x%x\n",__FUNCTION__,BO,BI,BD,current_core->cr,(cr ^ bo8),current_core->ctr, current_core->pc);
+#endif
+}
+ppc_opc_func_t ppc_opc_bcx_func = {
+	opc_bcx_tag,
+	opc_bcx_translate,
+	opc_invalid_translate_cond,
+};
+

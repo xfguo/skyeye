@@ -39,9 +39,10 @@ typedef enum{
 	CTR_REGNUM,
 	MSR_REGNUM,
 	PVR_REGNUM,
-	MAX_REGNUM
+	MAX_REGNUM,
 }e500_regnum_t;
 #define PPC_XR_SIZE (MAX_REGNUM - CR_REGNUM)
+#define SR(N) (PPC_GPR_SIZE + PPC_FPR_SIZE + N)
 
 #ifdef __cplusplus
 }

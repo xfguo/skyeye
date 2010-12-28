@@ -705,7 +705,7 @@ static ppc_opc_func_t ppc_opc_table_main[64] = {
 ppc_opc_func_t* ppc_get_opc_func(uint32_t opc)
 {
 	uint32 mainopc = PPC_OPC_MAIN(opc);
-	debug(DEBUG_DEC, "In %s,opc=0x%x,mainopc=0x%x\n", __FUNCTION__, opc, mainopc);
+	debug(DEBUG_DEC, "In %s,opc=0x%x,mainopc=%d\n", __FUNCTION__, opc, mainopc);
 	if(mainopc == 31){
 		return ppc_opc_group_2(opc);
 	}

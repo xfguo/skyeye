@@ -90,13 +90,10 @@ int opc_addi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	uint32 imm;
 	e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	//current_core->gpr[rD] = (rA ? current_core->gpr[rA] : 0) + imm;
 	if(rA)
 		LET(rD, ADD(R(rA), CONST(imm)));
 	else
 		LET(rD, CONST(imm));
-
-	//fprintf(stderr, "in %s,rD=0x%x,rA=0x%x,imm=0x%x,current_core->gpr[rD]=0x%x\n",__FUNCTION__, rD,rA,imm,current_core->gpr[rD]);
 }
 ppc_opc_func_t ppc_opc_addi_func = {
 	opc_default_tag,
@@ -154,7 +151,46 @@ ppc_opc_func_t ppc_opc_twi_func;		//  3
  ppc_opc_func_t ppc_opc_mulli_func;		//  7
  ppc_opc_func_t ppc_opc_subfic_func;	//  8
  ppc_opc_func_t ppc_opc_cmpli_func;
- ppc_opc_func_t ppc_opc_cmpi_func;
+/*
+ *	cmpi		Compare Immediate
+ *	.443
+ */
+static int opc_cmpi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	uint32 cr;
+	int rA;
+	e500_core_t* current_core = get_current_core();
+	printf("In %s not implemented\n", __FUNCTION__);
+	return 0;
+	uint32 imm;
+	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, cr, rA, imm);
+	cr >>= 2;
+	sint32 a = current_core->gpr[rA];
+	sint32 b = imm;
+	uint32 c;
+/*	if (!VALGRIND_CHECK_READABLE(a, sizeof a)) {
+		ht_printf("%08x <--i\n", current_core->pc);
+//		SINGLESTEP("");
+	}*/
+	if (a < b) {
+		c = 8;
+	} else if (a > b) {
+		c = 4;
+	} else {
+		c = 2;
+	}
+	if (current_core->xer & XER_SO) c |= 1;
+	cr = 7-cr;
+//	current_core->cr &= ppc_cmp_and_mask[cr];
+	current_core->cr |= c<<(cr*4);
+	//fprintf(stderr,"in %s,rA=%d,gpr[rA]=0x%d,im=%d,c=%d\n",__FUNCTION__,rA,current_core->gpr[rA],imm,c);
+}
+ ppc_opc_func_t ppc_opc_cmpi_func = {
+	opc_default_tag,
+	opc_cmpi_translate,
+	opc_invalid_translate_cond,
+};
+
  ppc_opc_func_t ppc_opc_addic_func;		
  ppc_opc_func_t ppc_opc_addic__func;		
  ppc_opc_func_t ppc_opc_sc_func;
@@ -166,7 +202,33 @@ ppc_opc_func_t ppc_opc_twi_func;		//  3
  ppc_opc_func_t ppc_opc_xoris_func;
  ppc_opc_func_t ppc_opc_andi__func;
  ppc_opc_func_t ppc_opc_andis__func;
- ppc_opc_func_t ppc_opc_lwz_func;
+
+/*
+ *	lwz		Load Word and Zero
+ *	.557
+ */
+static int opc_lwz_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	e500_core_t* current_core = get_current_core();
+	int rA, rD;
+	uint32 imm;
+	printf("In %s not implemented\n", __FUNCTION__);
+	return 0;
+	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
+	uint32 r;
+
+	int ret = ppc_read_effective_word((rA?current_core->gpr[rA]:0)+imm, &r);
+	if (ret == PPC_MMU_OK) {
+		current_core->gpr[rD] = r;
+	}	
+
+}
+ ppc_opc_func_t ppc_opc_lwz_func = {
+	opc_default_tag,
+	opc_lwz_translate,
+	opc_invalid_translate_cond,
+};
+
 
 /*
  *	lwzu		Load Word and Zero with Update
@@ -229,13 +291,9 @@ static int opc_stwu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);
 	// FIXME: check rA!=0
-#if 0
-	int ret = ppc_write_effective_word(current_core->gpr[rA]+imm, current_core->gpr[rS]);
-	if (ret == PPC_MMU_OK) {
-		current_core->gpr[rA] += imm;
-	}
-#endif
-	printf("In %s , not implemented.\n");
+	/* FIXME: no MMU now */
+	arch_write_memory(cpu, bb, ADD(R(rA), CONST(imm)), R(rS), 32);
+	return 0;
 }
 
  ppc_opc_func_t ppc_opc_stwu_func = {
@@ -270,20 +328,13 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rS, spr1, spr2;
 	PPC_OPC_TEMPL_X(instr, rS, spr1, spr2);
-	printf("In %s, not implemented.\n", __FUNCTION__);
-	return 0;
-	/*
-	if(!(spr1 == 8 && spr2 == 0)) 
-		if( !(spr1 == 9 && spr2 == 0))
-			fprintf(stderr, "In %s, opc=0x%x,spr1=%d,spr2=%d\n", __FUNCTION__, current_core->current_opc, spr1, spr2);
-	*/
 	e500_core_t* current_core = get_current_core();
 	switch (spr2) {
 	case 0:
 		switch (spr1) {
-		case 1: current_core->xer = current_core->gpr[rS]; return 0;
-		case 8:	current_core->lr = current_core->gpr[rS]; return 0;
-		case 9:	current_core->ctr = current_core->gpr[rS]; return 0;
+		case 1: LET(SR(XER_REGNUM), R(rS)); return 0;
+		case 8:	LET(SR(LR_REGNUM), R(rS)); return 0;
+		case 9:	LET(SR(CTR_REGNUM), R(rS)); return 0;
 		}
 		break;
 	
