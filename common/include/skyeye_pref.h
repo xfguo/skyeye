@@ -7,6 +7,27 @@
  extern "C" {
 #endif 
 
+void set_exec_file(const char *filename);
+char *get_exec_file();
+
+void set_exec_load_base(const generic_address_t addr);
+generic_address_t get_exec_load_base();
+
+void set_exec_load_mask(const uint32_t addr);
+uint32_t get_exec_load_mask();
+
+void set_conf_filename(const char *filename);
+char *get_conf_filename();
+
+void set_interactive_mode(const bool_t mode);
+bool_t get_interactive_mode();
+
+void set_endian(const endian_t endian);
+bool_t get_endian();
+
+void set_autoboot(const bool_t value);
+bool_t get_autoboot();
+
 struct _sky_pref_s{
 	//generic_address_t elf_load_base;
 	//uinteger_t elf_load_mask;
