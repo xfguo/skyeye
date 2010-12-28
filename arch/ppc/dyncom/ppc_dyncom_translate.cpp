@@ -12,6 +12,7 @@
 #include "dyncom/basicblock.h"
 
 #include "ppc_dyncom_dec.h"
+#include "ppc_dyncom_debug.h"
 
 #define BAD_INSTR {fprintf(stderr, "In %s, cannot parse instruction 0x%x\n", __FUNCTION__, instr);skyeye_exit(-1);}
 
@@ -42,7 +43,7 @@ int arch_powerpc_tag_instr(cpu_t *cpu, addr_t phys_pc, tag_t *tag, addr_t *new_p
 	int instr_size = 4;
 	uint32_t instr;
 #define END_ADDR 0x14
-	printf("In %s, pc=0x%x\n", __FUNCTION__, phys_pc);
+	debug(DEBUG_TAG, "In %s, pc=0x%x\n", __FUNCTION__, phys_pc);
 	bus_read(32, phys_pc, &instr);
 	ppc_opc_func_t* opc_func = ppc_get_opc_func(instr);
 	if(!opc_func)
@@ -58,7 +59,7 @@ int arch_powerpc_tag_instr(cpu_t *cpu, addr_t phys_pc, tag_t *tag, addr_t *new_p
 int arch_powerpc_translate_instr(cpu_t *cpu, addr_t real_addr, BasicBlock *bb){
 	uint32 instr_size = 4;
 	uint32 instr;
-	printf("In %s, pc=0x%x\n", __FUNCTION__, real_addr);
+	debug(DEBUG_TRANSLATE, "In %s, pc=0x%x\n", __FUNCTION__, real_addr);
 	if(bus_read(32, real_addr, &instr) != 0){
 		/* some error handler */
 	}

@@ -45,6 +45,7 @@
 #include "ppc_vec.h"
 #include "ppc_mmu.h"
 #include "ppc_opc.h"
+#include "ppc_dyncom_debug.h"
 
 #define BAD_INSTR {fprintf(stderr, "In %s, cannot parse instruction 0x%x\n", __FUNCTION__, instr);skyeye_exit(-1);}
 //#include "io/prom/promosi.h"
@@ -362,7 +363,7 @@ inline static ppc_opc_func_t* ppc_opc_group_2(uint32 opc)
 	if(current_core->pc >= 0xfff80100 && current_core->pc < 0xfffff000)
                         printf("DBG:before exec pc=0x%x,opc=0x%x,ext=0x%x\n", current_core->pc, current_core->current_opc, ext);
 	*/
-	printf("In %s, ext=0x%x\n", __FUNCTION__, ext);
+	debug(DEBUG_DEC, "In %s, ext=0x%x\n", __FUNCTION__, ext);
 	if (ext >= (sizeof ppc_opc_table_group2 / sizeof ppc_opc_table_group2[0])) {
 		return &ppc_opc_invalid;
 	}
@@ -704,7 +705,7 @@ static ppc_opc_func_t ppc_opc_table_main[64] = {
 ppc_opc_func_t* ppc_get_opc_func(uint32_t opc)
 {
 	uint32 mainopc = PPC_OPC_MAIN(opc);
-	printf("In %s,opc=0x%x,mainopc=0x%x\n", __FUNCTION__, opc, mainopc);
+	debug(DEBUG_DEC, "In %s,opc=0x%x,mainopc=0x%x\n", __FUNCTION__, opc, mainopc);
 	if(mainopc == 31){
 		return ppc_opc_group_2(opc);
 	}
