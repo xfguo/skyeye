@@ -6,7 +6,7 @@
 #endif
 
 #define MAX_OPTION_NAME 32
-#define MAX_PARAM_NAME  32
+#define MAX_PARAM_NAME  256
 #if 0
 typedef struct skyeye_option_s
 {
