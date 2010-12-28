@@ -49,19 +49,18 @@ void init_symbol_table(char* filename, char* arch_name)
   asymbol *symptr;
   int key;
   bfd *abfd;
-  printf("call ARMul_InitSymTable,kernel filename is %s. \n",filename);
 
 	if(!filename){
-					fprintf(stderr, "Can not get correct kernel filename!Maybe your skyeye.conf have something wrong!\n");
-					//skyeye_exit(-1);
+		fprintf(stderr, "Can not get correct kernel filename!Maybe your skyeye.conf have something wrong!\n");
 		return;
 	}
 	abfd = bfd_openr (filename, get_bfd_target(arch_name));
 
-
 	if (!bfd_check_format(abfd, bfd_object)) {
-		printf("Wrong format\n") ;
-		exit(0);
+		bfd_close(abfd);
+		printf("In %s, wrong bfd format\n", __FUNCTION__) ;
+		return;
+		//exit(0);
 	}
 
   storage_needed = bfd_get_symtab_upper_bound(abfd);
