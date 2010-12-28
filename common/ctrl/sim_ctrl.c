@@ -130,8 +130,10 @@ void SIM_init(){
 		SIM_cli();		
 	}
 	else{
-		SIM_start();
-		SIM_run();
+		if (pref->autoboot == True) {
+			SIM_start();
+			SIM_run();
+		}
 	}
 }
 
