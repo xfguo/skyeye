@@ -197,6 +197,39 @@ arch_put_fp_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits,
 	}
 }
 
+/**
+ * @brief store registers by pointer 
+ *
+ * @param cpu
+ * @param reg register pointer
+ * @param v value to store
+ * @param bits 32/64 bits register is supported
+ * @param sext not used
+ * @param bb basic block to store the IR
+ *
+ * @return 
+ */
+Value *
+arch_put_reg_by_ptr(cpu_t *cpu, void *reg, Value *v, uint32_t bits, bool sext,
+	BasicBlock *bb)
+{
+	Type const *int32ptr_type = Type::getInt32Ty(_CTX());
+	Type const *int64ptr_type = Type::getInt64Ty(_CTX());
+	Constant *v_reg = NULL;
+	Value *v_reg_ptr = NULL;
+	if(bits == 32){
+		v_reg = ConstantInt::get(int32ptr_type, (uint64_t)reg);
+		v_reg_ptr = ConstantExpr::getIntToPtr(v_reg, PointerType::getUnqual(int32ptr_type));
+	}else if(bits == 64){
+		v_reg = ConstantInt::get(int64ptr_type, (uint64_t)reg);
+		v_reg_ptr = ConstantExpr::getIntToPtr(v_reg, PointerType::getUnqual(int64ptr_type));
+	}else{
+		fprintf(stderr, "in %s,register size %d not supported.\n", __FUNCTION__, bits);
+		exit(0);
+	}
+	new StoreInst(v, v_reg_ptr, bb);
+	return v;
+}
 //XXX TODO
 // The guest CPU can be little endian or big endian, so we need both
 // host mode access routines as well as IR generators that deal with

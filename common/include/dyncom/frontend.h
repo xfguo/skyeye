@@ -3,6 +3,7 @@
 /* emitter functions */
 Value *arch_get_reg(cpu_t *cpu, uint32_t index, uint32_t bits, BasicBlock *bb);
 Value *arch_put_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, bool sext, BasicBlock *bb);
+Value *arch_put_reg_by_ptr(cpu_t *cpu, void *reg, Value *v, uint32_t bits, bool sext,BasicBlock *bb);
 Value *arch_load32_aligned(cpu_t *cpu, Value *a, BasicBlock *bb);
 void arch_store32_aligned(cpu_t *cpu, Value *v, Value *a, BasicBlock *bb);
 Value *arch_load8(cpu_t *cpu, Value *addr, BasicBlock *bb);
@@ -177,6 +178,9 @@ uint32_t RAM32LE(uint8_t *RAM, addr_t a);
 #define LET_ZEXT(i,v) arch_put_reg(cpu, i, v, 1, false, bb)
 /* this one is different: it does not deal with registers, but with flags */
 #define LET1(a,b) new StoreInst(b, a, false, bb)
+#define LET_BY_PTR(ptr, v, bits) arch_put_reg_by_ptr(cpu, ptr, v, bits, false, bb)
+#define LET32_BY_PTR(ptr, v) LET_BY_PTR(ptr, v, 32)
+#define LET64_BY_PTR(ptr, v) LET_BY_PTR(ptr, v, 64)
 
 /* interface to the FPRs */
 #define FR(i) arch_load_fp_reg(cpu, i, 0, bb)
