@@ -1,4 +1,4 @@
-#include "memory.h"
+#include "dyncom/memory.h"
 read_memory_t read_memory = NULL;
 write_memory_t write_memory = NULL;
 /* 

@@ -124,11 +124,6 @@ void arm_dyncom_init(arm_core_t* core){
 	return;
 }
 
-static void
-debug_function(cpu_t *cpu) {
-	return;
-}
-
 void arm_dyncom_run(cpu_t* cpu){
 	arm_core_t* core = (arm_core_t*)cpu->cpu_data;
 	addr_t phys_pc = core->Reg[15];
@@ -144,7 +139,7 @@ void arm_dyncom_run(cpu_t* cpu){
         cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);
         cpu->dyncom_engine->code_entry = phys_pc;
 
-	int rc = cpu_run(cpu, debug_function);
+	int rc = cpu_run(cpu);
 	switch (rc) {
                 case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
                         break;
@@ -157,7 +152,7 @@ void arm_dyncom_run(cpu_t* cpu){
                   *If singlestep,we run it here,otherwise,break.
                   */
                         if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP){
-                                rc = cpu_run(cpu, debug_function);
+                                rc = cpu_run(cpu);
                                 if(rc != JIT_RETURN_TRAP)
                                         break;
                         }

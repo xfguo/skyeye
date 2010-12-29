@@ -28,7 +28,7 @@
 #include "optimize.h"
 #include "stat.h"
 
-#include "memory.h"
+#include "dyncom/memory.h"
 
 static void debug_func_init(cpu_t *cpu);
 #define IS_LITTLE_ENDIAN(cpu) (((cpu)->info.common_flags & CPU_FLAG_ENDIAN_MASK) == CPU_FLAG_ENDIAN_LITTLE)
@@ -399,7 +399,7 @@ void breakpoint() {}
  * @return the return value of JIT Function
  */
 int
-cpu_run(cpu_t *cpu, debug_function_t debug_function)
+cpu_run(cpu_t *cpu)
 {
 	addr_t pc = 0, orig_pc = 0;
 	uint64_t icounter, orig_icounter;
@@ -425,25 +425,23 @@ cpu_run(cpu_t *cpu, debug_function_t debug_function)
 		success = false;
 		update_timing(cpu, TIMER_RUN, true);
 		breakpoint();
-		#if PRINT_REG
+#if PRINT_REG
 		for (int i = 0; i < 16; i++) {
 			LOG("%d:%x ", i, *(uint32_t*)((uint8_t*)cpu->rf.grf + 4*i));
 		}
 		LOG("\n");
 		LOG("############### Begin to execute JIT\n");
-		#endif
-		//ret = FP(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.frf, debug_function, WindowCheck, xtensa_read_memory, xtensa_write_memory);
-//		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.frf, read_memory, write_memory);
+#endif
 		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, read_memory, write_memory);
 		//*(uint32_t*)((uint8_t*)cpu->rf.grf + 8) = 0;
 		//ret = FP(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.frf, debug_function);
-		#if PRINT_REG
+#if PRINT_REG
 		for (int i = 0; i < 16; i++) {
 			LOG("%d:%x ", i, *(uint32_t*)((uint8_t*)cpu->rf.grf + 4*i));
 		}
 		LOG("pc : %x\n ret : %x", cpu->f.get_pc(cpu, cpu->rf.grf), ret);
 		LOG("\n");
-		#endif
+#endif
 		update_timing(cpu, TIMER_RUN, false);
 		//pc = cpu->f.get_pc(cpu, cpu->rf.grf);
 		//icounter = REG(SR(ICOUNTER));
@@ -459,13 +457,13 @@ cpu_run(cpu_t *cpu, debug_function_t debug_function)
 			//break;
 		}
 		//}
-		#if 1
+#if 1
 		if (!success) {
 			LOG("{%llx}", pc);
 			cpu_tag(cpu, pc);
 			do_translate = true;
 		}
-		#endif
+#endif
 	}
 }
 //LOG("%d\n", __LINE__);

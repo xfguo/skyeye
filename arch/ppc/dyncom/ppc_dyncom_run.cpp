@@ -19,10 +19,21 @@
 #include "ppc_mmu.h"
 #include "ppc_dyncom.h"
 #include "ppc_dyncom_run.h"
+#include "dyncom/memory.h"
+#include "bank_defs.h"
 
 e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	return core;
+}
+
+static uint32_t ppc_read_memory(cpu_t *cpu, addr_t addr, uint32_t size){
+	uint32_t result;
+	bus_read(size, addr, &result);
+	return result;
+}
+static void ppc_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size){
+	bus_write(size, addr, value);
 }
 
 /* physical register for powerpc archtecture */
@@ -111,7 +122,18 @@ static arch_func_t powerpc_arch_func = {
 * @param cpu the instance of cpu_t
 */
 static void ppc_debug_func(cpu_t* cpu){
+	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	printf("In %s, phys_pc=0x%x\n", __FUNCTION__, *(addr_t*)cpu->rf.phys_pc);
+	printf("gprs:\n ");
+#define PRINT_COLUMN 8
+	int i;
+	for(i = 0; i < 32; i ++){
+		printf("gpr[%d]=0x%x ", i, *(uint32_t*)((uint8_t*)cpu->rf.grf + 4*i));
+		if((i % PRINT_COLUMN) == (PRINT_COLUMN - 1))
+			printf("\n ");
+	}
+	printf("\nsprs:\n ");
+	printf("LR = 0x%x\n ", core->lr);
 	return;
 }
 void ppc_dyncom_init(e500_core_t* core){
@@ -121,24 +143,17 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->rf.pc = &core->pc;
 	cpu->rf.phys_pc = &core->phys_pc;
 	cpu->rf.grf = core->gpr;
+	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
 	cpu_set_flags_debug(cpu, 0
                 | CPU_DEBUG_PRINT_IR
                 | CPU_DEBUG_LOG
                 );
 	cpu->debug_func = ppc_debug_func;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
+	set_memory_operator(ppc_read_memory, ppc_write_memory);
 	return;
 }
 
-/**
-* @brief Debug function that will be called in every instruction execution, print the cpu state
-*
-* @param cpu the cpu_t instance
-*/
-static void
-debug_function(cpu_t *cpu) {
-	return;
-}
 void ppc_dyncom_run(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	addr_t phys_pc = 0;
@@ -150,36 +165,35 @@ void ppc_dyncom_run(cpu_t* cpu){
 	printf("In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, phys_pc);
 	core->phys_pc = phys_pc;
 	cpu->dyncom_engine->code_start = phys_pc;
-        cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);
-        cpu->dyncom_engine->code_entry = phys_pc;
+	cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);
+	cpu->dyncom_engine->code_entry = phys_pc;
 
-	int rc = cpu_run(cpu, debug_function);
+	int rc = cpu_run(cpu);
 	switch (rc) {   
-                case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
-                        break;  
-                case JIT_RETURN_SINGLESTEP:
-                case JIT_RETURN_FUNCNOTFOUND:
+		case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
+			break;  
+		case JIT_RETURN_SINGLESTEP:
+		case JIT_RETURN_FUNCNOTFOUND:
 			printf("In %s, function not found at 0x%x\n", __FUNCTION__, core->phys_pc);
-                        cpu_tag(cpu, core->phys_pc);
-                        cpu->dyncom_engine->functions = 0;
-                        cpu_translate(cpu);
-		 /*
-                  *If singlestep,we run it here,otherwise,break.
-                  */
-                        if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP){
-                                rc = cpu_run(cpu, debug_function);
-                                if(rc != JIT_RETURN_TRAP)
-                                        break;
-                        }
-                        else
-                                break;
+			cpu_tag(cpu, core->phys_pc);
+			cpu->dyncom_engine->functions = 0;
+			cpu_translate(cpu);
+			/*
+			**If singlestep,we run it here,otherwise,break.
+			*/
+			if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP){
+				rc = cpu_run(cpu);
+				if(rc != JIT_RETURN_TRAP)
+					break;
+			}else
+				break;
 		case JIT_RETURN_TRAP:
 			break;
 		default:
-                        fprintf(stderr, "unknown return code: %d\n", rc);
-			skyeye_exit(-1);
-        }// switch (rc)
-	return;
+			fprintf(stderr, "unknown return code: %d\n", rc);
+		skyeye_exit(-1);
+	}// switch (rc)
+return;
 }
 
 void ppc_dyncom_stop(){
