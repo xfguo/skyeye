@@ -328,7 +328,7 @@ spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 	// flags
 	if (cpu->info.psr_size != 0) {
 		Value *flags = arch_flags_encode(cpu, bb);
-		new StoreInst(flags, cpu->ptr_xr[0], false, bb);
+		//new StoreInst(flags, cpu->ptr_xr[0], false, bb);
 	}
 
 	// GPRs

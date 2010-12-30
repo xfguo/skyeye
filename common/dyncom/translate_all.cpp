@@ -104,7 +104,6 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 			if (tag & (TAG_CONDITIONAL | TAG_ZEROVERHEADLOOP | TAG_POSTCOND | TAG_WINDOWCHECK | TAG_LAST_INST))
  				bb_next = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, next_pc, bb_ret, BB_TYPE_NORMAL);
 			//update pc
-			printf("In %s, save pc = 0x%x\n", __FUNCTION__, pc);
 			emit_store_pc(cpu, cur_bb, pc);
 		       arch_inc_icounter(cpu, cur_bb);
 #if 1// Only for debug all the execution instructions
@@ -117,7 +116,6 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 				//cpu->f.translate_loop_helper(cpu, pc, cur_bb, bb_ret, bb_next, bb_cont);
 				//bb_cont = NULL;
 			}
-
 			pc = next_pc;
 			if ((tag & TAG_WINDOWCHECK) && bb_cont) {//change instruction bb to the new one
 				cur_bb = bb_cont;
