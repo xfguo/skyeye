@@ -36,6 +36,7 @@ static void arch_arm_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint3
 	bus_write(size, (int)addr, value);
 }
 
+static cpu_flags_layout_t arm_flags_layout[4] ={{3,'N',"NFLAG"},{2,'Z',"ZFLAG"},{1,'C',"CFLAG"},{0,'V',"VFLAG"}} ;
 /* physical register for arm archtecture */
 static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 {
@@ -66,6 +67,10 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	info->register_size[CPU_REG_XR] = 32;
 	info->register_count[CPU_REG_SPR] = 7;
 	info->register_size[CPU_REG_SPR] = 32;
+	info->psr_size = 32;
+	info->flags_count = 4;
+	info->flags_layout = arm_flags_layout;
+
 	cpu->redirection = false;
 
 	//debug
@@ -136,6 +141,7 @@ void arm_dyncom_init(arm_core_t* core){
 
 	/* init the reg structure */
 	cpu->rf.pc = &core->Reg[15];
+	cpu->rf.phys_pc = &core->Reg[15];
 	cpu->rf.grf = core->Reg;
 	cpu->rf.srf = core->Spsr;
 

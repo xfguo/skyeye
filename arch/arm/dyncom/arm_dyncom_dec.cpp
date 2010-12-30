@@ -8,7 +8,7 @@
 
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 #define BIT(n) ((instr >> (n)) & 1)
-#define BAD
+#define BAD	do{printf("meet BAD at %s\n", __FUNCTION__ ); exit(0);}while(0);
 #define ptr_N	cpu->ptr_N
 #define ptr_Z	cpu->ptr_Z
 #define ptr_C	cpu->ptr_C
@@ -29,9 +29,82 @@
 /*xxxx xxxx xxx1 xxxx xxxx xxxx xxxx xxxx */
 #define S BIT(20)
 
+#define SHIFT BITS(5,6)
+#define SHIFT_IMM BITS(7,11)
 
+#define LSPBIT  BIT(24)
+#define LSUBIT  BIT(23)
+#define LSBBIT  BIT(22)
+#define LSWBIT  BIT(21)
+#define LSLBIT  BIT(20)
+#define OFFSET12 BITS(0,11)
 
 using namespace llvm;
+
+Value *GetLSAddr5x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+
+	Value *Addr;
+	if(LSUBIT)
+		Addr =  ADD(R(RN), CONST(OFFSET12));
+	else
+		Addr =  SUB(R(RN), CONST(OFFSET12));
+
+	if(LSWBIT)
+		LET(RN, Addr);
+
+	if(RN == 15)
+		Addr = ADD(Addr, CONST(8));
+
+	return Addr;
+}
+
+Value *GetLSAddr7x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	printf("in GetLSAddr7x may be not compilitable\n");
+
+	Value *Addr;
+	if(BITS(4,11) == 0) {
+		if(LSUBIT)
+			Addr = ADD(R(RN), R(RM));
+		else
+			Addr = SUB(R(RN), R(RM));
+	} else{
+		int shift = SHIFT;
+		Value *index;
+		switch(shift) {
+		case 0:	/* LSL */
+			index = SHL(R(RM), CONST(SHIFT_IMM));
+			break;
+		case 1: /* LSR */
+			if(SHIFT_IMM == 0)
+				index = CONST(0);
+			else
+				index = LSHR(R(RM), CONST(SHIFT_IMM));
+			break;
+		case 2:	/* ASR */
+			if(SHIFT_IMM == 0)
+				index = ADD(NOT(AND(R(RM), CONST(0x80000000))), CONST(1));
+			else
+				index = ASHR(R(RM), CONST(SHIFT_IMM));
+			break;
+		case 3:	/* ROR or RRX */
+			break;
+		}
+
+		if(LSUBIT)
+			Addr = ADD(R(RN), index);
+		else
+			Addr = SUB(R(RN), index);
+	}
+
+	if(RN == 15)
+		Addr = ADD(Addr, CONST(8));
+
+	return Addr;
+}
+
+
 Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 {
         if (I) { /* 32-bit immediate */
@@ -62,14 +135,20 @@ Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 
 Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 {
-                int rotate_imm = (instr << 2);
-		if(instr &  0x1000000)
-			rotate_imm |= 0xfc000000;
+		uint32_t rotate_imm = instr;
+		if(instr &  0x800000)
+			rotate_imm = (~rotate_imm + 1) & 0x0ffffff;
 		else
-			rotate_imm &= 0x06ffffff;
+			rotate_imm &= 0x0ffffff;
+
+		rotate_imm = rotate_imm << 2;
+
+		return CONST(rotate_imm);
 }
 #define OPERAND operand(cpu,instr,bb)
 #define BOPERAND boperand(cpu,instr,bb)
+#define GETLSADDR5x GetLSAddr5x(cpu,instr,bb)
+#define GETLSADDR7x GetLSAddr7x(cpu,instr,bb)
 
 int arm_opc_trans_00(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -353,7 +432,7 @@ int arm_opc_trans_12(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	//}
 
 	/* ~MODET */
-	new StoreInst(OPERAND, cpu->ptr_PC, bb);
+//	new StoreInst(OPERAND, cpu->ptr_PC, bb);
 
 	return 0;
 }
@@ -460,6 +539,7 @@ int arm_opc_trans_1a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* p = 1, U = 1, I = 0, W = 1 */
 		return 0;
 	}
+	LET(RD, OPERAND);
 	return 0;
 }
 
@@ -654,9 +734,11 @@ int arm_opc_trans_31(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 }
 
+#define CPSR 16
 int arm_opc_trans_32(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* TEQ immed and MSR immed to CPSR */
+        /* MSR immed to CPSR. R = 0(set CPSR) */
 
 }
 
@@ -687,7 +769,8 @@ int arm_opc_trans_35(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_36(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* CMN immed and MSR immed to SPSR */
+	/* MSR R = 1 set SPSR*/
 
 }
 
@@ -740,7 +823,9 @@ int arm_opc_trans_3d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_3e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* MVN immed */
+	/* I = 1, S = 0 */
+	LET(RD, XOR(OPERAND,CONST(0xFFFFFFFF)));
 
 }
 
@@ -898,7 +983,7 @@ int arm_opc_trans_58(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Store Word, No WriteBack, Pre Inc, Immed. */
 	/* I = 0, P = 1, U = 1, W = 0 */
-	Value *addr = OPERAND;
+	Value *addr = GETLSADDR5x;
 	arch_write_memory(cpu, bb, addr, R(RN), 32);
 }
 
@@ -906,7 +991,7 @@ int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Load Word, No WriteBack, Pre Inc, Immed.  */
 	/* I = 0, P = 1, U = 0, W = 0 */
-	Value *addr = OPERAND;
+	Value *addr = GETLSADDR5x;
 	Value *ret = arch_read_memory(cpu, bb, addr, 0, 32);
 	LET(RD,ret);
 	return 0;
@@ -1130,7 +1215,7 @@ int arm_opc_trans_7d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* UNDEF INSTR */
 	}
 
-	Value *addr = OPERAND;
+	Value *addr = GETLSADDR7x;
 	Value *ret = arch_read_memory(cpu, bb, addr, 0, 8);
 	LET(RD,ret);
 }
@@ -1257,8 +1342,25 @@ int arm_opc_trans_91(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_92(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* Store, WriteBack, PreDec */
+	/* STM(1) P = 1, U = 0, W = 1 */
+	int i =  BITS(0,15);
+	int count = 0;
+	Value *addr;
+	while(i){
+		count ++;
+		i = i >> 1;
+	}
 
-
+	if(!LSUBIT)
+		addr = SUB(R(RN), CONST(count * 4));
+	for( i = 0; i < 16; i ++ ){
+		if(BIT(i)){
+			arch_write_memory(cpu, bb, addr, R(i), 32);
+			addr = ADD(addr, CONST(4));
+		}
+	}
+	LET(RN, SUB(R(RN), CONST(count * 4)));
 }
 
 int arm_opc_trans_93(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1385,7 +1487,7 @@ int arm_opc_trans_a8(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* 0xa8 - 0xaf negative addr */
 	LET(14, ADD(R(15), CONST(4)));
-	LET(15, SUB(R(15),BOPERAND));
+	LET(15, SUB(ADD(R(15), CONST(8)),BOPERAND));
 }
 
 int arm_opc_trans_a9(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1426,8 +1528,8 @@ int arm_opc_trans_af(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_b0(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* b0 - b7 branch and link forward */
-	LET(14, AND(R(15),CONST(4)));
-	LET(15, AND(R(15),BOPERAND));
+	LET(14, ADD(R(15),CONST(4)));
+	LET(15, ADD(ADD(R(15),BOPERAND), CONST(8)));
 }
 
 int arm_opc_trans_b1(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1468,6 +1570,7 @@ int arm_opc_trans_b7(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_b8(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* b8 - bf branch and link backward */
+	LET(15, ADD(R(15),BOPERAND));
 }
 
 int arm_opc_trans_b9(cpu_t *cpu, uint32_t instr, BasicBlock *bb)

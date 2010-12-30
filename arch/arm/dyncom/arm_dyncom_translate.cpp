@@ -31,6 +31,7 @@ typedef struct arm_opc_func_s{
         translate_cond_func_t translate_cond;
 }arm_opc_func_t;
 arm_opc_func_t* arm_get_opc_func(uint32_t opc);
+Value *arm_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 
 arm_opc_func_t  arm_opc_table_main[0xff] ;
 
@@ -85,7 +86,6 @@ int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t
 	uint32_t instr;
 	bus_read(32, pc, &instr);
 	arm_opc_func_t *opc_func = arm_get_opc_func(instr);
-	printf("pc is %x\n",  pc);
 	if (instr)
 		opc_func->tag(cpu, pc, instr, tag, new_pc, next_pc);
 	else
@@ -118,8 +118,8 @@ void arm_opc_func_init()
 	//*arm_opc_table =(arm_opc_func_t *) malloc(sizeof(arm_opc_func_t) * 0xff);
 	arm_opc_func_t *arm_opc_table = arm_opc_table_main;
 	int i;
-	for(i = 0; i < 0xff; i ++){
-		arm_opc_table[i].translate_cond = arch_arm_translate_cond;
+	for(i = 0; i < 0x100; i ++){
+		arm_opc_table[i].translate_cond = arm_translate_cond;
 	}
 
 	init_arm_opc_group0(&arm_opc_table[0x0]);
@@ -142,9 +142,7 @@ void arm_opc_func_init()
 
 
 Value *
-arm_translate_cond(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
-	uint32_t instr;
-	bus_read(32, pc, &instr);
+arm_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb) {
 	switch ((instr) >> 28) {
 		case 0x0: /* EQ */
 			return LOAD(ptr_Z);
@@ -184,7 +182,7 @@ arm_translate_cond(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
 	}
 }
 
-#define instr_size 4;
+#define instr_size 4
 int arm_tag_continue(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	*tag = TAG_CONTINUE;
@@ -193,6 +191,13 @@ int arm_tag_continue(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *
 		*tag |= TAG_CONDITIONAL;
 }
 
+int arm_tag_stop(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
+{
+	*tag = TAG_STOP;
+	*next_pc = pc + instr_size;
+	if(instr >> 28 != 0xe)
+		*tag |= TAG_CONDITIONAL;
+}
 int arm_tag_ret(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	*tag = TAG_RET;

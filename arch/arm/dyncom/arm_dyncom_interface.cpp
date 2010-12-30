@@ -81,7 +81,6 @@ static bool arm_cpu_init()
 	for(i = 0; i < cpu->core_num; i++){
 		arm_core_t* core = &cpu->core[i];
 		arm_core_init(core, i);
-		printf("init core_num core->Reg is %x\n", core->Reg);
 		arm_dyncom_init(core);
 
 		skyeye_exec_t* exec = create_exec();
