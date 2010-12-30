@@ -140,7 +140,8 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
 	/* Initilize different register set for different core */
-	cpu->rf.pc = &core->pc;
+	//cpu->rf.pc = &core->pc;
+	cpu->rf.pc = &core->phys_pc;
 	cpu->rf.phys_pc = &core->phys_pc;
 	cpu->rf.grf = core->gpr;
 	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);

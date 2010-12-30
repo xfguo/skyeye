@@ -1,0 +1,130 @@
+#ifndef __PPC_DYNCOM_INSTR_GROUPV__
+#define __PPC_DYNCOM_INSTR_GROUPV__
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+extern ppc_opc_func_t ppc_opc_vaddubm_func;
+extern ppc_opc_func_t ppc_opc_vmaxub_func;
+extern ppc_opc_func_t ppc_opc_vrlb_func;
+extern ppc_opc_func_t ppc_opc_vmuloub_func;
+extern ppc_opc_func_t ppc_opc_vaddfp_func;
+extern ppc_opc_func_t ppc_opc_vmrghb_func;
+extern ppc_opc_func_t ppc_opc_vpkuhum_func;
+extern ppc_opc_func_t ppc_opc_vadduhm_func;
+extern ppc_opc_func_t ppc_opc_vmaxuh_func;
+extern ppc_opc_func_t ppc_opc_vrlh_func;
+extern ppc_opc_func_t ppc_opc_vmulouh_func;
+extern ppc_opc_func_t ppc_opc_vsubfp_func;
+extern ppc_opc_func_t ppc_opc_vmrghh_func;
+extern ppc_opc_func_t ppc_opc_vpkuwum_func;
+extern ppc_opc_func_t ppc_opc_vadduwm_func;
+extern ppc_opc_func_t ppc_opc_vmaxuw_func;
+extern ppc_opc_func_t ppc_opc_vrlw_func;
+extern ppc_opc_func_t ppc_opc_vmrghw_func;
+extern ppc_opc_func_t ppc_opc_vpkuhus_func;
+extern ppc_opc_func_t ppc_opc_vpkuwus_func;
+extern ppc_opc_func_t ppc_opc_vmaxsb_func;
+extern ppc_opc_func_t ppc_opc_vslb_func;
+extern ppc_opc_func_t ppc_opc_vmulosb_func;
+extern ppc_opc_func_t ppc_opc_vrefp_func;
+extern ppc_opc_func_t ppc_opc_vmrglb_func;
+extern ppc_opc_func_t ppc_opc_vpkshus_func;
+extern ppc_opc_func_t ppc_opc_vmaxsh_func;
+extern ppc_opc_func_t ppc_opc_vslh_func;
+extern ppc_opc_func_t ppc_opc_vmulosh_func;
+extern ppc_opc_func_t ppc_opc_vrsqrtefp_func;
+extern ppc_opc_func_t ppc_opc_vmrglh_func;
+extern ppc_opc_func_t ppc_opc_vpkswus_func;
+extern ppc_opc_func_t ppc_opc_vaddcuw_func;
+extern ppc_opc_func_t ppc_opc_vmaxsw_func;
+extern ppc_opc_func_t ppc_opc_vslw_func;
+extern ppc_opc_func_t ppc_opc_vexptefp_func;
+extern ppc_opc_func_t ppc_opc_vmrglw_func;
+extern ppc_opc_func_t ppc_opc_vpkshss_func;
+extern ppc_opc_func_t ppc_opc_vsl_func;
+extern ppc_opc_func_t ppc_opc_vlogefp_func;
+extern ppc_opc_func_t ppc_opc_vpkswss_func;
+extern ppc_opc_func_t ppc_opc_vaddubs_func;
+extern ppc_opc_func_t ppc_opc_vminub_func;
+extern ppc_opc_func_t ppc_opc_vsrb_func;
+extern ppc_opc_func_t ppc_opc_vmuleub_func;
+extern ppc_opc_func_t ppc_opc_vrfin_func;
+extern ppc_opc_func_t ppc_opc_vspltb_func;
+extern ppc_opc_func_t ppc_opc_vupkhsb_func;
+extern ppc_opc_func_t ppc_opc_vadduhs_func;
+extern ppc_opc_func_t ppc_opc_vminuh_func;
+extern ppc_opc_func_t ppc_opc_vsrh_func;
+extern ppc_opc_func_t ppc_opc_vmuleuh_func;
+extern ppc_opc_func_t ppc_opc_vrfiz_func;
+extern ppc_opc_func_t ppc_opc_vsplth_func;
+extern ppc_opc_func_t ppc_opc_vupkhsh_func;
+extern ppc_opc_func_t ppc_opc_vadduws_func;
+extern ppc_opc_func_t ppc_opc_vminuw_func;
+extern ppc_opc_func_t ppc_opc_vsrw_func;
+extern ppc_opc_func_t ppc_opc_vrfip_func;
+extern ppc_opc_func_t ppc_opc_vspltw_func;
+extern ppc_opc_func_t ppc_opc_vupklsb_func;
+extern ppc_opc_func_t ppc_opc_vsr_func;
+extern ppc_opc_func_t ppc_opc_vrfim_func;
+extern ppc_opc_func_t ppc_opc_vupklsh_func;
+extern ppc_opc_func_t ppc_opc_vaddsbs_func;
+extern ppc_opc_func_t ppc_opc_vminsb_func;
+extern ppc_opc_func_t ppc_opc_vsrab_func;
+extern ppc_opc_func_t ppc_opc_vmulesb_func;
+extern ppc_opc_func_t ppc_opc_vcfux_func;
+extern ppc_opc_func_t ppc_opc_vspltisb_func;
+extern ppc_opc_func_t ppc_opc_vpkpx_func;
+extern ppc_opc_func_t ppc_opc_vaddshs_func;
+extern ppc_opc_func_t ppc_opc_vminsh_func;
+extern ppc_opc_func_t ppc_opc_vsrah_func;
+extern ppc_opc_func_t ppc_opc_vmulesh_func;
+extern ppc_opc_func_t ppc_opc_vcfsx_func;
+extern ppc_opc_func_t ppc_opc_vspltish_func;
+extern ppc_opc_func_t ppc_opc_vupkhpx_func;
+extern ppc_opc_func_t ppc_opc_vaddsws_func;
+extern ppc_opc_func_t ppc_opc_vminsw_func;
+extern ppc_opc_func_t ppc_opc_vsraw_func;
+extern ppc_opc_func_t ppc_opc_vctuxs_func;
+extern ppc_opc_func_t ppc_opc_vspltisw_func;
+extern ppc_opc_func_t ppc_opc_vctsxs_func;
+extern ppc_opc_func_t ppc_opc_vupklpx_func;
+extern ppc_opc_func_t ppc_opc_vsububm_func;
+extern ppc_opc_func_t ppc_opc_vavgub_func;
+extern ppc_opc_func_t ppc_opc_vand_func;
+extern ppc_opc_func_t ppc_opc_vmaxfp_func;
+extern ppc_opc_func_t ppc_opc_vslo_func;
+extern ppc_opc_func_t ppc_opc_vsubuhm_func;
+extern ppc_opc_func_t ppc_opc_vavguh_func;
+extern ppc_opc_func_t ppc_opc_vandc_func;
+extern ppc_opc_func_t ppc_opc_vminfp_func;
+extern ppc_opc_func_t ppc_opc_vsro_func;
+extern ppc_opc_func_t ppc_opc_vsubuwm_func;
+extern ppc_opc_func_t ppc_opc_vavguw_func;
+extern ppc_opc_func_t ppc_opc_vor_func;
+extern ppc_opc_func_t ppc_opc_vxor_func;
+extern ppc_opc_func_t ppc_opc_vavgsb_func;
+extern ppc_opc_func_t ppc_opc_vnor_func;
+extern ppc_opc_func_t ppc_opc_vavgsh_func;
+extern ppc_opc_func_t ppc_opc_vsubcuw_func;
+extern ppc_opc_func_t ppc_opc_vavgsw_func;
+extern ppc_opc_func_t ppc_opc_vsububs_func;
+extern ppc_opc_func_t ppc_opc_mfvscr_func;
+extern ppc_opc_func_t ppc_opc_vsum4ubs_func;
+extern ppc_opc_func_t ppc_opc_vsubuhs_func;
+extern ppc_opc_func_t ppc_opc_mtvscr_func;
+extern ppc_opc_func_t ppc_opc_vsum4shs_func;
+extern ppc_opc_func_t ppc_opc_vsubuws_func;
+extern ppc_opc_func_t ppc_opc_vsum2sws_func;
+extern ppc_opc_func_t ppc_opc_vsubsbs_func;
+extern ppc_opc_func_t ppc_opc_vsum4sbs_func;
+extern ppc_opc_func_t ppc_opc_vsubshs_func;
+extern ppc_opc_func_t ppc_opc_vsubsws_func;
+extern ppc_opc_func_t ppc_opc_vsumsws_func;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

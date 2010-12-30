@@ -1,34 +1,10 @@
-/*
- *	ppc_dyncom_alu.cpp - Implementation of some translation function for 
- *	powerpc dyncom. 
- *
- *	Copyright (C) 2010 Michael.kang (blackfin.kang@gmail.com)
- *
- *	This program is free software; you can redistribute it and/or modify
- *	it under the terms of the GNU General Public License version 2 as
- *	published by the Free Software Foundation.
- *
- *	This program is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	GNU General Public License for more details.
- *
- *	You should have received a copy of the GNU General Public License
- *	along with this program; if not, write to the Free Software
- *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-/*
- * 05/16/2010   Michael.Kang  <blackfin.kang@gmail.com>
- */
-
 #include "debug.h"
 #include "tracers.h"
-#include "ppc_dyncom_alu.h"
 #include "ppc_dyncom_dec.h"
 #include "ppc_exc.h"
 #include "ppc_cpu.h"
-#include "ppc_dyncom_opc.h"
 #include "ppc_dyncom_alu.h"
+#include "ppc_dyncom_run.h"
 #include "ppc_tools.h"
 #include "ppc_mmu.h"
 
@@ -38,69 +14,7 @@
 #include "dyncom/basicblock.h"
 #include "skyeye.h"
 
-/*
- *	addx		Add
- *	.422
- */
-void ppc_opc_addx(cpu_t* cpu, BasicBlock *bb)
-{
-	int rD, rA, rB;
-	e500_core_t* core = (e500_core_t *)cpu->cpu_data;
-	PPC_OPC_TEMPL_XO(core->current_opc, rD, rA, rB);
-	LET(rD, ADD(R(rA), R(rB)));
-
-	//core->gpr[rD] = core->gpr[rA] + core->gpr[rB];
-#if 0 /* FIXME, not implemented */
-	if (core->current_opc & PPC_OPC_Rc) {
-		// update cr0 flags
-		ppc_update_cr0(cpu, bb, current_core->gpr[rD]);
-	}
-#endif
-}
-
-/*
- *      addis           Add Immediate Shifted
- *      .428
- */
-int opc_addis_translate(cpu_t *cpu, addr_t real_addr, BasicBlock *bb)
-{
-        int rD, rA;
-        uint32 imm;
-        e500_core_t* current_core = get_current_core();
-        PPC_OPC_TEMPL_D_Shift16(current_core->current_opc, rD, rA, imm);
-	//current_core->gpr[rD] = (rA ? current_core->gpr[rA] : 0) + imm;
-	if(rA)
-		LET(rD, ADD(R(rA), CONST(imm)));
-	else
-		LET(rD, CONST(imm));
-}
-ppc_opc_func_t ppc_opc_addis_func = {
-	opc_default_tag,
-	opc_addis_translate,
-	opc_invalid_translate_cond,
-};
-
-/*
- *	addi		Add Immediate
- *	.425
- */
-int opc_addi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	int rD, rA;
-	uint32 imm;
-	e500_core_t* current_core = get_current_core();
-	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	if(rA)
-		LET(rD, ADD(R(rA), CONST(imm)));
-	else
-		LET(rD, CONST(imm));
-}
-ppc_opc_func_t ppc_opc_addi_func = {
-	opc_default_tag,
-	opc_addi_translate,
-	opc_invalid_translate_cond,
-};
-
+#include "ppc_dyncom_debug.h"
 /*
  *	orx		OR
  *	.603
@@ -116,210 +30,35 @@ static int opc_orx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		fprintf(stderr, "##### In %s,cr0 is not updated.\n", __FUNCTION__);
 		//ppc_update_cr0(current_core->gpr[rA]);
 	}
-}
-ppc_opc_func_t ppc_opc_orx_func = {
-	opc_default_tag,
-	opc_orx_translate,
-	opc_invalid_translate_cond,
-};
-
-/*
- *	rlwinmx		Rotate Left Word Immediate then AND with Mask
- *	.618
- */
-static int opc_rlwinmx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	int rS, rA, SH, MB, ME;
-	PPC_OPC_TEMPL_M(instr, rS, rA, SH, MB, ME);
-	//uint32 v = ppc_word_rotl(current_core->gpr[rS], SH);
-	Value* v = ROTL(R(rS), SH);
-	uint32 mask = ppc_mask(MB, ME);
-	//current_core->gpr[rA] = v & mask;
-	LET(rA, AND(v, CONST(mask)));
-	if (instr & PPC_OPC_Rc) {
-		// update cr0 flags
-		fprintf(stderr, "Not implemented update cr\n");
-		ppc_dyncom_update_cr0(cpu, bb, rA);
-	}
-}
-ppc_opc_func_t ppc_opc_rlwinmx_func = {
-	opc_default_tag,
-	opc_rlwinmx_translate,
-	opc_invalid_translate_cond,
-};
-ppc_opc_func_t ppc_opc_twi_func;		//  3
- ppc_opc_func_t ppc_opc_mulli_func;		//  7
- ppc_opc_func_t ppc_opc_subfic_func;	//  8
- ppc_opc_func_t ppc_opc_cmpli_func;
-/*
- *	cmpi		Compare Immediate
- *	.443
- */
-static int opc_cmpi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	uint32 cr;
-	int rA;
-	e500_core_t* current_core = get_current_core();
-	printf("In %s not implemented\n", __FUNCTION__);
 	return 0;
-	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, cr, rA, imm);
-	cr >>= 2;
-	sint32 a = current_core->gpr[rA];
-	sint32 b = imm;
-	uint32 c;
-/*	if (!VALGRIND_CHECK_READABLE(a, sizeof a)) {
-		ht_printf("%08x <--i\n", current_core->pc);
-//		SINGLESTEP("");
-	}*/
-	if (a < b) {
-		c = 8;
-	} else if (a > b) {
-		c = 4;
-	} else {
-		c = 2;
-	}
-	if (current_core->xer & XER_SO) c |= 1;
-	cr = 7-cr;
-//	current_core->cr &= ppc_cmp_and_mask[cr];
-	current_core->cr |= c<<(cr*4);
-	//fprintf(stderr,"in %s,rA=%d,gpr[rA]=0x%d,im=%d,c=%d\n",__FUNCTION__,rA,current_core->gpr[rA],imm,c);
 }
- ppc_opc_func_t ppc_opc_cmpi_func = {
-	opc_default_tag,
-	opc_cmpi_translate,
-	opc_invalid_translate_cond,
-};
-
- ppc_opc_func_t ppc_opc_addic_func;		
- ppc_opc_func_t ppc_opc_addic__func;		
- ppc_opc_func_t ppc_opc_sc_func;
- ppc_opc_func_t ppc_opc_rlwimix_func;
- ppc_opc_func_t ppc_opc_rlwnmx_func;
- ppc_opc_func_t ppc_opc_ori_func;
- ppc_opc_func_t ppc_opc_oris_func;
- ppc_opc_func_t ppc_opc_xori_func;
- ppc_opc_func_t ppc_opc_xoris_func;
- ppc_opc_func_t ppc_opc_andi__func;
- ppc_opc_func_t ppc_opc_andis__func;
-
 /*
- *	lwz		Load Word and Zero
- *	.557
+ *	addx		Add
+ *	.422
  */
-static int opc_lwz_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+int opc_addx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	e500_core_t* core = (e500_core_t *)cpu->cpu_data;
+	PPC_OPC_TEMPL_XO(core->current_opc, rD, rA, rB);
+	LET(rD, ADD(R(rA), R(rB)));
+	//FIXME:
+	return 0;
+}
+/*
+ *	lwzx		Load Word and Zero Indexed
+ *	.560
+ */
+static int opc_lwzx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	e500_core_t* current_core = get_current_core();
-	int rA, rD;
-	uint32 imm;
-	printf("In %s not implemented\n", __FUNCTION__);
-	return 0;
-	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	uint32 r;
-
-	int ret = ppc_read_effective_word((rA?current_core->gpr[rA]:0)+imm, &r);
-	if (ret == PPC_MMU_OK) {
-		current_core->gpr[rD] = r;
-	}	
-
-}
- ppc_opc_func_t ppc_opc_lwz_func = {
-	opc_default_tag,
-	opc_lwz_translate,
-	opc_invalid_translate_cond,
-};
-
-
-/*
- *	lwzu		Load Word and Zero with Update
- *	.558
- */
-static int opc_lwzu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	e500_core_t* current_core = get_current_core();
-	int rA, rD;
-	uint32 imm;
-	printf("In %s not implemented\n", __FUNCTION__);
-	return 0;
-	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	// FIXME: check rA!=0 && rA!=rD
-	uint32 r;
-	int ret = ppc_read_effective_word(current_core->gpr[rA]+imm, &r);
-	if (ret == PPC_MMU_OK) {
-		current_core->gpr[rA] += imm;
-		current_core->gpr[rD] = r;
-	}	
-}
-
-ppc_opc_func_t ppc_opc_lwzu_func = {
-	opc_default_tag,
-	opc_lwzu_translate,
-	opc_invalid_translate_cond,
-
-};
- ppc_opc_func_t ppc_opc_lbz_func;
- ppc_opc_func_t ppc_opc_lbzu_func;
-
-/*
- *	stw		Store Word
- *	.659
- */
-static int opc_stw_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	int rA, rS;
-	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);
-	printf("In %s not implemented\n", __FUNCTION__);
-	return 0;
-	e500_core_t* current_core = get_current_core();
-	ppc_write_effective_word((rA?current_core->gpr[rA]:0)+imm, current_core->gpr[rS]) != PPC_MMU_FATAL;
-}
-
-ppc_opc_func_t ppc_opc_stw_func = {
-	opc_default_tag,
-	opc_stw_translate,
-	opc_invalid_translate_cond,
-};
-
-/*
- *	stwu		Store Word with Update
- *	.663
- */
-static int opc_stwu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	int rA, rS;
-	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);
-	// FIXME: check rA!=0
-	/* FIXME: no MMU now */
-	arch_write_memory(cpu, bb, ADD(R(rA), CONST(imm)), R(rS), 32);
+	int rA, rD, rB;
+	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
+	Value* addr = rA ? ADD(R(rB), R(rA)) : R(rB);
+	Value* result = arch_read_memory(cpu, bb, addr, 0, 32);
+	LET(rD, result);
 	return 0;
 }
-
- ppc_opc_func_t ppc_opc_stwu_func = {
-	opc_default_tag,
-	opc_stwu_translate,
-	opc_invalid_translate_cond,
-};
- ppc_opc_func_t ppc_opc_stb_func;
- ppc_opc_func_t ppc_opc_stbu_func;
- ppc_opc_func_t ppc_opc_lhz_func;
- ppc_opc_func_t ppc_opc_lhzu_func;
- ppc_opc_func_t ppc_opc_lha_func;
- ppc_opc_func_t ppc_opc_lhau_func;
- ppc_opc_func_t ppc_opc_sth_func;
- ppc_opc_func_t ppc_opc_sthu_func;
- ppc_opc_func_t ppc_opc_lmw_func;
- ppc_opc_func_t ppc_opc_stmw_func;
- ppc_opc_func_t ppc_opc_lfs_func;
- ppc_opc_func_t ppc_opc_lfsu_func;
- ppc_opc_func_t ppc_opc_lfd_func;
- ppc_opc_func_t ppc_opc_lfdu_func;
- ppc_opc_func_t ppc_opc_stfs_func;
- ppc_opc_func_t ppc_opc_stfsu_func;
- ppc_opc_func_t ppc_opc_stfd_func;
- ppc_opc_func_t ppc_opc_stfdu_func;
-
 /*
  *	mtspr		Move to Special-Purpose Register
  *	.584
@@ -332,20 +71,20 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	switch (spr2) {
 	case 0:
 		switch (spr1) {
-		case 1: LET(SR(XER_REGNUM), R(rS)); return 0;
-		case 8:	LET(SR(LR_REGNUM), R(rS)); return 0;
-		case 9:	LET(SR(CTR_REGNUM), R(rS)); return 0;
+		case 1: LET32_BY_PTR(&current_core->xer, R(rS)); return 0;
+		case 8:	LET32_BY_PTR(&current_core->lr, R(rS)); return 0;
+		case 9:	LET32_BY_PTR(&current_core->ctr, R(rS)); return 0;
 		}
 		break;
 	
 	case 8:	//altivec makes this register unpriviledged
 		if (spr1 == 0) {
-			current_core->vrsave = current_core->gpr[rS]; 
+			LET32_BY_PTR(&current_core->vrsave, R(rS)); 
 			return 0;
 		}
 		switch(spr1){
 			case 28:
-				current_core->tbl = current_core->gpr[rS];
+				LET32_BY_PTR(&current_core->tbl, R(rS)); 
 				return 0;
 			case 29:
 				current_core->tbu = current_core->gpr[rS];
@@ -672,12 +411,6 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	fprintf(stderr, "pc=0x%x\n",current_core->pc);
 	skyeye_exit(-1);
 }
-
-ppc_opc_func_t ppc_opc_mtspr_func = {
-	opc_default_tag,
-	opc_mtspr_translate,
-	opc_invalid_translate_cond,
-};
 /*
  *	mfspr		Move from Special-Purpose Register
  *	.567
@@ -686,8 +419,6 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	e500_core_t* current_core = get_current_core();
 	int rD, spr1, spr2;
-	printf("In %s not implemented\n", __FUNCTION__);
-	return 0;
 	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, spr1, spr2);
 	if (current_core->msr & MSR_PR) {
 		//ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
@@ -699,9 +430,9 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	switch(spr2) {
 	case 0:
 		switch (spr1) {
-		case 1: current_core->gpr[rD] = current_core->xer; return 0;
-		case 8: current_core->gpr[rD] = current_core->lr; return 0;
-		case 9: current_core->gpr[rD] = current_core->ctr; return 0;
+		case 1: LET(rD, GET32_BY_PTR(&current_core->xer)); return 0;
+		case 8: LET(rD, GET32_BY_PTR(&current_core->lr)); return 0;
+		case 9: LET(rD, GET32_BY_PTR(&current_core->ctr)); return 0;
 
 		case 18: current_core->gpr[rD] = current_core->dsisr; return 0;
 		case 19: current_core->gpr[rD] = current_core->dar; return 0;
@@ -965,9 +696,142 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	//SINGLESTEP("invalid mfspr\n");
 	return -1;
 }
-
+/* Interfaces */
+ppc_opc_func_t ppc_opc_cmp_func;
+ppc_opc_func_t ppc_opc_tw_func;
+ppc_opc_func_t ppc_opc_subfcx_func;//+
+ppc_opc_func_t ppc_opc_addcx_func;//+
+ppc_opc_func_t ppc_opc_mulhwux_func;
+ppc_opc_func_t ppc_opc_mfcr_func;
+ppc_opc_func_t ppc_opc_lwarx_func;
+ppc_opc_func_t ppc_opc_lwzx_func = {
+	opc_default_tag,
+	opc_lwzx_translate,
+	opc_invalid_translate_cond,
+};
+ppc_opc_func_t ppc_opc_slwx_func;
+ppc_opc_func_t ppc_opc_cntlzwx_func;
+ppc_opc_func_t ppc_opc_andx_func;
+ppc_opc_func_t ppc_opc_cmpl_func;
+ppc_opc_func_t ppc_opc_subfx_func;
+ppc_opc_func_t ppc_opc_iselgt_func;
+ppc_opc_func_t ppc_opc_dcbst_func;
+ppc_opc_func_t ppc_opc_lwzux_func;
+ppc_opc_func_t ppc_opc_andcx_func;
+ppc_opc_func_t ppc_opc_mulhwx_func;
+ppc_opc_func_t ppc_opc_iseleq_func;
+ppc_opc_func_t ppc_opc_mfmsr_func;
+ppc_opc_func_t ppc_opc_dcbf_func;
+ppc_opc_func_t ppc_opc_lbzx_func;
+ppc_opc_func_t ppc_opc_negx_func;
+ppc_opc_func_t ppc_opc_lbzux_func;
+ppc_opc_func_t ppc_opc_norx_func;
+ppc_opc_func_t ppc_opc_wrtee_func;
+ppc_opc_func_t ppc_opc_subfex_func;//+
+ppc_opc_func_t ppc_opc_addex_func;//+
+ppc_opc_func_t ppc_opc_mtcrf_func;
+ppc_opc_func_t ppc_opc_mtmsr_func;
+ppc_opc_func_t ppc_opc_stwcx__func;
+ppc_opc_func_t ppc_opc_stwx_func;
+ppc_opc_func_t ppc_opc_wrteei_func;
+ppc_opc_func_t ppc_opc_dcbtls_func;
+ppc_opc_func_t ppc_opc_stwux_func;
+ppc_opc_func_t ppc_opc_subfzex_func;//+
+ppc_opc_func_t ppc_opc_addzex_func;//+
+ppc_opc_func_t ppc_opc_mtsr_func;
+ppc_opc_func_t ppc_opc_stbx_func;
+ppc_opc_func_t ppc_opc_subfmex_func;//+
+ppc_opc_func_t ppc_opc_addmex_func;
+ppc_opc_func_t ppc_opc_mullwx_func;//+
+ppc_opc_func_t ppc_opc_mtsrin_func;
+ppc_opc_func_t ppc_opc_dcbtst_func;
+ppc_opc_func_t ppc_opc_stbux_func;
+ppc_opc_func_t ppc_opc_addx_func = {
+	opc_default_tag,
+	opc_addx_translate,
+	opc_invalid_translate_cond,
+};
+ppc_opc_func_t ppc_opc_dcbt_func;
+ppc_opc_func_t ppc_opc_lhzx_func;
+ppc_opc_func_t ppc_opc_eqvx_func;
+ppc_opc_func_t ppc_opc_tlbie_func;
+ppc_opc_func_t ppc_opc_eciwx_func;
+ppc_opc_func_t ppc_opc_lhzux_func;
+ppc_opc_func_t ppc_opc_xorx_func;
 ppc_opc_func_t ppc_opc_mfspr_func = {
 	opc_default_tag,
 	opc_mfspr_translate,
 	opc_invalid_translate_cond,
 };
+ppc_opc_func_t ppc_opc_mtspr_func = {
+	opc_default_tag,
+	opc_mtspr_translate,
+	opc_invalid_translate_cond,
+};
+ppc_opc_func_t ppc_opc_lhax_func;
+ppc_opc_func_t ppc_opc_isel_func;
+ppc_opc_func_t ppc_opc_tlbia_func;
+ppc_opc_func_t ppc_opc_lhaux_func;
+ppc_opc_func_t ppc_opc_sthx_func;
+ppc_opc_func_t ppc_opc_orcx_func;
+ppc_opc_func_t ppc_opc_ecowx_func;
+ppc_opc_func_t ppc_opc_sthux_func;
+ppc_opc_func_t ppc_opc_orx_func = {
+	opc_default_tag,
+	opc_orx_translate,
+	opc_invalid_translate_cond,
+};
+ppc_opc_func_t ppc_opc_divwux_func;//+
+ppc_opc_func_t ppc_opc_dcbi_func;
+ppc_opc_func_t ppc_opc_nandx_func;
+ppc_opc_func_t ppc_opc_divwx_func;//+
+ppc_opc_func_t ppc_opc_mcrxr_func;
+ppc_opc_func_t ppc_opc_lswx_func;
+ppc_opc_func_t ppc_opc_lwbrx_func;
+ppc_opc_func_t ppc_opc_lfsx_func;
+ppc_opc_func_t ppc_opc_srwx_func;
+ppc_opc_func_t ppc_opc_tlbsync_func;
+ppc_opc_func_t ppc_opc_lfsux_func;
+ppc_opc_func_t ppc_opc_mfsr_func;
+ppc_opc_func_t ppc_opc_lswi_func;
+ppc_opc_func_t ppc_opc_sync_func;
+ppc_opc_func_t ppc_opc_lfdx_func;
+ppc_opc_func_t ppc_opc_lfdux_func;
+ppc_opc_func_t ppc_opc_mfsrin_func;
+ppc_opc_func_t ppc_opc_stswx_func;
+ppc_opc_func_t ppc_opc_stwbrx_func;
+ppc_opc_func_t ppc_opc_stfsx_func;
+ppc_opc_func_t ppc_opc_stfsux_func;
+ppc_opc_func_t ppc_opc_stswi_func;
+ppc_opc_func_t ppc_opc_stfdx_func;
+ppc_opc_func_t ppc_opc_dcba_func;
+ppc_opc_func_t ppc_opc_stfdux_func;
+ppc_opc_func_t ppc_opc_tlbivax_func; /* TLB invalidated virtual address indexed */
+ppc_opc_func_t ppc_opc_lhbrx_func;
+ppc_opc_func_t ppc_opc_srawx_func;
+ppc_opc_func_t ppc_opc_srawix_func;
+ppc_opc_func_t ppc_opc_eieio_func;
+ppc_opc_func_t ppc_opc_tlbsx_func;
+ppc_opc_func_t ppc_opc_sthbrx_func;
+ppc_opc_func_t ppc_opc_extshx_func;
+ppc_opc_func_t ppc_opc_tlbrehi_func;
+ppc_opc_func_t ppc_opc_extsbx_func;
+ppc_opc_func_t ppc_opc_tlbwe_func; /* TLB write entry */
+ppc_opc_func_t ppc_opc_icbi_func;
+ppc_opc_func_t ppc_opc_stfiwx_func;
+ppc_opc_func_t ppc_opc_dcbz_func;
+ppc_opc_func_t ppc_opc_dss_func;      /*Temporarily modify*/
+ppc_opc_func_t ppc_opc_lvsl_func;
+ppc_opc_func_t ppc_opc_lvebx_func;
+ppc_opc_func_t ppc_opc_lvsr_func;
+ppc_opc_func_t ppc_opc_lvehx_func;
+ppc_opc_func_t ppc_opc_lvewx_func;
+ppc_opc_func_t ppc_opc_lvx_func;
+ppc_opc_func_t ppc_opc_stvebx_func;
+ppc_opc_func_t ppc_opc_stvehx_func;
+ppc_opc_func_t ppc_opc_stvewx_func;
+ppc_opc_func_t ppc_opc_stvx_func;
+ppc_opc_func_t ppc_opc_dst_func;
+ppc_opc_func_t ppc_opc_lvxl_func;
+ppc_opc_func_t ppc_opc_dstst_func;
+ppc_opc_func_t ppc_opc_stvxl_func;

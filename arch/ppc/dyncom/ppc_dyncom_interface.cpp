@@ -40,6 +40,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <skyeye_log.h>
 #include <skyeye_exec.h>
 #include <skyeye_cell.h>
+#include "ppc_dyncom_debug.h"
 
 #ifdef __CYGWIN__
 #include <sys/time.h>
@@ -134,7 +135,7 @@ static void per_cpu_step(conf_object_t * running_core){
 		if(!(cpu->eebpcr & 0x2000000))
 			return;
 	}
-	printf("In %s, core[%d].pc=0x%x\n", __FUNCTION__, core->pir, core->pc);
+	debug(DEBUG_INTERFACE, "In %s, core[%d].pc=0x%x\n", __FUNCTION__, core->pir, core->pc);
 	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 }
 static void per_cpu_stop(conf_object_t * core){

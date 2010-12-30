@@ -59,10 +59,10 @@ int arch_powerpc_tag_instr(cpu_t *cpu, addr_t phys_pc, tag_t *tag, addr_t *new_p
 int arch_powerpc_translate_instr(cpu_t *cpu, addr_t real_addr, BasicBlock *bb){
 	uint32 instr_size = 4;
 	uint32 instr;
-	debug(DEBUG_TRANSLATE, "In %s, pc=0x%x\n", __FUNCTION__, real_addr);
 	if(bus_read(32, real_addr, &instr) != 0){
 		/* some error handler */
 	}
+	debug(DEBUG_TRANSLATE, "In %s, pc=0x%x, instr=0x%x\n", __FUNCTION__, real_addr, instr);
 	ppc_opc_func_t* opc_func = ppc_get_opc_func(instr);
 	if(!opc_func)
 		BAD_INSTR;

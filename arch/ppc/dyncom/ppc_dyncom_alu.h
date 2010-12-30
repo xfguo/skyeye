@@ -23,58 +23,41 @@
 
 #ifndef __PPC_DYNCOM_ALU_H__
 #define __PPC_DYNCOM_ALU_H__
+#include "skyeye_types.h"
+#include <dyncom/tag.h>
+
+#include "ppc_tools.h"
+#include "ppc_dyncom_run.h"
 #include "ppc_dyncom_dec.h"
+#include "ppc_e500_core.h"
+#include "ppc_cpu.h"
 
-extern ppc_opc_func_t ppc_opc_addis_func;
-extern ppc_opc_func_t ppc_opc_addi_func;
-extern ppc_opc_func_t ppc_opc_orx_func;
-extern ppc_opc_func_t ppc_opc_rlwinmx_func;
 
-extern ppc_opc_func_t ppc_opc_twi_func;		//  3
-extern ppc_opc_func_t ppc_opc_mulli_func;		//  7
-extern ppc_opc_func_t ppc_opc_subfic_func;	//  8
-extern ppc_opc_func_t ppc_opc_cmpli_func;
-extern ppc_opc_func_t ppc_opc_cmpi_func;
-extern ppc_opc_func_t ppc_opc_addic_func;		
-extern ppc_opc_func_t ppc_opc_addic__func;		
-extern ppc_opc_func_t ppc_opc_addi_func;
-extern ppc_opc_func_t ppc_opc_addis_func;
-extern ppc_opc_func_t ppc_opc_bcx_func;
-extern ppc_opc_func_t ppc_opc_sc_func;
-extern ppc_opc_func_t ppc_opc_rlwimix_func;
-extern ppc_opc_func_t ppc_opc_rlwinmx_func;
-extern ppc_opc_func_t ppc_opc_rlwnmx_func;
-extern ppc_opc_func_t ppc_opc_ori_func;
-extern ppc_opc_func_t ppc_opc_oris_func;
-extern ppc_opc_func_t ppc_opc_xori_func;
-extern ppc_opc_func_t ppc_opc_xoris_func;
-extern ppc_opc_func_t ppc_opc_andi__func;
-extern ppc_opc_func_t ppc_opc_andis__func;
-extern ppc_opc_func_t ppc_opc_lwz_func;
-extern ppc_opc_func_t ppc_opc_lwzu_func;
-extern ppc_opc_func_t ppc_opc_lbz_func;
-extern ppc_opc_func_t ppc_opc_lbzu_func;
-extern ppc_opc_func_t ppc_opc_stw_func;
-extern ppc_opc_func_t ppc_opc_stwu_func;
-extern ppc_opc_func_t ppc_opc_stb_func;
-extern ppc_opc_func_t ppc_opc_stbu_func;
-extern ppc_opc_func_t ppc_opc_lhz_func;
-extern ppc_opc_func_t ppc_opc_lhzu_func;
-extern ppc_opc_func_t ppc_opc_lha_func;
-extern ppc_opc_func_t ppc_opc_lhau_func;
-extern ppc_opc_func_t ppc_opc_sth_func;
-extern ppc_opc_func_t ppc_opc_sthu_func;
-extern ppc_opc_func_t ppc_opc_lmw_func;
-extern ppc_opc_func_t ppc_opc_stmw_func;
-extern ppc_opc_func_t ppc_opc_lfs_func;
-extern ppc_opc_func_t ppc_opc_lfsu_func;
-extern ppc_opc_func_t ppc_opc_lfd_func;
-extern ppc_opc_func_t ppc_opc_lfdu_func;
-extern ppc_opc_func_t ppc_opc_stfs_func;
-extern ppc_opc_func_t ppc_opc_stfsu_func;
-extern ppc_opc_func_t ppc_opc_stfd_func;
-extern ppc_opc_func_t ppc_opc_stfdu_func;
-extern ppc_opc_func_t ppc_opc_mtspr_func;
-extern ppc_opc_func_t ppc_opc_mfspr_func;
-
+static inline void ppc_dyncom_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
+{
+	e500_core_t* current_core = get_current_core();
+	current_core->cr &= 0x0fffffff;
+	if (!r) {
+		current_core->cr |= CR_CR0_EQ;
+	} else if (r & 0x80000000) {
+		current_core->cr |= CR_CR0_LT;
+	} else {
+		current_core->cr |= CR_CR0_GT;
+	}
+	if (current_core->xer & XER_SO) current_core->cr |= CR_CR0_SO;
+}
+static inline uint32 ppc_mask(int MB, int ME)
+{
+	uint32 mask;
+	if (MB <= ME) {
+		if (ME-MB == 31) {
+			mask = 0xffffffff;
+		} else {
+			mask = ((1<<(ME-MB+1))-1)<<(31-ME);
+		}
+	} else {
+		mask = ppc_word_rotl((1<<(32-MB+ME+1))-1, 31-ME);
+	}
+	return mask;
+}
 #endif
