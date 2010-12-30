@@ -111,6 +111,10 @@ static arch_func_t arm_arch_func = {
 	NULL
 };
 
+static void arm_debug_func(cpu_t* cpu){
+	printf("In %s, phys_pc=0x%x, r1 is 0x%x, r3 is 0x%x\n", __FUNCTION__, *(addr_t*)cpu->rf.phys_pc,((unsigned int*)cpu->rf.grf)[1],((unsigned int*)cpu->rf.grf)[3]);
+	return;
+}
 void arm_dyncom_init(arm_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, arm_arch_func);
 
@@ -121,6 +125,7 @@ void arm_dyncom_init(arm_core_t* core){
 
 	cpu->cpu_data = (conf_object_t*)core;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
+	cpu->debug_func = arm_debug_func;
 	return;
 }
 
