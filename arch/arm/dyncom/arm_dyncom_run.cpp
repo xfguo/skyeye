@@ -11,6 +11,7 @@
 
 #include "armdefs.h"
 #include "memory.h"
+#include "dyncom/memory.h"
 #include "arm_dyncom_translate.h"
 #define MAX_REGNUM 15
 
