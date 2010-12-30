@@ -662,7 +662,6 @@ Value *arch_read_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, uint32_t sign, 
 	std::vector<Value *> params;
 	params.push_back(v_cpu_ptr);
 	params.push_back(addr);
-	params.push_back(CONST(sign));
 	params.push_back(CONST(size));
 	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_func_read_memory, params.begin(), params.end(), "", bb);
 	return ret;
