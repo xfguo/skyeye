@@ -126,7 +126,8 @@ enum {
 	 			 // GPRs in the memory layout, they are kept separate
 				 // to avoid confusing the client about the number of
 				 // registers available.
-	CPU_REG_SPR
+	CPU_REG_SPR,
+	MAX_REG_NUM
 };
 // @@@END_DEPRECATION
 
@@ -199,8 +200,8 @@ typedef struct cpu_archinfo {
 	uint32_t default_page_size;
 
 	// @@@BEGIN_DEPRECATION
-	uint32_t register_count[4];
-	uint32_t register_size[4];
+	uint32_t register_count[MAX_REG_NUM];
+	uint32_t register_size[MAX_REG_NUM];
 	// @@@END_DEPRECATION
 
 	cpu_register_layout_t const *register_layout;
