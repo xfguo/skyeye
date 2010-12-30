@@ -230,6 +230,27 @@ arch_put_reg_by_ptr(cpu_t *cpu, void *reg, Value *v, uint32_t bits, bool sext,
 	new StoreInst(v, v_reg_ptr, bb);
 	return v;
 }
+Value *
+arch_get_reg_by_ptr(cpu_t *cpu, void *reg, uint32_t bits, BasicBlock *bb)
+{
+	Type const *int32ptr_type = Type::getInt32Ty(_CTX());
+	Type const *int64ptr_type = Type::getInt64Ty(_CTX());
+	Constant *v_reg = NULL;
+	Value *v_reg_ptr = NULL;
+	Value *v;
+	if(bits == 32){
+		v_reg = ConstantInt::get(int32ptr_type, (uint64_t)reg);
+		v_reg_ptr = ConstantExpr::getIntToPtr(v_reg, PointerType::getUnqual(int32ptr_type));
+	}else if(bits == 64){
+		v_reg = ConstantInt::get(int64ptr_type, (uint64_t)reg);
+		v_reg_ptr = ConstantExpr::getIntToPtr(v_reg, PointerType::getUnqual(int64ptr_type));
+	}else{
+		fprintf(stderr, "in %s,register size %d not supported.\n", __FUNCTION__, bits);
+		exit(0);
+	}
+	v = new LoadInst(v_reg_ptr, "", bb);
+	return v;
+}
 //XXX TODO
 // The guest CPU can be little endian or big endian, so we need both
 // host mode access routines as well as IR generators that deal with
