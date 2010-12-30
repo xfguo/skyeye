@@ -451,13 +451,13 @@ cpu_run(cpu_t *cpu)
 			return ret;
 		if (!is_inside_code_area(cpu, pc))
 			return ret;
+#if 0
 		/* simulator run new instructions ? */
 		if (icounter != orig_icounter) {
 			success = true;
 			//break;
 		}
 		//}
-#if 1
 		if (!success) {
 			LOG("{%llx}", pc);
 			cpu_tag(cpu, pc);
