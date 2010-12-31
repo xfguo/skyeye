@@ -984,7 +984,7 @@ int arm_opc_trans_58(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* Store Word, No WriteBack, Pre Inc, Immed. */
 	/* I = 0, P = 1, U = 1, W = 0 */
 	Value *addr = GETLSADDR5x;
-	arch_write_memory(cpu, bb, addr, R(RN), 32);
+	arch_write_memory(cpu, bb, addr, R(RD), 32);
 }
 
 int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
