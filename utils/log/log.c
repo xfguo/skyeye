@@ -127,7 +127,7 @@ static void log_pc_callback(generic_arch_t* arch_instance){
 		enable_log_flag = False;
 	if(enable_log_flag == True){
 		if((pc >= range_begin) && (pc < range_end)){
-			if(log_level = 1){
+			if(log_level == 1){
 				char* symbol = get_sym(pc);
 				if(symbol)
 					fprintf(log_fd, "%s:0x%x\n", symbol, pc);
