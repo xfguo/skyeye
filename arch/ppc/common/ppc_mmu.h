@@ -44,6 +44,7 @@ extern uint32 gMemorySize;
 
 int e500_mmu_init(e500_mmu_t * mmu);
 uint32_t get_end_of_page(uint32 phys_addr);
+uint32_t get_begin_of_page(uint32_t phys_addr);
 int   ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
 int   e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
 int   e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
