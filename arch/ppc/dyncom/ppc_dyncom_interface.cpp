@@ -246,17 +246,17 @@ static uint32 ppc_get_regval_by_id(int id){
         	return cpu->core[core_id].gpr[id];
 
 	switch(id){
-		case PC:
+		case PC_REG:
 			return cpu->core[core_id].pc;
 		case MSR:
 			return cpu->core[core_id].msr;
-		case CR:
+		case CR_REG:
 			return cpu->core[core_id].cr;
-		case LR:
+		case LR_REG:
 			return cpu->core[core_id].lr;
-		case CTR:
+		case CTR_REG:
 			return cpu->core[core_id].ctr;
-		case XER:
+		case XER_REG:
 			return cpu->core[core_id].xer;
 		case FPSCR:
 			return cpu->core[core_id].fpscr;

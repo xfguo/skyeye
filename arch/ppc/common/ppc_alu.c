@@ -401,7 +401,7 @@ void ppc_opc_andis_()
  *	cmp		Compare
  *	.442
  */
-static uint32 ppc_cmp_and_mask[8] = {
+uint32 ppc_cmp_and_mask[8] = {
 	0xfffffff0,
 	0xffffff0f,
 	0xfffff0ff,

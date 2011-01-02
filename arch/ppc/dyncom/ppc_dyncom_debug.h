@@ -8,6 +8,7 @@
 #define DEBUG_TRANSLATE_COND		1 << 2
 #define DEBUG_DEC					1 << 3
 #define DEBUG_INTERFACE				1 << 4
+#define DEBUG_NOT_TEST				1 << 5
 
 #define DEBUG_MASK				0xffffffff
 

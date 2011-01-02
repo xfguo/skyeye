@@ -21,6 +21,8 @@
 #ifndef __PPC_ALU_H__
 #define __PPC_ALU_H__
 
+extern uint32 ppc_cmp_and_mask[];
+
 void ppc_opc_addx();
 void ppc_opc_addcx();
 void ppc_opc_addex();
