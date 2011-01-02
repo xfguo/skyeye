@@ -3,6 +3,10 @@
 /* emitter functions */
 Value *arch_get_reg(cpu_t *cpu, uint32_t index, uint32_t bits, BasicBlock *bb);
 Value *arch_put_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, bool sext, BasicBlock *bb);
+
+Value *arch_get_spr_reg(cpu_t *cpu, uint32_t index, uint32_t bits, BasicBlock *bb);
+Value *arch_put_spr_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, bool sext, BasicBlock *bb);
+
 Value *arch_get_reg_by_ptr(cpu_t *cpu, void *reg, uint32_t bits, BasicBlock *bb);
 Value *arch_put_reg_by_ptr(cpu_t *cpu, void *reg, Value *v, uint32_t bits, bool sext,BasicBlock *bb);
 Value *arch_load32_aligned(cpu_t *cpu, Value *a, BasicBlock *bb);
@@ -103,7 +107,8 @@ uint32_t RAM32LE(uint8_t *RAM, addr_t a);
 #define XOR(a,b) BinaryOperator::Create(Instruction::Xor, a, b, "", bb)
 #define SHL(a,b) BinaryOperator::Create(Instruction::Shl, a, b, "", bb)
 #define LSHR(a,b) BinaryOperator::Create(Instruction::LShr, a, b, "", bb)
-#define ROTL(data,n)	OR(SHL(data, CONST(n & 0x1f)), LSHR(data, CONST(32 - n & 0x1f)));
+
+#define ROTL(data,n)	OR(SHL(data, AND(n, CONST(0x1f))), LSHR(data, SUB(CONST(32), AND(n, CONST(0x1f)))))
 #define ASHR(a,b) BinaryOperator::Create(Instruction::AShr, a, b, "", bb)
 #define ICMP_EQ(a,b) new ICmpInst(*bb, ICmpInst::ICMP_EQ, a, b, "")
 #define ICMP_NE(a,b) new ICmpInst(*bb, ICmpInst::ICMP_NE, a, b, "")
@@ -115,6 +120,10 @@ uint32_t RAM32LE(uint8_t *RAM, addr_t a);
 #define ICMP_SGT(a,b) new ICmpInst(*bb, ICmpInst::ICMP_SGT, a, b, "")
 #define ICMP_SGE(a,b) new ICmpInst(*bb, ICmpInst::ICMP_SGE, a, b, "")
 #define ICMP_SLE(a,b) new ICmpInst(*bb, ICmpInst::ICMP_SLE, a, b, "")
+
+#define LOG_OR(a,b) OR(ICMP_NE(a,CONST(0)), ICMP_NE(b, CONST(0)))
+#define LOG_AND(a,b) AND(ICMP_NE(a,CONST(0)), ICMP_NE(b, CONST(0)))
+#define LOG_NOT(a) ICMP_NE(a, CONST(0))
 
 /* shortcuts */
 #define COM(x) XOR(x, CONST(-1ULL))
@@ -174,9 +183,17 @@ uint32_t RAM32LE(uint8_t *RAM, addr_t a);
 #define R(i) arch_get_reg(cpu, i, 0, bb)
 #define R32(i) arch_get_reg(cpu, i, 32, bb)
 
+/* interface to the SPRs */
+#define RS(i) arch_get_spr_reg(cpu, i, 0, bb)
+#define RS32(i) arch_get_spr_reg(cpu, i, 32, bb)
+
 #define LET(i,v) arch_put_reg(cpu, i, v, 0, false, bb)
 #define LET32(i,v) arch_put_reg(cpu, i, v, 32, true, bb)
 #define LET_ZEXT(i,v) arch_put_reg(cpu, i, v, 1, false, bb)
+
+#define LETS(i,v) arch_put_spr_reg(cpu, i, v, 0, false, bb)
+#define LETS32(i,v) arch_put_reg(cpu, i, v, 32, true, bb)
+#define LETS_ZEXT(i,v) arch_put_reg(cpu, i, v, 1, false, bb)
 /* this one is different: it does not deal with registers, but with flags */
 #define LET1(a,b) new StoreInst(b, a, false, bb)
 #define LET_BY_PTR(ptr, v, bits) arch_put_reg_by_ptr(cpu, ptr, v, bits, false, bb)
