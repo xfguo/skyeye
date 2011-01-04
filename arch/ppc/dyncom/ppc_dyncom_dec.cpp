@@ -308,7 +308,7 @@ static ppc_opc_func_t* ppc_opc_group_v(cpu_t* cpu, BasicBlock* bb)
 static inline ppc_opc_func_t* ppc_opc_group_1(uint32 instr)
 {
 	uint32 ext = PPC_OPC_EXT(instr);
-	debug(DEBUG_DEC, "In %s, ext=0x%x\n", __FUNCTION__, ext);
+	debug(DEBUG_DEC, "In %s, ext=%d\n", __FUNCTION__, ext);
 	if (ext >= (sizeof ppc_opc_table_group_1 / sizeof ppc_opc_table_group_1[0])) {
 		return &ppc_opc_invalid;
 	}
@@ -319,7 +319,7 @@ static inline ppc_opc_func_t* ppc_opc_group_1(uint32 instr)
 static inline ppc_opc_func_t* ppc_opc_group_2(uint32 opc)
 {
 	uint32 ext = PPC_OPC_EXT(opc);
-	debug(DEBUG_DEC, "In %s, ext=0x%x\n", __FUNCTION__, ext);
+	debug(DEBUG_DEC, "In %s, ext=%d\n", __FUNCTION__, ext);
 	if (ext >= (sizeof ppc_opc_table_group_2 / sizeof ppc_opc_table_group_2[0])) {
 		return &ppc_opc_invalid;
 	}
@@ -330,6 +330,7 @@ static inline ppc_opc_func_t* ppc_opc_group_f1(uint32 instr)
 {
 	uint32 ext = PPC_OPC_EXT(instr);
 	uint32_t index = ext & 0x1f;
+	debug(DEBUG_DEC, "In %s, ext=%d\n", __FUNCTION__, ext);
 	return ppc_opc_table_group_f1[index];
 }
 // main opcode 63
@@ -337,6 +338,7 @@ static inline ppc_opc_func_t* ppc_opc_group_f2(uint32 instr)
 {
 	uint32 ext = PPC_OPC_EXT(instr);
 	uint32_t index = ext & 0x1f;
+	debug(DEBUG_DEC, "In %s, ext=%d\n", __FUNCTION__, ext);
 	return ppc_opc_table_group_f2[index];
 }
 
@@ -350,7 +352,6 @@ static inline ppc_opc_func_t* ppc_opc_group_f2(uint32 instr)
 ppc_opc_func_t* ppc_get_opc_func(uint32_t opc)
 {
 	uint32 mainopc = PPC_OPC_MAIN(opc);
-	debug(DEBUG_DEC, "In %s,opc=0x%x,mainopc=%d\n", __FUNCTION__, opc, mainopc);
 	if(mainopc == 31)
 		return ppc_opc_group_2(opc);
 	else if(mainopc == 19)
@@ -359,8 +360,10 @@ ppc_opc_func_t* ppc_get_opc_func(uint32_t opc)
 		return ppc_opc_group_f1(opc);
 	else if(mainopc == 63)
 		return ppc_opc_group_f2(opc);
-	else
+	else{
+		debug(DEBUG_DEC, "In %s,mainopc=%d\n", __FUNCTION__, mainopc);
 		return ppc_opc_table_main[mainopc];
+	}
 }
 
 /**

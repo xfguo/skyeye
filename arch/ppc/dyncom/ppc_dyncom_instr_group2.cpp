@@ -15,6 +15,42 @@
 #include "skyeye.h"
 
 #include "ppc_dyncom_debug.h"
+
+#define NOT_TESTED() do { printf("INSTRUCTION NOT TESTED:%s", __FUNCTION__); } while(0)
+/*
+ *	cmp		Compare
+ *	.442
+ */
+static uint32 ppc_cmp_and_mask[8] = {
+	0xfffffff0,
+	0xffffff0f,
+	0xfffff0ff,
+	0xffff0fff,
+	0xfff0ffff,
+	0xff0fffff,
+	0xf0ffffff,
+	0x0fffffff,
+};
+
+static int opc_cmp_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	NOT_TESTED();
+	uint32 cr;
+	int rA, rB;
+	e500_core_t* current_core = get_current_core();
+	PPC_OPC_TEMPL_X(instr, cr, rA, rB);
+	cr >>= 2;
+	cr = 7 - cr;
+	Value * tmp1 = ICMP_SLT(R(rA), R(rB));
+	Value * tmp2 = ICMP_SGT(R(rA), R(rB));
+	Value * tmp3 = ICMP_EQ(R(rA), R(rB));
+	Value * c = SELECT(tmp1, CONST(8),SELECT(tmp2, CONST(4), SELECT(tmp3, CONST(2), CONST(0))));
+	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
+	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
+	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, CONST(cr * 4))));
+	return 0;
+}
+
 /*
  *	orx		OR
  *	.603
@@ -24,11 +60,9 @@ static int opc_orx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rS, rA, rB;
 	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
 	LET(rA, OR(R(rS), R(rB)));
-	//current_core->gpr[rA] = current_core->gpr[rS] | current_core->gpr[rB];
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
-		fprintf(stderr, "##### In %s,cr0 is not updated.\n", __FUNCTION__);
-		//ppc_update_cr0(current_core->gpr[rA]);
+		ppc_dyncom_update_cr0(cpu, bb, rA);
 	}
 	return 0;
 }
@@ -71,9 +105,9 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	switch (spr2) {
 	case 0:
 		switch (spr1) {
-		case 1: LET32_BY_PTR(&current_core->xer, R(rS)); return 0;
-		case 8:	LET32_BY_PTR(&current_core->lr, R(rS)); return 0;
-		case 9:	LET32_BY_PTR(&current_core->ctr, R(rS)); return 0;
+		case 1: LETS(XER_REGNUM, R(rS)); return 0;
+		case 8:	LETS(LR_REGNUM, R(rS)); return 0;
+		case 9:	LETS(CTR_REGNUM,R(rS)); return 0;
 		}
 		break;
 	
@@ -419,20 +453,20 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	e500_core_t* current_core = get_current_core();
 	int rD, spr1, spr2;
-	PPC_OPC_TEMPL_XO(current_core->current_opc, rD, spr1, spr2);
+	PPC_OPC_TEMPL_XO(instr, rD, spr1, spr2);
 	if (current_core->msr & MSR_PR) {
 		//ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		if(!(spr2 == 0 && spr1 == 8)) /* read lr*/
 			printf("Warning, execute mfspr in user mode, pc=0x%x\n", current_core->pc);
 		//return;
 	}
-	//fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);
+	debug(DEBUG_TRANSLATE, "In %s, spr2=%d, spr1=%d\n", __func__, spr2, spr1);
 	switch(spr2) {
 	case 0:
 		switch (spr1) {
-		case 1: LET(rD, GET32_BY_PTR(&current_core->xer)); return 0;
-		case 8: LET(rD, GET32_BY_PTR(&current_core->lr)); return 0;
-		case 9: LET(rD, GET32_BY_PTR(&current_core->ctr)); return 0;
+		case 1: LET(rD, RS(XER_REGNUM)); return 0;
+		case 8: LET(rD, RS(LR_REGNUM)); return 0;
+		case 9: LET(rD, RS(CTR_REGNUM)); return 0;
 
 		case 18: current_core->gpr[rD] = current_core->dsisr; return 0;
 		case 19: current_core->gpr[rD] = current_core->dar; return 0;
@@ -696,8 +730,38 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	//SINGLESTEP("invalid mfspr\n");
 	return -1;
 }
+/*
+ *	cntlzwx		Count Leading Zeros Word
+ *	.447
+ */
+static int opc_cntlzwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	NOT_TESTED();
+	int rS, rA, rB;
+	e500_core_t* current_core = get_current_core();
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	PPC_OPC_ASSERT(rB==0);
+	int i;
+	Value * n_value = CONST(0);
+	Value * old_n_value = CONST(0);
+	Value * v_value = R(rS);
+	for(i = 0; i < 32; i++){
+		n_value = SELECT(ICMP_EQ(AND(LSHR(v_value, CONST(i)), CONST(1)), CONST(1)), CONST(i), old_n_value);
+		old_n_value = n_value;
+	}
+	LET(rA, SUB(SUB(CONST(32), n_value), CONST(1)));
+	if (current_core->current_opc & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rA);
+	}
+}
+
 /* Interfaces */
-ppc_opc_func_t ppc_opc_cmp_func;
+ppc_opc_func_t ppc_opc_cmp_func = {
+	opc_default_tag,
+	opc_cmp_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_tw_func;
 ppc_opc_func_t ppc_opc_subfcx_func;//+
 ppc_opc_func_t ppc_opc_addcx_func;//+
@@ -710,7 +774,11 @@ ppc_opc_func_t ppc_opc_lwzx_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_slwx_func;
-ppc_opc_func_t ppc_opc_cntlzwx_func;
+ppc_opc_func_t ppc_opc_cntlzwx_func = {
+	opc_default_tag,
+	opc_cntlzwx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_andx_func;
 ppc_opc_func_t ppc_opc_cmpl_func;
 ppc_opc_func_t ppc_opc_subfx_func;

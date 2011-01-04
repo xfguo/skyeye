@@ -34,20 +34,19 @@
 #include "ppc_dyncom_dec.h"
 #include "ppc_e500_core.h"
 #include "ppc_cpu.h"
-#include "ppc_regformat.h"
 
 
 static inline void ppc_dyncom_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
 {
-	LETS(CR_REG, AND(RS(CR_REG), CONST(0x0fffffff)));
-	LETS(CR_REG, 
-		SELECT(NOT(R(r)), OR(RS(CR_REG), CONST(CR_CR0_EQ)), 
-			SELECT(AND(R(r), CONST(0x80000000)), 
-				OR(RS(CR_REG), CONST(CR_CR0_LT)), 
-				OR(RS(CR_REG), CONST(CR_CR0_GT)))));
+	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(0x0fffffff)));
+	LETS(CR_REGNUM, 
+		SELECT(NOT(R(r)), OR(RS(CR_REGNUM), CONST(CR_CR0_EQ)), 
+			SELECT(ICMP_NE(AND(R(r), CONST(0x80000000)), CONST(0)), 
+				OR(RS(CR_REGNUM), CONST(CR_CR0_LT)), 
+				OR(RS(CR_REGNUM), CONST(CR_CR0_GT)))));
 
-	LETS(CR_REG, SELECT(AND(RS(XER_REG), CONST(XER_SO)), 
-		RS(CR_REG), OR(RS(CR_REG), CONST(CR_CR0_SO))));
+	LETS(CR_REGNUM, SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), 
+		RS(CR_REGNUM), OR(RS(CR_REGNUM), CONST(CR_CR0_SO))));
 }
 static int inline ppc_mask(int MB, int ME){
 	uint32 mask;

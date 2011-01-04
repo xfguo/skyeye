@@ -20,6 +20,7 @@ using namespace llvm;
 
 Value *
 arch_powerpc_translate_cond(cpu_t *cpu, addr_t phys_pc, BasicBlock *bb){
+	debug(DEBUG_TAG, "In %s, pc=0x%x\n", __FUNCTION__, phys_pc);
 	uint32_t instr;
 	bus_read(32, phys_pc, &instr);
 	ppc_opc_func_t* opc_func = ppc_get_opc_func(instr);

@@ -19,7 +19,7 @@
 
 #include "ppc_dyncom_debug.h"
 #define TODO do{fprintf(stderr, "In %s, not implement\n", __FUNCTION__);exit(-1);}while(0);
-#define NOT_TEST do{debug(DEBUG_NOT_TEST, "In %s,not implemented\n", __FUNCTION__);}while(0);
+#define NOT_TEST do{debug(DEBUG_NOT_TEST, "In %s,not tested\n", __FUNCTION__);}while(0);
 /*
  *      addis           Add Immediate Shifted
  *      .428
@@ -73,31 +73,20 @@ static int opc_cmpi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	uint32 cr;
 	int rA;
 	e500_core_t* current_core = get_current_core();
-	printf("In %s not implemented\n", __FUNCTION__);
-	return 0;
 	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, cr, rA, imm);
+	PPC_OPC_TEMPL_D_SImm(instr, cr, rA, imm);
 	cr >>= 2;
-	sint32 a = current_core->gpr[rA];
-	sint32 b = imm;
-	uint32 c;
-/*	if (!VALGRIND_CHECK_READABLE(a, sizeof a)) {
-		ht_printf("%08x <--i\n", current_core->pc);
-//		SINGLESTEP("");
-	}*/
-	if (a < b) {
-		c = 8;
-	} else if (a > b) {
-		c = 4;
-	} else {
-		c = 2;
-	}
-	if (current_core->xer & XER_SO) c |= 1;
-	cr = 7-cr;
-//	current_core->cr &= ppc_cmp_and_mask[cr];
-	current_core->cr |= c<<(cr*4);
-	//fprintf(stderr,"in %s,rA=%d,gpr[rA]=0x%d,im=%d,c=%d\n",__FUNCTION__,rA,current_core->gpr[rA],imm,c);
+	cr = 7 - cr;
+	Value * tmp1 = ICMP_SLT(R(rA), CONST(imm));
+	Value * tmp2 = ICMP_SGT(R(rA), CONST(imm));
+	Value * tmp3 = ICMP_EQ(R(rA), CONST(imm));
+	Value * c = SELECT(tmp1, CONST(8),SELECT(tmp2, CONST(4), SELECT(tmp3, CONST(2), CONST(0))));
+	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
+	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
+	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, CONST(cr * 4))));
+	return 0;
 }
+
 ppc_opc_func_t ppc_opc_cmpi_func = {
 	opc_default_tag,
 	opc_cmpi_translate,
@@ -139,15 +128,11 @@ static int opc_lwz_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
-	printf("In %s not implemented\n", __FUNCTION__);
-	return 0;
-	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
+	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
 	uint32 r;
-
-	int ret = ppc_read_effective_word((rA?current_core->gpr[rA]:0)+imm, &r);
-	if (ret == PPC_MMU_OK) {
-		current_core->gpr[rD] = r;
-	}	
+	Value *cond = ICMP_NE(R(rA), CONST(0));
+	LET(rD, arch_read_memory(cpu, bb, ADD(SELECT(cond, R(rA), CONST(0)), CONST(imm)), 0, 32));
+	return 0;
 }
 ppc_opc_func_t ppc_opc_lwz_func = {
 	opc_default_tag,
@@ -200,9 +185,11 @@ ppc_opc_func_t ppc_opc_stw_func = {
  */
 static int opc_stwu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	debug(DEBUG_TRANSLATE, "In %s\n", __func__);
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);
+	debug(DEBUG_TRANSLATE, "In %s,rS=%d,rA=%d,imm=%d\n", __FUNCTION__, rS, rA, imm);
 	// FIXME: check rA!=0
 	/* FIXME: no MMU now */
 	arch_write_memory(cpu, bb, ADD(R(rA), CONST(imm)), R(rS), 32);
@@ -239,16 +226,16 @@ static int opc_bx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	uint32 li;
 	PPC_OPC_TEMPL_I(instr, li);
+	if (instr & PPC_OPC_LK) {
+		LETS(LR_REGNUM, ADD(CONST(4), CONST(*(addr_t *)cpu->rf.phys_pc)));
+	}
 	if (!(instr & PPC_OPC_AA)) {
-		arch_store(CONST(li + current_core->phys_pc), cpu->ptr_PHYS_PC, bb);
+		arch_store(ADD(CONST(li), CONST(*(addr_t *)cpu->rf.phys_pc)), cpu->ptr_PHYS_PC, bb);
 		debug(DEBUG_TRANSLATE, "In %s, li=0x%x, pc=0x%x, br 0x%x\n",
 				__FUNCTION__, li, current_core->phys_pc, li + current_core->phys_pc);
 	}else{
 		arch_store(CONST(li), cpu->ptr_PHYS_PC, bb);
 		debug(DEBUG_TRANSLATE, "In %s, li=0x%x, br 0x%x\n", __FUNCTION__, li, li);
-	}
-	if (instr & PPC_OPC_LK) {
-		LET32_BY_PTR(&current_core->lr, CONST(4 + current_core->phys_pc));
 	}
 	return PPC_INSN_SIZE;
 }
@@ -263,42 +250,61 @@ ppc_opc_func_t ppc_opc_bx_func = {
  *	.436
  */
 int opc_bcx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
-	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	*tag = TAG_COND_BRANCH;
-	*new_pc = NEW_PC_NONE;
-	debug(DEBUG_TAG, "In %s, new_pc=0x%x\n", __FUNCTION__, *new_pc);
+	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
+	uint32 BO, BI, BD;
+	PPC_OPC_TEMPL_B(instr, BO, BI, BD);
+	uint32_t AA = instr & PPC_OPC_AA;
+	if(AA)
+		*new_pc = BD;
+	else
+		*new_pc = phys_pc + BD;
+	if(*new_pc > get_end_of_page(phys_pc) || *new_pc < get_begin_of_page(phys_pc)){
+		*new_pc = NEW_PC_NONE;
+		*tag |= TAG_STOP;
+	}
+	debug(DEBUG_TAG, "In %s, new_pc=0x%x, BD=0x%x\n", __FUNCTION__, *new_pc, BD);
 	return PPC_INSN_SIZE;
+}
+Value* opc_bcx_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	NOT_TEST;
+	uint32 BO, BI, BD;
+	PPC_OPC_TEMPL_B(instr, BO, BI, BD);
+	if (!(BO & 4)) {
+		LETS(CTR_REGNUM, SUB(RS(CTR_REGNUM), CONST(1)));
+	}
+	bool_t bo2 = ((BO & 2)?True: False);
+	bool_t bo8 = ((BO & 8)? True: False); // branch condition true
+	Value* cr_value = SELECT(ICMP_NE(AND(RS(CR_REGNUM), CONST(1<<(31-BI))), CONST(0)), CONST(1), CONST(0));
+	//bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0) ;
+	return AND(
+		OR(ICMP_NE(CONST(BO & 4), CONST(0)), XOR(LOG_NOT(RS(CTR_REGNUM)), CONST1(bo2))), 
+		OR(ICMP_NE(CONST(BO & 16), CONST(0)), LOG_NOT(XOR(cr_value, CONST(bo2))))
+	);
+#if 0
+	Value *npc_v;
+	if (!(instr & PPC_OPC_AA)) {
+		npc_v = SELECT(cond, ADD(CONST(BD), RS(PC_REGNUM)), CONST(BD));
+	}
+	if (instr & PPC_OPC_LK) {
+		LETS(LR_REGNUM, SELECT(cond, ADD(RS(PC_REGNUM), CONST(4)), RS(LR_REGNUM)));
+	}
+	LETS(NPC_REGNUM, SELECT(cond, npc_v, RS(NPC_REGNUM)));
+#endif
 }
 static int opc_bcx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
 	uint32 BO, BI, BD;
 	PPC_OPC_TEMPL_B(instr, BO, BI, BD);
-	if (!(BO & 4)) {
-		LETS(CTR_REG, SUB(RS(CTR_REG), CONST(1)));
-	}
-	bool_t bo2 = ((BO & 2)?True: False);
-	bool_t bo8 = ((BO & 8)? True: False); // branch condition true
-	Value* cr_value = SELECT(AND(RS(CR_REG), CONST(1<<(31-BI))), CONST(1), CONST(0));
-	//bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0) ;
-	Value* cond = LOG_AND(
-		LOG_OR(CONST(BO & 4), 
-			XOR(LOG_NOT(RS(CTR_REG)), CONST(bo2))), 
-		LOG_OR(CONST(BO & 16) , 
-			LOG_NOT(XOR(cr_value, CONST(bo2))))
-	);
-	if (!(instr & PPC_OPC_AA)) {
-		LETS(BD, SELECT(cond, ADD(CONST(BD), RS(PC_REG)), RS(BD)));
-	}
 	if (instr & PPC_OPC_LK) {
-		LETS(LR_REG, SELECT(cond, ADD(RS(PC_REG), CONST(4)), RS(LR_REG)));
+		LETS(LR_REGNUM, ADD(RS(PC_REGNUM), CONST(4)));
 	}
-	LETS(NPC_REG, SELECT(cond, RS(BD), RS(NPC_REG)));
-	NOT_TEST;
+	return 0;
 }
 ppc_opc_func_t ppc_opc_bcx_func = {
 	opc_bcx_tag,
 	opc_bcx_translate,
-	opc_invalid_translate_cond,
+	opc_bcx_translate_cond,
 };
 static int opc_twi_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
@@ -346,9 +352,9 @@ static int opc_subfic_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	NOT_TEST;
 	// update XER
 	Value* cond = ppc_dyncom_carry_3(cpu, bb, not_a, CONST(imm), CONST(1));
-	LETS(XER_REG, SELECT(cond, 
-			OR(R(XER_REG), CONST(XER_CA)), 
-			AND(RS(XER_REG), CONST(~XER_CA)))
+	LETS(XER_REGNUM, SELECT(cond, 
+			OR(R(XER_REGNUM), CONST(XER_CA)), 
+			AND(RS(XER_REGNUM), CONST(~XER_CA)))
 	);
 }
 
@@ -370,10 +376,10 @@ static int opc_cmpli_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	cr >>= 2;
 	Value* c;
 	c = SELECT(ICMP_ULT(R(rA), CONST(imm)), CONST(8), SELECT(ICMP_UGT(R(rA), CONST(imm)), CONST(4), CONST(2)));
-	c = SELECT(AND(RS(XER_REG), CONST(XER_SO)), OR(c, CONST(1)), c);
-	LETS(CR_REG, SUB(CONST(7), RS(CR_REG)));
-	LETS(CR_REG, AND(RS(CR_REG), CONST(ppc_cmp_and_mask[cr])));
-	LETS(CR_REG, OR(RS(CR_REG), SHL(c, MUL(RS(CR_REG), CONST(4)))));
+	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
+	LETS(CR_REGNUM, SUB(CONST(7), RS(CR_REGNUM)));
+	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
+	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, MUL(RS(CR_REGNUM), CONST(4)))));
 	NOT_TEST;
 	return 0;
 }
@@ -394,9 +400,9 @@ static int opc_addic_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
 	LET(rD, ADD(R(rA), CONST(imm)));
 	// update XER
-	LETS(XER_REG, SELECT(ICMP_ULT(R(rD), R(rA)), 
-		OR(RS(XER_REG), CONST(XER_CA)), 
-		AND(RS(XER_REG), CONST(~XER_CA)))
+	LETS(XER_REGNUM, SELECT(ICMP_ULT(R(rD), R(rA)), 
+		OR(RS(XER_REGNUM), CONST(XER_CA)), 
+		AND(RS(XER_REGNUM), CONST(~XER_CA)))
 	);
 	NOT_TEST;
 }
@@ -417,7 +423,7 @@ static int opc_addic__translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
 	LET(rD, ADD(R(rA), CONST(imm)));
 	// update XER
-	LETS(XER_REG, SELECT(ICMP_ULT(R(rD), R(rA)), OR(RS(XER_REG), CONST(XER_CA)), AND(RS(XER_REG), CONST(~~XER_CA))));
+	LETS(XER_REGNUM, SELECT(ICMP_ULT(R(rD), R(rA)), OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~~XER_CA))));
 	// update cr0 flags
 	ppc_dyncom_update_cr0(cpu, bb, rD);
 }
@@ -764,7 +770,7 @@ static int opc_lha_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,16);
 	else
 		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,16);
-	LET(rD, SELECT(AND(ret, CONST(0x8000)), OR(ret, CONST(0xFFFF0000)), ret));
+	LET(rD, SELECT(ICMP_NE(AND(ret, CONST(0x8000)), CONST(0)), OR(ret, CONST(0xFFFF0000)), ret));
 	NOT_TEST;
 }
 
@@ -787,7 +793,7 @@ static int opc_lhau_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,16);
 	else
 		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,16);
-	LET(rD, SELECT(AND(ret, CONST(0x8000)), OR(ret, CONST(0xFFFF0000)), ret));
+	LET(rD, SELECT(ICMP_NE(AND(ret, CONST(0x8000)), CONST(0)), OR(ret, CONST(0xFFFF0000)), ret));
 	LET(rA, ADD(R(rA), CONST(imm)));	
 	NOT_TEST;
 }

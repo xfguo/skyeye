@@ -120,6 +120,7 @@ void mpc8641d_boot_application(){
 	for(i = 0; i < cpu->core_num; i++){
 		e500_core_t * core = &cpu->core[i];
 		core->gpr[1] = 0x00ff0000;	/* stack */
+		core->phys_pc = 0x10000140;
 	}
 	cpu->ccsr = 0xF80000;
 }

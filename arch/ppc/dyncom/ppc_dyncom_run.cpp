@@ -57,8 +57,10 @@ static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf
 	info->float_size = 64;
 	info->address_size = 32;
 	// There are 16 32-bit GPRs
-	info->register_count[CPU_REG_GPR] = MAX_REGNUM;
+	info->register_count[CPU_REG_GPR] = PPC_DYNCOM_GPR_SIZE;
 	info->register_size[CPU_REG_GPR] = info->word_size;
+	info->register_count[CPU_REG_SPR] = PPC_DYNCOM_MAX_SPR_REGNUM;
+	info->register_size[CPU_REG_SPR] = info->word_size;
 	// There is also 1 extra register to handle PSR.
 	//info->register_count[CPU_REG_XR] = PPC_XR_SIZE;
 	info->register_count[CPU_REG_XR] = 0;
@@ -134,19 +136,24 @@ static void ppc_debug_func(cpu_t* cpu){
 	}
 	printf("\nsprs:\n ");
 	printf("LR = 0x%x\n ", core->lr);
+	printf("CR = 0x%x\n ", core->cr);
 	return;
 }
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
+	cpu->dyncom_engine->code_start = 0x10000140;
+	cpu->dyncom_engine->code_entry = 0x10000140;
+	cpu->dyncom_engine->code_end = 0x11000000;
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
 	/* Initilize different register set for different core */
-	//cpu->rf.pc = &core->pc;
-	cpu->rf.pc = &core->phys_pc;
+	cpu->rf.pc = &core->pc;
+	//cpu->rf.pc = &core->phys_pc;
 	cpu->rf.phys_pc = &core->phys_pc;
 	cpu->rf.grf = core->gpr;
+	cpu->rf.srf = &core->cr;
 	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
 	cpu_set_flags_debug(cpu, 0
-                | CPU_DEBUG_PRINT_IR
+         //       | CPU_DEBUG_PRINT_IR
                 | CPU_DEBUG_LOG
                 );
 	cpu->debug_func = ppc_debug_func;
@@ -158,16 +165,13 @@ void ppc_dyncom_init(e500_core_t* core){
 void ppc_dyncom_run(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	addr_t phys_pc = 0;
-	if(ppc_effective_to_physical(core, core->pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
+	if(ppc_effective_to_physical(core, *(addr_t*)cpu->rf.phys_pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
 		/* we donot allow mmu exception in tagging state */
 		fprintf(stderr, "In %s, can not translate the pc 0x%x\n", __FUNCTION__, core->pc);
 		exit(-1);
 	}
 	printf("In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, phys_pc);
 	core->phys_pc = phys_pc;
-	cpu->dyncom_engine->code_start = phys_pc;
-	cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);
-	cpu->dyncom_engine->code_entry = phys_pc;
 
 	int rc = cpu_run(cpu);
 	switch (rc) {   

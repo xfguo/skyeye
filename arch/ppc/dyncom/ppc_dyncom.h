@@ -31,7 +31,8 @@ static int arch_powerpc_translate_loop_helper(cpu_t* cpu, addr_t pc, BasicBlock 
 *	 order with e500_core_t
 */
 typedef enum{
-	CR_REGNUM = (PPC_GPR_SIZE + PPC_FPR_SIZE),
+//	CR_REGNUM = (PPC_GPR_SIZE + PPC_FPR_SIZE),
+	CR_REGNUM = 0,
 	FPSCR_REGNUM,
 	XER_REGNUM,
 	XER_CA_REGNUM,
@@ -39,8 +40,11 @@ typedef enum{
 	CTR_REGNUM,
 	MSR_REGNUM,
 	PVR_REGNUM,
-	MAX_REGNUM,
+	PC_REGNUM,
+	NPC_REGNUM,
+	PPC_DYNCOM_MAX_SPR_REGNUM,
 }e500_regnum_t;
+#define PPC_DYNCOM_GPR_SIZE 32
 #define PPC_XR_SIZE (MAX_REGNUM - CR_REGNUM)
 #define SR(N) (PPC_GPR_SIZE + PPC_FPR_SIZE + N)
 
