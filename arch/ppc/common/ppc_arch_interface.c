@@ -231,7 +231,7 @@ static void per_cpu_step(conf_object_t * running_core){
 	//core->current_opc = ppc_word_from_BE(instr);
 	core->current_opc = instr;
 
-	ppc_exec_opc();
+	ppc_exec_opc(core);
 	//debug_log(core);	
 exec_npc:
 	if(!ppc_divisor){
