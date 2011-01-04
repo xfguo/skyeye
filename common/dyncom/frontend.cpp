@@ -163,7 +163,7 @@ Value *
 arch_put_spr_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, bool sext,
 	BasicBlock *bb)
 {
-	Value **regs = cpu->ptr_gpr;
+	Value **regs = cpu->ptr_spr;
 	uint32_t count = cpu->info.register_count[CPU_REG_SPR];
 
 	/*

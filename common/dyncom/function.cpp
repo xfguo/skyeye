@@ -377,7 +377,7 @@ cpu_create_function(cpu_t *cpu, const char *name,
 
 	// - struct spr_reg
 	StructType *type_struct_spr_reg_t = get_struct_spr_reg(cpu);
-	cpu->dyncom_engine->mod->addTypeName("struct.spr_reg_t", type_struct_reg_t);
+	cpu->dyncom_engine->mod->addTypeName("struct.spr_reg_t", type_struct_spr_reg_t);
 	// - struct spr_reg *
 	PointerType *type_pstruct_spr_reg_t = PointerType::get(type_struct_spr_reg_t, 0);
 
