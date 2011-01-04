@@ -247,6 +247,7 @@ typedef struct dyncom_engine{
 	uint32_t flags;
 	uint8_t code_digest[20];
 	FILE *file_entries;
+	tag_t ***tag_table;
 	tag_t *tag;
 	bool tags_dirty;
 	Module *mod;

@@ -35,32 +35,73 @@ get_temp_dir()
 #endif
 	return "/tmp/";
 }
+static bool
+is_tag_level2_table_allocated(cpu_t *cpu, addr_t addr)
+{
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(addr);
+	return cpu->dyncom_engine->tag_table[level1_offset];
+}
 
+static bool
+is_tag_level3_table_allocated(cpu_t *cpu, addr_t addr)
+{
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(addr);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(addr);
+	return cpu->dyncom_engine->tag_table[level1_offset][level2_offset];
+}
+
+/**
+ * @brief initialize tag level2 table
+ *
+ * @param cpu CPU core structure
+ * @param addr address to tag
+ */
 static void
-init_tagging(cpu_t *cpu)
+init_tag_level2_table(cpu_t *cpu, addr_t addr)
+{
+	tag_t **tag = (tag_t**)malloc(TAG_LEVEL2_TABLE_SIZE * sizeof(tag_t *));
+	memset(tag, 0, TAG_LEVEL2_TABLE_SIZE * sizeof(tag_t *));
+
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(addr);
+	cpu->dyncom_engine->tag_table[level1_offset] = tag;
+}
+
+/**
+ * @brief initialize tag level3 table
+ *
+ * @param cpu CPU core structure
+ * @param addr address to tag
+ */
+static void
+init_tag_level3_table(cpu_t *cpu, addr_t addr)
 {
 	addr_t nitems, i;
 
-	nitems = cpu->dyncom_engine->code_end - cpu->dyncom_engine->code_start;
+	nitems = TAG_LEVEL3_TABLE_SIZE;
+
 	cpu->dyncom_engine->tag = (tag_t*)malloc(nitems * sizeof(tag_t));
 	for (i = 0; i < nitems; i++)
 		cpu->dyncom_engine->tag[i] = TAG_UNKNOWN;
 
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(addr);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(addr);
+	cpu->dyncom_engine->tag_table[level1_offset][level2_offset] = cpu->dyncom_engine->tag;
+
 		#if 0
-	if (!(cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_TAG_LIMIT)) {
+	if (!(cpu->flags_codegen & CPU_CODEGEN_TAG_LIMIT)) {
 		/* calculate hash of code */
 		SHA1_CTX ctx;
 		SHA1Init(&ctx);
-		//SHA1Update(&ctx, &cpu->RAM[cpu->dyncom_engine->code_start - 0x50000000], cpu->dyncom_engine->code_end - cpu->code_start);
+		//SHA1Update(&ctx, &cpu->RAM[cpu->code_start - 0x50000000], cpu->code_end - cpu->code_start);
 
 		int32_t offset;
-               printf("cpu->dyncom_engine->code_start : %x\n", cpu->code_start);
-               if (cpu->dyncom_engine->code_start > 0x60000000) {
-                       offset = cpu->dyncom_engine->code_start - 0x60000000;
+               printf("cpu->code_start : %x\n", cpu->code_start);
+               if (cpu->code_start > 0x60000000) {
+                       offset = cpu->code_start - 0x60000000;
                } else
-                       offset = cpu->dyncom_engine->code_start - 0x50000000;
+                       offset = cpu->code_start - 0x50000000;
 
-               SHA1Update(&ctx, &cpu->RAM[offset], cpu->dyncom_engine->code_end -cpu->dyncom_engine->code_start);
+               SHA1Update(&ctx, &cpu->RAM[offset], cpu->code_end -cpu->code_start);
 
 
 		SHA1Final(cpu->code_digest, &ctx);
@@ -73,7 +114,7 @@ init_tagging(cpu_t *cpu)
 		LOG("Code Digest: %s\n", ascii_digest);
 		sprintf(cache_fn, "%slibcpu-%s.entries", get_temp_dir(), ascii_digest);
 		
-		cpu->dyncom_engine->file_entries = NULL;
+		cpu->file_entries = NULL;
 		FILE *f;
 		if ((f = fopen(cache_fn, "r"))) {
 			LOG("info: entry cache found.\n");
@@ -89,13 +130,31 @@ init_tagging(cpu_t *cpu)
 			LOG("info: entry cache NOT found.\n");
 		}
 		
-		if (!(cpu->dyncom_engine->file_entries = fopen(cache_fn, "a"))) {
+		if (!(cpu->file_entries = fopen(cache_fn, "a"))) {
 			printf("error appending to cache file!\n");
 			exit(1);
 		}
 		#endif
 //	}
 }
+
+/**
+ * @brief check integrity of tag array memory. Allocate memory on demand.
+ *
+ * @param cpu CPU core structure
+ * @param addr address to tag
+ */
+static void
+check_tag_memory_integrity(cpu_t *cpu, addr_t addr)
+{
+	if (!is_tag_level2_table_allocated(cpu, addr)) {
+		init_tag_level2_table(cpu, addr);
+	}
+	if (!is_tag_level3_table_allocated(cpu, addr)) {
+		init_tag_level3_table(cpu, addr);
+	}
+}
+
 /**
  * @brief Determine an address is in code area or not
  *
@@ -119,10 +178,29 @@ is_inside_code_area(cpu_t *cpu, addr_t a)
 void
 or_tag(cpu_t *cpu, addr_t a, tag_t t)
 {
-	if (is_inside_code_area(cpu, a))
-		cpu->dyncom_engine->tag[a - cpu->dyncom_engine->code_start] |= t;
+	/* NEW_PC_NONE is not a real address. Some branch/call address could not be known at translate-time*/
+	if (a == NEW_PC_NONE) {
+		return;
+	}
+	check_tag_memory_integrity(cpu, a);
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(a);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
+	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
+	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset] |= t;
 }
-extern addr_t arch_xtensa_address_to_offset(addr_t);
+void
+xor_tag(cpu_t *cpu, addr_t a, tag_t t)
+{
+	/* NEW_PC_NONE is not a real address. Some branch/call address could not be known at translate-time*/
+	if (a == NEW_PC_NONE) {
+		return;
+	}
+	check_tag_memory_integrity(cpu, a);
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(a);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
+	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
+	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset] &= ~t;
+}
 void clear_tag(cpu_t *cpu)
 {
 	addr_t nitems, i;
@@ -146,10 +224,15 @@ void clear_tag(cpu_t *cpu)
 tag_t
 get_tag(cpu_t *cpu, addr_t a)
 {
-	if (is_inside_code_area(cpu, a))
-		return cpu->dyncom_engine->tag[a - cpu->dyncom_engine->code_start];
-	else
+	/* NEW_PC_NONE is not a real address. Some branch/call address could not be known at translate-time*/
+	if (a == NEW_PC_NONE) {
 		return TAG_UNKNOWN;
+	}
+	check_tag_memory_integrity(cpu, a);
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(a);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
+	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
+	return cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset];
 }
 /**
  * @brief Determine an address is code or not
@@ -298,10 +381,7 @@ tag_start(cpu_t *cpu, addr_t pc)
 		return;
 
 	/* initialize data structure on demand */
-	if (!cpu->dyncom_engine->tag)
-		init_tagging(cpu);
-//	else/* reset tag data */
-//		clear_tag(cpu);
+	check_tag_memory_integrity(cpu, pc);
 
 	LOG("starting tagging at $%02llx\n", (unsigned long long)pc);
 

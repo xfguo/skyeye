@@ -81,6 +81,7 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 			tag_t dummy1;
 
 			tag = get_tag(cpu, pc);
+			LOG("TAG of 0x%x = 0x%x\n", pc, tag);
 
 			/* get address of the following instruction */
 			addr_t new_pc, next_pc;

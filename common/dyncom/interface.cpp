@@ -107,6 +107,8 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 		cpu->dyncom_engine->tag_array[i] = NULL;
 		cpu->dyncom_engine->code_size[i] = 0;
 	}
+	cpu->dyncom_engine->tag_table = (tag_t ***)malloc(TAG_LEVEL1_TABLE_SIZE * sizeof(tag_t **));
+	memset(cpu->dyncom_engine->tag_table, 0, TAG_LEVEL1_TABLE_SIZE * sizeof(tag_t **));
 
 	for (i = 0; i < sizeof(cpu->dyncom_engine->func)/sizeof(*cpu->dyncom_engine->func); i++)
 		cpu->dyncom_engine->func[i] = NULL;
@@ -417,8 +419,11 @@ cpu_run(cpu_t *cpu)
 		if (it != func_addr.end()) {
 			pfunc = (fp_t)it->second;
 			do_translate = false;
-		} else
+		} else{
+			LOG("jitfunction not found:key=0x%x\n", pc);
 			return JIT_RETURN_FUNCNOTFOUND;
+		}
+		LOG("find jitfunction:key=0x%x\n", pc);
 
 		//orig_pc = pc;
 		//orig_icounter = REG(SR(ICOUNTER));

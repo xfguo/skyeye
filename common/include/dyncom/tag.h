@@ -33,9 +33,31 @@
 
 #define TAG_UNKNOWN      0	/* unused (or not yet discovered) code or data */
 
+#define TAG_LEVEL1_TABLE_SIZE		1024
+#define TAG_LEVEL2_TABLE_SIZE		1024
+#define TAG_LEVEL3_TABLE_SIZE		4096
+
+#define TAG_LEVEL1_TABLE_SHIFT		22
+#define TAG_LEVEL2_TABLE_SHIFT		12
+#define TAG_LEVEL3_TABLE_SHIFT		0
+
+#define TAG_LEVEL1_TABLE_MASK		0xffc00000
+#define TAG_LEVEL2_TABLE_MASK		0x3ff000
+#define TAG_LEVEL3_TABLE_MASK		0xfff
+
+#define TAG_LEVEL1_OFFSET(addr)		((addr & TAG_LEVEL1_TABLE_MASK) >> TAG_LEVEL1_TABLE_SHIFT)
+#define TAG_LEVEL2_OFFSET(addr)		((addr & TAG_LEVEL2_TABLE_MASK) >> TAG_LEVEL2_TABLE_SHIFT)
+#define TAG_LEVEL3_OFFSET(addr)		((addr & TAG_LEVEL3_TABLE_MASK) >> TAG_LEVEL3_TABLE_SHIFT)
+
+static bool is_tag_level2_table_allocated(cpu_t *cpu, addr_t addr);
+static bool is_tag_level3_table_allocated(cpu_t *cpu, addr_t addr);
+static void init_tag_level2_table(cpu_t *cpu, addr_t addr);
+static void init_tag_level3_table(cpu_t *cpu, addr_t addr);
+
 tag_t get_tag(cpu_t *cpu, addr_t a);
 void clear_tag(cpu_t *cpu);
 void or_tag(cpu_t *cpu, addr_t a, tag_t t);
+void xor_tag(cpu_t *cpu, addr_t a, tag_t t);
 bool is_inside_code_area(cpu_t *cpu, addr_t a);
 bool is_code(cpu_t *cpu, addr_t a);
 void tag_start(cpu_t *cpu, addr_t pc);
