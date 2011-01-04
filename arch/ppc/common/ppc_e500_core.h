@@ -96,6 +96,9 @@ typedef struct e500_core_s{
 	uint32 msr;
 	uint32 pvr;	// spr 287
 
+	uint32 pc;
+	uint32 npc;
+
 	//    * memory managment
 	uint32 ibatu[4];	// spr 528, 530, 532, 534
 	uint32 ibatl[4];	// spr 529, 531, 533, 535
@@ -125,8 +128,6 @@ typedef struct e500_core_s{
 	uint32 hid[16];
 	// * internal
 	
-	uint32 pc;
-	uint32 npc;
 	uint32 current_opc;
 	bool_t   exception_pending;
 	bool_t   dec_exception;
