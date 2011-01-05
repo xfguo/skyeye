@@ -187,6 +187,11 @@ static uint32 arm_get_regval_by_id(int id){
 	int core_id = 0;
 	ARM_CPU_State* cpu = get_current_cpu();
 }
+static exception_t arm_set_register_by_id(int id, uint32 value){
+	ARM_CPU_State* cpu = get_current_cpu();
+	cpu->core[0].Reg[id] = value;
+        return No_exp;
+}
 
 #ifdef __cplusplus
 	extern "C" {
@@ -210,6 +215,7 @@ init_arm_dyncom ()
 	arm_arch->parse_cpu = arm_parse_cpu;
 	arm_arch->get_regval_by_id = arm_get_regval_by_id;
 	arm_arch->get_regname_by_id = arm_get_regname_by_id;
+	arm_arch->set_regval_by_id = arm_set_register_by_id;
 
 	register_arch (arm_arch);
 	return No_exp;
