@@ -72,6 +72,7 @@ extern int _fisatty (FILE *);
 #include "armdefs.h"
 #include "armos.h"
 #include "armemu.h"
+#include "skyeye_swapendian.h"
 #ifndef NOOS
 #ifndef VALIDATE
 /* #ifndef ASIM */
@@ -80,6 +81,11 @@ extern int _fisatty (FILE *);
 /* #endif */
 #endif
 #endif
+
+#define DUMP_SYSCALL 0
+#define dump(...) do { if (DUMP_SYSCALL) printf(__VA_ARGS__); } while(0)
+//#define debug(...)			printf(__VA_ARGS__);
+#define debug(...)			;
 
 /* For RDIError_BreakpointReached.  */
 //chy 2005-09-12 disable below line
@@ -126,6 +132,9 @@ struct OSblock
 #else
 #define FIXCRLF(t,c) c
 #endif
+
+mmap_area_t *mmap_global = NULL;
+
 
 static ARMword softvectorcode[] = {	/* basic: swi tidyexception + event; mov pc, lr;
 					   ldmia r11,{r11,pc}; swi generateexception  + event.  */
@@ -316,14 +325,14 @@ SWIread (ARMul_State * state, ARMword f, ARMword ptr, ARMword len)
 		for (i = 0; i < res; i++)
 			ARMul_WriteByte (state, ptr + i, local[i]);
 	free (local);
-	state->Reg[0] = res == -1 ? -1 : len - res;
+	//state->Reg[0] = res == -1 ? -1 : len - res;
+	state->Reg[0] = res;
 	OSptr->ErrorNo = errno;
 }
 
 static void
 SWIwrite (ARMul_State * state, ARMword f, ARMword ptr, ARMword len)
 {
-	struct OSblock *OSptr = (struct OSblock *) state->OSptr;
 	int res;
 	ARMword i;
 	char *local = malloc (len);
@@ -339,9 +348,9 @@ SWIwrite (ARMul_State * state, ARMword f, ARMword ptr, ARMword len)
 		local[i] = ARMul_ReadByte (state, ptr + i);
 
 	res = write (f, local, len);
-	state->Reg[0] = res == -1 ? -1 : len - res;
+	//state->Reg[0] = res == -1 ? -1 : len - res;
+	state->Reg[0] = res;
 	free (local);
-	OSptr->ErrorNo = errno;
 }
 
 static void
@@ -372,12 +381,28 @@ SWIflen (ARMul_State * state, ARMword fh)
 unsigned
 ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 {
+	number &= 0xfffff;
 	ARMword addr, temp;
-	struct OSblock *OSptr = (struct OSblock *) state->OSptr;
 
 	switch (number) {
 	case SWI_Read:
 		SWIread (state, state->Reg[0], state->Reg[1], state->Reg[2]);
+		return TRUE;
+
+	case SWI_GetUID32:
+		state->Reg[0] = getuid();
+		return TRUE;
+
+	case SWI_GetGID32:
+		state->Reg[0] = getgid();
+		return TRUE;
+
+	case SWI_GetEUID32:
+		state->Reg[0] = geteuid();
+		return TRUE;
+
+	case SWI_GetEGID32:
+		state->Reg[0] = getegid();
 		return TRUE;
 
 	case SWI_Write:
@@ -388,6 +413,41 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 		SWIopen (state, state->Reg[0], state->Reg[1]);
 		return TRUE;
 
+	case SWI_Close:
+		state->Reg[0] = close (state->Reg[0]);
+		return TRUE;
+
+	case SWI_Seek:
+		{
+			/* We must return non-zero for failure */
+			state->Reg[0] =
+				lseek (state->Reg[0], state->Reg[1],
+					     SEEK_SET);
+			return TRUE;
+		}
+
+	case SWI_Exit:
+		exit(0);
+		return TRUE;
+
+	case SWI_Break:
+		state->Emulate = FALSE;
+		return TRUE;
+
+	case SWI_Mmap:{
+		int addr = state->Reg[0];
+		int len = state->Reg[1];
+		int prot = state->Reg[2];
+		int flag = state->Reg[3];
+		int fd = state->Reg[4];
+		int offset = state->Reg[5];
+		mmap_area_t *area = new_mmap_area(addr, len);
+		state->Reg[0] = area->bank.addr;
+		//printf("syscall %d mmap(0x%x,%x,0x%x,0x%x,%d,0x%x) = 0x%x\n",\
+				SWI_Mmap, addr, len, prot, flag, fd, offset, state->Reg[0]);
+		return TRUE;
+	}
+#if 0
 	case SWI_Clock:
 		/* return number of centi-seconds... */
 		state->Reg[0] =
@@ -399,40 +459,20 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 			/* presume unix... clock() returns microseconds */
 			(ARMword) (clock () / 10000);
 #endif
-		OSptr->ErrorNo = errno;
+	//	OSptr->ErrorNo = errno;
 		return (TRUE);
 
 	case SWI_Time:
 		state->Reg[0] = (ARMword) time (NULL);
-		OSptr->ErrorNo = errno;
+	//	OSptr->ErrorNo = errno;
 		return (TRUE);
-
-	case SWI_Close:
-		state->Reg[0] = close (state->Reg[0]);
-		OSptr->ErrorNo = errno;
-		return TRUE;
-
 	case SWI_Flen:
 		SWIflen (state, state->Reg[0]);
 		return (TRUE);
 
-	case SWI_Exit:
-		state->Emulate = FALSE;
-		return TRUE;
-
-	case SWI_Seek:
-		{
-			/* We must return non-zero for failure */
-			state->Reg[0] =
-				-1 >= lseek (state->Reg[0], state->Reg[1],
-					     SEEK_SET);
-			OSptr->ErrorNo = errno;
-			return TRUE;
-		}
-
 	case SWI_WriteC:
 		(void) fputc ((int) state->Reg[0], stdout);
-		OSptr->ErrorNo = errno;
+	//	OSptr->ErrorNo = errno;
 		return (TRUE);
 
 	case SWI_Write0:
@@ -440,7 +480,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 		return (TRUE);
 
 	case SWI_GetErrno:
-		state->Reg[0] = OSptr->ErrorNo;
+	//	state->Reg[0] = OSptr->ErrorNo;
 		return (TRUE);
 
 	case SWI_Breakpoint:
@@ -494,18 +534,18 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 				/* presume unix... clock() returns microseconds */
 				(ARMword) (clock () / 10000);
 #endif
-			OSptr->ErrorNo = errno;
+		//	OSptr->ErrorNo = errno;
 			return (TRUE);
 
 		case AngelSWI_Reason_Time:
 			state->Reg[0] = (ARMword) time (NULL);
-			OSptr->ErrorNo = errno;
+		//	OSptr->ErrorNo = errno;
 			return (TRUE);
 
 		case AngelSWI_Reason_WriteC:
 			(void) fputc ((int) ARMul_ReadByte (state, addr),
 				      stdout);
-			OSptr->ErrorNo = errno;
+		//	OSptr->ErrorNo = errno;
 			return (TRUE);
 
 		case AngelSWI_Reason_Write0:
@@ -514,7 +554,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 
 		case AngelSWI_Reason_Close:
 			state->Reg[0] = close (ARMul_ReadWord (state, addr));
-			OSptr->ErrorNo = errno;
+		//	OSptr->ErrorNo = errno;
 			return (TRUE);
 
 		case AngelSWI_Reason_Seek:
@@ -522,7 +562,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 				-1 >= lseek (ARMul_ReadWord (state, addr),
 					     ARMul_ReadWord (state, addr + 4),
 					     SEEK_SET);
-			OSptr->ErrorNo = errno;
+		//	OSptr->ErrorNo = errno;
 			return (TRUE);
 
 		case AngelSWI_Reason_FLen:
@@ -569,7 +609,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 			return (TRUE);
 
 		case AngelSWI_Reason_Errno:
-			state->Reg[0] = OSptr->ErrorNo;
+		//	state->Reg[0] = OSptr->ErrorNo;
 			return (TRUE);
 
 		case AngelSWI_Reason_Open:
@@ -593,6 +633,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 			return TRUE;
 		}
 
+#endif
 	default:
 #if 0
 		state->Emulate = FALSE;
@@ -601,6 +642,127 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 	}
 }
 
+/**
+ * @brief For mmap syscall.A mmap_area is a memory bank. Get from ppc.
+ */
+static mmap_area_t* new_mmap_area(int sim_addr, int len){
+	mmap_area_t *area = (mmap_area_t *)malloc(sizeof(mmap_area_t));
+	if(area == NULL){
+		printf("error ,failed %s\n",__FUNCTION__);
+		exit(0);
+	}
+	memset(area, 0x0, sizeof(mmap_area_t));
+	area->bank.addr = mmap_next_base;
+	area->bank.len = len;
+	area->bank.bank_write = mmap_mem_write;
+	area->bank.bank_read = mmap_mem_read;
+	area->bank.type = MEMTYPE_RAM;
+	area->bank.objname = "mmap";
+	addr_mapping(&area->bank);
+
+	mmap_next_base = mmap_next_base + len + 4;
+
+	area->mmap_addr = malloc(len);
+	if(area->mmap_addr == NULL){
+		printf("error mmap malloc\n");
+		exit(0);
+	}
+	memset(area->mmap_addr, 0x0, len);
+	area->next = NULL;
+	if(mmap_global){
+		area->next = mmap_global->next;
+		mmap_global->next = area;
+	}else{
+		mmap_global = area;
+	}
+	return area;
+}
+
+static mmap_area_t *get_mmap_area(int addr){
+	mmap_area_t *tmp = mmap_global;
+	while(tmp){
+		if ((tmp->bank.addr <= addr) && (tmp->bank.addr + tmp->bank.len > addr)){
+			return tmp;
+		}
+		tmp = tmp->next;
+	}
+	printf("cannot get mmap area:addr=0x%x\n", addr);
+	return NULL;
+}
+
+/**
+ * @brief the mmap_area bank write function. Get from ppc.
+ *
+ * @param size size to write, 8/16/32
+ * @param addr address to write
+ * @param value value to write
+ *
+ * @return sucess return 1,otherwise 0.
+ */
+static char mmap_mem_write(short size, int addr, uint32_t value){
+	mmap_area_t *area_tmp = get_mmap_area(addr);
+	mem_bank_t *bank_tmp = &area_tmp->bank;
+	int offset = addr - bank_tmp->addr;
+	switch(size){
+		case 8:{
+			uint8_t value_endian = value;
+			*(uint8_t *)&(((char *)area_tmp->mmap_addr)[offset]) = value_endian;
+			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,value_endian);
+			break;
+		}
+		case 16:{
+			uint16_t value_endian = half_to_BE((uint16_t)value);
+			*(uint16_t *)&(((char *)area_tmp->mmap_addr)[offset]) = value_endian;
+			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,value_endian);
+			break;
+		}
+		case 32:{
+			uint32_t value_endian = word_to_BE((uint32_t)value);
+			*(uint32_t *)&(((char *)area_tmp->mmap_addr)[offset]) = value_endian;
+			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,value_endian);
+			break;
+		}
+		default:
+			printf("invalid size %d\n",size);
+			return 0;
+	}
+	return 1;
+}
+
+/**
+ * @brief the mmap_area bank read function. Get from ppc.
+ *
+ * @param size size to read, 8/16/32
+ * @param addr address to read
+ * @param value value to read
+ *
+ * @return sucess return 1,otherwise 0.
+ */
+static char mmap_mem_read(short size, int addr, uint32_t * value){
+	mmap_area_t *area_tmp = get_mmap_area(addr);
+	mem_bank_t *bank_tmp = &area_tmp->bank;
+	int offset = addr - bank_tmp->addr;
+	switch(size){
+		case 8:{
+			*(uint8_t *)value = *(uint8_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]);
+			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,*(uint8_t*)value);
+			break;
+		}
+		case 16:{
+			*(uint16_t *)value = half_from_BE(*(uint16_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]));
+			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,*(uint16_t*)value);
+			break;
+		}
+		case 32:
+			*value = (uint32_t)word_from_BE(*(uint32_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]));
+			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,*(uint32_t*)value);
+			break;
+		default:
+			printf("invalid size %d\n",size);
+			return 0;
+	}
+	return 1;
+}
 #ifndef NOOS
 #ifndef ASIM
 

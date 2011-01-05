@@ -23,6 +23,7 @@
 #include "skyeye_callback.h"
 #include "skyeye_bus.h"
 #include "sim_control.h"
+#include "skyeye_pref.h"
 //#include "skyeye2gdb.h"
 //#include "code_cov.h"
 
@@ -4196,11 +4197,12 @@ ARMul_Emulate26 (ARMul_State * state)
 						     ARMul_PrefetchAbortV);
 					break;
 				}
-#if 0
-				if (!ARMul_OSHandleSWI (state, BITS (0, 23)))
-#else
+				sky_pref_t* pref = get_skyeye_pref();
+				if(pref->user_mode_sim){
+					ARMul_OSHandleSWI (state, BITS (0, 23));
+					break;
+				}
 				ARMul_Abort (state, ARMul_SWIV);
-#endif
 				break;
 			}
 		}

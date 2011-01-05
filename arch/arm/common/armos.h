@@ -15,6 +15,20 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
+#include "bank_defs.h"
+
+typedef struct mmap_area{
+	mem_bank_t bank;
+	void *mmap_addr;
+	struct mmap_area *next;
+}mmap_area_t;
+
+#define mmap_base 0x50000000
+static long mmap_next_base = mmap_base;
+
+static mmap_area_t* new_mmap_area(int sim_addr, int len);
+static char mmap_mem_write(short size, int addr, uint32_t value);
+static char mmap_mem_read(short size, int addr, uint32_t * value);
 /***************************************************************************\
 *                   Define the initial layout of memory                     *
 \***************************************************************************/
@@ -30,21 +44,36 @@
 *                               SWI numbers                                 *
 \***************************************************************************/
 
+#define SWI_Exit                   0x1
+#define SWI_Read                   0x3
+#define SWI_Write                  0x4
+#define SWI_Open                   0x5
+#define SWI_Close                  0x6
+#define SWI_Seek                   0x13
+#define SWI_Rename                 0x26
+#define SWI_Break                  0x11
+
+#define SWI_Mmap                   0x5a
+
+#define SWI_GetUID32               0xc7
+#define SWI_GetGID32               0xc8
+#define SWI_GetEUID32              0xc9
+#define SWI_GetEGID32              0xca
+
+#if 0
+#define SWI_Time                   0xd
 #define SWI_WriteC                 0x0
 #define SWI_Write0                 0x2
 #define SWI_ReadC                  0x4
 #define SWI_CLI                    0x5
 #define SWI_GetEnv                 0x10
-#define SWI_Exit                   0x11
 #define SWI_EnterOS                0x16
-
 #define SWI_GetErrno               0x60
 #define SWI_Clock                  0x61
 #define SWI_Time                   0x63
 #define SWI_Remove                 0x64
 #define SWI_Rename                 0x65
 #define SWI_Open                   0x66
-
 #define SWI_Close                  0x68
 #define SWI_Write                  0x69
 #define SWI_Read                   0x6a
@@ -55,9 +84,11 @@
 #define SWI_TmpNam                 0x6f
 #define SWI_InstallHandler         0x70
 #define SWI_GenerateError          0x71
+#endif
 
 #define SWI_Breakpoint             0x180000	/* see gdb's tm-arm.h */
 
+#if 0
 #define AngelSWI_ARM		   0x123456
 #define AngelSWI_Thumb		   0xAB
 
@@ -86,10 +117,12 @@
 #define ADP_Stopped_ApplicationExit 	((2 << 16) + 38)
 #define ADP_Stopped_RunTimeError 	((2 << 16) + 34)
 
+#endif
 #define FPESTART 0x2000L
 #define FPEEND 0x8000L
 #define FPEOLDVECT FPESTART + 0x100L + 8L * 16L + 4L	/* stack + 8 regs + fpsr */
 #define FPENEWVECT(addr) 0xea000000L + ((addr) >> 2) - 3L	/* branch from 4 to 0x2400 */
+
 
 extern unsigned int fpecode[];
 extern unsigned int fpesize;
