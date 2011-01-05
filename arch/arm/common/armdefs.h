@@ -242,7 +242,6 @@ struct ARMul_State
 	unsigned char *MemSparePtr;	/* extra space */
 	ARMword MemSize;
 
-	unsigned char *OSptr;	/* OS Handle */
 	char *CommandLine;	/* Command Line from ARMsd */
 
 	ARMul_CPInits *CPInit[16];	/* coprocessor initialisers */

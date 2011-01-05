@@ -124,7 +124,6 @@ arm_core_init (ARMul_State *state, int i)
 	state->abort_model = 0;
 	state->cpu = p_arm_cpu;
 	state->bigendSig = (big_endian ? HIGH : LOW);
-	ARMul_OSInit (state);
 
 	if (!strcmp(p_arm_cpu->cpu_arch_name, "armv3"))
 		ARMul_SelectProcessor (state, ARM_v4_Prop);

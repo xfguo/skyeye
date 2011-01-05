@@ -103,7 +103,6 @@ ARMul_NewState (ARMul_State *state)
 	state->MemSparePtr = NULL;
 	state->MemSize = 0;
 
-	state->OSptr = NULL;
 	state->CommandLine = NULL;
 
 	state->EventSet = 0;
@@ -219,10 +218,7 @@ ARMul_Reset (ARMul_State * state)
 	state->NumIcycles = 0;
 	state->NumCcycles = 0;
 	state->NumFcycles = 0;
-#ifdef ASIM
-	(void) ARMul_MemoryInit ();
-	ARMul_OSInit (state);
-#endif
+
 	//fprintf(stderr,"armul_reset 3: state->  Cpsr 0x%x, Mode %d\n",state->Cpsr,state->Mode);  
 	mmu_reset (state);
 	//fprintf(stderr,"armul_reset 4: state->  Cpsr 0x%x, Mode %d\n",state->Cpsr,state->Mode);  
@@ -415,9 +411,6 @@ ARMul_Abort (ARMul_State * state, ARMword vector)
 	int e2size = (TFLAG ? -4 : 0);
 
 	state->Aborted = FALSE;
-
-	if (ARMul_OSException (state, vector, ARMul_GetPC (state)))
-		return;
 
 	if (state->prog32Sig)
 		if (ARMul_MODE26BIT)
