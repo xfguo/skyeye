@@ -98,6 +98,10 @@ typedef struct e500_core_s{
 
 	uint32 pc;
 	uint32 npc;
+	uint32 phys_pc;
+	uint32 reserve;
+	bool_t   have_reservation;
+	uint32 icount;
 
 	//    * memory managment
 	uint32 ibatu[4];	// spr 528, 530, 532, 534
@@ -137,8 +141,6 @@ typedef struct e500_core_s{
 
 	uint32 pagetable_base;
 	int    pagetable_hashmask;
-	uint32 reserve;
-	bool_t   have_reservation;
 	
 	// for generic cpu core
 	uint32 effective_code_page;
@@ -197,7 +199,6 @@ typedef struct e500_core_s{
 
 	uint32 spefscr;
 	e500_mmu_t mmu;
-	uint32 phys_pc;
 
 	uint32 ipr;
 	uint32 iack;
