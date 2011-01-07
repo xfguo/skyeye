@@ -38,8 +38,22 @@
 #define LSWBIT  BIT(21)
 #define LSLBIT  BIT(20)
 #define OFFSET12 BITS(0,11)
-
+//------------------------------------------------------------------------------
 using namespace llvm;
+
+
+// FIXME set_condition added by yukewei
+// if S = 1 set CPSR zncv bit
+int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2)
+{
+	/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+	/* new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb); */
+	/* C */ new StoreInst(ICMP_SLE(ret, op1), ptr_C, false, bb);
+	/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+
+	return 0;
+}
 
 Value *GetLSAddr5x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -169,7 +183,7 @@ int arm_opc_trans_00(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		return 0;
 	}
 	if (BITS (4, 7) == 9) {
-		/* MUL? */
+		/* MUL? */ /* ?S = 0 */
 	}
 	else {
 		/* AND reg.  */
@@ -266,6 +280,7 @@ int arm_opc_trans_05(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 }
 
+
 int arm_opc_trans_06(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 
@@ -280,7 +295,15 @@ int arm_opc_trans_07(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_08(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* ADD reg I = 0, S = 0*/
+	if(BIT(4) != 1 || BIT(7) != 1)
+	{
+		/* ADD reg I = 0, S = 0*/
+		Value *op1 = R(RN);
+		Value *op2 = OPERAND;
+		Value *res = ADD(op1,op2);
+		LET(RD, res);
+		printf("ADD no test in %s, %d!\n",__FUNCTION__, __LINE__);
+	}
 	if(BITS(4, 7) == 0xB) {
 		/* STRH reg offset, no write-back, up, post, indexed */
 		/*P = 0, U = 1, I = 0, W = 0 */
@@ -406,7 +429,6 @@ int arm_opc_trans_12(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* ElSegundo QSUB insn.  */
 		return 0;
 	}
-				//}
 	if (BITS (4, 11) == 0xB) {
 		/* STRH register offset, write-back, down, pre indexed.  */
 		/* p = 1, U = 0, I = 0, W = 1 */
@@ -455,10 +477,14 @@ int arm_opc_trans_15(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
 	Value *ret = SUB(op1, op2);
-	/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
-	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
-	/* C */ new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
-	/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+	//FIXME !!!!!!
+	set_condition(cpu, ret, bb, op1, op2);
+	/*
+	new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+	new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+	new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
+	new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+	*/
 	return 0;
 }
 
@@ -797,6 +823,7 @@ int arm_opc_trans_3a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* MOV immed. I = 1, S = 0 */
 	if(RD == 15){
 		new StoreInst(SUB(R(14), CONST(4)), cpu->ptr_PC, bb);
+		return 0;
 	}
 	LET(RD, OPERAND);
 
@@ -837,160 +864,181 @@ int arm_opc_trans_3f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_40(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, No WriteBack, Post Dec, Immed.  */
+	/* I = 0, P = 0, U = 0, B = 0, W = 0 */
 
 }
 
 int arm_opc_trans_41(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, No WriteBack, Post Dec, Immed.  */
+	/* I = 0, P = 0, U = 0, B = 0, W = 0*/
 
 }
 
 int arm_opc_trans_42(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, WriteBack, Post Dec, Immed.  */
+	/* I = 0, P = 0, U = 0, B = 0, W = 1*/
 
 }
 
 int arm_opc_trans_43(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, WriteBack, Post Dec, Immed.  */
+	/* I = 0, P = 0, U = 0, B = 0, W = 1*/
 
 }
 
 int arm_opc_trans_44(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, No WriteBack, Post Dec, Immed.  */
+	/* I = 0, P = 0, U = 0, B = 1, W = 0*/
 
 }
 
 int arm_opc_trans_45(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, No WriteBack, Post Dec, Immed.  */
+	/* I = 0, P = 0, U = 0, B = 1, W = 0*/
 
 }
 
 int arm_opc_trans_46(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, WriteBack, Post Dec, Immed.  */
+	/* I = 0, P = 0, U = 0, B = 1, W = 1*/
 
 }
 
 int arm_opc_trans_47(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, WriteBack, Post Dec, Immed.  */
+	/* I = 0, P = 0, U = 0, B = 1, W = 1*/
 
 }
 
 int arm_opc_trans_48(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, No WriteBack, Post Inc, Immed.  */
+	/* I = 0, P = 0, U = 1, B = 0, W = 0*/
 
 }
 
 int arm_opc_trans_49(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, No WriteBack, Post Inc, Immed.  */
+	/* I = 0, P = 0, U = 1, B = 0, W = 0*/
 
 }
 
 int arm_opc_trans_4a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, WriteBack, Post Inc, Immed.  */
+	/* I = 0, P = 0, U = 1, B = 0, W = 1*/
 
 }
 
 int arm_opc_trans_4b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, WriteBack, Post Inc, Immed.  */
+	/* I = 0, P = 0, U = 1, B = 0, W = 1*/
 
 }
 
 int arm_opc_trans_4c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/* Store Byte, No WriteBack, Post Inc, Immed.  */
+	/* I = 0, P = 0, U = 1, B = 1, W = 0*/
 }
 
 int arm_opc_trans_4d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, No WriteBack, Post Inc, Immed.  */
+	/* I = 0, P = 0, U = 1, B = 1, W = 0*/
 
 }
 
 int arm_opc_trans_4e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, WriteBack, Post Inc, Immed.  */
+	/* I = 0, P = 0, U = 1, B = 1, W = 1*/
 
 }
 
 int arm_opc_trans_4f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, WriteBack, Post Inc, Immed.  */
+	/* I = 0, P = 0, U = 1, B = 1, W = 1*/
 
 }
 
 int arm_opc_trans_50(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, No WriteBack, Pre Dec, Immed.  */
+	/* I = 0, P = 1, U = 0, B = 0, W = 0 */
 
 }
 
 int arm_opc_trans_51(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/*LDR No WriteBack, Pre Inc, Regist - Immed. */
+	/*I = 0, P = 1, U = 0, W = 0 */
 
 }
 
 int arm_opc_trans_52(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/* Store Word, WriteBack, "Pre Inc", Regist - Immed. */
+	/* I = 0, P = 1, U = 0, B = 0, W = 1 */
 }
 
 int arm_opc_trans_53(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/*LDR , WriteBack, Pre Inc,  Regist - Immed */
+	/*I = 0, P = 1, U = 0, B = 0, W = 1 */
 }
 
 int arm_opc_trans_54(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/*STRB , No WriteBack, Pre Inc, Regist - Immed */
+	/*I = 0, P = 1, U = 0, W = 0, B = 1 */
 
 }
 
 int arm_opc_trans_55(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-
+	/*LDRB, No WriteBack, Pre Inc, Regist - Immed */
+	/*I = 0, P = 1, U = 0, W = 0, B = 1 */
 }
 
 int arm_opc_trans_56(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/*STRB, No WriteBack, Pre Inc, Regist - Immed */
+	/*I = 0, P = 1, U = 0, W = 0, B = 1 */
 
 }
 
 int arm_opc_trans_57(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/*LDRB, WriteBack, Pre Inc, Regist - Immed */
+	/*I = 0, P = 1, U = 0, W = 1, B = 1 */
 
 
 }
 
 int arm_opc_trans_58(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* Store Word, No WriteBack, Pre Inc, Immed. */
-	/* I = 0, P = 1, U = 1, W = 0 */
+	/*STR, No WriteBack, Pre Inc, Regist + Immed || Regist */
+	/* I = 0, P = 1, U = 1, W = 0, B = 0 */
 	Value *addr = GETLSADDR5x;
 	arch_write_memory(cpu, bb, addr, R(RD), 32);
 }
 
 int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* Load Word, No WriteBack, Pre Inc, Immed.  */
-	/* I = 0, P = 1, U = 0, W = 0 */
+	/* Load , No WriteBack, Pre Inc, Regist + Immed.|| Regist  */
+	/* I = 0, P = 1, U = 1, W = 0 , B = 0*/
 	Value *addr = GETLSADDR5x;
 	Value *ret = arch_read_memory(cpu, bb, addr, 0, 32);
 	LET(RD,ret);
@@ -999,211 +1047,219 @@ int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_5a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* STR, WriteBack, Pre Inc, Regist + Immed || Regist */
+	/*  I = 0, P = 1, U = 1, B = 0, W = 1 */
 
 }
 
 int arm_opc_trans_5b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* LDR, WriteBack, Pre Inc, Regist + Immed.|| Regist */
+	/*  I = 0, P = 1, U = 1, B = 0, W = 1 */
 
 }
 
 int arm_opc_trans_5c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* STRB, No WriteBack, Pre Inc, Regist + Immed || Regist */
+	/*  I = 0, P = 1, U = 1, B = 1, W = 0 */
 
 }
 
 int arm_opc_trans_5d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* LDRB, No WriteBack, Pre Inc, Regist + Immed || Regist */
+	/* I = 0, P = 1, U = 1, B = 1, W = 0 */
 
 }
 
 int arm_opc_trans_5e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* STRB, WriteBack, Pre Inc, Regist + Immed || Regist */
+	/* I = 0, P = 1, U = 1, B = 1, W = 1 */
 
 }
 
 int arm_opc_trans_5f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* LDRB, WriteBack, Pre Inc, Immed. */
+	/* I = 0, P = 1, U = 1, B = 1, W = 1 */
 
 }
 
 int arm_opc_trans_60(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	 /* Store Word, No WriteBack, Post Dec, Reg.  */
 
 }
 
 int arm_opc_trans_61(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, No WriteBack, Post Dec, Reg.  */
 
 }
 
 int arm_opc_trans_62(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, WriteBack, Post Dec, Reg.  */
 
 }
 
 int arm_opc_trans_63(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, WriteBack, Post Dec, Reg.  */
 
 }
 
 int arm_opc_trans_64(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* Store Byte, No WriteBack, Post Dec, Reg.  */
 	BAD;
 	return 0;
 }
 
 int arm_opc_trans_65(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, No WriteBack, Post Dec, Reg.  */
 
 }
 
 int arm_opc_trans_66(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, WriteBack, Post Dec, Reg.  */
 
 }
 
 int arm_opc_trans_67(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, WriteBack, Post Dec, Reg.  */
 
 }
 
 int arm_opc_trans_68(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, No WriteBack, Post Inc, Reg.  */
 
 }
 
 int arm_opc_trans_69(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, No WriteBack, Post Inc, Reg.  */
 
 }
 
 int arm_opc_trans_6a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, WriteBack, Post Inc, Reg.  */
 
 }
 
 int arm_opc_trans_6b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, WriteBack, Post Inc, Reg.  */
 
 }
 
 int arm_opc_trans_6c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, No WriteBack, Post Inc, Reg.  */
 
 }
 
 int arm_opc_trans_6d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, No WriteBack, Post Inc, Reg.  */
 
 }
 
 int arm_opc_trans_6e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, WriteBack, Post Inc, Reg.  */
 
 }
 
 int arm_opc_trans_6f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, WriteBack, Post Inc, Reg.  */
 
 }
 
 int arm_opc_trans_70(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, No WriteBack, Pre Dec, Reg.  */
 
 }
 
 int arm_opc_trans_71(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, No WriteBack, Pre Dec, Reg.  */
 
 }
 
 int arm_opc_trans_72(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* Store Word, WriteBack, Pre Dec, Reg.  */
 
 
 }
 
 int arm_opc_trans_73(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, WriteBack, Pre Dec, Reg.  */
 
 }
 
 int arm_opc_trans_74(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, No WriteBack, Pre Dec, Reg.  */
 
 }
 
 int arm_opc_trans_75(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, No WriteBack, Pre Dec, Reg.  */
 
 }
 
 int arm_opc_trans_76(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, WriteBack, Pre Dec, Reg.  */
 
 }
 
 int arm_opc_trans_77(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Byte, WriteBack, Pre Dec, Reg.  */
 
 }
 
 int arm_opc_trans_78(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, No WriteBack, Pre Inc, Reg.  */
 
 }
 
 int arm_opc_trans_79(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, No WriteBack, Pre Inc, Reg.  */
 
 }
 
 int arm_opc_trans_7a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Word, WriteBack, Pre Inc, Reg.  */
 
 }
 
 int arm_opc_trans_7b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load Word, WriteBack, Pre Inc, Reg.  */
 
 }
 
 int arm_opc_trans_7c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, No WriteBack, Pre Inc, Reg.  */
 
 }
 
@@ -1222,109 +1278,109 @@ int arm_opc_trans_7d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_7e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store Byte, WriteBack, Pre Inc, Reg.  */
 
 }
 
 int arm_opc_trans_7f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	 /* Load Byte, WriteBack, Pre Inc, Reg.  */
 
 }
 
 int arm_opc_trans_80(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, No WriteBack, Post Dec.  */
 
 }
 
 int arm_opc_trans_81(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, No WriteBack, Post Dec.  */
 
 }
 
 int arm_opc_trans_82(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, WriteBack, Post Dec.  */
 
 }
 
 int arm_opc_trans_83(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, WriteBack, Post Dec.  */
 
 }
 
 int arm_opc_trans_84(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, Flags, No WriteBack, Post Dec.  */
 
 }
 
 int arm_opc_trans_85(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, Flags, No WriteBack, Post Dec.  */
 
 }
 
 int arm_opc_trans_86(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, Flags, WriteBack, Post Dec.  */
 
 }
 
 int arm_opc_trans_87(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, Flags, WriteBack, Post Dec.  */
 
 }
 
 int arm_opc_trans_88(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, No WriteBack, Post Inc.  */
 
 }
 
 int arm_opc_trans_89(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, No WriteBack, Post Inc.  */
 
 }
 
 int arm_opc_trans_8a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, WriteBack, Post Inc.  */
 
 }
 
 int arm_opc_trans_8b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, WriteBack, Post Inc.  */
 
 }
 
 int arm_opc_trans_8c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, Flags, No WriteBack, Post Inc.  */
 
 }
 
 int arm_opc_trans_8d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, Flags, No WriteBack, Post Inc.  */
 
 }
 
 int arm_opc_trans_8e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, Flags, WriteBack, Post Inc.  */
 
 }
 
 int arm_opc_trans_8f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	 /* Load, Flags, WriteBack, Post Inc.  */
 
 }
 
