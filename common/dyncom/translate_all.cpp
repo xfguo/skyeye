@@ -107,7 +107,7 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 			//update pc
 			emit_store_pc(cpu, cur_bb, pc);
 		       arch_inc_icounter(cpu, cur_bb);
-#if 1// Only for debug all the execution instructions
+#if 0// Only for debug all the execution instructions
 			arch_debug_me(cpu, cur_bb);
 #endif
 

@@ -46,11 +46,13 @@ void arch_store_fp_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, Basi
 Value *arch_sqrt(cpu_t *cpu, size_t width, Value *v, BasicBlock *bb);
 
 void arch_debug_me(cpu_t *cpu, BasicBlock *bb);
+void arch_syscall(cpu_t *cpu, BasicBlock *bb);
 void arch_windowcheck(cpu_t *cpu, BasicBlock *bb, BasicBlock *bb_ret, BasicBlock *bb_instr);
 void arch_write_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, Value *value, uint32_t size);
 Value *arch_read_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, uint32_t sign, uint32_t size);
 void arch_inc_icounter(cpu_t *cpu, BasicBlock *bb);
 
+static inline Value* bitnot32(Value* v);
 /* host functions */
 uint32_t RAM32BE(uint8_t *RAM, addr_t a);
 uint32_t RAM32LE(uint8_t *RAM, addr_t a);
@@ -108,7 +110,7 @@ uint32_t RAM32LE(uint8_t *RAM, addr_t a);
 #define SHL(a,b) BinaryOperator::Create(Instruction::Shl, a, b, "", bb)
 #define LSHR(a,b) BinaryOperator::Create(Instruction::LShr, a, b, "", bb)
 
-#define ROTL(data,n)	OR(SHL(data, AND(n, CONST(0x1f))), LSHR(data, SUB(CONST(32), AND(n, CONST(0x1f)))))
+#define ROTL(data,n)	OR(SHL(data, AND(n, CONST(0x1f))), LSHR(data, UREM(SUB(CONST(32), AND(n, CONST(0x1f))), CONST(32))))
 #define ASHR(a,b) BinaryOperator::Create(Instruction::AShr, a, b, "", bb)
 #define ICMP_EQ(a,b) new ICmpInst(*bb, ICmpInst::ICMP_EQ, a, b, "")
 #define ICMP_NE(a,b) new ICmpInst(*bb, ICmpInst::ICMP_NE, a, b, "")
@@ -299,4 +301,3 @@ uint32_t RAM32LE(uint8_t *RAM, addr_t a);
 /* debugging */
 #define DEBUG_ME()   arch_debug_me(cpu, bb)
 //#define WINDOW_CHECK(wr, ws, wt) arch_windowcheck(cpu, bb, wr, ws, wt)
-

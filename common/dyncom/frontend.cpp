@@ -595,7 +595,7 @@ arch_sqrt(cpu_t *cpu, size_t width, Value *v, BasicBlock *bb) {
  */
 void arch_inc_icounter(cpu_t *cpu, BasicBlock *bb)
 {
-	//LET(SR(ICOUNTER), ADD(R(SR(ICOUNTER)), CONST(1)));
+//	LET(ICOUNTER, ADD(RS(ICOUNTER), CONST(1)));
 }
 
 // Invoke debug_function
@@ -665,4 +665,21 @@ Value *arch_read_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, uint32_t sign, 
 	params.push_back(CONST(size));
 	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_func_read_memory, params.begin(), params.end(), "", bb);
 	return ret;
+}
+/**
+ * @brief Generate the invoke syscall llvm IR
+ *
+ * @param cpu CPU core structure
+ * @param bb basic block to store llvm IR
+ */
+void
+arch_syscall(cpu_t *cpu, BasicBlock *bb)
+{
+	if (cpu->dyncom_engine->ptr_arch_func[1] == NULL)
+		return;
+	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
+	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
+	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
+	// XXX synchronize cpu context!
+	CallInst::Create(cpu->dyncom_engine->ptr_arch_func[1], v_cpu_ptr, "", bb);
 }

@@ -31,6 +31,7 @@
 #include "dyncom/memory.h"
 
 static void debug_func_init(cpu_t *cpu);
+static void syscall_func_init(cpu_t *cpu);
 #define IS_LITTLE_ENDIAN(cpu) (((cpu)->info.common_flags & CPU_FLAG_ENDIAN_MASK) == CPU_FLAG_ENDIAN_LITTLE)
 
 static inline bool
@@ -204,6 +205,7 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 	cpu->timer_total[TIMER_RUN] = 0;
 
 	debug_func_init(cpu);
+	syscall_func_init(cpu);
 	return cpu;
 }
 /**
@@ -533,4 +535,24 @@ static void debug_func_init(cpu_t *cpu){
 	cpu->dyncom_engine->ptr_arch_func[0] = debug_func;
 }
 
-//LOG("%s:%d\n", __func__, __LINE__);
+extern "C" int syscall_func(cpu_t *cpu){
+	if(cpu->syscall_func != NULL)
+		cpu->syscall_func(cpu);
+};
+static void syscall_func_init(cpu_t *cpu){
+	//types
+	std::vector<const Type*> type_func_syscall_args;
+	PointerType *type_intptr = PointerType::get(cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX()), 0);
+	type_func_syscall_args.push_back(type_intptr);	/* intptr *cpu */
+	FunctionType *type_func_syscall_callout = FunctionType::get(
+		Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
+		type_func_syscall_args,	/* Params */
+		false);		      	/* isVarArg */
+	Constant *syscall_const = cpu->dyncom_engine->mod->getOrInsertFunction("syscall_func",	//function name
+		type_func_syscall_callout);	//return
+	if(syscall_const == NULL)
+		fprintf(stderr, "Error:cannot insert function:syscall.\n");
+	Function *syscall_func = cast<Function>(syscall_const);
+	syscall_func->setCallingConv(CallingConv::C);
+	cpu->dyncom_engine->ptr_arch_func[1] = syscall_func;
+}
