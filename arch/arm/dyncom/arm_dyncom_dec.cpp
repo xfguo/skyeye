@@ -38,7 +38,12 @@
 #define LSWBIT  BIT(21)
 #define LSLBIT  BIT(20)
 #define OFFSET12 BITS(0,11)
-//------------------------------------------------------------------------------
+#define DESTReg (BITS (12, 15))
+
+#define IS_V5E 0
+#define IS_V5  0
+#define IS_V6  0
+#define LHSReg 0
 using namespace llvm;
 
 
@@ -57,8 +62,7 @@ int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2
 
 Value *GetLSAddr5x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
-	Value *Addr;
+Value *Addr;
 	if(LSUBIT)
 		Addr =  ADD(R(RN), CONST(OFFSET12));
 	else
@@ -72,7 +76,6 @@ Value *GetLSAddr5x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 	return Addr;
 }
-
 Value *GetLSAddr7x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	printf("in GetLSAddr7x may be not compilitable\n");
@@ -276,21 +279,36 @@ int arm_opc_trans_04(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_05(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if ((BITS (4, 7) & 0x9) == 0x9){
+		/* LDR immediate offset, no write-back, down, post inde     xed.  */
+		return 0;
+	}
 
-
+	/* SUBS reg */
+	return 0;
 }
 
 
 int arm_opc_trans_06(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if (BITS (4, 7) == 0xB){
+		/* STRH immediate offset, write-back, down, post indexe     d.  */
+		return 0;
+	}
 
-
+	/* RSB reg */
+	return 0;
 }
 
 int arm_opc_trans_07(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if ((BITS (4, 7) & 0x9) == 0x9){
+		/* LDR immediate offset, write-back, down, post indexed     .  */
+		return 0;
+	}
 
-
+	/* RSBS reg */
+	return 0;
 }
 
 int arm_opc_trans_08(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -382,39 +400,110 @@ int arm_opc_trans_0b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_0c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if (BITS (4, 7) == 0x9)
+	{
+		/* STR immediate offset, no write-back, up post indexe     d.  */
+		return 0;
+	}
 
+	/* SBC reg */
+	return 0;
 
 }
 
 int arm_opc_trans_0d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	if ((BITS (4, 7) & 0x9) == 0x9){
+		/* LDR immediate offset, no write-back, up, post indexe     d.  */
+		return 0;
+	}
+	if (BITS (4, 7) == 0x9){
+		 /* MULL  32x32=64 */
+		return 0;
+	}
 
 }
 
 int arm_opc_trans_0e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	if (BITS (4, 7) == 0xB){
+		/* STRH immediate offset, write-back, up, post indexed.       */
+		return 0;
+	}
+	if (BITS (4, 7) == 0x9){
+		 /* MULL  32x32=64 */
+		return 0;
+	}
 
 }
 
 int arm_opc_trans_0f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if ((BITS (4, 7) & 0x9) == 0x9){
+		/* LDR immediate offset, write-back, up, post indexed.       */
+		return 0;
+	}
+	if (BITS (4, 7) == 0x9){
+		/* MULL  32x32=64 */
+		return 0;
+	}
 
-
+	/* RSCS reg */
+	return 0;
 }
 
 
 int arm_opc_trans_10(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* TST reg and MRS CPSR and SWP word.  */
+	if (BITS (4, 7) & 0x9 == 0x9){
+		/* 8 ~ 11 SBZ, IPUBWL 010000*/
+		/* S H both is 0   SWP ???? */
+		return 0;
+	}
+	if (IS_V5E) {
+		if (BIT (4) == 0 && BIT (7) == 1) {
+			/* ElSegundo SMLAxy insn.  */
 
+			if (BITS (4, 11) == 5) {
+				/* ElSegundo QADD insn.  */
+				return 0;
+			}
+			if (BITS (4, 11) == 9){
+				/* SWP */
+				return 0;
+			}
+			else if ((BITS (0, 11) == 0) && (LHSReg == 15)) {
+				/* MRS CPSR */
+				return 0;
+			}
+			else {
+				/* UNDEF_Test */
+				return 0;
+			}
 
+		}
+		return 0;
+	}
+
+	return 0;
 
 }
 
 int arm_opc_trans_11(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if ((BITS (4, 11) & 0xF9) == 0x9){
+	/* LDR register offset, no write-back, down, pre indexed.  */
+		return 0;
+	}
+	if (DESTReg == 15) {
+		/* TSTP reg */
+	}
+	else{
+		/* TST reg */
+	}
 
+	return 0;
 
 }
 
@@ -461,30 +550,88 @@ int arm_opc_trans_12(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_13(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if ((BITS (4, 7) & 0x9) == 0x9){
+		/* LDR register offset, write-back, down, pre indexed.  */
+		/* bit 8 ~ 11 SBZ IPUBWL 010011*/
+		return 0;
+	}
+	if (DESTReg == 15) {
+		/* TEQP reg */
+	}
+	else {
+		/* TEQ Reg.  */
+	}
 
-
+	return 0;
 }
+
 
 int arm_opc_trans_14(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if (IS_V5E){
+		if (BIT (4) == 0 && BIT (7) == 1) {
+			/* ElSegundo SMLALxy insn.  */
+			return 0;
+		}
+		if (BITS (4, 11) == 5) {
+			/* ElSegundo QDADD insn.  */
+			return 0;
+		}
+	}
+
+	if ((BITS (4, 7) & 0x9) == 0x9){
+		/* STR immediate offset, no write-back, down, pre indexed.  */
+		/* IPUBWL 010100*/
+		return 0;
+	}
 
 
+	if (BITS (4, 11) == 9) {
+		/* SWP */
+		return 0;
+	}
+	else if ((BITS (0, 11) == 0)
+			&& (LHSReg == 15)) {
+		/* MRS SPSR */
+		return 0;
+	}
+	else{
+		/* UNDEF */
+	}
 }
-
+#define CLEARC 0
+#define CLEARV 0
+#define CLEARN 0
 int arm_opc_trans_15(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* CMP reg I = 0 */
-	Value *op1 = R(RN);
-	Value *op2 = OPERAND;
-	Value *ret = SUB(op1, op2);
-	//FIXME !!!!!!
-	set_condition(cpu, ret, bb, op1, op2);
-	/*
-	new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
-	new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
-	new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
-	new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
-	*/
+	if ((BITS (4, 7) & 0x9) == 0x9){
+		/* LDR immediate offset, no write-back, down, pre indexed.  */
+		/* IPUBWL 010101*/
+		return 0;
+	}
+
+
+	/* Other instruction*/
+	if (DESTReg == 15) {
+		/* CMPP reg.  */
+		return 0;
+	}
+	else
+	{
+		/* CMP reg I = 0 */
+		Value *op1 = R(RN);
+		Value *op2 = OPERAND;
+		Value *ret = SUB(op1, op2);
+		//FIXME !!!!!!
+		set_condition(cpu, ret, bb, op1, op2);
+		/*
+		   new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+		   new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+		   new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
+		   new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+		 */
+	}
+
 	return 0;
 }
 
@@ -527,24 +674,63 @@ int arm_opc_trans_16(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_17(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* CMN reg I = 0*/
-	if ((BITS (4, 7) & 0x9) == 0x9)
+	if ((BITS (4, 7) & 0x9) == 0x9){
 		/* LDR immediate offset, write-back, down, pre indexed.  */
 		/*  ? */
 		return 0;
+	}
+	if (DESTReg == 15){
+
+	}
+	else{
+		/* CMN reg.  */
+	}
+
+	/* CMNP reg */
 
 	return 0;
 }
 
+
 int arm_opc_trans_18(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if (IS_V6) {
+		if (BITS (4, 7) == 0x9)
+			/* P = 1 U = 0 B = 1 W = 0 */
+			return 0;
+	}
+	if (BITS (4, 11) == 0xB) {
+		/* STRH register offset, no write-back, up, pre indexed.  */
+		return 0;
+	}
 
+	if(BITS(4, 7) & 0x9 == 0x9){	/* STR */
+		/* P = 1 U = 0 B = 1 W = 0 */
+		return 0;
+	}
+
+	/* ORR reg */
+	return 0;
 
 }
 
 int arm_opc_trans_19(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* dyf add armv6 instr ldrex */
+	if (IS_V6) {
+		if (BITS (4, 7) == 0x9) {
+			return 0;
+		}
+	}
 
+	if ((BITS (4, 11) & 0xF9) == 0x9){
+		/* LDR register offset, no write-back, up, pre indexed.  */
+		return 0;
+	}
 
+	/* ORRS reg */
+
+	return 0;
 }
 
 int arm_opc_trans_1a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -574,8 +760,10 @@ int arm_opc_trans_1b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* movs reg  I = 0 S = 1*/
 	if ((BITS (4, 11) & 0xF9) == 0x9)
 		/* LDR register offset, write-back, up, pre indexed.  */
-
 		return 0;
+
+	/* Continue with remaining instruction decoding.  */
+	/* MOVS reg */
 	return 0;
 }
 
@@ -602,6 +790,7 @@ int arm_opc_trans_1c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* P = 1, U = 1, I = 1, W = 0 */
 		return 0;
 	}
+	/* BIC reg */
 	return 0;
 }
 
@@ -626,21 +815,34 @@ int arm_opc_trans_1d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* LDR immediate offset, no write-back, up, pre indexed.  */
 		return 0;
 	}
+
+	/* BICS reg */
 	return 0;
 }
 
 int arm_opc_trans_1e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if (BITS (4, 7) & 0x9 == 0x9) {
+		/* STR immediate offset, write-back, up, pre indexed.  */
+		/* PUBWL 11110*/
+		return 0;
+	}
 
-
+	/* MVN reg */
+	return 0;
 
 }
 
 int arm_opc_trans_1f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if (BITS (4, 7) & 0x9 == 0x9) {
+		/* LDR immediate offset, write-back, up, pre indexed.  */
+		/* PUBWL 11110*/
+		return 0;
+	}
 
-
-
+	/* MVNS reg */
+	return 0;
 }
 
 int arm_opc_trans_20(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -678,19 +880,19 @@ int arm_opc_trans_24(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_25(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* SUBS immed */
 
 }
 
 int arm_opc_trans_26(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* RSB immed */
 
 }
 
 int arm_opc_trans_27(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* RSBS immed */
 
 }
 
@@ -726,37 +928,46 @@ int arm_opc_trans_2b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_2c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* SBC immed */
 
 }
 
 int arm_opc_trans_2d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* SBCS immed */
 
 }
 
 int arm_opc_trans_2e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* RSC immed */
 
 }
 
 int arm_opc_trans_2f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* RSCS immed */
 
 }
 
 int arm_opc_trans_30(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* TST immed */
 
 }
 
 int arm_opc_trans_31(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* TSTP immed */
+	if (DESTReg == 15){
+		/* TSTP immed.  */
+		return 0;
+	}
+	else{
+		/* TST immed.  */
+	}
 
+	return 0;
 
 }
 
@@ -764,32 +975,54 @@ int arm_opc_trans_31(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_32(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* TEQ immed and MSR immed to CPSR */
-        /* MSR immed to CPSR. R = 0(set CPSR) */
+    /* MSR immed to CPSR. R = 0(set CPSR) */
+	if (DESTReg == 15){
+		/* MSR immed to CPSR.  */
+		return 0;
+	}
+	else{
+		/* UNDEF*/
+	}
+
+	return 0;
 
 }
 
 int arm_opc_trans_33(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if (DESTReg == 15) {
+		/* TEQP immed.  */
+		return 0;
+	}
+	else{
+		/* TEQ immed */
+		return 0;
+	}
 
-
+	return 0;
 }
 
 int arm_opc_trans_34(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* CMP immed */
 
 }
 
 int arm_opc_trans_35(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* CMPP immed I = 1, */
-	Value *op1 = R(RN);
-	Value *op2 = OPERAND;
-	Value *ret = SUB(op1,op2);
-	/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
-	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
-	/* C */ new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
-	/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+	if (DESTReg == 15) {
+	}
+	else{
+		/* CMPP immed I = 1, */
+		Value *op1 = R(RN);
+		Value *op2 = OPERAND;
+		Value *ret = SUB(op1,op2);
+		/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+		/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+		/* C */ new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
+		/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+		/* CMP immed.  */
+	}
 	return 0;
 }
 
@@ -797,24 +1030,37 @@ int arm_opc_trans_36(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* CMN immed and MSR immed to SPSR */
 	/* MSR R = 1 set SPSR*/
+	if (DESTReg == 15){
+		return 0;
+	}
+	else{
+		/*UNDEF*/
+	}
 
+	return 0;
 }
 
 int arm_opc_trans_37(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* CMNP immed.  */
+	if (DESTReg == 15){
+		/* CMNP immed.  */
+		return 0;
+	}
+	else{
+		/* CMN immed.  */
+	}
 	return 0;
 }
 
 int arm_opc_trans_38(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* ORR immed.  */
 
 }
 
 int arm_opc_trans_39(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* ORRS immed.  */
 
 }
 
@@ -858,7 +1104,7 @@ int arm_opc_trans_3e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_3f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* MVNS immed.  */
 
 }
 
@@ -1386,13 +1632,13 @@ int arm_opc_trans_8f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_90(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, No WriteBack, Pre Dec.  */
 
 }
 
 int arm_opc_trans_91(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, No WriteBack, Pre Dec.  */
 
 }
 
@@ -1421,79 +1667,79 @@ int arm_opc_trans_92(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_93(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, WriteBack, Pre Dec.  */
 
 }
 
 int arm_opc_trans_94(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, Flags, No WriteBack, Pre Dec.  */
 
 }
 
 int arm_opc_trans_95(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, Flags, No WriteBack, Pre Dec.  */
 
 }
 
 int arm_opc_trans_96(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, Flags, WriteBack, Pre Dec.  */
 
 }
 
 int arm_opc_trans_97(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, Flags, WriteBack, Pre Dec.  */
 
 }
 
 int arm_opc_trans_98(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, No WriteBack, Pre Inc.  */
 
 }
 
 int arm_opc_trans_99(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, No WriteBack, Pre Inc.  */
 
 }
 
 int arm_opc_trans_9a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, WriteBack, Pre Inc.  */
 
 }
 
 int arm_opc_trans_9b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, WriteBack, Pre Inc.  */
 
 }
 
 int arm_opc_trans_9c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, Flags, No WriteBack, Pre Inc.  */
 
 }
 
 int arm_opc_trans_9d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, Flags, No WriteBack, Pre Inc.  */
 
 }
 
 int arm_opc_trans_9e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store, Flags, WriteBack, Pre Inc.  */
 
 }
 
 int arm_opc_trans_9f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Load, Flags, WriteBack, Pre Inc.  */
 
 }
 
@@ -1690,8 +1936,18 @@ int arm_opc_trans_c3(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_c4(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	if(IS_V5){
+		/* Reading from R15 is UNPREDICTABLE.  */
+		if (BITS (12, 15) == 15
+				|| BITS (16, 19) == 15){
+			return 0;
+		}
+		else{
+			return 0;
+		}
+	}
 
-
+	return 0;
 }
 
 int arm_opc_trans_c5(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1704,7 +1960,7 @@ int arm_opc_trans_c5(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_c6(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , WriteBack , Post Dec.  */
 
 }
 
@@ -1717,7 +1973,7 @@ int arm_opc_trans_c7(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_c8(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , No WriteBack , Post Inc.  */
 
 }
 
@@ -1730,7 +1986,7 @@ int arm_opc_trans_c9(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_ca(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , WriteBack , Post Inc.  */
 
 }
 
@@ -1743,7 +1999,7 @@ int arm_opc_trans_cb(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_cc(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , No WriteBack , Post Inc.  */
 
 }
 
@@ -1756,6 +2012,7 @@ int arm_opc_trans_cd(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_ce(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	/* Store , WriteBack , Post Inc.  */
 }
 
 int arm_opc_trans_cf(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1767,7 +2024,7 @@ int arm_opc_trans_cf(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_d0(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , No WriteBack , Pre Dec.  */
 
 }
 
@@ -1780,7 +2037,7 @@ int arm_opc_trans_d1(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_d2(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , WriteBack , Pre Dec.  */
 
 }
 
@@ -1793,7 +2050,7 @@ int arm_opc_trans_d3(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_d4(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , No WriteBack , Pre Dec.  */
 
 }
 
@@ -1806,7 +2063,7 @@ int arm_opc_trans_d5(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_d6(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , WriteBack , Pre Dec.  */
 
 }
 
@@ -1819,7 +2076,7 @@ int arm_opc_trans_d7(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_d8(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , No WriteBack , Pre Inc.  */
 
 }
 
@@ -1832,7 +2089,7 @@ int arm_opc_trans_d9(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_da(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , WriteBack , Pre Inc.  */
 
 }
 
@@ -1845,7 +2102,7 @@ int arm_opc_trans_db(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_dc(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , No WriteBack , Pre Inc.  */
 
 }
 
@@ -1858,7 +2115,7 @@ int arm_opc_trans_dd(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_de(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-
+	/* Store , WriteBack , Pre Inc.  */
 
 }
 
@@ -1983,6 +2240,7 @@ int arm_opc_trans_ef(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	arm_opc_trans_e1(cpu, instr, bb);
 }
 
+/* Software interrupt*/
 int arm_opc_trans_f0(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 
