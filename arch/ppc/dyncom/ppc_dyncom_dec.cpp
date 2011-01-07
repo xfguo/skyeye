@@ -50,6 +50,7 @@
 
 int opc_default_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	*tag = TAG_CONTINUE;
+	*next_pc = phys_addr + PPC_INSN_SIZE;
 	return PPC_INSN_SIZE;
 }
 

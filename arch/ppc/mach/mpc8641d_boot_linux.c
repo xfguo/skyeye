@@ -115,10 +115,12 @@ void mpc8641d_boot_linux(){
 }
 
 void mpc8641d_boot_application(){
-	int i;
+	int i, j;
 	PPC_CPU_State* cpu = get_current_cpu();
 	for(i = 0; i < cpu->core_num; i++){
 		e500_core_t * core = &cpu->core[i];
+		for(j = 0; j < 32; j++)
+			core->gpr[j] = 0;
 		core->gpr[1] = 0x00ff0000;	/* stack */
 		core->phys_pc = 0x10000140;
 	}

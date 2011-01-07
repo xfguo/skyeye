@@ -40,13 +40,13 @@ static inline void ppc_dyncom_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
 {
 	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(0x0fffffff)));
 	LETS(CR_REGNUM, 
-		SELECT(NOT(R(r)), OR(RS(CR_REGNUM), CONST(CR_CR0_EQ)), 
+		SELECT(ICMP_EQ(R(r), CONST(0)), OR(RS(CR_REGNUM), CONST(CR_CR0_EQ)), 
 			SELECT(ICMP_NE(AND(R(r), CONST(0x80000000)), CONST(0)), 
 				OR(RS(CR_REGNUM), CONST(CR_CR0_LT)), 
 				OR(RS(CR_REGNUM), CONST(CR_CR0_GT)))));
 
 	LETS(CR_REGNUM, SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), 
-		RS(CR_REGNUM), OR(RS(CR_REGNUM), CONST(CR_CR0_SO))));
+		OR(RS(CR_REGNUM), CONST(CR_CR0_SO)), RS(CR_REGNUM)));
 }
 static int inline ppc_mask(int MB, int ME){
 	uint32 mask;
@@ -64,7 +64,8 @@ static int inline ppc_mask(int MB, int ME){
 
 static inline Value* ppc_dyncom_carry_3(cpu_t* cpu, BasicBlock *bb, Value* a, Value* b, Value* c)
 {
-	return SELECT(LOG_OR(ICMP_ULT(ADD(a, b), c), ICMP_ULT(ADD(ADD(a, b), c), c)), CONST(1), CONST(0));
+	Value* tmp1 = ICMP_SLT(b, CONST(0));
+	Value* tmp2 = ICMP_SLT(ADD(a, b), CONST(0));
+	return SELECT(OR(tmp1, tmp2), TRUE, FALSE);
 }
-
 #endif

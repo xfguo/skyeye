@@ -10,7 +10,16 @@
 #include "ppc_syscall.h"
 #include "ppc_mmu.h"
 
+#include "llvm/Module.h"
+#include "llvm/Function.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Instructions.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/CallingConv.h"
+#include "llvm/Type.h"
+#include "llvm/Constants.h"
+#include "skyeye_dyncom.h"
 #include <dyncom/dyncom_llvm.h>
 #include <dyncom/frontend.h>
 #include "dyncom/basicblock.h"
@@ -77,10 +86,9 @@ static int opc_cmpi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	PPC_OPC_TEMPL_D_SImm(instr, cr, rA, imm);
 	cr >>= 2;
 	cr = 7 - cr;
-	Value * tmp1 = ICMP_SLT(R(rA), CONST(imm));
-	Value * tmp2 = ICMP_SGT(R(rA), CONST(imm));
-	Value * tmp3 = ICMP_EQ(R(rA), CONST(imm));
-	Value * c = SELECT(tmp1, CONST(8),SELECT(tmp2, CONST(4), SELECT(tmp3, CONST(2), CONST(0))));
+	Value* c;
+	c = SELECT(ICMP_SLT(R(rA), CONST(imm)), CONST(8), SELECT(ICMP_SGT(R(rA), CONST(imm)), CONST(4), CONST(2)));
+	c = SELECT(ICMP_EQ(R(rA), CONST(imm)), CONST(2), c);
 	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
 	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
 	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, CONST(cr * 4))));
@@ -101,10 +109,9 @@ static int opc_rlwinmx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rS, rA, SH, MB, ME;
 	PPC_OPC_TEMPL_M(instr, rS, rA, SH, MB, ME);
-	//uint32 v = ppc_word_rotl(current_core->gpr[rS], SH);
 	Value* v = ROTL(R(rS), CONST(SH));
 	uint32 mask = ppc_mask(MB, ME);
-	//current_core->gpr[rA] = v & mask;
+	debug(DEBUG_TRANSLATE, "In %s,rS=%d,rA=%d,SH=%d,MB=%d,ME=%d,mask=0x%x\n",__func__,rS,rA,SH,MB,ME,mask);
 	LET(rA, AND(v, CONST(mask)));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
@@ -151,8 +158,11 @@ static int opc_lwzu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
 	// FIXME: check rA!=0 && rA!=rD
-	arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0, 32);
-	/* FIXME:update rD */
+	Value * addr = ADD(R(rA), CONST(imm));
+	Value * result = arch_read_memory(cpu, bb, addr, 0, 32);
+	LET(rD, result);
+	/* FIXME:update rA */
+	LET(rA, addr);
 	return 0;
 }
 ppc_opc_func_t ppc_opc_lwzu_func = {
@@ -192,9 +202,10 @@ static int opc_stwu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	debug(DEBUG_TRANSLATE, "In %s,rS=%d,rA=%d,imm=%d\n", __FUNCTION__, rS, rA, imm);
 	// FIXME: check rA!=0
 	/* FIXME: no MMU now */
-	arch_write_memory(cpu, bb, ADD(R(rA), CONST(imm)), R(rS), 32);
+	Value *addr = ADD(R(rA), CONST(imm));
+	arch_write_memory(cpu, bb, addr, R(rS), 32);
 	/* updata rS */
-	//LET(R(rS), ADD(R(rA), CONST(imm)));
+	LET(rA, addr);
 	return 0;
 }
 ppc_opc_func_t ppc_opc_stwu_func = {
@@ -211,13 +222,15 @@ int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *n
 	uint32 li;
 	PPC_OPC_TEMPL_I(instr, li);
 	*tag = TAG_BRANCH;
+	*tag |= TAG_STOP;
 	/*if the branch target is out of the page, stop the tagging */
 	debug(DEBUG_TAG, "pc=0x%x,page_begin=0x%x,page_end=0x%x\n",
 			current_core->pc,get_begin_of_page(current_core->pc),get_end_of_page(current_core->pc));
-	if(li < get_begin_of_page(current_core->pc) && li > get_end_of_page(current_core->pc)){
-		*tag |= TAG_STOP;
-	}
-	*new_pc = li + phys_pc;
+//	if(li < get_begin_of_page(current_core->pc) && li > get_end_of_page(current_core->pc)){
+//		*tag |= TAG_STOP;
+//	}
+	*new_pc = NEW_PC_NONE;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
 	debug(DEBUG_TAG, "In %s, new_pc=0x%x\n", __FUNCTION__, *new_pc);
 	return PPC_INSN_SIZE;
 }
@@ -227,14 +240,14 @@ static int opc_bx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	uint32 li;
 	PPC_OPC_TEMPL_I(instr, li);
 	if (instr & PPC_OPC_LK) {
-		LETS(LR_REGNUM, ADD(CONST(4), CONST(*(addr_t *)cpu->rf.phys_pc)));
+		LETS(LR_REGNUM, ADD(CONST(4), RS(PHYS_PC_REGNUM)));
 	}
 	if (!(instr & PPC_OPC_AA)) {
-		arch_store(ADD(CONST(li), CONST(*(addr_t *)cpu->rf.phys_pc)), cpu->ptr_PHYS_PC, bb);
-		debug(DEBUG_TRANSLATE, "In %s, li=0x%x, pc=0x%x, br 0x%x\n",
-				__FUNCTION__, li, current_core->phys_pc, li + current_core->phys_pc);
+	//	arch_store(ADD(CONST(li), RS(PHYS_PC_REGNUM)), cpu->ptr_PHYS_PC, bb);
+		LETS(PHYS_PC_REGNUM, ADD(CONST(li), RS(PHYS_PC_REGNUM)));
+		debug(DEBUG_TRANSLATE, "In %s, li=0x%x\n",__FUNCTION__, li);
 	}else{
-		arch_store(CONST(li), cpu->ptr_PHYS_PC, bb);
+		LETS(PHYS_PC_REGNUM, CONST(li));
 		debug(DEBUG_TRANSLATE, "In %s, li=0x%x, br 0x%x\n", __FUNCTION__, li, li);
 	}
 	return PPC_INSN_SIZE;
@@ -251,18 +264,18 @@ ppc_opc_func_t ppc_opc_bx_func = {
  */
 int opc_bcx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	*tag = TAG_COND_BRANCH;
-	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	uint32 BO, BI, BD;
 	PPC_OPC_TEMPL_B(instr, BO, BI, BD);
 	uint32_t AA = instr & PPC_OPC_AA;
 	if(AA)
 		*new_pc = BD;
 	else
-		*new_pc = phys_pc + BD;
+		*new_pc = NEW_PC_NONE;
 	if(*new_pc > get_end_of_page(phys_pc) || *new_pc < get_begin_of_page(phys_pc)){
 		*new_pc = NEW_PC_NONE;
 		*tag |= TAG_STOP;
 	}
+	*next_pc = phys_pc + PPC_INSN_SIZE;
 	debug(DEBUG_TAG, "In %s, new_pc=0x%x, BD=0x%x\n", __FUNCTION__, *new_pc, BD);
 	return PPC_INSN_SIZE;
 }
@@ -273,31 +286,30 @@ Value* opc_bcx_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
 	if (!(BO & 4)) {
 		LETS(CTR_REGNUM, SUB(RS(CTR_REGNUM), CONST(1)));
 	}
-	bool_t bo2 = ((BO & 2)?True: False);
-	bool_t bo8 = ((BO & 8)? True: False); // branch condition true
+	bool_t bo2 = ((BO & 2)?True: False); //branch if ctr==0 when true
+	bool_t bo8 = ((BO & 8)?True: False); // branch condition true
 	Value* cr_value = SELECT(ICMP_NE(AND(RS(CR_REGNUM), CONST(1<<(31-BI))), CONST(0)), CONST(1), CONST(0));
-	//bool_t cr = ((current_core->cr & (1<<(31-BI)))?1:0) ;
-	return AND(
-		OR(ICMP_NE(CONST(BO & 4), CONST(0)), XOR(LOG_NOT(RS(CTR_REGNUM)), CONST1(bo2))), 
-		OR(ICMP_NE(CONST(BO & 16), CONST(0)), LOG_NOT(XOR(cr_value, CONST(bo2))))
-	);
-#if 0
-	Value *npc_v;
-	if (!(instr & PPC_OPC_AA)) {
-		npc_v = SELECT(cond, ADD(CONST(BD), RS(PC_REGNUM)), CONST(BD));
-	}
-	if (instr & PPC_OPC_LK) {
-		LETS(LR_REGNUM, SELECT(cond, ADD(RS(PC_REGNUM), CONST(4)), RS(LR_REGNUM)));
-	}
-	LETS(NPC_REGNUM, SELECT(cond, npc_v, RS(NPC_REGNUM)));
-#endif
-}
+	Value* tmp1 = ICMP_NE(AND(CONST(BO), CONST(4)), CONST(0));
+	Value* tmp2 = XOR(ICMP_NE(RS(CTR_REGNUM), CONST(0)), ICMP_NE(CONST(bo2), CONST(0)));
+	Value* tmp3 = ICMP_NE(AND(CONST(BO), CONST(16)), CONST(0));
+	Value* tmp4 = ICMP_EQ(XOR(cr_value, CONST(bo8)), CONST(0));
+	return AND(OR(tmp1, tmp2), OR(tmp3, tmp4));
+	//return AND(
+	//	OR(ICMP_NE(CONST(BO & 4), CONST(0)), XOR(LOG_NOT(RS(CTR_REGNUM)), CONST1(bo2))), 
+	//	OR(ICMP_NE(CONST(BO & 16), CONST(0)), LOG_NOT(XOR(cr_value, CONST(bo8))))
+	//);
+}   //
 static int opc_bcx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
 	uint32 BO, BI, BD;
 	PPC_OPC_TEMPL_B(instr, BO, BI, BD);
 	if (instr & PPC_OPC_LK) {
-		LETS(LR_REGNUM, ADD(RS(PC_REGNUM), CONST(4)));
+		LETS(LR_REGNUM, ADD(RS(PHYS_PC_REGNUM), CONST(4)));
+	}
+	if (!(instr & PPC_OPC_AA)) {
+		arch_store(ADD(CONST(BD), RS(PHYS_PC_REGNUM)), cpu->ptr_PHYS_PC, bb);
+	}else{
+		arch_store(CONST(BD), cpu->ptr_PHYS_PC, bb);
 	}
 	return 0;
 }
@@ -347,11 +359,9 @@ static int opc_subfic_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	int rD, rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
-	Value* not_a = NOT(R(rA));
-	LET(rD, ADD(not_a, CONST(imm + 1)));
-	NOT_TEST;
+	LET(rD, ADD(XOR(R(rA), CONST(-1)), CONST(imm + 1)));
 	// update XER
-	Value* cond = ppc_dyncom_carry_3(cpu, bb, not_a, CONST(imm), CONST(1));
+	Value* cond = ppc_dyncom_carry_3(cpu, bb, XOR(R(rA), CONST(-1)), CONST(imm), CONST(1));
 	LETS(XER_REGNUM, SELECT(cond, 
 			OR(R(XER_REGNUM), CONST(XER_CA)), 
 			AND(RS(XER_REGNUM), CONST(~XER_CA)))
@@ -374,10 +384,11 @@ static int opc_cmpli_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	uint32 imm;
 	PPC_OPC_TEMPL_D_UImm(instr, cr, rA, imm);
 	cr >>= 2;
+	cr = 7-cr;
 	Value* c;
-	c = SELECT(ICMP_ULT(R(rA), CONST(imm)), CONST(8), SELECT(ICMP_UGT(R(rA), CONST(imm)), CONST(4), CONST(2)));
+	c = SELECT(ICMP_SLT(R(rA), CONST(imm)), CONST(8), SELECT(ICMP_SGT(R(rA), CONST(imm)), CONST(4), CONST(2)));
+	c = SELECT(ICMP_EQ(R(rA), CONST(imm)), CONST(2), c);
 	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
-	LETS(CR_REGNUM, SUB(CONST(7), RS(CR_REGNUM)));
 	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
 	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, MUL(RS(CR_REGNUM), CONST(4)))));
 	NOT_TEST;
@@ -434,23 +445,14 @@ ppc_opc_func_t ppc_opc_addic__func = {
         opc_invalid_translate_cond,
 };
 
-static int opc_sc_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
-	TODO;
-	return 0;
-}
 static int opc_sc_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
-        e500_core_t* current_core = get_current_core();
-        sky_pref_t* pref = get_skyeye_pref();
-	TODO;
-        if(pref->user_mode_sim)
-                ppc_syscall(current_core);
-        else
-                ppc_exception(current_core, current_core->syscall_number ,0 ,0);
+	arch_syscall(cpu, bb);
+	return 0;
 }
 
 ppc_opc_func_t ppc_opc_sc_func = {
-        opc_sc_tag,
+        opc_default_tag,
         opc_sc_translate,
         opc_invalid_translate_cond,
 };
@@ -619,7 +621,7 @@ static int opc_lbz_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
+	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
 	uint8 r;
 	/*
 	int ret = ppc_read_effective_byte((rA?current_core->gpr[rA]:0)+imm, &r);
@@ -879,7 +881,7 @@ static int opc_stmw_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	e500_core_t* current_core = get_current_core();
 	int rS, rA;
 	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rS, rA, imm);
+	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);
 	Value* ea;
 	if(rA)
 		ea = ADD(R(rA), CONST(imm));

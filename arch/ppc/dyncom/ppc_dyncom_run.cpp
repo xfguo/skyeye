@@ -14,6 +14,7 @@
 #include <skyeye_obj.h>
 #include <skyeye.h>
 #include <dyncom/dyncom_llvm.h>
+#include <skyeye_pref.h>
 
 #include "ppc_cpu.h"
 #include "ppc_mmu.h"
@@ -21,6 +22,7 @@
 #include "ppc_dyncom_run.h"
 #include "dyncom/memory.h"
 #include "bank_defs.h"
+#include "ppc_dyncom_debug.h"
 
 e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
@@ -135,13 +137,36 @@ static void ppc_debug_func(cpu_t* cpu){
 			printf("\n ");
 	}
 	printf("\nsprs:\n ");
+	printf("PC = 0x%x\n ", core->phys_pc);
 	printf("LR = 0x%x\n ", core->lr);
 	printf("CR = 0x%x\n ", core->cr);
+	printf("CTR= 0x%x\n ", core->ctr);
+	printf("ICOUNT = %d\n", core->icount);
+	core->icount ++;
+#if 0
+	extern void ppc_dyncom_diff_log(const unsigned int pc, const unsigned int lr, const unsigned int cr, const unsigned int ctr, const unsigned int reg[]);
+	ppc_dyncom_diff_log(*(addr_t*)cpu->rf.phys_pc, ((uint32_t*)cpu->rf.srf)[LR_REGNUM], ((uint32_t*)cpu->rf.srf)[CR_REGNUM], ((uint32_t*)cpu->rf.srf)[CTR_REGNUM], core->gpr);
+#endif
 	return;
+}
+/**
+ * @brief for llvm ir invoking
+ *
+ * @param cpu
+ */
+extern "C" int ppc_syscall(e500_core_t* core);
+extern "C" bool_t ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a);
+static void ppc_dyncom_syscall(cpu_t* cpu){
+	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	sky_pref_t* pref = get_skyeye_pref();
+	if(pref->user_mode_sim)
+		ppc_syscall(core);
+	else
+		ppc_exception(core, core->gpr[0], 0, 0);
 }
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
-	cpu->dyncom_engine->code_start = 0x10000140;
+	cpu->dyncom_engine->code_start = 0x100000f4;
 	cpu->dyncom_engine->code_entry = 0x10000140;
 	cpu->dyncom_engine->code_end = 0x11000000;
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
@@ -153,10 +178,17 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->rf.srf = &core->cr;
 	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
 	cpu_set_flags_debug(cpu, 0
-         //       | CPU_DEBUG_PRINT_IR
-                | CPU_DEBUG_LOG
+            //    | CPU_DEBUG_PRINT_IR
+            //    | CPU_DEBUG_LOG
                 );
 	cpu->debug_func = ppc_debug_func;
+	sky_pref_t *pref = get_skyeye_pref();
+	if(pref->user_mode_sim){
+		extern void ppc_dyncom_syscall(cpu_t* cpu);
+		cpu->syscall_func = ppc_dyncom_syscall;
+	}
+	else
+		cpu->syscall_func = NULL;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	set_memory_operator(ppc_read_memory, ppc_write_memory);
 	return;
@@ -170,7 +202,7 @@ void ppc_dyncom_run(cpu_t* cpu){
 		fprintf(stderr, "In %s, can not translate the pc 0x%x\n", __FUNCTION__, core->pc);
 		exit(-1);
 	}
-	printf("In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, phys_pc);
+	debug(DEBUG_RUN, "In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, phys_pc);
 	core->phys_pc = phys_pc;
 
 	int rc = cpu_run(cpu);
@@ -179,7 +211,7 @@ void ppc_dyncom_run(cpu_t* cpu){
 			break;  
 		case JIT_RETURN_SINGLESTEP:
 		case JIT_RETURN_FUNCNOTFOUND:
-			printf("In %s, function not found at 0x%x\n", __FUNCTION__, core->phys_pc);
+			debug(DEBUG_RUN, "In %s, function not found at 0x%x\n", __FUNCTION__, core->phys_pc);
 			cpu_tag(cpu, core->phys_pc);
 			cpu->dyncom_engine->functions = 0;
 			cpu_translate(cpu);
