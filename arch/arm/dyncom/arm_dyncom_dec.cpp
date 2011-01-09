@@ -1789,8 +1789,6 @@ int arm_opc_trans_58(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/*STR, No WriteBack, Pre Inc, Regist + Immed || Regist */
 	/* I = 0, P = 1, U = 1, W = 0, B = 0 */
-	//Value *addr = GETLSADDR5x;
-	//arch_write_memory(cpu, bb, addr, R(RD), 32);
 	Value *addr = GetAddr(cpu, instr, bb);
 	StoreWord(cpu, instr, bb, addr);
 }
@@ -1799,9 +1797,6 @@ int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Load , No WriteBack, Pre Inc, Regist + Immed.|| Regist  */
 	/* I = 0, P = 1, U = 1, W = 0 , B = 0*/
-	//Value *addr = GETLSADDR5x;
-	//Value *ret = arch_read_memory(cpu, bb, addr, 0, 32);
-	//LET(RD,ret);
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadWord(cpu, instr, bb, addr);
 	return 0;
@@ -2033,9 +2028,6 @@ int arm_opc_trans_7d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* UNDEF INSTR */
 	}
 
-	//Value *addr = GETLSADDR7x;
-	//Value *ret = arch_read_memory(cpu, bb, addr, 0, 8);
-	//LET(RD,ret);
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadByte(cpu, instr, bb, addr);
 }
@@ -2164,21 +2156,6 @@ int arm_opc_trans_92(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Store, WriteBack, PreDec */
 	/* STM(1) P = 1, U = 0, W = 1 */
-#if 0
-	Value *addr;
-	while(i){
-		count ++;
-		i = i >> 1;
-	}
-
-	if(!LSUBIT)
-		addr = SUB(R(RN), CONST(count * 4));
-#endif
-
-#if 0
-	int i;
-	int count = 0;
-#endif
 	Value *addr = GetAddr(cpu, instr, bb);
 	StoreM(cpu, instr, bb, addr);
 }
