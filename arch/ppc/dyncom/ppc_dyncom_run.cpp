@@ -120,6 +120,7 @@ static arch_func_t powerpc_arch_func = {
 	NULL
 };
 
+int ppc_dyncom_start_debug_flag = 0;
 /**
 * @brief Place all the powerpc debug output here.
 *
@@ -127,21 +128,27 @@ static arch_func_t powerpc_arch_func = {
 */
 static void ppc_debug_func(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
-	printf("In %s, phys_pc=0x%x\n", __FUNCTION__, *(addr_t*)cpu->rf.phys_pc);
-	printf("gprs:\n ");
+	if(ppc_dyncom_start_debug_flag){
+		printf("In %s, phys_pc=0x%x\n", __FUNCTION__, *(addr_t*)cpu->rf.phys_pc);
+		printf("gprs:\n ");
 #define PRINT_COLUMN 8
-	int i;
-	for(i = 0; i < 32; i ++){
-		printf("gpr[%d]=0x%x ", i, *(uint32_t*)((uint8_t*)cpu->rf.grf + 4*i));
-		if((i % PRINT_COLUMN) == (PRINT_COLUMN - 1))
-			printf("\n ");
+		int i;
+		for(i = 0; i < 32; i ++){
+			printf("gpr[%d]=0x%x ", i, *(uint32_t*)((uint8_t*)cpu->rf.grf + 4*i));
+			if((i % PRINT_COLUMN) == (PRINT_COLUMN - 1))
+				printf("\n ");
+		}
+		printf("\nsprs:\n ");
+		printf("PC = 0x%x\n ", core->phys_pc);
+		printf("LR = 0x%x\n ", core->lr);
+		printf("CR = 0x%x\n ", core->cr);
+		printf("CTR= 0x%x\n ", core->ctr);
+		printf("ICOUNT = %d\n", core->icount);
 	}
-	printf("\nsprs:\n ");
-	printf("PC = 0x%x\n ", core->phys_pc);
-	printf("LR = 0x%x\n ", core->lr);
-	printf("CR = 0x%x\n ", core->cr);
-	printf("CTR= 0x%x\n ", core->ctr);
-	printf("ICOUNT = %d\n", core->icount);
+	if(core->icount == START_DEBUG_ICOUNT){
+		ppc_dyncom_start_debug_flag = 1;
+		cpu_set_flags_debug(cpu, CPU_DEBUG_LOG);
+	}
 	core->icount ++;
 #if 0
 	extern void ppc_dyncom_diff_log(const unsigned int pc, const unsigned int lr, const unsigned int cr, const unsigned int ctr, const unsigned int reg[]);

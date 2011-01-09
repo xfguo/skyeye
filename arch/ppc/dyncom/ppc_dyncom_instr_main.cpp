@@ -132,13 +132,16 @@ ppc_opc_func_t ppc_opc_rlwinmx_func = {
  */
 static int opc_lwz_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
-	uint32 r;
-	Value *cond = ICMP_NE(R(rA), CONST(0));
-	LET(rD, arch_read_memory(cpu, bb, ADD(SELECT(cond, R(rA), CONST(0)), CONST(imm)), 0, 32));
+	Value* addr;
+	if(rA)
+		addr = ADD(R(rA), CONST(imm));
+	else
+		addr = CONST(imm);
+	Value* result = arch_read_memory(cpu, bb, addr, 0, 32);
+	LET(rD, result);
 	return 0;
 }
 ppc_opc_func_t ppc_opc_lwz_func = {
@@ -386,12 +389,11 @@ static int opc_cmpli_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	cr >>= 2;
 	cr = 7-cr;
 	Value* c;
-	c = SELECT(ICMP_SLT(R(rA), CONST(imm)), CONST(8), SELECT(ICMP_SGT(R(rA), CONST(imm)), CONST(4), CONST(2)));
+	c = SELECT(ICMP_ULT(R(rA), CONST(imm)), CONST(8), SELECT(ICMP_UGT(R(rA), CONST(imm)), CONST(4), CONST(2)));
 	c = SELECT(ICMP_EQ(R(rA), CONST(imm)), CONST(2), c);
 	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
 	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
-	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, MUL(RS(CR_REGNUM), CONST(4)))));
-	NOT_TEST;
+	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, CONST(cr * 4))));
 	return 0;
 }
 
@@ -634,8 +636,8 @@ static int opc_lbz_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,8);
 	else
 		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,8);
-	LET(rD, ret);
-	NOT_TEST;
+	LET(rD, AND(ret, CONST(0x000000ff)));
+	return 0;
 }
 
 ppc_opc_func_t ppc_opc_lbz_func = {
@@ -697,11 +699,10 @@ static int opc_stbu_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);
-	if(rA)
-		arch_write_memory(cpu, bb, ADD(R(rA), CONST(imm)), R(rS), 8);
-	else
-		arch_write_memory(cpu, bb, CONST(imm), R(rS), 8);
-	NOT_TEST;		
+	Value* addr = ADD(R(rA), CONST(imm));
+	arch_write_memory(cpu, bb, addr, R(rS), 8);
+	LET(rA, addr);
+	return 0;
 }
 
 ppc_opc_func_t ppc_opc_stbu_func = {
@@ -823,7 +824,7 @@ static int opc_sth_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 
 ppc_opc_func_t ppc_opc_sth_func = {
         opc_default_tag,
-        opc_addic_translate,
+        opc_sth_translate,
         opc_invalid_translate_cond,
 };
 /*
@@ -878,7 +879,6 @@ ppc_opc_func_t ppc_opc_lmw_func = {
  */
 static int opc_stmw_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
-	e500_core_t* current_core = get_current_core();
 	int rS, rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);

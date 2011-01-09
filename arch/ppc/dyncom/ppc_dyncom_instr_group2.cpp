@@ -1007,6 +1007,7 @@ static int opc_slwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int opc_srawix_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	*tag = TAG_CONDITIONAL;
 	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
 	return PPC_INSN_SIZE;
 }
 Value* opc_srawix_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
@@ -1015,14 +1016,15 @@ Value* opc_srawix_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
 	PPC_OPC_TEMPL_X(instr, rS, rA, SH);
 	LET(rA, R(rS));
 	LETS(XER_REGNUM, AND(RS(XER_REGNUM), CONST(~XER_CA)));
-	Value *tmp = SELECT(ICMP_UGT(CONST(SH), CONST(31)), CONST(0), LSHR(R(rA), CONST(SH)));
+	Value* tmp = SELECT(ICMP_UGT(CONST(SH), CONST(31)), CONST(0), LSHR(R(rA), UREM(CONST(SH), CONST(32))));
 	Value* result = AND(R(rA), CONST(0x80000000));
-	LET(rA, SELECT(ICMP_EQ(result, CONST(0)), tmp, R(rA)));
+	Value* cond = ICMP_NE(result, CONST(0));
+	LET(rA, SELECT(cond, R(rA), tmp));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
 		ppc_dyncom_update_cr0(cpu, bb, rA);
 	}
-	return ICMP_NE(result, CONST(0));
+	return cond;
 }
 static int opc_srawix_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -1030,9 +1032,13 @@ static int opc_srawix_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	uint32 SH;
 	PPC_OPC_TEMPL_X(instr, rS, rA, SH);
 	Value* ca = CONST(0);
-	Value* shift = SHL(CONST(1), CONST(SH));
+	Value* shift = SHL(CONST(1), UREM(CONST(SH),CONST(32)));
 	LETS(XER_REGNUM, SELECT(ICMP_NE(AND(R(rA), shift), CONST(0)), OR(RS(XER_REGNUM), CONST(XER_CA)), RS(XER_REGNUM)));
-	LET(rA, OR(SHL(R(rA), shift), SHL(CONST(0xffffffff), UREM(SUB(CONST(32), shift), CONST(32)))));
+	LET(rA, OR(LSHR(R(rA), UREM(CONST(SH),CONST(32))), SHL(CONST(0xffffffff), UREM(SUB(CONST(32), CONST(SH)), CONST(32)))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rA);
+	}
 	return 0;
 }
 /*
@@ -1145,6 +1151,255 @@ static int opc_divwux_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		ppc_dyncom_update_cr0(cpu, bb, rD);
 	}
 }
+/*
+ *	orcx		OR with Complement
+ *	.604
+ */
+static int opc_orcx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rS, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	LET(rA, OR(R(rS), XOR(R(rB), CONST(-1))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rA);
+	}
+}
+/*
+ *	extsbx		Extend Sign Byte
+ *	.481
+ */
+static int opc_extsbx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rS, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	PPC_OPC_ASSERT(rB==0);
+	LET(rA, R(rS));
+	LET(rA, SELECT(ICMP_NE(AND(R(rA), CONST(0x80)), CONST(0)), OR(R(rA), CONST(0xffffff00)), AND(R(rA), CONST(~0xffffff00))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rA);
+	}
+}
+/*
+ *	lbzx		Load Byte and Zero Indexed
+ *	.524
+ */
+static int opc_lbzx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rD, rB;
+	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	uint8 r;
+	Value* addr;
+	if(rA)
+		addr = ADD(R(rA), R(rB));
+	else
+		addr = R(rB);
+	Value* result = arch_read_memory(cpu, bb, addr, 0, 8);
+	LET(rD, AND(result, CONST(0x000000ff)));
+	return 0;
+}
+/*
+ *	stbx		Store Byte Indexed
+ *	.635
+ */
+static int opc_stbx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rS, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	Value* addr;
+	if(rA)
+		addr = ADD(R(rA), R(rB));
+	else
+		addr = R(rB);
+	arch_write_memory(cpu, bb, addr, R(rS), 8);
+	return 0;
+}
+/*
+ *	lhzx		Load Half Word and Zero Indexed
+ *	.546
+ */
+static int opc_lhzx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rD, rB;
+	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	Value* addr;
+	if(rA)
+		addr = ADD(R(rA), R(rB));
+	else
+		addr = R(rB);
+	Value* result = arch_read_memory(cpu, bb, addr, 0, 16);
+	LET(rD, AND(result, CONST(0x0000ffff)));
+	return 0;
+}
+/*
+ *	divwx		Divide Word
+ *	.470
+ */
+static int opc_divwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	/* FIXME check division by zero */
+//	if (!current_core->gpr[rB]) {
+//		PPC_ALU_WARN("division by zero @%08x\n", current_core->pc);
+//	}
+	LET(rD, SDIV(R(rA), R(rB)));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rD);
+	}
+}
+/*
+ *	dcbtst		Data Cache Block Touch for Store
+ *	.463
+ */
+static int opc_dcbtst_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	// NO-OP
+}
+/*
+ *	mulhwx		Multiply High Word
+ *	.595
+ */
+static int opc_mulhwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	Value* result64 = MUL(SEXT64(R(rA)), SEXT64(R(rB)));
+	LET(rD, TRUNC32(LSHR(result64, CONST64(32))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rD);
+	}
+}
+/*
+ *	sthx		Store Half Word Indexed
+ *	.655
+ */
+static int opc_sthx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rS, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	Value* addr = rA ? ADD(R(rB), R(rA)) : R(rB);
+	arch_write_memory(cpu, bb, addr, R(rS), 16);
+	return 0;
+}
+/*
+ *	lbzux		Load Byte and Zero with Update Indexed
+ *	.523
+ */
+static int opc_lbzux_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rD, rB;
+	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	// FIXME: check rA!=0 && rA!=rD
+	Value* addr = ADD(R(rA), R(rB));
+	Value* result = arch_read_memory(cpu, bb, addr, 0, 8);
+	LET(rA, addr);
+	LET(rD, AND(result, CONST(0x000000ff)));
+	return 0;
+}
+/*
+ *	lhax		Load Half Word Algebraic Indexed
+ *	.541
+ */
+static int opc_lhax_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rD, rB;
+	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	uint16 r;
+	Value* addr = rA ? ADD(R(rB), R(rA)) : R(rB);
+	Value* result = arch_read_memory(cpu, bb, addr, 0, 16);
+	result = AND(result, CONST(0x0000ffff));
+	LET(rD, SELECT(ICMP_NE(AND(result, CONST(0x8000)), CONST(0)), OR(result, CONST(0xffff0000)), result));
+	return 0;
+}
+/*
+ *	subfcx		Subtract From Carrying
+ *	.667
+ */
+static int opc_subfcx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	LET(rD, ADD(XOR(R(rA), CONST(-1)), ADD(R(rB), CONST(1))));
+	Value* cond = ppc_dyncom_carry_3(cpu, bb, XOR(R(rA), CONST(-1)), R(rB), CONST(1));
+	LETS(XER_REGNUM, SELECT(cond, OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~XER_CA))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rD);
+	}
+	NOT_TESTED();
+	return 0;
+}
+/*
+ *	stwux		Store Word with Update Indexed
+ *	.664
+ */
+static int opc_stwux_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rS, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	Value* addr = ADD(R(rA), R(rB));
+	arch_write_memory(cpu, bb, addr, R(rS), 32);
+	LET(rA, addr);
+	NOT_TESTED();
+	return 0;
+}
+/*
+ *	addex		Add Extended
+ *	.424
+ */
+static int opc_addex_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	Value* ca = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_CA)), CONST(0)), CONST(1), CONST(0));
+	LET(rD, ADD(R(rA), ADD(R(rB), ca)));
+	Value* cond = ppc_dyncom_carry_3(cpu, bb, R(rA), R(rB), ca);
+	LETS(XER_REGNUM, SELECT(cond, OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~XER_CA))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rD);
+	}
+	NOT_TESTED();
+	return 0;
+}
+/*
+ *	nandx		NAND
+ *	.600
+ */
+static int opc_nandx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rS, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	LET(rA, XOR(AND(R(rS), R(rB)), CONST(-1)));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rA);
+	}
+	NOT_TESTED();
+	return 0;
+}
+/*
+ *	addcx		Add Carrying
+ *	.423
+ */
+static int opc_addcx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	LET(rD, ADD(R(rA), R(rB)));
+	Value* cond = ICMP_ULT(R(rD), R(rA));
+	LETS(XER_REGNUM, SELECT(cond, OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~XER_CA))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rD);
+	}
+	NOT_TESTED();
+	return 0;
+}
 /* Interfaces */
 ppc_opc_func_t ppc_opc_cmp_func = {
 	opc_default_tag,
@@ -1152,8 +1407,16 @@ ppc_opc_func_t ppc_opc_cmp_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_tw_func;
-ppc_opc_func_t ppc_opc_subfcx_func;//+
-ppc_opc_func_t ppc_opc_addcx_func;//+
+ppc_opc_func_t ppc_opc_subfcx_func = {
+	opc_default_tag,
+	opc_subfcx_translate,
+	opc_invalid_translate_cond,
+};
+ppc_opc_func_t ppc_opc_addcx_func = {
+	opc_default_tag,
+	opc_addcx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_mulhwux_func = {
 	opc_default_tag,
 	opc_mulhwux_translate,
@@ -1208,17 +1471,31 @@ ppc_opc_func_t ppc_opc_andcx_func = {
 	opc_andcx_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_mulhwx_func;
+ppc_opc_func_t ppc_opc_mulhwx_func = {
+	opc_default_tag,
+	opc_mulhwx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_iseleq_func;
 ppc_opc_func_t ppc_opc_mfmsr_func;
 ppc_opc_func_t ppc_opc_dcbf_func;
-ppc_opc_func_t ppc_opc_lbzx_func;
+ppc_opc_func_t ppc_opc_lbzx_func = {
+	opc_default_tag,
+	opc_lbzx_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_negx_func = {
 	opc_default_tag,
 	opc_negx_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_lbzux_func;
+ppc_opc_func_t ppc_opc_lbzux_func = {
+	opc_default_tag,
+	opc_lbzux_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_norx_func = {
 	opc_default_tag,
 	opc_norx_translate,
@@ -1230,7 +1507,11 @@ ppc_opc_func_t ppc_opc_subfex_func = {
 	opc_subfex_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_addex_func;//+
+ppc_opc_func_t ppc_opc_addex_func = {
+	opc_default_tag,
+	opc_addex_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_mtcrf_func = {
 	opc_default_tag,
 	opc_mtcrf_translate,
@@ -1249,7 +1530,12 @@ ppc_opc_func_t ppc_opc_stwx_func = {
 };
 ppc_opc_func_t ppc_opc_wrteei_func;
 ppc_opc_func_t ppc_opc_dcbtls_func;
-ppc_opc_func_t ppc_opc_stwux_func;
+ppc_opc_func_t ppc_opc_stwux_func = {
+	opc_default_tag,
+	opc_stwux_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_subfzex_func;//+
 ppc_opc_func_t ppc_opc_addzex_func = {
 	opc_default_tag,
@@ -1257,7 +1543,11 @@ ppc_opc_func_t ppc_opc_addzex_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_mtsr_func;
-ppc_opc_func_t ppc_opc_stbx_func;
+ppc_opc_func_t ppc_opc_stbx_func = {
+	opc_default_tag,
+	opc_stbx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_subfmex_func;//+
 ppc_opc_func_t ppc_opc_addmex_func;
 ppc_opc_func_t ppc_opc_mullwx_func = {
@@ -1266,7 +1556,11 @@ ppc_opc_func_t ppc_opc_mullwx_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_mtsrin_func;
-ppc_opc_func_t ppc_opc_dcbtst_func;
+ppc_opc_func_t ppc_opc_dcbtst_func = {
+	opc_default_tag,
+	opc_dcbtst_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_stbux_func;
 ppc_opc_func_t ppc_opc_addx_func = {
 	opc_default_tag,
@@ -1274,7 +1568,12 @@ ppc_opc_func_t ppc_opc_addx_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_dcbt_func;
-ppc_opc_func_t ppc_opc_lhzx_func;
+ppc_opc_func_t ppc_opc_lhzx_func = {
+	opc_default_tag,
+	opc_lhzx_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_eqvx_func;
 ppc_opc_func_t ppc_opc_tlbie_func;
 ppc_opc_func_t ppc_opc_eciwx_func;
@@ -1294,12 +1593,24 @@ ppc_opc_func_t ppc_opc_mtspr_func = {
 	opc_mtspr_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_lhax_func;
+ppc_opc_func_t ppc_opc_lhax_func = {
+	opc_default_tag,
+	opc_lhax_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_isel_func;
 ppc_opc_func_t ppc_opc_tlbia_func;
 ppc_opc_func_t ppc_opc_lhaux_func;
-ppc_opc_func_t ppc_opc_sthx_func;
-ppc_opc_func_t ppc_opc_orcx_func;
+ppc_opc_func_t ppc_opc_sthx_func = {
+	opc_default_tag,
+	opc_sthx_translate,
+	opc_invalid_translate_cond,
+};
+ppc_opc_func_t ppc_opc_orcx_func = {
+	opc_default_tag,
+	opc_orcx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_ecowx_func;
 ppc_opc_func_t ppc_opc_sthux_func;
 ppc_opc_func_t ppc_opc_orx_func = {
@@ -1313,8 +1624,16 @@ ppc_opc_func_t ppc_opc_divwux_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_dcbi_func;
-ppc_opc_func_t ppc_opc_nandx_func;
-ppc_opc_func_t ppc_opc_divwx_func;//+
+ppc_opc_func_t ppc_opc_nandx_func = {
+	opc_default_tag,
+	opc_nandx_translate,
+	opc_invalid_translate_cond,
+};
+ppc_opc_func_t ppc_opc_divwx_func = {
+	opc_default_tag,
+	opc_divwx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_mcrxr_func;
 ppc_opc_func_t ppc_opc_lswx_func;
 ppc_opc_func_t ppc_opc_lwbrx_func;
@@ -1366,7 +1685,12 @@ ppc_opc_func_t ppc_opc_extshx_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_tlbrehi_func;
-ppc_opc_func_t ppc_opc_extsbx_func;
+ppc_opc_func_t ppc_opc_extsbx_func = {
+	opc_default_tag,
+	opc_extsbx_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_tlbwe_func; /* TLB write entry */
 ppc_opc_func_t ppc_opc_icbi_func;
 ppc_opc_func_t ppc_opc_stfiwx_func;
