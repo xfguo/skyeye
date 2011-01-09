@@ -275,11 +275,11 @@ int ppc_syscall(e500_core_t* core){
 			}
 			int size = read(fd, tmp, count);
 			int i = 0;
-			for (; i < count; i++){
+			for (i = 0; i < size; i++){
 				bus_write(8, buff + i, ((char*)tmp)[i]);
 			}
-			core->gpr[3] = size;
 			free(tmp);
+			core->gpr[3] = size;
 			dump("syscall %d read(%d, 0x%x, %d) = %d\n",TARGET_NR_read, fd, buff, count, core->gpr[3]);
 			break;
 		}
@@ -334,14 +334,23 @@ int ppc_syscall(e500_core_t* core){
 			dump("syscall %d getuid() = %d\n",TARGET_NR_getuid32, core->gpr[3]);
 			break;
 		case TARGET_NR_times:{		/* 43 */
-			struct tms *buff = core->gpr[3];
+			struct tms *buff = (struct tms*)core->gpr[3];
 			struct tms tmp;
 			uint32_t result = times(&tmp);
-			bus_write(32, buff->tms_utime, tmp.tms_utime);
-			bus_write(32, buff->tms_stime, tmp.tms_stime);
-			bus_write(32, buff->tms_cutime, tmp.tms_cutime);
-			bus_write(32, buff->tms_cstime, tmp.tms_cstime);
+			bus_write(32, &buff->tms_utime, tmp.tms_utime);
+			bus_write(32, &buff->tms_stime, tmp.tms_stime);
+			bus_write(32, &buff->tms_cutime, tmp.tms_cutime);
+			bus_write(32, &buff->tms_cstime, tmp.tms_cstime);
 			core->gpr[3] = result;
+			//////FOR DIFF LOG
+///			printf("utime=%d,stime=%d,cutime=%d,cstime=%d,result=%x\n",tmp.tms_utime,tmp.tms_stime,tmp.tms_cutime,tmp.tms_cstime,result);
+#if 0
+			bus_write(32, &buff->tms_utime, 677);
+			bus_write(32, &buff->tms_stime, 20);
+			bus_write(32, &buff->tms_cutime, 0);
+			bus_write(32, &buff->tms_cstime, 0);
+			core->gpr[3] = 0x66cbacf0;	//for diff log
+#endif
 			dump("syscall %d times(0x%x) = %d\n",TARGET_NR_times, buff, result);
 			break;
 		}
@@ -350,8 +359,6 @@ int ppc_syscall(e500_core_t* core){
 			debug("set data segment to 0x%x\n", addr);
 			//NOTE:powerpc brk syscall return end of data segment address instead of zero when success??
 			int i;
-			for(i = 0;i < addr;i++)
-				bus_write(8, i, 0);
 			core->gpr[3] = addr;
 			dump("syscall %d brk(0x%x) = 0x%x\n", TARGET_NR_brk, core->gpr[3]);
 			break;
