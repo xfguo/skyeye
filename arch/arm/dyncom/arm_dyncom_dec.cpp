@@ -6,6 +6,7 @@
 #include "arm_types.h"
 #include "dyncom/tag.h"
 
+using namespace llvm;
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 #define BIT(n) ((instr >> (n)) & 1)
 #define BAD	do{printf("meet BAD at %s\n", __FUNCTION__ ); exit(0);}while(0);
@@ -25,18 +26,21 @@
 #define BIT(n) ((instr >> (n)) & 1)
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 /*xxxx xx1x xxxx xxxx xxxx xxxx xxxx xxxx */
-#define I ((instr >> 25) & 1)
+#define I BIT(25)
 /*xxxx xxxx xxx1 xxxx xxxx xxxx xxxx xxxx */
 #define S BIT(20)
 
 #define SHIFT BITS(5,6)
 #define SHIFT_IMM BITS(7,11)
+#define IMMH BITS(8,11)
+#define IMML BITS(0,3)
 
 #define LSPBIT  BIT(24)
 #define LSUBIT  BIT(23)
 #define LSBBIT  BIT(22)
 #define LSWBIT  BIT(21)
 #define LSLBIT  BIT(20)
+#define LSSHBITS BITS(5,6)
 #define OFFSET12 BITS(0,11)
 #define DESTReg (BITS (12, 15))
 
@@ -44,7 +48,133 @@
 #define IS_V5  0
 #define IS_V6  0
 #define LHSReg 0
-using namespace llvm;
+
+void StoreWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	arch_write_memory(cpu, bb, addr, R(RD), 32);
+}
+
+void StoreHWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	arch_write_memory(cpu, bb, addr, R(RD), 16);
+}
+
+void StoreByte(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	arch_write_memory(cpu, bb, addr, R(RD), 8);
+}
+
+void StoreDWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	arch_write_memory(cpu, bb, addr, R(RD), 32);
+	arch_write_memory(cpu, bb, ADD(addr,CONST(4)), R(RD + 1),32);
+}
+
+void LoadWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	Value *ret = arch_read_memory(cpu, bb, addr, 0, 32);
+	LET(RD,ret);
+}
+
+void LoadHWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	Value *ret = arch_read_memory(cpu, bb, addr, 0, 16);
+	LET(RD,ret);
+}
+
+void LoadSHWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	Value *ret = arch_read_memory(cpu, bb, addr, 1, 16);
+	LET(RD,ret);
+}
+
+void LoadByte(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	Value *ret = arch_read_memory(cpu, bb, addr, 0, 8);
+	LET(RD,ret);
+}
+
+void LoadSByte(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	Value *ret = arch_read_memory(cpu, bb, addr, 1, 8);
+	LET(RD,ret);
+}
+
+void LoadDWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	Value *ret = arch_read_memory(cpu, bb, addr, 0, 32);
+	LET(RD,ret);
+	ret = arch_read_memory(cpu, bb, ADD(addr,CONST(4)), 0, 32);
+	LET(RD+1,ret);
+}
+
+void MisLoad(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	switch (LSSHBITS){
+		case 0:
+			LoadByte(cpu,instr,bb,addr);
+			break;
+		case 1:
+			LoadHWord(cpu,instr,bb,addr);
+			break;
+		case 2:
+			LoadByte(cpu,instr,bb,addr);
+			break;
+		case 3:
+			LoadHWord(cpu,instr,bb,addr);
+			break;
+	}
+}
+
+void MisStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	switch (LSSHBITS){
+		case 0:
+			StoreByte(cpu,instr,bb,addr);
+			break;
+		case 1:
+			StoreHWord(cpu,instr,bb,addr);
+			break;
+		case 2:
+			LoadDWord(cpu,instr,bb,addr);
+			break;
+		case 3:
+			StoreDWord(cpu,instr,bb,addr);
+			break;
+	}
+}
+
+void LoadM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	int i;
+	Value *ret;
+	Value *Addr = addr;
+	for( i = 0; i < 16; i ++ ){
+		if(BIT(i)){
+			ret = arch_read_memory(cpu, bb, Addr, 0, 32);
+			LET(i, ret);
+			Addr = ADD(Addr, CONST(4));
+		}
+	}
+}
+
+void StoreM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	int i;
+	Value *Addr = addr;
+	for( i = 0; i < 16; i ++ ){
+		if(BIT(i)){
+			arch_write_memory(cpu, bb, Addr, R(i), 32);
+			Addr = ADD(Addr, CONST(4));
+		}
+	}
+}
+
+#define CHECK_REG15() \
+	do{ \
+		if(RN == 15) \
+			Addr = ADD(Addr, CONST(8)); \
+	}while(0)
 
 
 // FIXME set_condition added by yukewei
@@ -59,6 +189,388 @@ int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2
 
 	return 0;
 }
+
+/* Addr Mode 1 */
+
+/* Addr Mode 2 */
+Value *WOrUBGetAddrImmOffset(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr;
+	if(LSUBIT)
+		Addr =  ADD(R(RN), CONST(OFFSET12));
+	else
+		Addr =  SUB(R(RN), CONST(OFFSET12));
+
+	CHECK_REG15();
+	return Addr;
+}
+
+Value *WOrUBGetAddrRegOffset(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr;
+	if(LSUBIT)
+		Addr =  ADD(R(RN), R(RM));
+	else
+		Addr =  SUB(R(RN), R(RM));
+
+	CHECK_REG15();
+	return Addr;
+}
+
+Value *WOrUBGetAddrScaledRegOffset(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr;
+	int shift = SHIFT;
+	Value *index;
+	switch(shift) {
+	case 0:	/* LSL */
+		index = SHL(R(RM), CONST(SHIFT_IMM));
+		break;
+	case 1: /* LSR */
+		if(SHIFT_IMM == 0)
+			index = CONST(0);
+		else
+			index = LSHR(R(RM), CONST(SHIFT_IMM));
+		break;
+	case 2:	/* ASR */
+		if(SHIFT_IMM == 0)
+			index = ADD(NOT(AND(R(RM), CONST(0x80000000))), CONST(1));
+		else
+			index = ASHR(R(RM), CONST(SHIFT_IMM));
+		break;
+	case 3:	/* ROR or RRX */
+		if(SHIFT_IMM == 0)
+			;/* CFLAG? */
+		else
+			index = ROTL(R(RM), CONST(SHIFT_IMM));
+		break;
+	}
+
+	if(LSUBIT)
+		Addr = ADD(R(RN), index);
+	else
+		Addr = SUB(R(RN), index);
+
+	CHECK_REG15();
+	return Addr;
+}
+
+Value *WOrUBGetAddrImmPre(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = WOrUBGetAddrImmOffset(cpu, instr, bb);
+	LET(RN, Addr);
+	return Addr;
+}
+
+Value *WOrUBGetAddrRegPre(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = WOrUBGetAddrRegOffset(cpu, instr, bb);
+	LET(RN, Addr);
+	return Addr;
+}
+
+Value *WOrUBGetAddrScaledRegPre(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = WOrUBGetAddrScaledRegOffset(cpu, instr, bb);
+	LET(RN, Addr);
+	return Addr;
+}
+
+Value *WOrUBGetAddrImmPost(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = R(RN);
+	LET(RN,WOrUBGetAddrImmOffset(cpu, instr, bb));
+	return Addr;
+}
+
+Value *WOrUBGetAddrRegPost(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = R(RN);
+	LET(RN,WOrUBGetAddrRegOffset(cpu, instr, bb));
+	return Addr;
+}
+
+Value *WOrUBGetAddrScaledRegPost(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = R(RN);;
+	LET(RN,WOrUBGetAddrScaledRegOffset(cpu, instr, bb));
+	return Addr;
+}
+
+Value *WOrUBGetAddrImm(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	if(BITS(24,27) == 0x5){
+		if(!BIT(21)){
+		/* ImmOff */
+			return WOrUBGetAddrImmOffset(cpu, instr, bb);
+		}else{
+		/* ImmPre */
+			return WOrUBGetAddrImmPre(cpu, instr, bb);
+		}
+	}else if(BITS(24,27) == 0x4){
+		/* ImmPost */
+		if(!BIT(21)){
+			return WOrUBGetAddrImmPost(cpu, instr, bb);
+		}
+	}
+	printf(" Error in WOrUB Get Imm Addr \n");
+}
+
+Value *WOrUBGetAddrReg(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	if(BITS(24,27) == 0x7){
+		if(!BIT(21)){
+		/* Reg off */
+			if(!BITS(4,11)){
+				return WOrUBGetAddrRegOffset(cpu, instr, bb);
+			}else{
+			/* scaled reg */
+				return WOrUBGetAddrScaledRegOffset(cpu, instr, bb);
+			}
+		} else {
+		/* Reg pre */
+			if(!BITS(4,11)){
+				return WOrUBGetAddrRegPre(cpu, instr, bb);
+			}else{
+			/* scaled reg */
+				return WOrUBGetAddrScaledRegPre(cpu, instr, bb);
+			}
+		}
+	}else if(BITS(24,27) == 0x6){
+		if(!BIT(21)){
+		/* Reg post */
+			if(!BITS(4,11)){
+				return WOrUBGetAddrRegPost(cpu, instr, bb);
+			}else{
+			/* scaled reg */
+				return WOrUBGetAddrScaledRegPost(cpu, instr, bb);
+			}
+		}
+	}
+	printf(" Error in WOrUB Get Reg Addr \n");
+}
+
+Value *WOrUBGetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	if(!BIT(25))
+		return WOrUBGetAddrImm(cpu, instr, bb);
+	else
+		return WOrUBGetAddrReg(cpu, instr, bb);
+}
+
+/* Addr Mode 3 */
+Value *MisGetAddrImmOffset(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+
+	Value *Addr;
+	Value *Offset_8;
+
+	Offset_8 = CONST(IMMH << 4 | IMML);
+	if(LSUBIT)
+		Addr =  ADD(R(RN), Offset_8);
+	else
+		Addr =  SUB(R(RN), Offset_8);
+
+	CHECK_REG15();
+	return Addr;
+}
+
+Value *MisGetAddrRegOffset(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr;
+
+	if(LSUBIT)
+		Addr =  ADD(R(RN), R(RM));
+	else
+		Addr =  SUB(R(RN), R(RM));
+
+	CHECK_REG15();
+	return Addr;
+}
+
+Value *MisGetAddrImmPre(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = MisGetAddrImmOffset(cpu, instr, bb);
+	LET(RN, Addr);
+
+	return Addr;
+}
+
+Value *MisGetAddrRegPre(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = MisGetAddrRegOffset(cpu, instr, bb);
+	LET(RN, Addr);
+
+	return Addr;
+}
+
+Value *MisGetAddrImmPost(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = R(RN);
+	LET(RN, MisGetAddrImmOffset(cpu, instr, bb));
+
+	return Addr;
+}
+
+Value *MisGetAddrRegPost(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *Addr = R(RN);
+	LET(RN, MisGetAddrRegOffset(cpu, instr, bb));
+
+	return Addr;
+}
+
+Value *MisGetAddrImm(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	if(BITS(24,27) == 0x0){
+		if(BITS(21,22) == 0x2){
+		/* Imm Post */
+			return MisGetAddrImmPost(cpu, instr, bb);
+		}
+	}else if(BITS(24,27) == 0x1){
+		if(BITS(21,22) == 0x2){
+		/* Imm Offset */
+			return MisGetAddrImmOffset(cpu, instr, bb);
+		}else if(BITS(21,22) == 0x3){
+		/* Imm pre */
+			return MisGetAddrImmPre(cpu, instr, bb);
+		}
+	}
+	printf(" Error in Mis Get Imm Addr \n");
+}
+
+Value *MisGetAddrReg(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	if(BITS(24,27) == 0x0){
+		if(BITS(21,22) == 0x0){
+		/* Reg Post */
+			return MisGetAddrRegPost(cpu, instr, bb);
+		}
+	}else if(BITS(24,27) == 0x1){
+		if(BITS(21,22) == 0x0){
+		/* Reg offset */
+			return MisGetAddrRegOffset(cpu, instr, bb);
+		}else if(BITS(21,22) == 0x1){
+		/* Reg pre */
+			return MisGetAddrRegPre(cpu, instr, bb);
+		}
+	}
+	printf(" Error in Mis Get Reg Addr \n");
+}
+
+
+Value *MisGetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	if(BIT(22))
+		return MisGetAddrImm(cpu, instr, bb);
+	else
+		return MisGetAddrReg(cpu, instr, bb);
+}
+
+/* Addr Mode 4 */
+Value *LSMGetAddrIA(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int i =  BITS(0,15);
+	int count = 0;
+	Value *Addr;
+	while(i){
+		count ++;
+		i = i >> 1;
+	}
+
+	Addr = R(RN);
+	LET(RN, ADD(R(RN), CONST(count * 4)));
+
+	CHECK_REG15();
+	return  Addr;
+}
+
+Value *LSMGetAddrIB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int i =  BITS(0,15);
+	int count = 0;
+	Value *Addr;
+	while(i){
+		count ++;
+		i = i >> 1;
+	}
+
+	Addr = ADD(R(RN), CONST(4));
+	LET(RN, ADD(R(RN), CONST(count * 4)));
+
+	CHECK_REG15();
+	return  Addr;
+}
+
+Value *LSMGetAddrDA(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int i =  BITS(0,15);
+	int count = 0;
+	Value *Addr;
+	while(i){
+		count ++;
+		i = i >> 1;
+	}
+
+	Addr = SUB(R(RN), CONST(count * 4 + 4));
+	LET(RN, SUB(R(RN), CONST(count * 4)));
+
+	CHECK_REG15();
+	return  Addr;
+}
+
+Value *LSMGetAddrDB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int i =  BITS(0,15);
+	int count = 0;
+	Value *Addr;
+	while(i){
+		count ++;
+		i = i >> 1;
+	}
+
+	Addr = SUB(R(RN), CONST(count * 4));
+	LET(RN, SUB(R(RN), CONST(count * 4)));
+
+	CHECK_REG15();
+	return  Addr;
+}
+
+Value *LSMGetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	if(BITS(24,27) == 0x8){
+		if(BIT(23)){
+		/* IA */
+			return LSMGetAddrIA(cpu, instr, bb);
+		}else{
+		/* DA */
+			return LSMGetAddrDA(cpu, instr, bb);
+		}
+	}else if(BITS(24,27) == 0x9){
+		if(BIT(23)){
+		/* IB */
+			return LSMGetAddrIB(cpu, instr, bb);
+		}else{
+		/* DB */
+			return LSMGetAddrDB(cpu, instr, bb);
+		}
+	}
+
+	printf(" Error in LSM Get Imm Addr BITS(24,27) is 0x%x\n", BITS(24,27));
+}
+/* all */
+Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	if(BITS(24,27) == 0x1 || BITS(24,27) == 0x2 ){
+		return MisGetAddr(cpu,instr,bb);
+	}else if(BITS(24,27) == 0x4 || BITS(24,27) == 0x5 || BITS(24,27) == 0x6 || BITS(24,27) == 0x7 ){
+		return WOrUBGetAddr(cpu,instr,bb);
+	}else if(BITS(24,27) == 0x8 || BITS(24,27) == 0x9){
+		return LSMGetAddr(cpu,instr,bb);
+	}
+}
+
+/* 5x 7x */
 
 Value *GetLSAddr5x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -1277,17 +1789,21 @@ int arm_opc_trans_58(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/*STR, No WriteBack, Pre Inc, Regist + Immed || Regist */
 	/* I = 0, P = 1, U = 1, W = 0, B = 0 */
-	Value *addr = GETLSADDR5x;
-	arch_write_memory(cpu, bb, addr, R(RD), 32);
+	//Value *addr = GETLSADDR5x;
+	//arch_write_memory(cpu, bb, addr, R(RD), 32);
+	Value *addr = GetAddr(cpu, instr, bb);
+	StoreWord(cpu, instr, bb, addr);
 }
 
 int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Load , No WriteBack, Pre Inc, Regist + Immed.|| Regist  */
 	/* I = 0, P = 1, U = 1, W = 0 , B = 0*/
-	Value *addr = GETLSADDR5x;
-	Value *ret = arch_read_memory(cpu, bb, addr, 0, 32);
-	LET(RD,ret);
+	//Value *addr = GETLSADDR5x;
+	//Value *ret = arch_read_memory(cpu, bb, addr, 0, 32);
+	//LET(RD,ret);
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadWord(cpu, instr, bb, addr);
 	return 0;
 }
 
@@ -1517,9 +2033,11 @@ int arm_opc_trans_7d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* UNDEF INSTR */
 	}
 
-	Value *addr = GETLSADDR7x;
-	Value *ret = arch_read_memory(cpu, bb, addr, 0, 8);
-	LET(RD,ret);
+	//Value *addr = GETLSADDR7x;
+	//Value *ret = arch_read_memory(cpu, bb, addr, 0, 8);
+	//LET(RD,ret);
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadByte(cpu, instr, bb, addr);
 }
 
 int arm_opc_trans_7e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1646,8 +2164,7 @@ int arm_opc_trans_92(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Store, WriteBack, PreDec */
 	/* STM(1) P = 1, U = 0, W = 1 */
-	int i =  BITS(0,15);
-	int count = 0;
+#if 0
 	Value *addr;
 	while(i){
 		count ++;
@@ -1656,13 +2173,14 @@ int arm_opc_trans_92(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 	if(!LSUBIT)
 		addr = SUB(R(RN), CONST(count * 4));
-	for( i = 0; i < 16; i ++ ){
-		if(BIT(i)){
-			arch_write_memory(cpu, bb, addr, R(i), 32);
-			addr = ADD(addr, CONST(4));
-		}
-	}
-	LET(RN, SUB(R(RN), CONST(count * 4)));
+#endif
+
+#if 0
+	int i;
+	int count = 0;
+#endif
+	Value *addr = GetAddr(cpu, instr, bb);
+	StoreM(cpu, instr, bb, addr);
 }
 
 int arm_opc_trans_93(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
