@@ -42,6 +42,7 @@ using namespace llvm;
 #define LSLBIT  BIT(20)
 #define LSSHBITS BITS(5,6)
 #define OFFSET12 BITS(0,11)
+#define SBIT  BIT(20)
 #define DESTReg (BITS (12, 15))
 
 #define IS_V5E 0
@@ -734,6 +735,97 @@ Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 #define BOPERAND boperand(cpu,instr,bb)
 #define GETLSADDR5x GetLSAddr5x(cpu,instr,bb)
 #define GETLSADDR7x GetLSAddr7x(cpu,instr,bb)
+void Dec_ADD(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x08 0x09 0x28 0x29 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *res = ADD(op1, op2);
+	LET(RD, res);
+	if(SBIT)
+		set_condition(cpu, res, bb, op1, op2);
+
+}
+
+void Dec_CMP(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x15 0x35 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = SUB(op1, op2);
+	set_condition(cpu, ret, bb, op1, op2);
+
+}
+void Dec_RSB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x06 0x07 0x26 0x27 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *res = SUB(op2, op1);
+	LET(RD, res);
+	if(SBIT)
+		set_condition(cpu, res, bb, op1, op2);
+
+}
+
+void Dec_MVN(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x1e 0x1f 0x3e 0x3f */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *res = XOR(op2, CONST(-1));
+	LET(RD, res);
+	if(SBIT)
+		set_condition(cpu, res, bb, op1, op2);
+
+}
+
+void Dec_ORR(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x18 0x19 0x38 0x39 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *res = OR(op2, op1);
+	LET(RD, res);
+	if(SBIT)
+		set_condition(cpu, res, bb, op1, op2);
+
+}
+
+void Dec_TST(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x11 0x31*/
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = SUB(op1, op2);
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
+
+}
+
+void Dec_BIC(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x1c 0x2d */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *res = AND(op1, NOT(op2));
+	LET(RD, res);
+	if(SBIT)
+		set_condition(cpu, res, bb, op1, op2);
+
+}
+
+void Dec_SUB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x04 0x05 0x24 0x25 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *res = SUB(op1, op2);
+	LET(RD, res);
+	if(SBIT)
+		set_condition(cpu, res, bb, op1, op2);
+
+}
 
 int arm_opc_trans_00(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -1439,7 +1531,7 @@ int arm_opc_trans_23(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_24(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* SUB immed I = 0, $ = 0 */
+	/* SUB immed I = 0, S = 0 */
 	Value* op1 = R(RN);
 	Value* op2 = OPERAND;
 	LET(RD,SUB(op1, op2));
@@ -1448,20 +1540,36 @@ int arm_opc_trans_24(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 int arm_opc_trans_25(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* SUBS immed */
+	/* SUBS immed S = 1 */
+	Value* op1 = R(RN);
+	Value* op2 = OPERAND;
+	Value* ret = SUB(op1, op2);
+	LET(RD,ret);
+	set_condition(cpu, ret, bb, op1, op2);
 
+	return 0;
 }
 
 int arm_opc_trans_26(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* RSB immed */
+	/* RSB immed S = 0*/
+	Value* op1 = R(RN);
+	Value* op2 = OPERAND;
+	LET(RD,SUB(op2, op1));
 
+	return 0;
 }
 
 int arm_opc_trans_27(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* RSBS immed */
+	Value* op1 = R(RN);
+	Value* op2 = OPERAND;
+	Value* ret = SUB(op2, op1);
+	LET(RD, ret);
+	set_condition(cpu, ret, bb, op1, op2);
 
+	return 0;
 }
 
 int arm_opc_trans_28(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1476,8 +1584,13 @@ int arm_opc_trans_28(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_29(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* ADDS immed  I = 1 S = 1*/
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = ADD(op1, op2);
+	LET(RD, ret);
+	set_condition(cpu, ret, bb, op1, op2);
 
-
+	return 0;
 }
 
 int arm_opc_trans_2a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1585,10 +1698,8 @@ int arm_opc_trans_35(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		Value *op1 = R(RN);
 		Value *op2 = OPERAND;
 		Value *ret = SUB(op1,op2);
-		/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
-		/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
-		/* C */ new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb);
-		/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+
+		set_condition(cpu, ret, bb, op1, op2);
 		/* CMP immed.  */
 	}
 	return 0;
