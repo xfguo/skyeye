@@ -815,6 +815,17 @@ void Dec_EOR(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		set_condition(cpu, ret, bb, op1, op2);
 }
 
+void Dec_MOV(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x10 0x11 0x30 0x31 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	LET(RD, op2);
+
+	if(SBIT)
+		set_condition(cpu, op2, bb, op1, op2);
+}
+
 void Dec_MVN(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* for 0x1e 0x1f 0x3e 0x3f */
@@ -1052,11 +1063,14 @@ int arm_opc_trans_08(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	if(BIT(4) != 1 || BIT(7) != 1)
 	{
+#if 0
 		/* ADD reg I = 0, S = 0*/
 		Value *op1 = R(RN);
 		Value *op2 = OPERAND;
 		Value *res = ADD(op1,op2);
 		LET(RD, res);
+#endif
+		Dec_ADD(cpu, instr, bb);
 		printf("ADD no test in %s, %d!\n",__FUNCTION__, __LINE__);
 	}
 	if(BITS(4, 7) == 0xB) {
@@ -1493,7 +1507,9 @@ int arm_opc_trans_1a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* p = 1, U = 1, I = 0, W = 1 */
 		return 0;
 	}
-	LET(RD, OPERAND);
+//	LET(RD, OPERAND);
+	Dec_MOV(cpu, instr, bb);
+	printf("Not tested in %s\n", __FUNCTION__);
 	return 0;
 }
 
@@ -1627,11 +1643,15 @@ int arm_opc_trans_24(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_25(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* SUBS immed S = 1 */
+#if 0
 	Value* op1 = R(RN);
 	Value* op2 = OPERAND;
 	Value* ret = SUB(op1, op2);
 	LET(RD,ret);
 	set_condition(cpu, ret, bb, op1, op2);
+#endif
+	Dec_SUB(cpu, instr, bb);
+	printf("Not tested in %s\n", __FUNCTION__);
 
 	return 0;
 }
@@ -1661,20 +1681,28 @@ int arm_opc_trans_27(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_28(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* ADD immed  I = 1 S = 0*/
+#if 0
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
 	LET(RD, ADD(op1, op2));
+#endif
+	Dec_ADD(cpu, instr, bb);
+	printf("Not tested in %s\n", __FUNCTION__);
 	return 0;
 }
 
 int arm_opc_trans_29(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* ADDS immed  I = 1 S = 1*/
+#if 0
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
 	Value *ret = ADD(op1, op2);
 	LET(RD, ret);
 	set_condition(cpu, ret, bb, op1, op2);
+#endif
+	Dec_ADD(cpu, instr, bb);
+	printf("Not tested in %s\n", __FUNCTION__);
 
 	return 0;
 }
@@ -1778,14 +1806,18 @@ int arm_opc_trans_34(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_35(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	if (DESTReg == 15) {
+		/* CMPP immed I = 1, */
 	}
 	else{
-		/* CMPP immed I = 1, */
+#if 0
 		Value *op1 = R(RN);
 		Value *op2 = OPERAND;
 		Value *ret = SUB(op1,op2);
 
 		set_condition(cpu, ret, bb, op1, op2);
+#endif
+		Dec_CMP(cpu, instr, bb);
+		printf("Not tested in %s\n", __FUNCTION__);
 		/* CMP immed.  */
 	}
 	return 0;
@@ -1836,7 +1868,8 @@ int arm_opc_trans_3a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		new StoreInst(SUB(R(14), CONST(4)), cpu->ptr_PC, bb);
 		return 0;
 	}
-	LET(RD, OPERAND);
+//	LET(RD, OPERAND);
+	Dec_MOV(cpu, instr, bb);
 
 	return 0;
 }
@@ -1940,7 +1973,9 @@ int arm_opc_trans_49(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Load Word, No WriteBack, Post Inc, Immed.  */
 	/* I = 0, P = 0, U = 1, B = 0, W = 0*/
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_4a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2002,6 +2037,9 @@ int arm_opc_trans_52(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Store Word, WriteBack, "Pre Inc", Regist - Immed. */
 	/* I = 0, P = 1, U = 0, B = 0, W = 1 */
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_53(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2068,13 +2106,18 @@ int arm_opc_trans_5b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* LDR, WriteBack, Pre Inc, Regist + Immed.|| Regist */
 	/*  I = 0, P = 1, U = 1, B = 0, W = 1 */
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_5c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* STRB, No WriteBack, Pre Inc, Regist + Immed || Regist */
 	/*  I = 0, P = 1, U = 1, B = 1, W = 0 */
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 
 }
 
@@ -2082,7 +2125,9 @@ int arm_opc_trans_5d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* LDRB, No WriteBack, Pre Inc, Regist + Immed || Regist */
 	/* I = 0, P = 1, U = 1, B = 1, W = 0 */
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_5e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2254,7 +2299,9 @@ int arm_opc_trans_78(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_79(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Load Word, No WriteBack, Pre Inc, Reg.  */
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_7a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2369,7 +2416,9 @@ int arm_opc_trans_8a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_8b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Load, WriteBack, Post Inc.  */
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_8c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2405,7 +2454,9 @@ int arm_opc_trans_90(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_91(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Load, No WriteBack, Pre Dec.  */
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_92(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2413,7 +2464,8 @@ int arm_opc_trans_92(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* Store, WriteBack, PreDec */
 	/* STM(1) P = 1, U = 0, W = 1 */
 	Value *addr = GetAddr(cpu, instr, bb);
-	StoreM(cpu, instr, bb, addr);
+	LoadStore(cpu,instr,bb,addr);
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_93(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2497,8 +2549,9 @@ int arm_opc_trans_9f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_a0(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* 0xa0 - 0xa7 branch postive addr */
-
-
+	LET(14, ADD(R(15), CONST(4)));
+	LET(15, ADD(ADD(R(15), CONST(8)),BOPERAND));
+	printf("Not tested in %s\n", __FUNCTION__);
 }
 
 int arm_opc_trans_a1(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
