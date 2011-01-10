@@ -225,7 +225,7 @@ int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *n
 	uint32 li;
 	PPC_OPC_TEMPL_I(instr, li);
 	*tag = TAG_BRANCH;
-	*tag |= TAG_STOP;
+//	*tag |= TAG_STOP;
 	/*if the branch target is out of the page, stop the tagging */
 	debug(DEBUG_TAG, "pc=0x%x,page_begin=0x%x,page_end=0x%x\n",
 			current_core->pc,get_begin_of_page(current_core->pc),get_end_of_page(current_core->pc));
@@ -274,10 +274,12 @@ int opc_bcx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *
 		*new_pc = BD;
 	else
 		*new_pc = NEW_PC_NONE;
+#if 0
 	if(*new_pc > get_end_of_page(phys_pc) || *new_pc < get_begin_of_page(phys_pc)){
 		*new_pc = NEW_PC_NONE;
 		*tag |= TAG_STOP;
 	}
+#endif
 	*next_pc = phys_pc + PPC_INSN_SIZE;
 	debug(DEBUG_TAG, "In %s, new_pc=0x%x, BD=0x%x\n", __FUNCTION__, *new_pc, BD);
 	return PPC_INSN_SIZE;
@@ -973,5 +975,12 @@ static int opc_stfdu_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb){
 ppc_opc_func_t ppc_opc_stfdu_func = {
         opc_default_tag,
         opc_stfdu_translate,
+        opc_invalid_translate_cond,
+};
+static int opc_none_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb){
+}
+ppc_opc_func_t ppc_opc_none_func = {
+        opc_default_tag,
+        opc_none_translate,
         opc_invalid_translate_cond,
 };

@@ -50,6 +50,7 @@ extern ppc_opc_func_t ppc_opc_stfs_func;
 extern ppc_opc_func_t ppc_opc_stfsu_func;
 extern ppc_opc_func_t ppc_opc_stfd_func;
 extern ppc_opc_func_t ppc_opc_stfdu_func;
+extern ppc_opc_func_t ppc_opc_none_func;
 
 #ifdef __cplusplus
 }

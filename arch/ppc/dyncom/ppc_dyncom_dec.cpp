@@ -380,6 +380,7 @@ void ppc_dyncom_dec_init()
 	for (i=0; i<(sizeof ppc_opc_table_main / sizeof ppc_opc_table_main[0]); i++) {
                 ppc_opc_table_main[i] = &ppc_opc_invalid;
         }
+	ppc_opc_table_main[0] = &ppc_opc_none_func;
 	ppc_opc_table_main[3] = &ppc_opc_twi_func;
 	ppc_opc_table_main[7] = &ppc_opc_mulli_func;
 	ppc_opc_table_main[8] = &ppc_opc_subfic_func;
