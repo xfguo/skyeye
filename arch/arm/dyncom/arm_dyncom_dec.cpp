@@ -706,11 +706,45 @@ Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
                         if (!shift && !shift_imm) { /* Register */
                                 return R(RM);
                         } else {
-                                BAD;
+				switch(shift){
+				case 0: /* logic shift left by imm */
+					if(!shift_imm)
+						return R(RM);
+					else
+						return SHL(R(RM), CONST(shift_imm));
+				case 1:	/* logi shift right by imm */
+					if(!shift_imm)
+						return CONST(0);
+					else
+						return LSHR(R(RM), CONST(shift_imm));
+				case 2:
+					if(!shift_imm)
+						return SELECT(ICMP_ULE(R(RM), CONST(0x80000000)), CONST(0), LSHR(R(RM), CONST(31)));
+					else
+						return ASHR(R(RM), CONST(shift_imm));
+				case 3:
+					if(!shift_imm){
+						BAD;
+					}
+					else
+						return ROTL(R(RM), CONST(shift_imm));
+                                //BAD;
+
+				}
                         }
                 } else {
                         if (!BIT(7)) { /* Register shifts */
-                                BAD;
+				Value *shamt = ADD(R(BITS(8,11)), CONST(0xff));
+				switch(BITS(5,6)){
+					case 0:  /* LSL */
+						return SELECT( ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_ULE(shamt, CONST(32)), CONST(0), SHL(R(RM), shamt)));
+					case 1:  /* LSR */
+						return SELECT( ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_ULE(shamt, CONST(32)), CONST(0), LSHR(R(RM), shamt)));
+					case 2:  /* ASR */
+						return SELECT( ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_ULE(shamt, CONST(32)), LSHR(R(RM), CONST(31)),LSHR(R(RM), shamt)));
+					case 3: /* ROR */
+						return SELECT( ICMP_EQ(shamt, CONST(0)), R(RM), ROTL(R(RM),SUB(CONST(32), shamt)));
+				}
                         } else { /* arithmetic or Load/Store instruction extension space */
                                 BAD;
                         }
@@ -2038,7 +2072,9 @@ int arm_opc_trans_52(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* Store Word, WriteBack, "Pre Inc", Regist - Immed. */
 	/* I = 0, P = 1, U = 0, B = 0, W = 1 */
 	Value *addr = GetAddr(cpu, instr, bb);
+	//Value *addr = WOrUBGetAddrImmPre(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
+	//StoreDWord(cpu,instr,bb,addr);
 	printf("Not tested in %s\n", __FUNCTION__);
 }
 
