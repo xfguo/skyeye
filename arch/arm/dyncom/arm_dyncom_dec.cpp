@@ -288,7 +288,7 @@ Value *WOrUBGetAddrScaledRegOffset(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		break;
 	case 2:	/* ASR */
 		if(SHIFT_IMM == 0)
-			index = ADD(NOT(AND(R(RM), CONST(0x80000000))), CONST(1));
+			index = ADD(XOR(LSHR(R(RM), CONST(31)), CONST(-1)), CONST(1));
 		else
 			index = ASHR(R(RM), CONST(SHIFT_IMM));
 		break;
@@ -670,7 +670,7 @@ Value *GetLSAddr7x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 			break;
 		case 2:	/* ASR */
 			if(SHIFT_IMM == 0)
-				index = ADD(NOT(AND(R(RM), CONST(0x80000000))), CONST(1));
+				index = ADD(XOR(LSHR(R(RM), CONST(31)), CONST(-1)), CONST(1));
 			else
 				index = ASHR(R(RM), CONST(SHIFT_IMM));
 			break;
@@ -689,7 +689,6 @@ Value *GetLSAddr7x(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 	return Addr;
 }
-
 
 Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 {
@@ -731,20 +730,68 @@ Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 
 		return CONST(rotate_imm);
 }
+
 #define OPERAND operand(cpu,instr,bb)
 #define BOPERAND boperand(cpu,instr,bb)
 #define GETLSADDR5x GetLSAddr5x(cpu,instr,bb)
 #define GETLSADDR7x GetLSAddr7x(cpu,instr,bb)
+#define GET_C LOAD(ptr_Z)
+
 void Dec_ADD(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* for 0x08 0x09 0x28 0x29 */
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
-	Value *res = ADD(op1, op2);
-	LET(RD, res);
+	Value *ret = ADD(op1, op2);
+	LET(RD, ret);
 	if(SBIT)
-		set_condition(cpu, res, bb, op1, op2);
+		set_condition(cpu, ret, bb, op1, op2);
 
+}
+
+void Dec_ADC(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x0a 0x0b 0x1a 0x1b */
+	Value *op1 = R(RN);
+	Value *op2 = ADD(OPERAND, GET_C);
+	Value *ret = ADD(op1, op2);
+	LET(RD, ret);
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
+}
+
+void Dec_AND(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x00, 0x01, 0x20, 0x21 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = AND(op1,op2);
+	LET(RD, ret);
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
+}
+
+void Dec_BIC(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x1c 0x2d */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = AND(op1,XOR(op2, CONST(-1)));
+	LET(RD, ret);
+
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
+}
+
+void Dec_CMN(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x17 0x37 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = ADD(op1, op2);
+
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
 }
 
 void Dec_CMP(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -753,19 +800,19 @@ void Dec_CMP(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
 	Value *ret = SUB(op1, op2);
-	set_condition(cpu, ret, bb, op1, op2);
 
+	set_condition(cpu, ret, bb, op1, op2);
 }
-void Dec_RSB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+
+void Dec_EOR(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	/* for 0x06 0x07 0x26 0x27 */
+	/* for 0x02, 0x03, 0x22, 0x23 */
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
-	Value *res = SUB(op2, op1);
-	LET(RD, res);
-	if(SBIT)
-		set_condition(cpu, res, bb, op1, op2);
+	Value *ret = XOR(op1,op2);
 
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
 }
 
 void Dec_MVN(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -773,11 +820,23 @@ void Dec_MVN(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* for 0x1e 0x1f 0x3e 0x3f */
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
-	Value *res = XOR(op2, CONST(-1));
-	LET(RD, res);
-	if(SBIT)
-		set_condition(cpu, res, bb, op1, op2);
+	Value *ret = XOR(op2, CONST(-1));
+	LET(RD, ret);
 
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
+}
+
+void Dec_MUL(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x00, 0x01*/
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = MUL(op1,op2);
+	LET(RD, ret);
+
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
 }
 
 void Dec_ORR(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -785,10 +844,49 @@ void Dec_ORR(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* for 0x18 0x19 0x38 0x39 */
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
-	Value *res = OR(op2, op1);
-	LET(RD, res);
+	Value *ret = OR(op2, op1);
+	LET(RD, ret);
+
 	if(SBIT)
-		set_condition(cpu, res, bb, op1, op2);
+		set_condition(cpu, ret, bb, op1, op2);
+}
+
+void Dec_RSB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x06 0x07 0x26 0x27 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = SUB(op2, op1);
+	LET(RD, ret);
+
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
+}
+
+void Dec_SUB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x04 0x05 0x24 0x25 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = SUB(op1, op2);
+	LET(RD, ret);
+
+	if(SBIT)
+		set_condition(cpu, ret, bb, op1, op2);
+}
+
+void Dec_TEQ(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x13, 0x33 */
+	Value *op1 = R(RN);
+	Value *op2 = OPERAND;
+	Value *ret = XOR(op1,op2);
+
+	set_condition(cpu, ret, bb, op1, op2);
+}
+
+void Dec_SWI(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
 
 }
 
@@ -798,33 +896,9 @@ void Dec_TST(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
 	Value *ret = SUB(op1, op2);
+
 	if(SBIT)
 		set_condition(cpu, ret, bb, op1, op2);
-
-}
-
-void Dec_BIC(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	/* for 0x1c 0x2d */
-	Value *op1 = R(RN);
-	Value *op2 = OPERAND;
-	Value *res = AND(op1, NOT(op2));
-	LET(RD, res);
-	if(SBIT)
-		set_condition(cpu, res, bb, op1, op2);
-
-}
-
-void Dec_SUB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	/* for 0x04 0x05 0x24 0x25 */
-	Value *op1 = R(RN);
-	Value *op2 = OPERAND;
-	Value *res = SUB(op1, op2);
-	LET(RD, res);
-	if(SBIT)
-		set_condition(cpu, res, bb, op1, op2);
-
 }
 
 int arm_opc_trans_00(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -929,11 +1003,14 @@ int arm_opc_trans_04(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		return 0;
 	}
 
+#if 0
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
 	Value *res = SUB(op1, op2);
 	LET(RD, res);
-
+#endif
+	Dec_SUB(cpu, instr, bb);
+	printf("Tested instead\n");
 	return 0;
 }
 
@@ -1279,11 +1356,16 @@ int arm_opc_trans_15(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	else
 	{
 		/* CMP reg I = 0 */
+		Dec_CMP(cpu, instr, bb);
+		printf("Tested instead\n");
+#if 0
+		/* CMP reg I = 0 */
 		Value *op1 = R(RN);
 		Value *op2 = OPERAND;
 		Value *ret = SUB(op1, op2);
 		//FIXME !!!!!!
 		set_condition(cpu, ret, bb, op1, op2);
+#endif
 		/*
 		   new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
 		   new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
@@ -1532,9 +1614,13 @@ int arm_opc_trans_23(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_24(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* SUB immed I = 0, S = 0 */
+#if 0
 	Value* op1 = R(RN);
 	Value* op2 = OPERAND;
 	LET(RD,SUB(op1, op2));
+#endif
+	Dec_SUB(cpu, instr, bb);
+	printf("Tested instead\n");
 	return 0;
 }
 
