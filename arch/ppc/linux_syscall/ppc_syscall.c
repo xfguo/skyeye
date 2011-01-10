@@ -22,6 +22,7 @@
 #include <skyeye_swapendian.h>
 #include <sim_control.h>
 #include <skyeye_types.h>
+#include <skyeye_command.h>
 
 #include <sys/types.h>
 #include <unistd.h>			//read,write...
@@ -506,8 +507,7 @@ int ppc_syscall(e500_core_t* core){
 		case TARGET_NR_exit_group:{		/* 234 */ 
 			int status = core->gpr[3];
 			dump("syscall %d exit_group(%d)\n",TARGET_NR_exit_group, status);
-			SIM_fini();
-			exit(2);
+			run_command("quit");
 			break;
 		}
 		default:
