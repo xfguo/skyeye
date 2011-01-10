@@ -108,6 +108,30 @@ void LoadDWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 	LET(RD+1,ret);
 }
 
+void WOrUBLoad(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	if(LSBBIT)
+		LoadSByte(cpu, instr, bb, addr);
+	else
+		LoadWord(cpu, instr, bb, addr);
+}
+
+void WOrUBStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	if(LSBBIT)
+		StoreByte(cpu, instr, bb, addr);
+	else
+		StoreWord(cpu, instr, bb, addr);
+}
+
+void WOrUBLoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	if(LSLBIT)
+		WOrUBLoad(cpu, instr, bb, addr);
+	else
+		WOrUBStore(cpu, instr, bb, addr);
+}
+
 void MisLoad(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 {
 	switch (LSSHBITS){
@@ -144,6 +168,14 @@ void MisStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 	}
 }
 
+void MisLoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	if(LSLBIT)
+		MisLoad(cpu,instr,bb,addr);
+	else
+		MisStore(cpu,instr,bb,addr);
+}
+
 void LoadM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 {
 	int i;
@@ -167,6 +199,27 @@ void StoreM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 			arch_write_memory(cpu, bb, Addr, R(i), 32);
 			Addr = ADD(Addr, CONST(4));
 		}
+	}
+}
+
+void LoadStoreM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	if(LSLBIT)
+		LoadM(cpu,instr,bb,addr);
+	else
+		StoreM(cpu,instr,bb,addr);
+}
+
+void LoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
+{
+	if(BITS(24,27) == 0x4 || BITS(24,27) == 0x5 || BITS(24,27) == 0x6 || BITS(24,27) == 0x7){
+		WOrUBLoadStore(cpu, instr, bb, addr);
+	}else if(BITS(24,27) == 0x0 || BITS(24,27) == 0x1){
+		MisLoadStore(cpu, instr, bb, addr);
+	}else if(BITS(24,27) == 0x8 || BITS(24,27) == 0x9){
+		LoadStoreM(cpu, instr, bb, addr);
+	}else{
+		printf("Not a Load Store operation \n");
 	}
 }
 
@@ -568,6 +621,9 @@ Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	}else if(BITS(24,27) == 0x8 || BITS(24,27) == 0x9){
 		return LSMGetAddr(cpu,instr,bb);
 	}
+
+	printf("Not a Load Store Addr operation \n");
+	return CONST(0);
 }
 
 /* 5x 7x */
@@ -1790,7 +1846,8 @@ int arm_opc_trans_58(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/*STR, No WriteBack, Pre Inc, Regist + Immed || Regist */
 	/* I = 0, P = 1, U = 1, W = 0, B = 0 */
 	Value *addr = GetAddr(cpu, instr, bb);
-	StoreWord(cpu, instr, bb, addr);
+	//StoreWord(cpu, instr, bb, addr);
+	LoadStore(cpu,instr,bb,addr);
 }
 
 int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1798,7 +1855,8 @@ int arm_opc_trans_59(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* Load , No WriteBack, Pre Inc, Regist + Immed.|| Regist  */
 	/* I = 0, P = 1, U = 1, W = 0 , B = 0*/
 	Value *addr = GetAddr(cpu, instr, bb);
-	LoadWord(cpu, instr, bb, addr);
+	//LoadWord(cpu, instr, bb, addr);
+	LoadStore(cpu,instr,bb,addr);
 	return 0;
 }
 
@@ -2029,7 +2087,8 @@ int arm_opc_trans_7d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	}
 
 	Value *addr = GetAddr(cpu, instr, bb);
-	LoadByte(cpu, instr, bb, addr);
+	//StoreM(cpu, instr, bb, addr);
+	LoadStore(cpu,instr,bb,addr);
 }
 
 int arm_opc_trans_7e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
