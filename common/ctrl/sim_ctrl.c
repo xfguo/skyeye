@@ -246,6 +246,8 @@ void SIM_fini(){
 	//pthread_cancel();
 	generic_arch_t* arch_instance = get_arch_instance("");
 	SIM_stop(arch_instance);
+	/* Call SIM_exit callback */
+        exec_callback(SIM_exit_callback, arch_instance);
 	printf("Destroy threads.\n");
 	destroy_threads();
 	printf("Unload all modules.\n");
@@ -253,6 +255,7 @@ void SIM_fini(){
 	SKY_unload_all_modules();
 	/* free the memory */
 	printf("exit.\n");
+
 	/* restore the environment */
 	tcsetattr(0, TCSANOW, &pref->saved_term);
 

@@ -33,6 +33,7 @@ typedef enum{
 	Bus_write_callback, /* called when memory read */
 	Exception_callback, /* called when some exceptions are triggered. */
 	Bootmach_callback, /* called when hard reset of machine */
+	SIM_exit_callback, /* called when simulator exit */
 	Max_callback
 }callback_kind_t;
 typedef void(*callback_func_t)(generic_arch_t* arch_instance);
