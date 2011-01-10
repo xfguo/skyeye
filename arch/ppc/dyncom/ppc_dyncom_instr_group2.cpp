@@ -1400,6 +1400,26 @@ static int opc_addcx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	NOT_TESTED();
 	return 0;
 }
+/*
+ *	addmex		Add to Minus One Extended
+ *	.429
+ */
+static int opc_addmex_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	PPC_OPC_ASSERT(rB == 0);
+	Value* ca = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_CA)), CONST(0)), CONST(1), CONST(0));
+	LET(rD, ADD(R(rA), ADD(ca, CONST(0xffffffff))));
+	LETS(XER_REGNUM, SELECT(OR(ICMP_NE(R(rA), CONST(0)), ICMP_NE(ca, CONST(0))), OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~XER_CA))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rD);
+	}
+	NOT_TESTED();
+	return 0;
+}
+
 /* Interfaces */
 ppc_opc_func_t ppc_opc_cmp_func = {
 	opc_default_tag,
@@ -1549,7 +1569,12 @@ ppc_opc_func_t ppc_opc_stbx_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_subfmex_func;//+
-ppc_opc_func_t ppc_opc_addmex_func;
+ppc_opc_func_t ppc_opc_addmex_func = {
+	opc_default_tag,
+	opc_addmex_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_mullwx_func = {
 	opc_default_tag,
 	opc_mullwx_translate,
