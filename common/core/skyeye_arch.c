@@ -58,28 +58,28 @@ register_arch (arch_config_t * arch)
 generic_arch_t * get_arch_instance(const char* arch_name){
 	if(running_arch_list == NULL){
 		running_arch_list = skyeye_mm_zero(sizeof(generic_arch_t));
-	}
-	skyeye_config_t* config = get_current_config();
-	if(config->arch == NULL){
-		printf("No valid arch option is provided.\n");
-		return NULL;
-	}
-	running_arch_list->arch_name = config->arch->arch_name;
-	running_arch_list->init = config->arch->init;
-        running_arch_list->reset = config->arch->reset;
-        running_arch_list->step_once = config->arch->step_once;
-        running_arch_list->set_pc = config->arch->set_pc;
-        running_arch_list->get_pc = config->arch->get_pc;
-        running_arch_list->get_step = config->arch->get_step;
+		skyeye_config_t* config = get_current_config();
+		if(config->arch == NULL){
+			printf("No valid arch option is provided.\n");
+			return NULL;
+		}
+		running_arch_list->arch_name = config->arch->arch_name;
+		running_arch_list->init = config->arch->init;
+	        running_arch_list->reset = config->arch->reset;
+	        running_arch_list->step_once = config->arch->step_once;
+	        running_arch_list->set_pc = config->arch->set_pc;
+	        running_arch_list->get_pc = config->arch->get_pc;
+	        running_arch_list->get_step = config->arch->get_step;
         //running_arch_list->ICE_write_byte = config->arch->ICE_write_byte;
         //running_arch_list->ICE_read_byte = config->arch->ICE_read_byte;
-	running_arch_list->get_regval_by_id = config->arch->get_regval_by_id;	
-	running_arch_list->get_regname_by_id = config->arch->get_regname_by_id;	
-	running_arch_list->set_regval_by_id = config->arch->set_regval_by_id;
-	running_arch_list->get_regnum = config->arch->get_regnum;
-	running_arch_list->mmu_read = config->arch->mmu_read;	
-	running_arch_list->mmu_write = config->arch->mmu_write;	
-	running_arch_list->signal = config->arch->signal;
+		running_arch_list->get_regval_by_id = config->arch->get_regval_by_id;	
+		running_arch_list->get_regname_by_id = config->arch->get_regname_by_id;	
+		running_arch_list->set_regval_by_id = config->arch->set_regval_by_id;
+		running_arch_list->get_regnum = config->arch->get_regnum;
+		running_arch_list->mmu_read = config->arch->mmu_read;	
+		running_arch_list->mmu_write = config->arch->mmu_write;	
+		running_arch_list->signal = config->arch->signal;
+	}
 	return running_arch_list;
 }
 static int
