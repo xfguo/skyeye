@@ -35,9 +35,17 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+@BUILD_ARM_TRUE@am__append_1 = arch/arm
+@BUILD_BFIN_TRUE@am__append_2 = arch/bfin
+@BUILD_COLDFIRE_TRUE@am__append_3 = arch/coldfire
+@BUILD_MIPS_TRUE@am__append_4 = arch/mips
+@BUILD_SPARC_TRUE@am__append_5 = arch/sparc
+@BUILD_PPC_TRUE@am__append_6 = arch/ppc
+@BUILD_X86_TRUE@am__append_7 = arch/x86
+@BUILD_ALL_TRUE@am__append_8 = arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ arch/sparc
 bin_PROGRAMS = skyeye$(EXEEXT) uart_instance$(EXEEXT) \
 	mknandflashdump$(EXEEXT) prof_convert$(EXEEXT)
-@LCD_TRUE@am__append_1 = @LCD_LIBS@
+@LCD_TRUE@am__append_9 = @LCD_LIBS@
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/bochs_config.h.in \
@@ -49,11 +57,7 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	libltdl/config/install-sh libltdl/config/ltmain.sh \
 	libltdl/config/missing ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltdl.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -111,7 +115,6 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir dist dist-all distcheck
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -159,6 +162,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+COMMON_CFLAGS = @COMMON_CFLAGS@
 COMMON_INCLUDES = @COMMON_INCLUDES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -167,7 +171,7 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0   
+DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@ 
 DEPDIR = @DEPDIR@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
@@ -296,16 +300,23 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device/ utils/ arch/sparc/ libltdl common/ soc/arm/
+
+#SUBDIRS =  arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device/ utils/ arch/sparc/ libltdl common/ soc/arm/
+SUBDIRS = device/ utils/ libltdl common/ soc/arm/ $(am__append_1) \
+	$(am__append_2) $(am__append_3) $(am__append_4) \
+	$(am__append_5) $(am__append_6) $(am__append_7) \
+	$(am__append_8)
+DIST_SUBDIRS = $(SUBDIRS)
 
 #AM_LDFLAGS = $(LIBLS) --start-group $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/device/libdev.a $(top_srcdir)/utils/libutils.a --end-group
 #AM_LDFLAGS = $(LIBLS) -L$(top_srcdir)/arch/arm/ -L$(top_srcdir)/arch/bfin/ -L$(top_srcdir)/arch/coldfire/ -L$(top_srcdir)/arch/mips/ -L$(top_srcdir)/device/ -L$(top_srcdir)/utils/ --start-group  -larm -lbfin -lcoldfire  -lmips -L$(top_srcdir)/arch/ppc/ -lppc -ldev -lutils --end-group
 
 #skyeye_LDADD =  -L$(top_srcdir)/common -lcommon -L$(top_srcdir)/third-party/bfd/.libs/ -lbfd
+#skyeye_LDADD =  
 #skyeye_LDADD =  $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/device/libdev.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/sparc/libsparc.a $(top_srcdir)/memory/libmemory.a $(top_srcdir)/third-party/bfd/libbfd.a $(top_srcdir)/third-party/libiberty/libiberty.a $(top_srcdir)/third-party/readline/libreadline.a
 
 # workaround getopt issue on Cygwin platform
-skyeye_LDADD = -L./common -lcommon -lc $(am__append_1)
+skyeye_LDADD = -lc $(am__append_9)
 # add curses library for ubentu system.
 # skyeye_LDADD += -lncurses
 
@@ -313,7 +324,8 @@ skyeye_LDADD = -L./common -lcommon -lc $(am__append_1)
 
 # some functions in "libutils.a" which is required by other libs
 #skyeye_LDADD += $(top_srcdir)/utils/libutils.a
-skyeye_LDFLAGS = 
+#skyeye_LDADD += 
+skyeye_LDFLAGS = -L./common -lcommon `llvm-config --libs ` -lrt -L`llvm-config --libdir`
 INCLUDES = @COMMON_INCLUDES@ -Ithird-party/bfd/
 AM_CFLAGS = -W -Wall -Wstrict-prototypes -Wmissing-prototypes 
 ACLOCAL_AMFLAGS = -I m4

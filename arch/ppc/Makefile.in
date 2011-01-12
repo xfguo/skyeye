@@ -38,11 +38,7 @@ target_triplet = @target@
 subdir = arch/ppc
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltdl.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -81,11 +77,18 @@ am__objects_2 = ppc_alu.lo ppc_cpu.lo ppc_exc.lo ppc_mmu.lo ppc_vec.lo \
 	ppc_arch_interface.lo ppc_dec.lo ppc_fpu.lo ppc_opc.lo \
 	ppc_e500_core.lo ppc_cpm.lo ppc_e500_exc.lo ppc_io.lo \
 	ppc_tools.lo ppc_e500_mpic.lo ppc_module.lo
-am_libppc_la_OBJECTS = $(am__objects_1) $(am__objects_2)
+am__objects_3 = ppc_dyncom_run.lo ppc_dyncom_translate.lo \
+	ppc_dyncom_interface.lo ppc_dyncom_instr_group1.lo \
+	ppc_dyncom_instr_group2.lo ppc_dyncom_instr_group_f1.lo \
+	ppc_dyncom_instr_group_f2.lo ppc_dyncom_instr_main.lo \
+	ppc_dyncom_instr_groupv.lo ppc_dyncom_dec.lo
+am__objects_4 = ppc_syscall.lo
+am_libppc_la_OBJECTS = $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4)
 libppc_la_OBJECTS = $(am_libppc_la_OBJECTS)
-libppc_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libppc_la_LDFLAGS) $(LDFLAGS) -o $@
+libppc_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libppc_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/libltdl/config/depcomp
 am__depfiles_maybe = depfiles
@@ -98,6 +101,15 @@ LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libppc_la_SOURCES)
 DIST_SOURCES = $(libppc_la_SOURCES)
@@ -115,6 +127,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+COMMON_CFLAGS = @COMMON_CFLAGS@
 COMMON_INCLUDES = @COMMON_INCLUDES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -123,7 +136,8 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFS = @DEFS@
+#DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0
+DEFS = @COMMON_CFLAGS@
 DEPDIR = @DEPDIR@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
@@ -258,18 +272,19 @@ common/ppc_arch_interface.c  common/ppc_dec.c       common/ppc_fpu.c  common/ppc
 common/ppc_e500_core.c	      common/ppc_cpm.c						\
 common/ppc_e500_exc.c  common/ppc_io.c   common/ppc_tools.c common/ppc_e500_mpic.c common/ppc_module.c
 
+ppc_dyncom = dyncom/ppc_dyncom_run.cpp dyncom/ppc_dyncom_translate.cpp dyncom/ppc_dyncom_interface.cpp dyncom/ppc_dyncom_instr_group1.cpp dyncom/ppc_dyncom_instr_group2.cpp dyncom/ppc_dyncom_instr_group_f1.cpp dyncom/ppc_dyncom_instr_group_f2.cpp dyncom/ppc_dyncom_instr_main.cpp dyncom/ppc_dyncom_instr_groupv.cpp dyncom/ppc_dyncom_dec.cpp
+ppc_linux_syscall = linux_syscall/ppc_syscall.c
 #libppc_a_SOURCES = $(ppc_mach) $(ppc_comm)
-libppc_la_SOURCES = $(ppc_mach) $(ppc_comm)
+libppc_la_SOURCES = $(ppc_mach) $(ppc_comm) $(ppc_dyncom) $(ppc_linux_syscall)
 pkglib_LTLIBRARIES = libppc.la
 # we will link the common module with main
 libppc_la_LDFLAGS = -module
-#DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0
 #noinst_LIBRARIES =      libppc.a
-INCLUDES = -I./common -I$(top_srcdir)/utils/debugger @COMMON_INCLUDES@
+INCLUDES = -I$(top_srcdir)/common -I$(top_srcdir)/dyncom/ -I$(top_srcdir)/arch/ppc/common -I$(top_srcdir)/arch/ppc/linux_syscall `/usr/local/bin/llvm-config --cflags` -I$(top_srcdir)/utils/debugger @COMMON_INCLUDES@
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cpp .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -348,6 +363,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_cpm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_cpu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_dec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_instr_group1.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_instr_group2.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_instr_group_f1.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_instr_group_f2.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_instr_groupv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_instr_main.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_interface.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_run.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_dyncom_translate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_e500_core.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_e500_exc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_e500_mpic.Plo@am__quote@
@@ -357,6 +382,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_mmu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_module.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_opc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_syscall.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppc_vec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_mach_mpc8560.Plo@am__quote@
@@ -537,6 +563,104 @@ ppc_module.lo: common/ppc_module.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='common/ppc_module.c' object='ppc_module.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ppc_module.lo `test -f 'common/ppc_module.c' || echo '$(srcdir)/'`common/ppc_module.c
+
+ppc_syscall.lo: linux_syscall/ppc_syscall.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ppc_syscall.lo -MD -MP -MF $(DEPDIR)/ppc_syscall.Tpo -c -o ppc_syscall.lo `test -f 'linux_syscall/ppc_syscall.c' || echo '$(srcdir)/'`linux_syscall/ppc_syscall.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/ppc_syscall.Tpo $(DEPDIR)/ppc_syscall.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='linux_syscall/ppc_syscall.c' object='ppc_syscall.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ppc_syscall.lo `test -f 'linux_syscall/ppc_syscall.c' || echo '$(srcdir)/'`linux_syscall/ppc_syscall.c
+
+.cpp.o:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
+
+.cpp.obj:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cpp.lo:
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
+
+ppc_dyncom_run.lo: dyncom/ppc_dyncom_run.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_run.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_run.Tpo -c -o ppc_dyncom_run.lo `test -f 'dyncom/ppc_dyncom_run.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_run.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_run.Tpo $(DEPDIR)/ppc_dyncom_run.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_run.cpp' object='ppc_dyncom_run.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_run.lo `test -f 'dyncom/ppc_dyncom_run.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_run.cpp
+
+ppc_dyncom_translate.lo: dyncom/ppc_dyncom_translate.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_translate.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_translate.Tpo -c -o ppc_dyncom_translate.lo `test -f 'dyncom/ppc_dyncom_translate.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_translate.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_translate.Tpo $(DEPDIR)/ppc_dyncom_translate.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_translate.cpp' object='ppc_dyncom_translate.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_translate.lo `test -f 'dyncom/ppc_dyncom_translate.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_translate.cpp
+
+ppc_dyncom_interface.lo: dyncom/ppc_dyncom_interface.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_interface.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_interface.Tpo -c -o ppc_dyncom_interface.lo `test -f 'dyncom/ppc_dyncom_interface.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_interface.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_interface.Tpo $(DEPDIR)/ppc_dyncom_interface.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_interface.cpp' object='ppc_dyncom_interface.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_interface.lo `test -f 'dyncom/ppc_dyncom_interface.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_interface.cpp
+
+ppc_dyncom_instr_group1.lo: dyncom/ppc_dyncom_instr_group1.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_instr_group1.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_instr_group1.Tpo -c -o ppc_dyncom_instr_group1.lo `test -f 'dyncom/ppc_dyncom_instr_group1.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_group1.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_instr_group1.Tpo $(DEPDIR)/ppc_dyncom_instr_group1.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_instr_group1.cpp' object='ppc_dyncom_instr_group1.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_instr_group1.lo `test -f 'dyncom/ppc_dyncom_instr_group1.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_group1.cpp
+
+ppc_dyncom_instr_group2.lo: dyncom/ppc_dyncom_instr_group2.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_instr_group2.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_instr_group2.Tpo -c -o ppc_dyncom_instr_group2.lo `test -f 'dyncom/ppc_dyncom_instr_group2.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_group2.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_instr_group2.Tpo $(DEPDIR)/ppc_dyncom_instr_group2.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_instr_group2.cpp' object='ppc_dyncom_instr_group2.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_instr_group2.lo `test -f 'dyncom/ppc_dyncom_instr_group2.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_group2.cpp
+
+ppc_dyncom_instr_group_f1.lo: dyncom/ppc_dyncom_instr_group_f1.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_instr_group_f1.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_instr_group_f1.Tpo -c -o ppc_dyncom_instr_group_f1.lo `test -f 'dyncom/ppc_dyncom_instr_group_f1.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_group_f1.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_instr_group_f1.Tpo $(DEPDIR)/ppc_dyncom_instr_group_f1.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_instr_group_f1.cpp' object='ppc_dyncom_instr_group_f1.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_instr_group_f1.lo `test -f 'dyncom/ppc_dyncom_instr_group_f1.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_group_f1.cpp
+
+ppc_dyncom_instr_group_f2.lo: dyncom/ppc_dyncom_instr_group_f2.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_instr_group_f2.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_instr_group_f2.Tpo -c -o ppc_dyncom_instr_group_f2.lo `test -f 'dyncom/ppc_dyncom_instr_group_f2.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_group_f2.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_instr_group_f2.Tpo $(DEPDIR)/ppc_dyncom_instr_group_f2.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_instr_group_f2.cpp' object='ppc_dyncom_instr_group_f2.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_instr_group_f2.lo `test -f 'dyncom/ppc_dyncom_instr_group_f2.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_group_f2.cpp
+
+ppc_dyncom_instr_main.lo: dyncom/ppc_dyncom_instr_main.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_instr_main.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_instr_main.Tpo -c -o ppc_dyncom_instr_main.lo `test -f 'dyncom/ppc_dyncom_instr_main.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_main.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_instr_main.Tpo $(DEPDIR)/ppc_dyncom_instr_main.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_instr_main.cpp' object='ppc_dyncom_instr_main.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_instr_main.lo `test -f 'dyncom/ppc_dyncom_instr_main.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_main.cpp
+
+ppc_dyncom_instr_groupv.lo: dyncom/ppc_dyncom_instr_groupv.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_instr_groupv.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_instr_groupv.Tpo -c -o ppc_dyncom_instr_groupv.lo `test -f 'dyncom/ppc_dyncom_instr_groupv.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_groupv.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_instr_groupv.Tpo $(DEPDIR)/ppc_dyncom_instr_groupv.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_instr_groupv.cpp' object='ppc_dyncom_instr_groupv.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_instr_groupv.lo `test -f 'dyncom/ppc_dyncom_instr_groupv.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_instr_groupv.cpp
+
+ppc_dyncom_dec.lo: dyncom/ppc_dyncom_dec.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ppc_dyncom_dec.lo -MD -MP -MF $(DEPDIR)/ppc_dyncom_dec.Tpo -c -o ppc_dyncom_dec.lo `test -f 'dyncom/ppc_dyncom_dec.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_dec.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/ppc_dyncom_dec.Tpo $(DEPDIR)/ppc_dyncom_dec.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/ppc_dyncom_dec.cpp' object='ppc_dyncom_dec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ppc_dyncom_dec.lo `test -f 'dyncom/ppc_dyncom_dec.cpp' || echo '$(srcdir)/'`dyncom/ppc_dyncom_dec.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo

@@ -42,11 +42,7 @@ subdir = common
 DIST_COMMON = $(nobase_include_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltdl.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -82,7 +78,8 @@ libcommon_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__objects_1 = skyeye_module.lo
 am__objects_2 = support.lo
 am__objects_3 = breakpoint.lo
-am__objects_4 = thread_ctrl.lo sim_ctrl.lo step.lo scheduler.lo
+am__objects_4 = thread_ctrl.lo sim_ctrl.lo step.lo scheduler.lo \
+	skyeye_thread.lo skyeye_cell.lo skyeye_exec.lo
 am__objects_5 = mman.lo usleep.lo gettimeofday.lo
 am__objects_6 = skyeye_pref.lo
 am__objects_7 = skyeye_arch.lo
@@ -98,13 +95,22 @@ am__objects_14 = bank_ops.lo io.lo ram.lo flash.lo skyeye_bus.lo \
 	bus_recoder.lo
 am__objects_15 = loader_elf.lo loader_file.lo
 am__objects_16 = callback.lo
+am__objects_17 = translate_singlestep_bb.lo translate_singlestep.lo \
+	translate_all.lo translate.lo timings.lo tag.lo stat.lo \
+	sha1.lo optimize.lo interface.lo function.lo frontend.lo fp.lo \
+	disasm.lo basicblock.lo memory.lo
+am__objects_18 = symbol.lo bfd_target.lo
 am_libcommon_la_OBJECTS = $(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
 	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
 	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
 	$(am__objects_12) $(am__objects_13) $(am__objects_14) \
-	$(am__objects_15) $(am__objects_16)
+	$(am__objects_15) $(am__objects_16) $(am__objects_17) \
+	$(am__objects_18)
 libcommon_la_OBJECTS = $(am_libcommon_la_OBJECTS)
+libcommon_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libcommon_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/libltdl/config/depcomp
 am__depfiles_maybe = depfiles
@@ -117,6 +123,15 @@ LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libcommon_la_SOURCES)
 DIST_SOURCES = $(libcommon_la_SOURCES)
@@ -135,6 +150,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+COMMON_CFLAGS = @COMMON_CFLAGS@
 COMMON_INCLUDES = @COMMON_INCLUDES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -143,7 +159,7 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_MODULE_DIR=$(skyeye_module_dir)
+DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_MODULE_DIR=$(skyeye_module_dir) @COMMON_CFLAGS@
 DEPDIR = @DEPDIR@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
@@ -277,7 +293,7 @@ top_srcdir = @top_srcdir@
 common_breakpoint = breakpoint/breakpoint.c
 common_misc = misc/support.c
 common_module = module/skyeye_module.c
-common_ctrl = ctrl/thread_ctrl.c ctrl/sim_ctrl.c ctrl/step.c ctrl/scheduler.c
+common_ctrl = ctrl/thread_ctrl.c ctrl/sim_ctrl.c ctrl/step.c ctrl/scheduler.c ctrl/skyeye_thread.c ctrl/skyeye_cell.c ctrl/skyeye_exec.c
 common_conf_parser = conf_parser/skyeye_options.c conf_parser/skyeye_config.c conf_parser/misc_options.c conf_parser/conf_obj.c
 common_log = log/skyeye_log.c
 common_loader = loader/loader_elf.c loader/loader_file.c
@@ -285,11 +301,13 @@ common_mm = mm/skyeye_mm.c
 common_cli = cli/skyeye_command.c cli/skyeye_cli.c cli/default_command.c
 common_portable = portable/mman.c portable/usleep.c portable/gettimeofday.c
 common_preference = preference/skyeye_pref.c
+common_profile = profile/symbol.c profile/bfd_target.c
 common_memory = bus/bank_ops.c  bus/io.c  bus/ram.c bus/flash.c bus/skyeye_bus.c bus/bus_recoder.c
 common_core = core/skyeye_arch.c
 common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c device/skyeye_signal.c
 common_mach = mach/skyeye_mach.c
 common_callback = callback/callback.c
+common_dyncom = dyncom/translate_singlestep_bb.cpp dyncom/translate_singlestep.cpp dyncom/translate_all.cpp dyncom/translate.cpp dyncom/timings.cpp dyncom/tag.cpp dyncom/stat.cpp dyncom/sha1.cpp dyncom/optimize.cpp dyncom/interface.cpp dyncom/function.cpp dyncom/frontend.cpp dyncom/fp.cpp dyncom/disasm.cpp dyncom/basicblock.cpp dyncom/memory.cpp
 pkglib_LTLIBRARIES = libcommon.la
 nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/skyeye_types.h ./include/skyeye_module.h ./include/int_register.h \
@@ -302,21 +320,22 @@ nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
 ./include/skyeye_queue.h
 
-libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback)
+libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_dyncom) $(common_profile)
 libcommon_la_LIBADD = -L$(top_builddir)/third-party/bfd/.libs/ -lbfd \
 	-L$(top_builddir)/third-party/libiberty/pic -liberty \
 	-lreadline @LIBLTDL@ @LIBADD_DL@ $(am__append_1)
 # we will link the common module with main
 #libcommon_la_LDFLAGS = -module
+libcommon_la_LDFLAGS = `llvm-config --libs ` -lrt -L`llvm-config --libdir`
 skyeye_module_dir = \"$(prefix)/lib/skyeye\"
 INCLUDES = @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ \
 	-I$(top_srcdir)/third-party/bfd/ \
 	-I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party \
-	@INCLTDL@ $(am__append_2)
+	@INCLTDL@ `llvm-config --cflags` $(am__append_2)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cpp .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -379,7 +398,7 @@ clean-pkglibLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libcommon.la: $(libcommon_la_OBJECTS) $(libcommon_la_DEPENDENCIES) 
-	$(LINK) -rpath $(pkglibdir) $(libcommon_la_OBJECTS) $(libcommon_la_LIBADD) $(LIBS)
+	$(libcommon_la_LINK) -rpath $(pkglibdir) $(libcommon_la_OBJECTS) $(libcommon_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -388,28 +407,40 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bank_ops.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/basicblock.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bfd_target.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/breakpoint.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bus_recoder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/callback.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/conf_obj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/default_command.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/disasm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flash.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/frontend.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/function.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gettimeofday.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interface.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/io.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/loader_elf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/loader_file.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc_options.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mman.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/optimize.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pen_buffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ram.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scheduler.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sim_ctrl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_arch.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_bus.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_cell.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_cli.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_command.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_config.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_device.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_exec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_log.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_mach.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_mm.Plo@am__quote@
@@ -417,10 +448,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_options.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_pref.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_signal.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/skyeye_uart_ops.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/step.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/support.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/symbol.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tag.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread_ctrl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timings.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/translate.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/translate_all.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/translate_singlestep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/translate_singlestep_bb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/usleep.Plo@am__quote@
 
 .c.o:
@@ -492,6 +532,27 @@ scheduler.lo: ctrl/scheduler.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ctrl/scheduler.c' object='scheduler.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o scheduler.lo `test -f 'ctrl/scheduler.c' || echo '$(srcdir)/'`ctrl/scheduler.c
+
+skyeye_thread.lo: ctrl/skyeye_thread.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT skyeye_thread.lo -MD -MP -MF $(DEPDIR)/skyeye_thread.Tpo -c -o skyeye_thread.lo `test -f 'ctrl/skyeye_thread.c' || echo '$(srcdir)/'`ctrl/skyeye_thread.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/skyeye_thread.Tpo $(DEPDIR)/skyeye_thread.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ctrl/skyeye_thread.c' object='skyeye_thread.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o skyeye_thread.lo `test -f 'ctrl/skyeye_thread.c' || echo '$(srcdir)/'`ctrl/skyeye_thread.c
+
+skyeye_cell.lo: ctrl/skyeye_cell.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT skyeye_cell.lo -MD -MP -MF $(DEPDIR)/skyeye_cell.Tpo -c -o skyeye_cell.lo `test -f 'ctrl/skyeye_cell.c' || echo '$(srcdir)/'`ctrl/skyeye_cell.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/skyeye_cell.Tpo $(DEPDIR)/skyeye_cell.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ctrl/skyeye_cell.c' object='skyeye_cell.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o skyeye_cell.lo `test -f 'ctrl/skyeye_cell.c' || echo '$(srcdir)/'`ctrl/skyeye_cell.c
+
+skyeye_exec.lo: ctrl/skyeye_exec.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT skyeye_exec.lo -MD -MP -MF $(DEPDIR)/skyeye_exec.Tpo -c -o skyeye_exec.lo `test -f 'ctrl/skyeye_exec.c' || echo '$(srcdir)/'`ctrl/skyeye_exec.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/skyeye_exec.Tpo $(DEPDIR)/skyeye_exec.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ctrl/skyeye_exec.c' object='skyeye_exec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o skyeye_exec.lo `test -f 'ctrl/skyeye_exec.c' || echo '$(srcdir)/'`ctrl/skyeye_exec.c
 
 mman.lo: portable/mman.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT mman.lo -MD -MP -MF $(DEPDIR)/mman.Tpo -c -o mman.lo `test -f 'portable/mman.c' || echo '$(srcdir)/'`portable/mman.c
@@ -688,6 +749,153 @@ callback.lo: callback/callback.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='callback/callback.c' object='callback.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o callback.lo `test -f 'callback/callback.c' || echo '$(srcdir)/'`callback/callback.c
+
+symbol.lo: profile/symbol.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT symbol.lo -MD -MP -MF $(DEPDIR)/symbol.Tpo -c -o symbol.lo `test -f 'profile/symbol.c' || echo '$(srcdir)/'`profile/symbol.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/symbol.Tpo $(DEPDIR)/symbol.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='profile/symbol.c' object='symbol.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o symbol.lo `test -f 'profile/symbol.c' || echo '$(srcdir)/'`profile/symbol.c
+
+bfd_target.lo: profile/bfd_target.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT bfd_target.lo -MD -MP -MF $(DEPDIR)/bfd_target.Tpo -c -o bfd_target.lo `test -f 'profile/bfd_target.c' || echo '$(srcdir)/'`profile/bfd_target.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/bfd_target.Tpo $(DEPDIR)/bfd_target.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='profile/bfd_target.c' object='bfd_target.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o bfd_target.lo `test -f 'profile/bfd_target.c' || echo '$(srcdir)/'`profile/bfd_target.c
+
+.cpp.o:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
+
+.cpp.obj:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cpp.lo:
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
+
+translate_singlestep_bb.lo: dyncom/translate_singlestep_bb.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT translate_singlestep_bb.lo -MD -MP -MF $(DEPDIR)/translate_singlestep_bb.Tpo -c -o translate_singlestep_bb.lo `test -f 'dyncom/translate_singlestep_bb.cpp' || echo '$(srcdir)/'`dyncom/translate_singlestep_bb.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/translate_singlestep_bb.Tpo $(DEPDIR)/translate_singlestep_bb.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/translate_singlestep_bb.cpp' object='translate_singlestep_bb.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o translate_singlestep_bb.lo `test -f 'dyncom/translate_singlestep_bb.cpp' || echo '$(srcdir)/'`dyncom/translate_singlestep_bb.cpp
+
+translate_singlestep.lo: dyncom/translate_singlestep.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT translate_singlestep.lo -MD -MP -MF $(DEPDIR)/translate_singlestep.Tpo -c -o translate_singlestep.lo `test -f 'dyncom/translate_singlestep.cpp' || echo '$(srcdir)/'`dyncom/translate_singlestep.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/translate_singlestep.Tpo $(DEPDIR)/translate_singlestep.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/translate_singlestep.cpp' object='translate_singlestep.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o translate_singlestep.lo `test -f 'dyncom/translate_singlestep.cpp' || echo '$(srcdir)/'`dyncom/translate_singlestep.cpp
+
+translate_all.lo: dyncom/translate_all.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT translate_all.lo -MD -MP -MF $(DEPDIR)/translate_all.Tpo -c -o translate_all.lo `test -f 'dyncom/translate_all.cpp' || echo '$(srcdir)/'`dyncom/translate_all.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/translate_all.Tpo $(DEPDIR)/translate_all.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/translate_all.cpp' object='translate_all.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o translate_all.lo `test -f 'dyncom/translate_all.cpp' || echo '$(srcdir)/'`dyncom/translate_all.cpp
+
+translate.lo: dyncom/translate.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT translate.lo -MD -MP -MF $(DEPDIR)/translate.Tpo -c -o translate.lo `test -f 'dyncom/translate.cpp' || echo '$(srcdir)/'`dyncom/translate.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/translate.Tpo $(DEPDIR)/translate.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/translate.cpp' object='translate.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o translate.lo `test -f 'dyncom/translate.cpp' || echo '$(srcdir)/'`dyncom/translate.cpp
+
+timings.lo: dyncom/timings.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT timings.lo -MD -MP -MF $(DEPDIR)/timings.Tpo -c -o timings.lo `test -f 'dyncom/timings.cpp' || echo '$(srcdir)/'`dyncom/timings.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/timings.Tpo $(DEPDIR)/timings.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/timings.cpp' object='timings.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o timings.lo `test -f 'dyncom/timings.cpp' || echo '$(srcdir)/'`dyncom/timings.cpp
+
+tag.lo: dyncom/tag.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tag.lo -MD -MP -MF $(DEPDIR)/tag.Tpo -c -o tag.lo `test -f 'dyncom/tag.cpp' || echo '$(srcdir)/'`dyncom/tag.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/tag.Tpo $(DEPDIR)/tag.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/tag.cpp' object='tag.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tag.lo `test -f 'dyncom/tag.cpp' || echo '$(srcdir)/'`dyncom/tag.cpp
+
+stat.lo: dyncom/stat.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT stat.lo -MD -MP -MF $(DEPDIR)/stat.Tpo -c -o stat.lo `test -f 'dyncom/stat.cpp' || echo '$(srcdir)/'`dyncom/stat.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/stat.Tpo $(DEPDIR)/stat.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/stat.cpp' object='stat.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o stat.lo `test -f 'dyncom/stat.cpp' || echo '$(srcdir)/'`dyncom/stat.cpp
+
+sha1.lo: dyncom/sha1.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT sha1.lo -MD -MP -MF $(DEPDIR)/sha1.Tpo -c -o sha1.lo `test -f 'dyncom/sha1.cpp' || echo '$(srcdir)/'`dyncom/sha1.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/sha1.Tpo $(DEPDIR)/sha1.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/sha1.cpp' object='sha1.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o sha1.lo `test -f 'dyncom/sha1.cpp' || echo '$(srcdir)/'`dyncom/sha1.cpp
+
+optimize.lo: dyncom/optimize.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT optimize.lo -MD -MP -MF $(DEPDIR)/optimize.Tpo -c -o optimize.lo `test -f 'dyncom/optimize.cpp' || echo '$(srcdir)/'`dyncom/optimize.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/optimize.Tpo $(DEPDIR)/optimize.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/optimize.cpp' object='optimize.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o optimize.lo `test -f 'dyncom/optimize.cpp' || echo '$(srcdir)/'`dyncom/optimize.cpp
+
+interface.lo: dyncom/interface.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT interface.lo -MD -MP -MF $(DEPDIR)/interface.Tpo -c -o interface.lo `test -f 'dyncom/interface.cpp' || echo '$(srcdir)/'`dyncom/interface.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/interface.Tpo $(DEPDIR)/interface.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/interface.cpp' object='interface.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o interface.lo `test -f 'dyncom/interface.cpp' || echo '$(srcdir)/'`dyncom/interface.cpp
+
+function.lo: dyncom/function.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT function.lo -MD -MP -MF $(DEPDIR)/function.Tpo -c -o function.lo `test -f 'dyncom/function.cpp' || echo '$(srcdir)/'`dyncom/function.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/function.Tpo $(DEPDIR)/function.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/function.cpp' object='function.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o function.lo `test -f 'dyncom/function.cpp' || echo '$(srcdir)/'`dyncom/function.cpp
+
+frontend.lo: dyncom/frontend.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT frontend.lo -MD -MP -MF $(DEPDIR)/frontend.Tpo -c -o frontend.lo `test -f 'dyncom/frontend.cpp' || echo '$(srcdir)/'`dyncom/frontend.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/frontend.Tpo $(DEPDIR)/frontend.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/frontend.cpp' object='frontend.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o frontend.lo `test -f 'dyncom/frontend.cpp' || echo '$(srcdir)/'`dyncom/frontend.cpp
+
+fp.lo: dyncom/fp.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT fp.lo -MD -MP -MF $(DEPDIR)/fp.Tpo -c -o fp.lo `test -f 'dyncom/fp.cpp' || echo '$(srcdir)/'`dyncom/fp.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/fp.Tpo $(DEPDIR)/fp.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/fp.cpp' object='fp.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o fp.lo `test -f 'dyncom/fp.cpp' || echo '$(srcdir)/'`dyncom/fp.cpp
+
+disasm.lo: dyncom/disasm.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT disasm.lo -MD -MP -MF $(DEPDIR)/disasm.Tpo -c -o disasm.lo `test -f 'dyncom/disasm.cpp' || echo '$(srcdir)/'`dyncom/disasm.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/disasm.Tpo $(DEPDIR)/disasm.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/disasm.cpp' object='disasm.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o disasm.lo `test -f 'dyncom/disasm.cpp' || echo '$(srcdir)/'`dyncom/disasm.cpp
+
+basicblock.lo: dyncom/basicblock.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT basicblock.lo -MD -MP -MF $(DEPDIR)/basicblock.Tpo -c -o basicblock.lo `test -f 'dyncom/basicblock.cpp' || echo '$(srcdir)/'`dyncom/basicblock.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/basicblock.Tpo $(DEPDIR)/basicblock.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/basicblock.cpp' object='basicblock.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o basicblock.lo `test -f 'dyncom/basicblock.cpp' || echo '$(srcdir)/'`dyncom/basicblock.cpp
+
+memory.lo: dyncom/memory.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT memory.lo -MD -MP -MF $(DEPDIR)/memory.Tpo -c -o memory.lo `test -f 'dyncom/memory.cpp' || echo '$(srcdir)/'`dyncom/memory.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/memory.Tpo $(DEPDIR)/memory.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/memory.cpp' object='memory.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o memory.lo `test -f 'dyncom/memory.cpp' || echo '$(srcdir)/'`dyncom/memory.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo

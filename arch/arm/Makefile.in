@@ -39,11 +39,7 @@ target_triplet = @target@
 subdir = arch/arm
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
-	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltdl.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -77,34 +73,38 @@ LTLIBRARIES = $(pkglib_LTLIBRARIES)
 libarm_la_DEPENDENCIES = armemu32.lo
 am__libarm_la_SOURCES_DIST = common/arm_arch_interface.c \
 	common/armcopro.c common/armemu.c common/arminit.c \
-	common/armio.c common/armmem.c common/armmmu.c common/armos.c \
-	common/armsupp.c common/armvirt.c common/thumbemu.c \
-	common/arm_module.c common/mmu/arm7100_mmu.c \
-	common/mmu/arm920t_mmu.c common/mmu/arm926ejs_mmu.c \
-	common/mmu/arm1176jzf_s_mmu.c common/mmu/cache.c \
-	common/mmu/maverick.c common/mmu/rb.c common/mmu/sa_mmu.c \
-	common/mmu/tlb.c common/mmu/wb.c common/mmu/xscale_copro.c \
-	mach/skyeye_mach_lpc.c dbct/arm2x86.c dbct/arm2x86_coproc.c \
+	common/armmmu.c common/armos.c common/armsupp.c \
+	common/armvirt.c common/thumbemu.c common/arm_module.c \
+	common/mmu/arm7100_mmu.c common/mmu/arm920t_mmu.c \
+	common/mmu/arm926ejs_mmu.c common/mmu/arm1176jzf_s_mmu.c \
+	common/mmu/cache.c common/mmu/maverick.c common/mmu/rb.c \
+	common/mmu/sa_mmu.c common/mmu/tlb.c common/mmu/wb.c \
+	common/mmu/xscale_copro.c mach/skyeye_mach_lpc.c \
+	dyncom/arm_dyncom_interface.cpp dyncom/arm_disasm.cpp \
+	dyncom/arm_dyncom_translate.cpp dyncom/arm_dyncom_run.cpp \
+	dyncom/arm_dyncom_dec.cpp dbct/arm2x86.c dbct/arm2x86_coproc.c \
 	dbct/arm2x86_dp.c dbct/arm2x86_mem.c dbct/arm2x86_movl.c \
 	dbct/arm2x86_mul.c dbct/arm2x86_other.c dbct/arm2x86_psr.c \
 	dbct/arm2x86_shift.c dbct/arm2x86_test.c dbct/tb.c
 am__objects_1 = arm_arch_interface.lo armcopro.lo armemu.lo arminit.lo \
-	armio.lo armmem.lo armmmu.lo armos.lo armsupp.lo armvirt.lo \
-	thumbemu.lo arm_module.lo
+	armmmu.lo armos.lo armsupp.lo armvirt.lo thumbemu.lo \
+	arm_module.lo
 am__objects_2 = arm7100_mmu.lo arm920t_mmu.lo arm926ejs_mmu.lo \
 	arm1176jzf_s_mmu.lo cache.lo maverick.lo rb.lo sa_mmu.lo \
 	tlb.lo wb.lo xscale_copro.lo
 am__objects_3 = skyeye_mach_lpc.lo
-am__objects_4 = arm2x86.lo arm2x86_coproc.lo arm2x86_dp.lo \
+am__objects_4 = arm_dyncom_interface.lo arm_disasm.lo \
+	arm_dyncom_translate.lo arm_dyncom_run.lo arm_dyncom_dec.lo
+am__objects_5 = arm2x86.lo arm2x86_coproc.lo arm2x86_dp.lo \
 	arm2x86_mem.lo arm2x86_movl.lo arm2x86_mul.lo arm2x86_other.lo \
 	arm2x86_psr.lo arm2x86_shift.lo arm2x86_test.lo tb.lo
-@DBCT_TRUE@am__objects_5 = $(am__objects_4)
+@DBCT_TRUE@am__objects_6 = $(am__objects_5)
 am_libarm_la_OBJECTS = $(am__objects_1) $(am__objects_2) \
-	$(am__objects_3) $(am__objects_5)
+	$(am__objects_3) $(am__objects_4) $(am__objects_6)
 libarm_la_OBJECTS = $(am_libarm_la_OBJECTS)
-libarm_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libarm_la_LDFLAGS) $(LDFLAGS) -o $@
+libarm_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libarm_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/libltdl/config/depcomp
 am__depfiles_maybe = depfiles
@@ -117,6 +117,15 @@ LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libarm_la_SOURCES)
 DIST_SOURCES = $(am__libarm_la_SOURCES_DIST)
@@ -134,6 +143,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+COMMON_CFLAGS = @COMMON_CFLAGS@
 COMMON_INCLUDES = @COMMON_INCLUDES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -143,7 +153,7 @@ CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 #noinst_LIBRARIES =      libarm.a
-DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DNO_LCD
+DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DNO_LCD @COMMON_CFLAGS@
 DEPDIR = @DEPDIR@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
@@ -272,21 +282,23 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-arm_comm = common/arm_arch_interface.c common/armcopro.c common/armemu.c common/arminit.c common/armio.c common/armmem.c common/armmmu.c common/armos.c common/armsupp.c common/armvirt.c common/thumbemu.c common/arm_module.c
+arm_comm = common/arm_arch_interface.c common/armcopro.c common/armemu.c common/arminit.c common/armmmu.c common/armos.c common/armsupp.c common/armvirt.c common/thumbemu.c common/arm_module.c
 arm_mmu = common/mmu/arm7100_mmu.c common/mmu/arm920t_mmu.c common/mmu/arm926ejs_mmu.c  common/mmu/arm1176jzf_s_mmu.c common/mmu/cache.c common/mmu/maverick.c common/mmu/rb.c common/mmu/sa_mmu.c common/mmu/tlb.c common/mmu/wb.c common/mmu/xscale_copro.c
 arm_dbct = dbct/arm2x86.c dbct/arm2x86_coproc.c dbct/arm2x86_dp.c dbct/arm2x86_mem.c dbct/arm2x86_movl.c dbct/arm2x86_mul.c dbct/arm2x86_other.c dbct/arm2x86_psr.c dbct/arm2x86_shift.c dbct/arm2x86_test.c dbct/tb.c 
 arm_mach = \
 mach/skyeye_mach_lpc.c
 
-libarm_la_SOURCES = $(arm_comm) $(arm_mmu) $(arm_mach) $(am__append_1)
+arm_dyncom = dyncom/arm_dyncom_interface.cpp dyncom/arm_disasm.cpp dyncom/arm_dyncom_translate.cpp dyncom/arm_dyncom_run.cpp dyncom/arm_dyncom_dec.cpp
+libarm_la_SOURCES = $(arm_comm) $(arm_mmu) $(arm_mach) $(arm_dyncom) \
+	$(am__append_1)
 libarm_la_LDFLAGS = -module
 pkglib_LTLIBRARIES = libarm.la
 libarm_la_LIBADD = armemu32.lo
-INCLUDES = -I$(top_srcdir)/arch/arm/common -I$(top_srcdir)/arch/arm/mach/ @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/
+INCLUDES = -I$(top_srcdir)/arch/arm/common -I$(top_srcdir)/arch/arm/mach/ -I$(top_srcdir)/common/dyncom/ `llvm-config --cflags` @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cpp .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -372,12 +384,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm920t_mmu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm926ejs_mmu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_arch_interface.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_disasm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_dyncom_dec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_dyncom_interface.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_dyncom_run.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_dyncom_translate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_module.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/armcopro.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/armemu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arminit.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/armio.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/armmem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/armmmu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/armos.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/armsupp.Plo@am__quote@
@@ -441,20 +456,6 @@ arminit.lo: common/arminit.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='common/arminit.c' object='arminit.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o arminit.lo `test -f 'common/arminit.c' || echo '$(srcdir)/'`common/arminit.c
-
-armio.lo: common/armio.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT armio.lo -MD -MP -MF $(DEPDIR)/armio.Tpo -c -o armio.lo `test -f 'common/armio.c' || echo '$(srcdir)/'`common/armio.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/armio.Tpo $(DEPDIR)/armio.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='common/armio.c' object='armio.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o armio.lo `test -f 'common/armio.c' || echo '$(srcdir)/'`common/armio.c
-
-armmem.lo: common/armmem.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT armmem.lo -MD -MP -MF $(DEPDIR)/armmem.Tpo -c -o armmem.lo `test -f 'common/armmem.c' || echo '$(srcdir)/'`common/armmem.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/armmem.Tpo $(DEPDIR)/armmem.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='common/armmem.c' object='armmem.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o armmem.lo `test -f 'common/armmem.c' || echo '$(srcdir)/'`common/armmem.c
 
 armmmu.lo: common/armmmu.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT armmmu.lo -MD -MP -MF $(DEPDIR)/armmmu.Tpo -c -o armmmu.lo `test -f 'common/armmmu.c' || echo '$(srcdir)/'`common/armmmu.c
@@ -658,6 +659,62 @@ tb.lo: dbct/tb.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='dbct/tb.c' object='tb.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tb.lo `test -f 'dbct/tb.c' || echo '$(srcdir)/'`dbct/tb.c
+
+.cpp.o:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
+
+.cpp.obj:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cpp.lo:
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
+
+arm_dyncom_interface.lo: dyncom/arm_dyncom_interface.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT arm_dyncom_interface.lo -MD -MP -MF $(DEPDIR)/arm_dyncom_interface.Tpo -c -o arm_dyncom_interface.lo `test -f 'dyncom/arm_dyncom_interface.cpp' || echo '$(srcdir)/'`dyncom/arm_dyncom_interface.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/arm_dyncom_interface.Tpo $(DEPDIR)/arm_dyncom_interface.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/arm_dyncom_interface.cpp' object='arm_dyncom_interface.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o arm_dyncom_interface.lo `test -f 'dyncom/arm_dyncom_interface.cpp' || echo '$(srcdir)/'`dyncom/arm_dyncom_interface.cpp
+
+arm_disasm.lo: dyncom/arm_disasm.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT arm_disasm.lo -MD -MP -MF $(DEPDIR)/arm_disasm.Tpo -c -o arm_disasm.lo `test -f 'dyncom/arm_disasm.cpp' || echo '$(srcdir)/'`dyncom/arm_disasm.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/arm_disasm.Tpo $(DEPDIR)/arm_disasm.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/arm_disasm.cpp' object='arm_disasm.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o arm_disasm.lo `test -f 'dyncom/arm_disasm.cpp' || echo '$(srcdir)/'`dyncom/arm_disasm.cpp
+
+arm_dyncom_translate.lo: dyncom/arm_dyncom_translate.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT arm_dyncom_translate.lo -MD -MP -MF $(DEPDIR)/arm_dyncom_translate.Tpo -c -o arm_dyncom_translate.lo `test -f 'dyncom/arm_dyncom_translate.cpp' || echo '$(srcdir)/'`dyncom/arm_dyncom_translate.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/arm_dyncom_translate.Tpo $(DEPDIR)/arm_dyncom_translate.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/arm_dyncom_translate.cpp' object='arm_dyncom_translate.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o arm_dyncom_translate.lo `test -f 'dyncom/arm_dyncom_translate.cpp' || echo '$(srcdir)/'`dyncom/arm_dyncom_translate.cpp
+
+arm_dyncom_run.lo: dyncom/arm_dyncom_run.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT arm_dyncom_run.lo -MD -MP -MF $(DEPDIR)/arm_dyncom_run.Tpo -c -o arm_dyncom_run.lo `test -f 'dyncom/arm_dyncom_run.cpp' || echo '$(srcdir)/'`dyncom/arm_dyncom_run.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/arm_dyncom_run.Tpo $(DEPDIR)/arm_dyncom_run.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/arm_dyncom_run.cpp' object='arm_dyncom_run.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o arm_dyncom_run.lo `test -f 'dyncom/arm_dyncom_run.cpp' || echo '$(srcdir)/'`dyncom/arm_dyncom_run.cpp
+
+arm_dyncom_dec.lo: dyncom/arm_dyncom_dec.cpp
+@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT arm_dyncom_dec.lo -MD -MP -MF $(DEPDIR)/arm_dyncom_dec.Tpo -c -o arm_dyncom_dec.lo `test -f 'dyncom/arm_dyncom_dec.cpp' || echo '$(srcdir)/'`dyncom/arm_dyncom_dec.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/arm_dyncom_dec.Tpo $(DEPDIR)/arm_dyncom_dec.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dyncom/arm_dyncom_dec.cpp' object='arm_dyncom_dec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o arm_dyncom_dec.lo `test -f 'dyncom/arm_dyncom_dec.cpp' || echo '$(srcdir)/'`dyncom/arm_dyncom_dec.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo
