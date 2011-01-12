@@ -376,7 +376,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	//char *exec_file = NULL;
 	int ret = 0;
 	opterr = 0;
-	while ((c = getopt (argc, argv, "be:dcp:nl:hu")) != -1)
+	while ((c = getopt (argc, argv, "be:dc:p:nl:hu")) != -1)
 		switch (c) {
 		case 'e':
 			exec_file = optarg;
