@@ -40,6 +40,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <skyeye_log.h>
 #include <skyeye_exec.h>
 #include <skyeye_cell.h>
+#include <skyeye_pref.h>
 #include "ppc_dyncom_debug.h"
 
 #ifdef __CYGWIN__
@@ -77,7 +78,9 @@ static bool ppc_cpu_init()
                 cpu->core_num = 2;
         else
 		cpu->core_num = 0;
-
+	/* We only use one core for user mode running */
+	if(get_user_mode() == True)
+		cpu->core_num = 1;
 	if(!cpu->core_num){
 		skyeye_log(Critical_log, __FUNCTION__, "Can not get the core number or set wrong mach name?\n");
 		skyeye_exit(-1);

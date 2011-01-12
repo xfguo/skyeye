@@ -102,7 +102,9 @@ bool_t get_autoboot()
 {
 	return skyeye_pref->autoboot;
 }
-
+bool_t get_user_mode(){
+	return skyeye_pref->user_mode_sim;
+}
 void update_skyeye_pref(sky_pref_t *pref){
 	/*
 	if(skyeye_pref->module_search_dir)
