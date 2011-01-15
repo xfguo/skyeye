@@ -156,10 +156,10 @@ void SIM_start(void){
 		return;
 	}
 
-	arch_instance->init();
 	
 	/* reset all the memory */
 	mem_reset();
+	arch_instance->init();
 
 	config->mach->mach_init(arch_instance, config->mach);
 	/* reset current arch_instanc */
