@@ -300,9 +300,9 @@ cpu_set_flags_hint(cpu_t *cpu, uint32_t f)
 void
 cpu_tag(cpu_t *cpu, addr_t pc)
 {
-	update_timing(cpu, TIMER_TAG, true);
+	//update_timing(cpu, TIMER_TAG, true);
 	tag_start(cpu, pc);
-	update_timing(cpu, TIMER_TAG, false);
+	//update_timing(cpu, TIMER_TAG, false);
 }
 /**
  * @brief Save the map from native code function to entry address.
@@ -341,7 +341,7 @@ cpu_translate_function(cpu_t *cpu)
 	cpu->dyncom_engine->cur_func = cpu_create_function(cpu, "jitmain", &bb_ret, &bb_trap, &label_entry);
 
 	/* TRANSLATE! */
-	update_timing(cpu, TIMER_FE, true);
+	//update_timing(cpu, TIMER_FE, true);
 	if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP) {
 		bb_start = cpu_translate_singlestep(cpu, bb_ret, bb_trap);
 	} else if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP_BB) {
@@ -349,7 +349,7 @@ cpu_translate_function(cpu_t *cpu)
 	} else {
 		bb_start = cpu_translate_all(cpu, bb_ret, bb_trap);
 	}
-	update_timing(cpu, TIMER_FE, false);
+	//update_timing(cpu, TIMER_FE, false);
 
 	/* finish entry basicblock */
 	BranchInst::Create(bb_start, label_entry);
@@ -369,12 +369,12 @@ cpu_translate_function(cpu_t *cpu)
 	}
 
 	LOG("*** Translating...");
-	update_timing(cpu, TIMER_BE, true);
+	//update_timing(cpu, TIMER_BE, true);
 	cpu->dyncom_engine->fp[cpu->dyncom_engine->functions] = cpu->dyncom_engine->exec_engine->getPointerToFunction(cpu->dyncom_engine->cur_func);
 	//cpu->dyncom_engine->fmap[start_addr] = cpu->dyncom_engine->fp[cpu->dyncom_engine->functions];
 	save_addr_in_func(cpu, cpu->dyncom_engine->fp[cpu->dyncom_engine->functions]);
 	LOG("Generate native code for %x\n", start_addr);
-	update_timing(cpu, TIMER_BE, false);
+	//update_timing(cpu, TIMER_BE, false);
 	LOG("done.\n");
 
 	cpu->dyncom_engine->functions++;/* Bug."functions" member could not be reset. */
@@ -450,9 +450,9 @@ cpu_run(cpu_t *cpu)
 
 		//orig_pc = pc;
 		//orig_icounter = REG(SR(ICOUNTER));
-		success = false;
-		update_timing(cpu, TIMER_RUN, true);
-		breakpoint();
+		//success = false;
+		//update_timing(cpu, TIMER_RUN, true);
+		//breakpoint();
 #if PRINT_REG
 		for (int i = 0; i < 16; i++) {
 			LOG("%d:%x ", i, *(uint32_t*)((uint8_t*)cpu->rf.grf + 4*i));
@@ -470,15 +470,17 @@ cpu_run(cpu_t *cpu)
 		LOG("pc : %x\n ret : %x", cpu->f.get_pc(cpu, cpu->rf.grf), ret);
 		LOG("\n");
 #endif
-		update_timing(cpu, TIMER_RUN, false);
+		//update_timing(cpu, TIMER_RUN, false);
 		//pc = cpu->f.get_pc(cpu, cpu->rf.grf);
 		//icounter = REG(SR(ICOUNTER));
 		//pc = 0x4d495354;
 		//return ret;
 		if (ret != JIT_RETURN_FUNCNOTFOUND)
 			return ret;
+#if 0
 		if (!is_inside_code_area(cpu, pc))
 			return ret;
+#endif
 #if 0
 		/* simulator run new instructions ? */
 		if (icounter != orig_icounter) {
