@@ -96,6 +96,7 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 	cpu->info.arch_flags = arch_flags;
 	assert(!arch_func);
 	cpu->f = arch_func;
+	cpu->icounter = 0;
 
 	cpu->dyncom_engine = new dyncom_engine_t;
 	cpu->dyncom_engine->code_start = 0;
@@ -208,6 +209,7 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 	cpu->timer_total[TIMER_FE] = 0;
 	cpu->timer_total[TIMER_BE] = 0;
 	cpu->timer_total[TIMER_RUN] = 0;
+	cpu->timer_total[TIMER_OPT] = 0;
 
 	debug_func_init(cpu);
 	syscall_func_init(cpu);
@@ -361,9 +363,11 @@ cpu_translate_function(cpu_t *cpu)
 		cpu->dyncom_engine->mod->dump();
 
 	if (cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_OPTIMIZE) {
+		update_timing(cpu, TIMER_OPT, true);
 		LOG("*** Optimizing...");
 		optimize(cpu);
 		LOG("done.\n");
+		update_timing(cpu, TIMER_OPT, false);
 		if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_PRINT_IR_OPTIMIZED)
 			cpu->dyncom_engine->mod->dump();
 	}
@@ -529,6 +533,7 @@ cpu_print_statistics(cpu_t *cpu)
 	printf("fe  = %8lld\n", cpu->timer_total[TIMER_FE]);
 	printf("be  = %8lld\n", cpu->timer_total[TIMER_BE]);
 	printf("run = %8lld\n", cpu->timer_total[TIMER_RUN]);
+	printf("opt = %8lld\n", cpu->timer_total[TIMER_OPT]);
 }
 
 extern "C" void debug_output(cpu_t* cpu){

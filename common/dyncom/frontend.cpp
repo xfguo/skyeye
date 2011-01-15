@@ -591,13 +591,15 @@ arch_sqrt(cpu_t *cpu, size_t width, Value *v, BasicBlock *bb) {
 }
 /**
  * @brief Generate the llvm instruction to increase ICOUNTER
+ * FIXME:arch_inc_icounter is not reenterable 
  *
  * @param cpu CPU core structure
  * @param bb basic block to store the llvm instruction
  */
 void arch_inc_icounter(cpu_t *cpu, BasicBlock *bb)
 {
-//	LET(ICOUNTER, ADD(RS(ICOUNTER), CONST(1)));
+	Value* tmp = GET64_BY_PTR(&cpu->icounter);
+	LET64_BY_PTR(&cpu->icounter, ADD(tmp, CONST64(1)));
 }
 
 // Invoke debug_function

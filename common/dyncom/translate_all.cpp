@@ -18,6 +18,7 @@
 #include "disasm.h"
 #include "dyncom/tag.h"
 #include "translate.h"
+#include "dyncom/defines.h"
 //#include "libcpu_run.h"
 
 /**
@@ -106,8 +107,11 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
  				bb_next = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, next_pc, bb_ret, BB_TYPE_NORMAL);
 			//update pc
 			emit_store_pc(cpu, cur_bb, pc);
-		       arch_inc_icounter(cpu, cur_bb);
-#if 0// Only for debug all the execution instructions
+#if ENABLE_ICOUNTER
+			arch_inc_icounter(cpu, cur_bb);
+#endif
+// Only for debug all the execution instructions
+#if ENABLE_DEBUG_ME 
 			arch_debug_me(cpu, cur_bb);
 #endif
 

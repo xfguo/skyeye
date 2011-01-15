@@ -131,11 +131,12 @@ enum {
 };
 // @@@END_DEPRECATION
 
-#define TIMER_COUNT	4
+#define TIMER_COUNT	5
 #define TIMER_TAG	0
 #define TIMER_FE	1
 #define TIMER_BE	2
 #define TIMER_RUN	3
+#define TIMER_OPT	4
 
 // flags' types
 enum {

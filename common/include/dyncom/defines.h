@@ -16,3 +16,6 @@
 // '6' is the optimum for OpenBSD's 'date' on M88K.
 #define LIMIT_TAGGING_DFS 1
 #define FAST_MEMORY
+
+#define ENABLE_DEBUG_ME 0
+#define ENABLE_ICOUNTER 0

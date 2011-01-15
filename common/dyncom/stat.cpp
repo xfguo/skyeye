@@ -1,6 +1,8 @@
 #include "skyeye_dyncom.h"
 #if HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
+#else
+#include <time.h>
 #endif
 
 void update_timing(cpu_t *cpu, int index, bool start)
@@ -15,7 +17,7 @@ void update_timing(cpu_t *cpu, int index, bool start)
 	getrusage(RUSAGE_SELF, &r_usage);
 	usec = ((uint64_t)r_usage.ru_utime.tv_sec * 1000000) + r_usage.ru_utime.tv_usec;
 #else
-	usec = 0;
+	usec = (uint64_t)clock()/CLOCKS_PER_SEC;
 #endif
 
 	if (start)
