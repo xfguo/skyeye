@@ -27,7 +27,8 @@
 #include "ppc_dyncom_debug.h"
 
 e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
-	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 	return core;
 }
 
@@ -81,7 +82,8 @@ arch_powerpc_done(cpu_t *cpu)
 static addr_t
 arch_powerpc_get_pc(cpu_t *cpu, void *reg)
 {
-	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 
 	return core->phys_pc;
 	//return ((reg_powerpc_t *)reg)->pc;
@@ -211,7 +213,8 @@ void ppc_dyncom_init(e500_core_t* core){
 }
 
 void ppc_dyncom_run(cpu_t* cpu){
-	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 	addr_t phys_pc = 0;
 	if(ppc_effective_to_physical(core, *(addr_t*)cpu->rf.phys_pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
 		/* we donot allow mmu exception in tagging state */

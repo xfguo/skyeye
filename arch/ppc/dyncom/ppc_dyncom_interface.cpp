@@ -131,7 +131,9 @@ ppc_init_state ()
 }
 
 static void per_cpu_step(conf_object_t * running_core){
-	e500_core_t *core = (e500_core_t *)get_cast_conf_obj(running_core, "e500_core_t");
+	/* Use typecast directly for performance issue */
+	//e500_core_t *core = (e500_core_t *)get_cast_conf_obj(running_core, "e500_core_t");
+	e500_core_t *core = (e500_core_t *)running_core->obj;
 	PPC_CPU_State* cpu = get_current_cpu();
 	/* Check the second core and boot flags */
 	if(core->pir){
@@ -139,7 +141,8 @@ static void per_cpu_step(conf_object_t * running_core){
 			return;
 	}
 	debug(DEBUG_INTERFACE, "In %s, core[%d].pc=0x%x\n", __FUNCTION__, core->pir, core->pc);
-	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
+	//ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
+	ppc_dyncom_run((cpu_t*)(core->dyncom_cpu->obj));
 }
 static void per_cpu_stop(conf_object_t * core){
 }
