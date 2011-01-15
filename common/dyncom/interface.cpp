@@ -103,6 +103,11 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 	cpu->dyncom_engine->code_entry = 0;
 	cpu->dyncom_engine->tag = NULL;
 
+	/* init hash fast map */
+#ifdef HASH_FAST_MAP
+	cpu->dyncom_engine->fmap = (fast_map)malloc(sizeof(void*) * HASH_FAST_MAP_SIZE);
+	memset(cpu->dyncom_engine->fmap, 0, sizeof(addr_t) * HASH_FAST_MAP_SIZE);
+#endif
 	uint32_t i;
 	for (i = 0; i < 4; i++) {
 		cpu->dyncom_engine->tag_array[i] = NULL;
@@ -307,10 +312,17 @@ cpu_tag(cpu_t *cpu, addr_t pc)
  */
 void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 {
+#ifdef HASH_FAST_MAP
+	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
+	bbaddr_map::iterator i = bb_addr.begin();
+	for (; i != bb_addr.end(); i++)
+		cpu->dyncom_engine->fmap[i->first & 0x1fffff] = native_code_func;
+#else
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
 	for (; i != bb_addr.end(); i++)
 		cpu->dyncom_engine->fmap[i->first] = native_code_func;
+#endif
 }
 /**
  * @brief Create llvm JIT Function and translate instructions to fill the JIT Function.
@@ -416,6 +428,14 @@ cpu_run(cpu_t *cpu)
 	/* try to find the entry in all functions */
 	while(true) {
 		pc = cpu->f.get_pc(cpu, cpu->rf.grf);
+#ifdef HASH_FAST_MAP
+		fast_map hash_map = cpu->dyncom_engine->fmap;
+		pfunc = (fp_t)hash_map[pc & 0x1fffff];
+		if(pfunc)
+			do_translate = false;
+		else
+			return JIT_RETURN_FUNCNOTFOUND;
+#else
 		fast_map &func_addr = cpu->dyncom_engine->fmap;
 		fast_map::const_iterator it = func_addr.find(pc);
 		if (it != func_addr.end()) {
@@ -425,6 +445,7 @@ cpu_run(cpu_t *cpu)
 			LOG("jitfunction not found:key=0x%x\n", pc);
 			return JIT_RETURN_FUNCNOTFOUND;
 		}
+#endif
 		LOG("find jitfunction:key=0x%x\n", pc);
 
 		//orig_pc = pc;

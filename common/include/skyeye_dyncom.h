@@ -234,10 +234,16 @@ typedef void (*debug_function_t)(cpu_t*);
 typedef void (*syscall_function_t)(cpu_t*);
 
 
+#define HASH_FAST_MAP
+#define HASH_FAST_MAP_SIZE 0x100000
 typedef std::map<addr_t, BasicBlock *> bbaddr_map;
 typedef std::map<Function *, bbaddr_map> funcbb_map;
+#ifdef HASH_FAST_MAP
+typedef void** fast_map;
+#else
 /* This map save <address, native code function pointer> */
 typedef std::map<addr_t, void *> fast_map;
+#endif
 
 typedef struct dyncom_engine{
 	funcbb_map func_bb; // faster bb lookup
