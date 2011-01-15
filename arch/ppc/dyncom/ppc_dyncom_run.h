@@ -9,6 +9,7 @@
  extern "C" {
 #endif
 
+void ppc_dyncom_stop(e500_core_t* core);
 exception_t init_ppc_dyncom ();
 void ppc_dyncom_run(cpu_t* cpu);
 

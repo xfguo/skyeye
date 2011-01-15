@@ -187,10 +187,14 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->rf.phys_pc = &core->phys_pc;
 	cpu->rf.grf = core->gpr;
 	cpu->rf.srf = &core->cr;
-	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
+	cpu_set_flags_codegen(cpu, 0
+					| CPU_CODEGEN_TAG_LIMIT
+			//		| CPU_CODEGEN_OPTIMIZE
+				);
 	cpu_set_flags_debug(cpu, 0
-               // | CPU_DEBUG_PRINT_IR
-            //    | CPU_DEBUG_LOG
+				//	| CPU_DEBUG_PRINT_IR
+				//	| CPU_DEBUG_LOG
+				//	| CPU_DEBUG_PROFILE
                 );
 	/* set endian */
 	cpu->info.common_flags |= CPU_FLAG_ENDIAN_BIG;
@@ -254,7 +258,56 @@ void ppc_dyncom_run(cpu_t* cpu){
 return;
 }
 
-void ppc_dyncom_stop(){
+////**profile**////
+#define JIT_FUNCTION_PROFILE 1
+struct ppc_dyncom_profile{
+	unsigned int func_num;
+	unsigned int average_func_size;
+	unsigned int size_lt_10_func;
+	unsigned int size_lt_50_func;
+	unsigned int size_ge_50_func;
+};
+static void ppc_dyncom_profile(e500_core_t* core){
+	cpu_t* cpu = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
+	struct ppc_dyncom_profile profile;
+	memset(&profile, 0, sizeof(struct ppc_dyncom_profile));
+	printf("PROFILING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+	profile.func_num = cpu->dyncom_engine->mod->size();
+	Module::iterator it = cpu->dyncom_engine->mod->begin();
+	unsigned int tmp_size = 0;
+	unsigned int tmp_total_size = 0;
+	for(; it != cpu->dyncom_engine->mod->end(); it++){
+		Function* f = cast<Function>(it);
+		tmp_size = f->size();
+		if(tmp_size < 10)
+			profile.size_lt_10_func ++;
+		else if(tmp_size < 50)
+			profile.size_lt_50_func ++;
+		else
+			profile.size_ge_50_func ++;
+		tmp_total_size += tmp_size;
+	}
+	profile.average_func_size = tmp_total_size / profile.func_num;
+	printf("JIT Fuctions in Module: %d\n",profile.func_num);
+	printf("Average size of Function: %d\n",profile.average_func_size);
+	printf("Function size (0 , 10): %d %f\n", profile.size_lt_10_func,
+			((float)profile.size_lt_10_func)/((float)profile.func_num));
+	printf("Function size [10, 50): %d %f\n", profile.size_lt_50_func,
+			((float)profile.size_lt_50_func)/((float)profile.func_num));
+	printf("Function size [50, +~): %d %f\n", profile.size_ge_50_func,
+			((float)profile.size_ge_50_func)/((float)profile.func_num));
+	printf("\n");
+}
+void ppc_dyncom_stop(e500_core_t* core){
+	cpu_t* cpu = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
+#if JIT_FUNCTION_PROFILE
+	ppc_dyncom_profile(core);
+#endif
+#if ENABLE_ICOUNTER
+	printf("Icounter: %lld\n", cpu->icounter);
+#endif
+	if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_PROFILE)
+		cpu_print_statistics(cpu);
 }
 
 void ppc_dyncom_fini(){

@@ -3,7 +3,7 @@
 
 #include <math.h>
 
-#define START_DEBUG_ICOUNT 5000000
+#define START_DEBUG_ICOUNT -1 
 extern int ppc_dyncom_start_debug_flag;
 
 #define DEBUG_TAG					1

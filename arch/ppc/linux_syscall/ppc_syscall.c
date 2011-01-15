@@ -38,6 +38,7 @@
 #include <sys/times.h>
 #include <linux/unistd.h>			//exit_group
 
+extern void ppc_dyncom_stop(e500_core_t* core);
 struct ppc_stat64{
 	unsigned long long st_dev;
     unsigned long long st_ino;
@@ -516,6 +517,7 @@ int ppc_syscall(e500_core_t* core){
 		case TARGET_NR_exit_group:{		/* 234 */ 
 			int status = core->gpr[3];
 			dump("syscall %d exit_group(%d)\n",TARGET_NR_exit_group, status);
+			ppc_dyncom_stop(core);
 			run_command("quit");
 			break;
 		}
