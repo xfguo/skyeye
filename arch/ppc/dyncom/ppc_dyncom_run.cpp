@@ -15,6 +15,7 @@
 #include <skyeye.h>
 #include <dyncom/dyncom_llvm.h>
 #include <skyeye_pref.h>
+#include "dyncom/defines.h"
 
 #include "ppc_cpu.h"
 #include "ppc_mmu.h"
@@ -22,6 +23,7 @@
 #include "ppc_dyncom_run.h"
 #include "dyncom/memory.h"
 #include "bank_defs.h"
+#include "skyeye_ram.h"
 #include "ppc_dyncom_debug.h"
 
 e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
@@ -185,9 +187,12 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->rf.srf = &core->cr;
 	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
 	cpu_set_flags_debug(cpu, 0
-            //    | CPU_DEBUG_PRINT_IR
+               // | CPU_DEBUG_PRINT_IR
             //    | CPU_DEBUG_LOG
                 );
+	/* set endian */
+	cpu->info.common_flags |= CPU_FLAG_ENDIAN_BIG;
+ 
 	cpu->debug_func = ppc_debug_func;
 	sky_pref_t *pref = get_skyeye_pref();
 	if(pref->user_mode_sim){
@@ -197,7 +202,11 @@ void ppc_dyncom_init(e500_core_t* core){
 	else
 		cpu->syscall_func = NULL;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
+#ifdef FAST_MEMORY
+	cpu->dyncom_engine->RAM = (uint8_t*)get_dma_addr(0);
+#else
 	set_memory_operator(ppc_read_memory, ppc_write_memory);
+#endif
 	return;
 }
 

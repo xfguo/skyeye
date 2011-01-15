@@ -23,6 +23,7 @@
 #include <sim_control.h>
 #include <skyeye_types.h>
 #include <skyeye_command.h>
+#include "dyncom/defines.h"
 
 #include <sys/types.h>
 #include <unistd.h>			//read,write...
@@ -130,7 +131,11 @@ typedef struct mmap_area{
 }mmap_area_t;
 mmap_area_t *mmap_global = NULL;
 
+#ifdef FAST_MEMORY
+#define mmap_base 0x20000000
+#else
 #define mmap_base 0x50000000
+#endif
 static long mmap_next_base = mmap_base;
 
 static char mmap_mem_write(short size, int addr, uint32_t value);
@@ -150,15 +155,16 @@ static mmap_area_t* new_mmap_area(int sim_addr, int len){
 	area->bank.type = MEMTYPE_RAM;
 	area->bank.objname = "mmap";
 	addr_mapping(&area->bank);
-
-	mmap_next_base = mmap_next_base + len + 4;
-
+#ifdef FAST_MEMORY
+	area->mmap_addr = (uint8_t*)get_dma_addr(mmap_next_base);
+#else
 	area->mmap_addr = malloc(len);
 	if(area->mmap_addr == NULL){
 		printf("error mmap malloc\n");
 		exit(0);
 	}
 	memset(area->mmap_addr, 0x0, len);
+#endif
 	area->next = NULL;
 	if(mmap_global){
 		area->next = mmap_global->next;
@@ -166,6 +172,7 @@ static mmap_area_t* new_mmap_area(int sim_addr, int len){
 	}else{
 		mmap_global = area;
 	}
+	mmap_next_base = mmap_next_base + len + 1024;
 	return area;
 }
 
@@ -173,7 +180,7 @@ static mmap_area_t *get_mmap_area(int addr){
 	mmap_area_t *tmp = mmap_global;
 	while(tmp){
 		if ((tmp->bank.addr <= addr) && (tmp->bank.addr + tmp->bank.len > addr)){
-			return tmp;	
+			return tmp;
 		}
 		tmp = tmp->next;
 	}
@@ -294,8 +301,10 @@ int ppc_syscall(e500_core_t* core){
 				exit(0);
 			}
 			int i = 0;
+			uint32_t tmp32;
 			for (; i<bytes; i++){
-				bus_read(8, buff + i, tmp + i);
+				bus_read(8, buff + i, &tmp32);
+				((uint8_t*)tmp)[i] = (uint8_t)tmp32;
 			}
 			int result = write(fd, tmp, bytes);
 			core->gpr[3] = result;
