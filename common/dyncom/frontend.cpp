@@ -20,6 +20,7 @@
 #include "skyeye_dyncom.h"
 #include "dyncom/dyncom_llvm.h"
 #include "dyncom/frontend.h"
+#include "dyncom/defines.h"
 
 //////////////////////////////////////////////////////////////////////
 // GENERIC: register access
@@ -416,16 +417,17 @@ arch_store(Value *v, Value *a, BasicBlock *bb)
 Value *
 arch_bswap(cpu_t *cpu, size_t width, Value *v, BasicBlock *bb) {
 	Type const *ty = getIntegerType(width);
-	//return CallInst::Create(Intrinsic::getDeclaration(cpu->dyncom_engine->mod, Intrinsic::bswap, &ty, 1), v, "", bb);
-	return CallInst::Create(v, "", bb);
-}
+	Value* intrinsic_bswap = (Value*)Intrinsic::getDeclaration(cpu->dyncom_engine->mod, Intrinsic::bswap, &ty, 1);
+	return CallInst::Create(intrinsic_bswap, (Value*)v, "", bb);
+ }
 
 Value *
 arch_ctlz(cpu_t *cpu, size_t width, Value *v, BasicBlock *bb) {
 	Type const *ty = getIntegerType(width);
-	//return CallInst::Create(Intrinsic::getDeclaration(cpu->dyncom_engine->mod, Intrinsic::ctlz, &ty, 1), v, "", bb);
-	return CallInst::Create(v, "", bb);
-}
+	Value* intrinsic_ctlz = (Value*)Intrinsic::getDeclaration(cpu->dyncom_engine->mod, Intrinsic::ctlz, &ty, 1);
+	return CallInst::Create(intrinsic_ctlz, (Value*)v, "", bb);
+ }
+
 
 Value *
 arch_cttz(cpu_t *cpu, size_t width, Value *v, BasicBlock *bb) {
@@ -627,6 +629,18 @@ arch_debug_me(cpu_t *cpu, BasicBlock *bb)
  */
 void arch_write_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, Value *value, uint32_t size)
 {
+#ifdef FAST_MEMORY
+	if(size == 8)
+		STORE8(value, addr);
+	else if(size == 16)
+		STORE16(value, addr);
+	else if(size == 32)
+		STORE32(value, addr);
+	else{
+		printf("in %s, error size\n", __func__);
+		exit(0);
+	}
+#else
 	if (cpu->dyncom_engine->ptr_func_write_memory == NULL) {
 		return;
 	}
@@ -639,6 +653,7 @@ void arch_write_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, Value *value, ui
 	params.push_back(value);
 	params.push_back(CONST(size));
 	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_func_write_memory, params.begin(), params.end(), "", bb);
+#endif
 }
 /**
  * @brief Generate the read memory llvm IR
@@ -653,6 +668,29 @@ void arch_write_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, Value *value, ui
  */
 Value *arch_read_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, uint32_t sign, uint32_t size)
 {
+#ifdef FAST_MEMORY
+	Value* tmp;
+	if(size == 8){
+		tmp = arch_load8(cpu, addr, bb);
+		if(sign)
+			return SEXT32(tmp);
+		else
+			return ZEXT32(tmp); 
+	}
+	else if(size == 16){
+		tmp = arch_load16_aligned(cpu, addr, bb);
+		if(sign)
+			return SEXT32(tmp);
+		else
+			return ZEXT32(tmp); 
+	}
+	else if(size == 32)
+		return arch_load32_aligned(cpu, addr, bb);
+	else{
+		printf("in %s, error size\n", __func__);
+		exit(0);
+	}
+#else
 	if (cpu->dyncom_engine->ptr_func_read_memory == NULL) {
 		return NULL;
 	}
@@ -665,6 +703,7 @@ Value *arch_read_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, uint32_t sign, 
 	params.push_back(CONST(size));
 	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_func_read_memory, params.begin(), params.end(), "", bb);
 	return ret;
+#endif
 }
 /**
  * @brief Generate the invoke syscall llvm IR
