@@ -215,12 +215,14 @@ void ppc_dyncom_init(e500_core_t* core){
 void ppc_dyncom_run(cpu_t* cpu){
 	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
-	addr_t phys_pc = 0;
+	addr_t phys_pc = *(addr_t*)cpu->rf.phys_pc;
+	#if 0	
 	if(ppc_effective_to_physical(core, *(addr_t*)cpu->rf.phys_pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
 		/* we donot allow mmu exception in tagging state */
 		fprintf(stderr, "In %s, can not translate the pc 0x%x\n", __FUNCTION__, core->pc);
 		exit(-1);
 	}
+	#endif
 	debug(DEBUG_RUN, "In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, phys_pc);
 	core->phys_pc = phys_pc;
 
