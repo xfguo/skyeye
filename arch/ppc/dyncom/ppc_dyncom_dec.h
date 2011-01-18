@@ -46,6 +46,7 @@ typedef struct ppc_opc_func_s{
  * The default handler for the functions
  */
 int opc_default_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc);
+int opc_default_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 int opc_invalid_tag(cpu_t *cpu, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
 int opc_invalid_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 Value* opc_invalid_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb);

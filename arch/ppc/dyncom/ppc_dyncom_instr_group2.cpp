@@ -785,6 +785,23 @@ static int opc_cmpl_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 #endif
 }
 /*
+ *	dcbz		Data Cache Clear to Zero
+ *	.464
+ */
+static int opc_dcbz_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+        int rA, rD, rB;
+        PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	Value* base;
+	if(rA)
+		base = ADD(R(rA), R(rB));
+	else
+		base = R(rB);
+	int i = 0;
+	for(; i < 32; i += 4)
+		arch_write_memory(cpu, bb, ADD(base, CONST(i)), CONST(0), 32);
+}
+
+/*
  *	mullwx		Multiply Low Word
  *	.599
  */
@@ -1251,14 +1268,6 @@ static int opc_divwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	}
 }
 /*
- *	dcbtst		Data Cache Block Touch for Store
- *	.463
- */
-static int opc_dcbtst_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
-{
-	// NO-OP
-}
-/*
  *	mulhwx		Multiply High Word
  *	.595
  */
@@ -1333,6 +1342,24 @@ static int opc_subfcx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	NOT_TESTED();
 	return 0;
 }
+/*
+ *	subfzex		Subtract From Zero Extended
+ *	.671
+ */
+static int opc_subfzex_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	PPC_OPC_ASSERT(rB == 0);
+	Value* ca = SELECT(AND(R(XER_REGNUM), CONST(XER_CA)), CONST(1), CONST(0));
+	LET(rD, ADD(XOR(R(rA), CONST(-1)), ca));
+	LET(XER_REGNUM, SELECT(LOG_AND(LOG_NOT(R(rA)), ca), OR(R(XER_REGNUM), CONST(XER_CA)), AND(R(XER_REGNUM), CONST(~XER_CA))));
+	if (instr & PPC_OPC_Rc) {
+		// update cr0 flags
+		ppc_dyncom_update_cr0(cpu, bb, rD);
+	}
+}
+
 /*
  *	stwux		Store Word with Update Indexed
  *	.664
@@ -1556,7 +1583,12 @@ ppc_opc_func_t ppc_opc_stwux_func = {
 	opc_invalid_translate_cond,
 };
 
-ppc_opc_func_t ppc_opc_subfzex_func;//+
+ppc_opc_func_t ppc_opc_subfzex_func = {
+	opc_default_tag,
+	opc_subfzex_translate,
+	opc_invalid_translate_cond,
+
+};//+
 ppc_opc_func_t ppc_opc_addzex_func = {
 	opc_default_tag,
 	opc_addzex_translate,
@@ -1583,7 +1615,7 @@ ppc_opc_func_t ppc_opc_mullwx_func = {
 ppc_opc_func_t ppc_opc_mtsrin_func;
 ppc_opc_func_t ppc_opc_dcbtst_func = {
 	opc_default_tag,
-	opc_dcbtst_translate,
+	opc_default_translate,
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_stbux_func;
@@ -1592,7 +1624,11 @@ ppc_opc_func_t ppc_opc_addx_func = {
 	opc_addx_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_dcbt_func;
+ppc_opc_func_t ppc_opc_dcbt_func = {
+	opc_default_tag,
+	opc_default_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_lhzx_func = {
 	opc_default_tag,
 	opc_lhzx_translate,
@@ -1719,7 +1755,12 @@ ppc_opc_func_t ppc_opc_extsbx_func = {
 ppc_opc_func_t ppc_opc_tlbwe_func; /* TLB write entry */
 ppc_opc_func_t ppc_opc_icbi_func;
 ppc_opc_func_t ppc_opc_stfiwx_func;
-ppc_opc_func_t ppc_opc_dcbz_func;
+ppc_opc_func_t ppc_opc_dcbz_func = {
+	opc_default_tag,
+	opc_dcbz_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_dss_func;      /*Temporarily modify*/
 ppc_opc_func_t ppc_opc_lvsl_func;
 ppc_opc_func_t ppc_opc_lvebx_func;

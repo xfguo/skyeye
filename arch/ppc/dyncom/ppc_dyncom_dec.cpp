@@ -53,6 +53,9 @@ int opc_default_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, add
 	*next_pc = phys_addr + PPC_INSN_SIZE;
 	return PPC_INSN_SIZE;
 }
+int opc_default_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	return 0;
+}
 
 int opc_invalid_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	BAD_INSTR;
