@@ -167,7 +167,7 @@ static void ppc_debug_func(cpu_t* cpu){
  */
 extern "C" int ppc_syscall(e500_core_t* core);
 extern "C" bool_t ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a);
-static void ppc_dyncom_syscall(cpu_t* cpu){
+static void ppc_dyncom_syscall(cpu_t* cpu, uint32_t num){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	sky_pref_t* pref = get_skyeye_pref();
 	if(pref->user_mode_sim)
@@ -202,7 +202,7 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->debug_func = ppc_debug_func;
 	sky_pref_t *pref = get_skyeye_pref();
 	if(pref->user_mode_sim){
-		extern void ppc_dyncom_syscall(cpu_t* cpu);
+		extern void ppc_dyncom_syscall(cpu_t* cpu, uint32_t num);
 		cpu->syscall_func = ppc_dyncom_syscall;
 	}
 	else

@@ -460,7 +460,7 @@ ppc_opc_func_t ppc_opc_addic__func = {
 
 static int opc_sc_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
-	arch_syscall(cpu, bb);
+	arch_syscall(cpu, bb, 0);
 	return 0;
 }
 
