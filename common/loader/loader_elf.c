@@ -302,16 +302,16 @@ load_exec (const char *file, addr_type_t addr_type)
 					 bfd_errmsg (bfd_get_error()));
 					goto out;
 				}
-				if(addr_type == Phys_addr){
+				/* If only run in user mode, we load section with physical address */
+				if(addr_type == Phys_addr || get_user_mode()){
 					write_phys(bfd_section_vma (tmp_bfd, s),
                                            tmp_str, bfd_section_size (tmp_bfd,
                                                                       s));
-
 				}
 				else if(addr_type == Virt_addr){
 					write_virt (bfd_section_vma (tmp_bfd, s),
-					   tmp_str, bfd_section_size (tmp_bfd,
-								      s));
+				   		tmp_str, bfd_section_size (tmp_bfd,
+						      s));
 				}
 				else{
 					fprintf(stderr, "wrong address type %d\n", addr_type);
@@ -323,8 +323,7 @@ load_exec (const char *file, addr_type_t addr_type)
 		}
 		else {
 			/* clear .bss section if simulate applications */
-			sky_pref_t* pref = get_skyeye_pref();
-			if(pref->user_mode_sim){
+			if(get_user_mode()){
 				if(strcmp(bfd_section_name (tmp_bfd, s), ".bss") == 0){
 					unsigned int bss_addr = (unsigned int) bfd_section_vma (tmp_bfd, s);
 					unsigned int bss_size = (unsigned int) bfd_section_size (tmp_bfd, s);
