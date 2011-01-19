@@ -221,18 +221,27 @@ ppc_opc_func_t ppc_opc_stwu_func = {
  *	.435
  */
 int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
-	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	uint32 li;
 	PPC_OPC_TEMPL_I(instr, li);
-	*tag = TAG_BRANCH;
-//	*tag |= TAG_STOP;
-	/*if the branch target is out of the page, stop the tagging */
+	if (instr & PPC_OPC_LK)
+		*tag = TAG_CALL;
+	else
+		*tag = TAG_BRANCH;
+/*
+	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	debug(DEBUG_TAG, "pc=0x%x,page_begin=0x%x,page_end=0x%x\n",
-			current_core->pc,get_begin_of_page(current_core->pc),get_end_of_page(current_core->pc));
+	current_core->pc,get_begin_of_page(current_core->pc),get_end_of_page(current_core->pc));
+*/
 //	if(li < get_begin_of_page(current_core->pc) && li > get_end_of_page(current_core->pc)){
 //		*tag |= TAG_STOP;
 //	}
-	*new_pc = NEW_PC_NONE;
+	//*new_pc = NEW_PC_NONE;
+	if (!(instr & PPC_OPC_AA)){
+		*new_pc = phys_pc + li;
+	}
+	else{
+		*new_pc = li;
+	}
 	*next_pc = phys_pc + PPC_INSN_SIZE;
 	debug(DEBUG_TAG, "In %s, new_pc=0x%x\n", __FUNCTION__, *new_pc);
 	return PPC_INSN_SIZE;
@@ -273,7 +282,7 @@ int opc_bcx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *
 	if(AA)
 		*new_pc = BD;
 	else
-		*new_pc = NEW_PC_NONE;
+		*new_pc = BD + phys_pc;
 #if 0
 	if(*new_pc > get_end_of_page(phys_pc) || *new_pc < get_begin_of_page(phys_pc)){
 		*new_pc = NEW_PC_NONE;
