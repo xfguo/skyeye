@@ -173,6 +173,10 @@ void arm_dyncom_init(arm_core_t* core){
 	else
 		cpu->syscall_func = NULL;
 
+	cpu->dyncom_engine->code_start = 0x80b4;
+	cpu->dyncom_engine->code_end = 0x60000;
+	cpu->dyncom_engine->code_entry = 0x80d0;
+
 	return;
 }
 
@@ -187,9 +191,11 @@ void arm_dyncom_run(cpu_t* cpu){
 	}
 #endif
 
+#if 0
 	cpu->dyncom_engine->code_start = phys_pc;
         cpu->dyncom_engine->code_end = get_end_of_page(phys_pc);
         cpu->dyncom_engine->code_entry = phys_pc;
+#endif
 
 	int rc = cpu_run(cpu);
 	switch (rc) {
