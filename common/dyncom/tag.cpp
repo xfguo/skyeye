@@ -12,6 +12,7 @@
  */
 #include "skyeye_dyncom.h"
 #include "dyncom/tag.h"
+#include "dyncom/defines.h"
 #include "sha1.h"
 
 /*

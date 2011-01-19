@@ -412,14 +412,4 @@ API_FUNC void cpu_print_statistics(cpu_t *cpu);
 /* runs the interactive debugger */
 API_FUNC int cpu_debugger(cpu_t *cpu, debug_function_t debug_function);
 
-// Copy register set paramters into a local array this hints LLVM to
-// not care about writing back the contents too often.
-// This works particularly well with PromoteMemoryToReg optimization
-// pass, which removes the local arrays and make LLVM do the register
-// allocation for us
-//#define OPT_LOCAL_REGISTERS
-
-// DFS limit when CPU_CODEGEN_TAG_LIMIT is set by the client.
-// '6' is the optimum for OpenBSD's 'date' on M88K.
-#define LIMIT_TAGGING_DFS 1
 #endif
