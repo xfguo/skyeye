@@ -205,7 +205,7 @@ int arm_tag_continue(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *
 	*tag = TAG_CONTINUE;
 	*next_pc = pc + instr_size;
 	if(instr >> 28 != 0xe)
-		*tag |= TAG_CONDITIONAL;
+		*tag = TAG_CONDITIONAL;
 }
 
 int arm_tag_stop(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
