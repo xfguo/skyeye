@@ -64,9 +64,13 @@ struct ppc_uname{
 };
 #define SYSCALL_DEBUG 0
 #define debug(...) do { if (SYSCALL_DEBUG) printf(__VA_ARGS__); } while(0)
-#define DUMP_SYSCALL 0
-#define dump(...) do { if (DUMP_SYSCALL) printf(__VA_ARGS__); } while(0)
 
+#define DUMP_SYSCALL 0
+#if DUMP_SYSCALL
+#define dump(...) do { if (DUMP_SYSCALL) printf(__VA_ARGS__); } while(0)
+#else
+#define dump(...)
+#endif
 /**
  * @brief write a string to memory
  *
