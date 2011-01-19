@@ -50,7 +50,13 @@ int arch_powerpc_tag_instr(cpu_t *cpu, addr_t phys_pc, tag_t *tag, addr_t *new_p
 	if(!opc_func)
 		BAD_INSTR;
 	assert(opc_func->tag != NULL);
-	opc_func->tag(cpu, instr, phys_pc, tag, new_pc, next_pc);
+	if(opc_func->tag == NULL){
+		printf("Some NULL tag functions at 0x%x\n", phys_pc);	
+		opc_default_tag(cpu, instr, phys_pc,tag, new_pc, next_pc);
+	}
+	else
+		opc_func->tag(cpu, instr, phys_pc, tag, new_pc, next_pc);
+
 	*next_pc = phys_pc + instr_size;
 	if(phys_pc == END_ADDR)
 		*tag |= TAG_STOP;
