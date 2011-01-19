@@ -46,9 +46,16 @@ static int opc_bcctrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
  *	.440
  */
 int opc_bclrx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
-	*tag = TAG_COND_BRANCH;
-	*new_pc = NEW_PC_NONE;
-	*tag |= TAG_STOP;
+	uint32 BO, BI, BD;
+        PPC_OPC_TEMPL_XL(instr, BO, BI, BD);
+	/* if BO is 1z1zz, then branch always */
+	if((BO & 0x14) == 0x14)
+		*tag = TAG_RET;
+	else{
+		*tag = TAG_COND_BRANCH;
+		*new_pc = NEW_PC_NONE;
+		*tag |= TAG_STOP;
+	}
 	return PPC_INSN_SIZE;
 }
 Value* opc_bclrx_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
