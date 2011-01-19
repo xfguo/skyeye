@@ -272,6 +272,7 @@ static void ppc_dyncom_profile(e500_core_t* core){
 	struct ppc_dyncom_profile profile;
 	memset(&profile, 0, sizeof(struct ppc_dyncom_profile));
 	printf("PROFILING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+	printf("DFS : %d \n", LIMIT_TAGGING_DFS);
 	profile.func_num = cpu->dyncom_engine->mod->size();
 	Module::iterator it = cpu->dyncom_engine->mod->begin();
 	unsigned int tmp_size = 0;
