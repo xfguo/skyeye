@@ -327,11 +327,15 @@ load_exec (const char *file, addr_type_t addr_type)
 				if(strcmp(bfd_section_name (tmp_bfd, s), ".bss") == 0){
 					unsigned int bss_addr = (unsigned int) bfd_section_vma (tmp_bfd, s);
 					unsigned int bss_size = (unsigned int) bfd_section_size (tmp_bfd, s);
-					printf ("find .bss section: addr = 0x%08x  size = 0x%08x .\n", bss_addr, bss_size);
+					//printf ("find .bss section: addr = 0x%08x  size = 0x%08x .\n", bss_addr, bss_size);
+					unsigned long host_addr = get_dma_addr(bss_addr);
+					memset(host_addr, '\0', bss_size);
+					#if 0
 					int i;
 					for(i=0; i<bss_size; i++)
 						bus_write(8, bss_addr + i, 0);
-					printf("bss cleared.\n");
+					#endif
+					//printf("bss cleared.\n");
 				}
 			}else{
 #if ELF_LOADING_INFO	
