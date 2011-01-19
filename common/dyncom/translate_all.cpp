@@ -50,7 +50,7 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 		//		LOG("TRANSLATED BB %x\n", pc);
 		//	}
 		}
-		pc++;
+		pc += (cpu->info.word_size / cpu->info.byte_size);
 	}
 	LOG("bbs: %d\n", bbs);
 
