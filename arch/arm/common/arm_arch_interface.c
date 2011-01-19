@@ -172,6 +172,8 @@ arm_core_init (ARMul_State *state, int i)
 
 	if (!strcmp(p_arm_cpu->cpu_name, "arm11"))
 		state->lateabtSig = LOW;
+
+	mmu_init(state);
 }
 
 static void
