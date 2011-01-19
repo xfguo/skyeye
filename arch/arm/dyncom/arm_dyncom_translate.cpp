@@ -22,6 +22,7 @@
 #define ptr_I 	cpu->ptr_I
 using namespace llvm;
 
+int arm_tag_branch(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
 typedef int (*tag_func_t)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
 typedef int (*translate_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 typedef Value* (*translate_cond_func_t)(cpu_t *cpu, addr_t pc, BasicBlock *bb);
@@ -81,17 +82,32 @@ Value * arch_arm_translate_cond(cpu_t *cpu, addr_t pc, BasicBlock *bb)
 	return opc_func->translate_cond(cpu, instr, bb);
 }
 
+#define BIT(n) ((instr >> (n)) & 1)
+#define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc) {
-	int instr_size = INSTR_SIZE;
-	uint32_t instr;
-	bus_read(32, pc, &instr);
-	arm_opc_func_t *opc_func = arm_get_opc_func(instr);
-	if (instr)
-		opc_func->tag(cpu, pc, instr, tag, new_pc, next_pc);
-	else
-		*tag |= TAG_STOP;
-	return instr_size;
+        int instr_size = INSTR_SIZE;
+        uint32_t instr;
+        bus_read(32, pc, &instr);
+        arm_opc_func_t *opc_func = arm_get_opc_func(instr);
+        if (instr){
+                if((BITS(24,27) != 0x9) && (BITS(24,27) != 0x8) && (BITS(24,27) != 0xb) &&(BITS(24,27) != 0xa) && BITS(12,15) == 0xf){
+                        arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
+			*new_pc = NEW_PC_NONE;
+		}else if(((BITS(24,27) == 0x9) || (BITS(24,27)) == 0x8) && BIT(15) && BIT(20)){
+                        arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
+			*new_pc = NEW_PC_NONE;
+		}
+                else
+                        opc_func->tag(cpu, pc, instr, tag, new_pc, next_pc);
+        }
+        else
+                *tag |= TAG_STOP;
+
+        return instr_size;
 }
+#undef BITS
+#undef BIT
+
 
 int arch_arm_translate_instr(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
 	int instr_size = INSTR_SIZE;
@@ -101,6 +117,7 @@ int arch_arm_translate_instr(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
 	}
 	arm_opc_func_t *opc_func = arm_get_opc_func(instr);
 	opc_func->translate(cpu, instr, bb);
+
 	return instr_size;
 }
 
@@ -1063,77 +1080,77 @@ int init_arm_opc_group10(arm_opc_func_t* arm_opc_table)
 {
 	{
 		(arm_opc_table)[0x0].translate = arm_opc_trans_a0;
-		(arm_opc_table)[0x0].tag = arm_tag_continue;
+		(arm_opc_table)[0x0].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x1].translate = arm_opc_trans_a1;
-		(arm_opc_table)[0x1].tag = arm_tag_continue;
+		(arm_opc_table)[0x1].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x2].translate = arm_opc_trans_a2;
-		(arm_opc_table)[0x2].tag = arm_tag_continue;
+		(arm_opc_table)[0x2].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x3].translate = arm_opc_trans_a3;
-		(arm_opc_table)[0x3].tag = arm_tag_continue;
+		(arm_opc_table)[0x3].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x4].translate = arm_opc_trans_a4;
-		(arm_opc_table)[0x4].tag = arm_tag_continue;
+		(arm_opc_table)[0x4].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x5].translate = arm_opc_trans_a5;
-		(arm_opc_table)[0x5].tag = arm_tag_continue;
+		(arm_opc_table)[0x5].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x6].translate = arm_opc_trans_a6;
-		(arm_opc_table)[0x6].tag = arm_tag_continue;
+		(arm_opc_table)[0x6].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x7].translate = arm_opc_trans_a7;
-		(arm_opc_table)[0x7].tag = arm_tag_continue;
+		(arm_opc_table)[0x7].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x8].translate = arm_opc_trans_a8;
-		(arm_opc_table)[0x8].tag = arm_tag_continue;
+		(arm_opc_table)[0x8].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0x9].translate = arm_opc_trans_a9;
-		(arm_opc_table)[0x9].tag = arm_tag_continue;
+		(arm_opc_table)[0x9].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0xa].translate = arm_opc_trans_aa;
-		(arm_opc_table)[0xa].tag = arm_tag_continue;
+		(arm_opc_table)[0xa].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0xb].translate = arm_opc_trans_ab;
-		(arm_opc_table)[0xb].tag = arm_tag_continue;
+		(arm_opc_table)[0xb].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0xc].translate = arm_opc_trans_ac;
-		(arm_opc_table)[0xc].tag = arm_tag_continue;
+		(arm_opc_table)[0xc].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0xd].translate = arm_opc_trans_ad;
-		(arm_opc_table)[0xd].tag = arm_tag_continue;
+		(arm_opc_table)[0xd].tag = arm_tag_branch;
 	}
 
 	{
 		(arm_opc_table)[0xe].translate = arm_opc_trans_ae;
-		(arm_opc_table)[0xe].tag = arm_tag_continue;
+		(arm_opc_table)[0xe].tag = arm_tag_branch;
 	}
 
 	{
@@ -1151,77 +1168,77 @@ int init_arm_opc_group11(arm_opc_func_t* arm_opc_table)
 
 	{
 		(arm_opc_table)[0x1].translate = arm_opc_trans_b1;
-		(arm_opc_table)[0x1].tag = arm_tag_continue;
+		(arm_opc_table)[0x1].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0x2].translate = arm_opc_trans_b2;
-		(arm_opc_table)[0x2].tag = arm_tag_continue;
+		(arm_opc_table)[0x2].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0x3].translate = arm_opc_trans_b3;
-		(arm_opc_table)[0x3].tag = arm_tag_continue;
+		(arm_opc_table)[0x3].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0x4].translate = arm_opc_trans_b4;
-		(arm_opc_table)[0x4].tag = arm_tag_continue;
+		(arm_opc_table)[0x4].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0x5].translate = arm_opc_trans_b5;
-		(arm_opc_table)[0x5].tag = arm_tag_continue;
+		(arm_opc_table)[0x5].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0x6].translate = arm_opc_trans_b6;
-		(arm_opc_table)[0x6].tag = arm_tag_continue;
+		(arm_opc_table)[0x6].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0x7].translate = arm_opc_trans_b7;
-		(arm_opc_table)[0x7].tag = arm_tag_continue;
+		(arm_opc_table)[0x7].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0x8].translate = arm_opc_trans_b8;
-		(arm_opc_table)[0x8].tag = arm_tag_continue;
+		(arm_opc_table)[0x8].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0x9].translate = arm_opc_trans_b9;
-		(arm_opc_table)[0x9].tag = arm_tag_continue;
+		(arm_opc_table)[0x9].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0xa].translate = arm_opc_trans_ba;
-		(arm_opc_table)[0xa].tag = arm_tag_continue;
+		(arm_opc_table)[0xa].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0xb].translate = arm_opc_trans_bb;
-		(arm_opc_table)[0xb].tag = arm_tag_continue;
+		(arm_opc_table)[0xb].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0xc].translate = arm_opc_trans_bc;
-		(arm_opc_table)[0xc].tag = arm_tag_continue;
+		(arm_opc_table)[0xc].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0xd].translate = arm_opc_trans_bd;
-		(arm_opc_table)[0xd].tag = arm_tag_continue;
+		(arm_opc_table)[0xd].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0xe].translate = arm_opc_trans_be;
-		(arm_opc_table)[0xe].tag = arm_tag_continue;
+		(arm_opc_table)[0xe].tag = arm_tag_call;
 	}
 
 	{
 		(arm_opc_table)[0xf].translate = arm_opc_trans_bf;
-		(arm_opc_table)[0xf].tag = arm_tag_continue;
+		(arm_opc_table)[0xf].tag = arm_tag_call;
 	}
 }
 
