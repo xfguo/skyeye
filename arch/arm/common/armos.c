@@ -233,7 +233,8 @@ SWIflen (ARMul_State * state, ARMword fh)
 * The emulator calls this routine when a SWI instruction is encuntered. The *
 * parameter passed is the SWI number (lower 24 bits of the instruction).    *
 \***************************************************************************/
-
+//static int brk_static =  0x00082008 + 0x000bbf38;
+static int brk_static =  0x10000000;
 unsigned
 ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 {
@@ -273,8 +274,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 		state->Reg[0] = close (state->Reg[0]);
 		return TRUE;
 
-	case SWI_Seek:
-		{
+	case SWI_Seek:{
 			/* We must return non-zero for failure */
 			state->Reg[0] =
 				lseek (state->Reg[0], state->Reg[1],
@@ -282,8 +282,26 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 			return TRUE;
 		}
 
+	case SWI_ExitGroup:
 	case SWI_Exit:
 		exit(0);
+		return TRUE;
+
+	case SWI_Times:{
+		time_t now;
+		time(&now);
+		bus_write(32, state->Reg[0], now);
+		state->Reg[0] = now;
+
+		return TRUE;
+		}
+
+	case SWI_Brk:
+		if(state->Reg[0]){
+			brk_static = state->Reg[0];
+			state->Reg[0] = 0;
+		} else
+			state->Reg[0] = brk_static;
 		return TRUE;
 
 	case SWI_Break:
@@ -303,6 +321,10 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 				SWI_Mmap, addr, len, prot, flag, fd, offset, state->Reg[0]);
 		return TRUE;
 	}
+
+	case SWI_Munmap:
+		state->Reg[0] = 0;
+		return TRUE;
 
 	case SWI_Breakpoint:
 		//chy 2005-09-12 change below line
