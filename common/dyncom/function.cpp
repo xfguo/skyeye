@@ -265,6 +265,8 @@ emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 		// decode P
 		Value *flags = new LoadInst(cpu->ptr_xr[0], "", false, bb);
 		arch_flags_decode(cpu, flags, bb);
+
+		STORE(TRUNC1(LOAD(cpu->ptr_xr[0])),cpu->ptr_Z); /* fix me use xr tmp */
 	}
 	
 	// frontend specific part
@@ -321,6 +323,7 @@ spill_fp_reg_state_helper(cpu_t *cpu, uint32_t count, uint32_t width,
 static void
 spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 {
+
 	// frontend specific part.
 	if (cpu->f.spill_reg_state != NULL)
 		cpu->f.spill_reg_state(cpu, bb);
@@ -329,6 +332,8 @@ spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 	if (cpu->info.psr_size != 0) {
 		Value *flags = arch_flags_encode(cpu, bb);
 		//new StoreInst(flags, cpu->ptr_xr[0], false, bb);
+
+		STORE(ZEXT32(LOAD(cpu->ptr_Z)), cpu->ptr_xr[0]); /* fix me use xr tmp */
 	}
 
 	// GPRs
