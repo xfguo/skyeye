@@ -43,12 +43,19 @@ static char mmap_mem_read(short size, int addr, uint32_t * value);
 #define SWI_Rename                 0x26
 #define SWI_Break                  0x11
 
+#define SWI_Times		   0x2b
+#define SWI_Brk			   0x2d
+
 #define SWI_Mmap                   0x5a
+#define SWI_Munmap                   0x5b
+
 
 #define SWI_GetUID32               0xc7
 #define SWI_GetGID32               0xc8
 #define SWI_GetEUID32              0xc9
 #define SWI_GetEGID32              0xca
+
+#define SWI_ExitGroup		   0xf8
 
 #if 0
 #define SWI_Time                   0xd
