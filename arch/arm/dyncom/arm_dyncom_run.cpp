@@ -8,12 +8,14 @@
 #include <skyeye_obj.h>
 #include <skyeye.h>
 #include <bank_defs.h>
+#include <skyeye_pref.h>
 
 #include "armdefs.h"
 #include "memory.h"
 #include "dyncom/memory.h"
+#include "dyncom/frontend.h"
 #include "arm_dyncom_translate.h"
-#define MAX_REGNUM 15
+#define MAX_REGNUM 16
 
 uint32_t get_end_of_page(uint32 phys_addr){
 	const uint32 page_size = 4 * 1024;
@@ -28,6 +30,7 @@ void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
 static uint32_t arch_arm_read_memory(cpu_t *cpu, addr_t addr,uint32_t size)
 {
 	uint32_t value;
+
 	bus_read(size, (int)addr, &value);
 	return value;
 }
@@ -43,8 +46,7 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 {
 	arm_opc_func_init();
 	// Basic Information
-	info->name = "arm";
-	info->full_name = "arm_dyncom";
+	info->name = "arm"; info->full_name = "arm_dyncom";
 
 	// This architecture is biendian, accept whatever the
 	// client wants, override other flags.
@@ -66,7 +68,7 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	//info->register_count[CPU_REG_XR] = PPC_XR_SIZE;
 	info->register_count[CPU_REG_XR] = 16;
 	info->register_size[CPU_REG_XR] = 32;
-	info->register_count[CPU_REG_SPR] = 7;
+	info->register_count[CPU_REG_SPR] = 8;
 	info->register_size[CPU_REG_SPR] = 32;
 	info->psr_size = 32;
 	info->flags_count = 4;
@@ -76,8 +78,8 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 
 	//debug
 	cpu_set_flags_debug(cpu, 0
-               | CPU_DEBUG_PRINT_IR
-               | CPU_DEBUG_LOG
+          //     | CPU_DEBUG_PRINT_IR
+          //     | CPU_DEBUG_LOG
                );
         cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
 	/* Initilize different register set for different core */
@@ -135,8 +137,22 @@ static arch_func_t arm_arch_func = {
 
 static void arm_debug_func(cpu_t* cpu){
 	printf("In %s, phys_pc=0x%x, r1 is 0x%x, r3 is 0x%x\n", __FUNCTION__, *(addr_t*)cpu->rf.phys_pc,((unsigned int*)cpu->rf.grf)[1],((unsigned int*)cpu->rf.grf)[3]);
-	return;
 }
+
+extern "C" unsigned arm_dyncom_SWI (ARMul_State * state, ARMword number);
+extern "C" void arm_dyncom_Abort(ARMul_State * state, ARMword vector);
+
+static void arm_dyncom_syscall(cpu_t* cpu, uint32_t num){
+
+	arm_core_t* core = (arm_core_t*)cpu->cpu_data;
+	sky_pref_t* pref = get_skyeye_pref();
+
+	if(pref->user_mode_sim)
+		arm_dyncom_SWI(core, num);
+	else
+		ARMul_Abort(core,ARMul_SWIV);
+}
+
 void arm_dyncom_init(arm_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, arm_arch_func);
 
@@ -149,6 +165,14 @@ void arm_dyncom_init(arm_core_t* core){
 	cpu->cpu_data = (conf_object_t*)core;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	cpu->debug_func = arm_debug_func;
+
+	sky_pref_t *pref = get_skyeye_pref();
+	if(pref->user_mode_sim){
+		cpu->syscall_func = arm_dyncom_syscall;
+	}
+	else
+		cpu->syscall_func = NULL;
+
 	return;
 }
 

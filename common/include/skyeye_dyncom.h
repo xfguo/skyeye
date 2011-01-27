@@ -232,7 +232,7 @@ typedef void (*debug_function_t)(cpu_t*);
  * type of the syscall callback; second parameter is
  * pointer to CPU specific register struct
  */
-typedef void (*syscall_function_t)(cpu_t*);
+typedef void (*syscall_function_t)(cpu_t*, uint32_t);
 
 
 #define HASH_FAST_MAP

@@ -714,13 +714,22 @@ Value *arch_read_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, uint32_t sign, 
  * @param bb basic block to store llvm IR
  */
 void
-arch_syscall(cpu_t *cpu, BasicBlock *bb)
+arch_syscall(cpu_t *cpu, BasicBlock *bb, uint32_t num)
 {
 	if (cpu->dyncom_engine->ptr_arch_func[1] == NULL)
 		return;
+#if 0
 	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
 	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
 	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
+#endif
+	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
+	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
+	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
+	std::vector<Value *> params;
+	params.push_back(v_cpu_ptr);
+	params.push_back(CONST(num));
 	// XXX synchronize cpu context!
-	CallInst::Create(cpu->dyncom_engine->ptr_arch_func[1], v_cpu_ptr, "", bb);
+	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_arch_func[1], params.begin(), params.end(), "", bb);
+	//CallInst::Create(cpu->dyncom_engine->ptr_arch_func[1], v_cpu_ptr, "", bb);
 }

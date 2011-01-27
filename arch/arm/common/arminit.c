@@ -45,6 +45,11 @@ extern int debugmode;
 extern int remote_interrupt( void );
 
 
+void arm_dyncom_Abort(ARMul_State * state, ARMword vector)
+{
+	ARMul_Abort(state, vector);
+}
+
 /***************************************************************************\
 *         Call this routine once to set up the emulator's tables.           *
 \***************************************************************************/

@@ -563,15 +563,17 @@ static void debug_func_init(cpu_t *cpu){
 	cpu->dyncom_engine->ptr_arch_func[0] = debug_func;
 }
 
-extern "C" int syscall_func(cpu_t *cpu){
+extern "C" int syscall_func(cpu_t *cpu, uint32_t num){
 	if(cpu->syscall_func != NULL)
-		cpu->syscall_func(cpu);
+		cpu->syscall_func(cpu, num);
 };
 static void syscall_func_init(cpu_t *cpu){
 	//types
 	std::vector<const Type*> type_func_syscall_args;
 	PointerType *type_intptr = PointerType::get(cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX()), 0);
+	const IntegerType *type_i32 = IntegerType::get(_CTX(), 32);
 	type_func_syscall_args.push_back(type_intptr);	/* intptr *cpu */
+	type_func_syscall_args.push_back(type_i32);	/* unsinged int */
 	FunctionType *type_func_syscall_callout = FunctionType::get(
 		Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
 		type_func_syscall_args,	/* Params */
