@@ -9,13 +9,25 @@
 using namespace llvm;
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 #define BIT(n) ((instr >> (n)) & 1)
-#define BAD	do{printf("meet BAD at %s\n", __FUNCTION__ ); exit(0);}while(0);
+#define BAD	do{printf("meet BAD at %s, instr is %x\n", __FUNCTION__, instr ); exit(0);}while(0);
 #define ptr_N	cpu->ptr_N
 #define ptr_Z	cpu->ptr_Z
 #define ptr_C	cpu->ptr_C
 #define ptr_V	cpu->ptr_V
 #define ptr_I 	cpu->ptr_I
 #define	ptr_CPSR cpu->ptr_gpr[16]
+
+/* for MUL instructions */
+/*xxxx xxxx xxxx 1111 xxxx xxxx xxxx xxxx */
+#define RDHi ((instr >> 16) & 0xF)
+/*xxxx xxxx xxxx xxxx 1111 xxxx xxxx xxxx */
+#define RDLo ((instr >> 12) & 0xF)
+/*xxxx xxxx xxxx 1111 xxxx xxxx xxxx xxxx */
+#define MUL_RD ((instr >> 16) & 0xF)
+/*xxxx xxxx xxxx xxxx 1111 xxxx xxxx xxxx */
+#define MUL_RN ((instr >> 12) & 0xF)
+/*xxxx xxxx xxxx xxxx xxxx 1111 xxxx xxxx */
+#define RS ((instr >> 8) & 0xF)
 
 /*xxxx xxxx xxxx xxxx 1111 xxxx xxxx xxxx */
 #define RD ((instr >> 12) & 0xF)
@@ -777,7 +789,7 @@ void Dec_BIC(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* for 0x1c 0x2d */
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
-	Value *ret = AND(op1,XOR(op2, CONST(-1)));
+	Value *ret = AND(op1,XOR(op2, CONST(0xffffffff)));
 	LET(RD, ret);
 
 	if(SBIT)
@@ -842,13 +854,30 @@ void Dec_MVN(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		set_condition(cpu, ret, bb, op1, op2);
 }
 
+void Dec_MLA(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	/* for 0x00, 0x01*/
+	Value *op1 = R(RM);
+	//Value *op2 = OPERAND;
+	Value *op2 = R(RS);
+	Value *op3 = R(MUL_RN);
+	Value *ret = ADD(MUL(op1,op2), op3);
+
+	LET(MUL_RD, ret);
+
+	if(SBIT)
+		set_condition(cpu, ret, bb, CONST(0), CONST(0));
+}
+
 void Dec_MUL(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* for 0x00, 0x01*/
-	Value *op1 = R(RN);
-	Value *op2 = OPERAND;
+	Value *op1 = R(RM);
+	//Value *op2 = OPERAND;
+	Value *op2 = R(RS);
 	Value *ret = MUL(op1,op2);
-	LET(RD, ret);
+
+	LET(MUL_RD, ret);
 
 	if(SBIT)
 		set_condition(cpu, ret, bb, op1, op2);
@@ -875,7 +904,7 @@ void Dec_RSB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	LET(RD, ret);
 
 	if(SBIT)
-		set_condition(cpu, ret, bb, op1, op2);
+		set_condition(cpu, ret, bb, op2, op1);
 }
 
 void Dec_SUB(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -895,6 +924,9 @@ void Dec_TEQ(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* for 0x13, 0x33 */
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
+
+	if(RN == 15)
+		op1 = ADD(op1, CONST(8));
 	Value *ret = XOR(op1,op2);
 
 	set_condition(cpu, ret, bb, op1, op2);
@@ -915,9 +947,6 @@ void Dec_TST(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	set_condition(cpu, ret, bb, op1, op2);
 }
 
-#define RDHi ((instr >> 16) & 0xF)
-#define RDLo ((instr >> 12) & 0xF)
-#define RS ((instr >> 8) & 0xF)
 void Dec_UMULL(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* for 0x08 0x09 */
@@ -977,6 +1006,7 @@ int arm_opc_trans_00(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	}
 	if (BITS (4, 7) == 9) {
 		/* MUL? */ /* ?S = 0 */
+		Dec_MUL(cpu, instr, bb);
 
 	}
 	else {
@@ -991,13 +1021,15 @@ int arm_opc_trans_00(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_01(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* ANDS reg and MULS */
-	if ((BITS (4, 11) & 0xF9) == 0x9)
+	if ((BITS (4, 11) & 0xF9) == 0x9){
 		/* LDR register offset, no write-back, down, post indexed.  */
 		BAD;
 		return 0;
+	}
+
 	if (BITS (4, 7) == 9) {
 		/* MULS  S = 1? */
-		BAD;
+		Dec_MUL(cpu, instr, bb);
 	}
 	else {
 		/* ANDS reg.  */
@@ -1013,15 +1045,16 @@ int arm_opc_trans_02(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		/* STRH register offset, write-back, down, post indexed. */
 		/* P = 0; U = 0; I = 0; W =1 */
 		BAD;
-		return 0 ;
+		return 0;
 	}
 
 	if (BITS (4, 7) == 9) {	/* MLA */
-		BAD;
-
+		Dec_MLA(cpu, instr, bb);
+		return 0;
 	}
 	else {	/* EOR */
 		Dec_EOR(cpu, instr, bb);
+		return 0;
 	}
 
 }
@@ -1037,7 +1070,8 @@ int arm_opc_trans_03(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 	if (BITS (4, 7) == 9) {
 		/* MLAS */
-		BAD;
+		Dec_MLA(cpu, instr, bb);
+		return 0;
 	}
 	else {
 		/* EORS */
@@ -1653,6 +1687,8 @@ int arm_opc_trans_1c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		return 0;
 	}
 	/* BIC reg */
+
+	Dec_BIC(cpu, instr, bb);
 	return 0;
 }
 
@@ -2020,7 +2056,9 @@ int arm_opc_trans_41(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Load Word, No WriteBack, Post Dec, Immed.  */
 	/* I = 0, P = 0, U = 0, B = 0, W = 0*/
-	BAD;
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	return 0;
 
 }
 
@@ -2166,29 +2204,40 @@ int arm_opc_trans_53(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/*LDR , WriteBack, Pre Inc,  Regist - Immed */
 	/*I = 0, P = 1, U = 0, B = 0, W = 1 */
-	BAD;
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+
+	return 0;
 }
 
 int arm_opc_trans_54(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/*STRB , No WriteBack, Pre Inc, Regist - Immed */
 	/*I = 0, P = 1, U = 0, W = 0, B = 1 */
-	BAD;
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
 
+	return 0;
 }
 
 int arm_opc_trans_55(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/*LDRB, No WriteBack, Pre Inc, Regist - Immed */
 	/*I = 0, P = 1, U = 0, W = 0, B = 1 */
-	BAD;
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+
+	return 0;
 }
 
 int arm_opc_trans_56(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/*STRB, No WriteBack, Pre Inc, Regist - Immed */
 	/*I = 0, P = 1, U = 0, W = 0, B = 1 */
-	BAD;
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+
+	return 0;
 
 }
 
@@ -2250,6 +2299,7 @@ int arm_opc_trans_5d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* I = 0, P = 1, U = 1, B = 1, W = 0 */
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
+	return 0;
 }
 
 int arm_opc_trans_5e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2264,8 +2314,9 @@ int arm_opc_trans_5f(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* LDRB, WriteBack, Pre Inc, Immed. */
 	/* I = 0, P = 1, U = 1, B = 1, W = 1 */
-	BAD;
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	return 0;
 }
 
 int arm_opc_trans_60(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2468,8 +2519,9 @@ int arm_opc_trans_7b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int arm_opc_trans_7c(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Store Byte, No WriteBack, Pre Inc, Reg.  */
-	BAD;
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	return 0;
 }
 
 int arm_opc_trans_7d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2482,6 +2534,7 @@ int arm_opc_trans_7d(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
+	return 0;
 }
 
 int arm_opc_trans_7e(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2560,6 +2613,8 @@ int arm_opc_trans_88(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* Store, No WriteBack, Post Inc.  */
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
+
+	return 0;
 }
 
 int arm_opc_trans_89(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2568,13 +2623,16 @@ int arm_opc_trans_89(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
 
+	return 0;
 }
 
 int arm_opc_trans_8a(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Store, WriteBack, Post Inc.  */
-	BAD;
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
 
+	return 0;
 }
 
 int arm_opc_trans_8b(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -2968,14 +3026,17 @@ int arm_opc_trans_c9(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* LDC Load , No WriteBack , Post Inc.  */
 	/* P = 0, U = 1, N = 0, W  = 0 */
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
 	return 0;
 }
 
 int arm_opc_trans_ca(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* Store , WriteBack , Post Inc.  */
-	BAD;
-
+	Value *addr = GetAddr(cpu, instr, bb);
+	LoadStore(cpu,instr,bb,addr);
+	return 0;
 }
 
 int arm_opc_trans_cb(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
