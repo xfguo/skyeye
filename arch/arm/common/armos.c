@@ -424,19 +424,22 @@ static char mmap_mem_write(short size, int addr, uint32_t value){
 	int offset = addr - bank_tmp->addr;
 	switch(size){
 		case 8:{
-			uint8_t value_endian = value;
+			//uint8_t value_endian = value;
+			uint8_t value_endian = (uint8_t)value;
 			*(uint8_t *)&(((char *)area_tmp->mmap_addr)[offset]) = value_endian;
 			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,value_endian);
 			break;
 		}
 		case 16:{
-			uint16_t value_endian = half_to_BE((uint16_t)value);
+			//uint16_t value_endian = half_to_BE((uint16_t)value);
+			uint16_t value_endian = ((uint16_t)value);
 			*(uint16_t *)&(((char *)area_tmp->mmap_addr)[offset]) = value_endian;
 			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,value_endian);
 			break;
 		}
 		case 32:{
-			uint32_t value_endian = word_to_BE((uint32_t)value);
+			//uint32_t value_endian = word_to_BE((uint32_t)value);
+			uint32_t value_endian = ((uint32_t)value);
 			*(uint32_t *)&(((char *)area_tmp->mmap_addr)[offset]) = value_endian;
 			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,value_endian);
 			break;
@@ -463,17 +466,20 @@ static char mmap_mem_read(short size, int addr, uint32_t * value){
 	int offset = addr - bank_tmp->addr;
 	switch(size){
 		case 8:{
-			*(uint8_t *)value = *(uint8_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]);
-			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,*(uint8_t*)value);
+			//*(uint8_t *)value = *(uint8_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]);
+			*value = *(uint8_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]);
+			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,*(uint32_t*)value);
 			break;
 		}
 		case 16:{
-			*(uint16_t *)value = half_from_BE(*(uint16_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]));
+			//*(uint16_t *)value = half_from_BE(*(uint16_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]));
+			*value = (*(uint16_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]));
 			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,*(uint16_t*)value);
 			break;
 		}
 		case 32:
-			*value = (uint32_t)word_from_BE(*(uint32_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]));
+			//*value = (uint32_t)word_from_BE(*(uint32_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]));
+			*value = (uint32_t)(*(uint32_t *)&(((uint8_t *)area_tmp->mmap_addr)[offset]));
 			debug("in %s,size=%d,addr=0x%x,value=0x%x\n",__FUNCTION__,size,addr,*(uint32_t*)value);
 			break;
 		default:
