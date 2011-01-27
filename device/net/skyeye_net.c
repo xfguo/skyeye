@@ -93,6 +93,14 @@ net_setup (struct device_desc *dev, void *option)
 		net_dev->net_write = vnet_write;
 		net_dev->net_wait_packet = vnet_wait_packet;
 		break;
+	case NET_MOD_VHUB:
+		net_dev->net_open = vhub_open;
+		net_dev->net_close = vhub_close;
+		net_dev->net_read = vhub_read;
+		net_dev->net_write = vhub_write;
+		net_dev->net_wait_packet = vhub_wait_packet;
+		break;
+
 	}
 	
 	ret = net_dev->net_open (net_dev);
@@ -209,6 +217,9 @@ do_net_option (skyeye_option_t * this_option, int num_params,
 			}
 			else if (!strncmp ("vnet", value, strlen (value))) {
 				net_opt.ethmod = NET_MOD_VNET;
+			}
+			else if (!strncmp("vhub", value, strlen(value))) {
+				net_opt.ethmod = NET_MOD_VHUB;
 			}
 		}
 	}
