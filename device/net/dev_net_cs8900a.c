@@ -205,12 +205,14 @@ eeprom_reset (struct device_desc *dev)
 	memcpy (io->eeprom, eeprom_val, sizeof (eeprom_val));
 
 	/* others */
-	io->eeprom_writable = 0;
+	io->eeprom_writable = 1;
 
 	io->ctrl_st[CtrlStNum (PP_SelfST)] |= EEPROMpresent | EEPROMOK;
 
 	memcpy (io->ieee_addr, net_dev->macaddr, 6);
 
+	printf ("In epprom_reset(io->ieee_addr) mac addr=%x:%x:%x:%x:%x:%x\n", io->ieee_addr[0], io->ieee_addr[1], io->ieee_addr[2], io->ieee_addr[3], io->ieee_addr[4], io->ieee_addr[5]);
+	printf ("In epprom_reset(net->macaddr) mac addr=%x:%x:%x:%x:%x:%x\n", net_dev->macaddr[0], net_dev->macaddr[1], net_dev->macaddr[2], net_dev->macaddr[3], net_dev->macaddr[4], net_dev->macaddr[5]);
 }
 
 static void
@@ -291,6 +293,7 @@ net_cs8900a_reset (struct device_desc *dev)
 	struct net_cs8900a_io *io = (struct net_cs8900a_io *) dev->data;
 	int i;
 
+    eeprom_reset(dev);
 	/* set ProductID: rev_d */
 	io->product_id[0] = EISA_REG_CODE;
 	io->product_id[1] = CS8900A | (REV_D << 8);
@@ -307,7 +310,8 @@ net_cs8900a_reset (struct device_desc *dev)
 	}
 	io->ctrl_st[CtrlStNum (PP_BusST)] |= Rdy4TxNOW;
 
-	eeprom_reset (dev);
+    /*init smdk2410_macaddr*/
+	memcpy (io->smdk2410_macaddr, net_dev->macaddr, 6);
 
 	/* init tx/rx buffer */
 	if (!io->rx_frame)
@@ -348,7 +352,10 @@ net_cs8900a_read_halfword (struct device_desc *dev, uint32 addr, uint16 * data)
 {
 	struct net_device *net_dev = (struct net_device *) dev->dev;
 	struct net_cs8900a_io *io = (struct net_cs8900a_io *) dev->data;
-
+#if 0
+	printf ("In net_cs8900a_read_halfword(io->ieee_addr) mac addr=%x:%x:%x:%x:%x:%x\n", io->ieee_addr[0], io->ieee_addr[1], io->ieee_addr[2], io->ieee_addr[3], io->ieee_addr[4], io->ieee_addr[5]);
+	printf ("In net_cs8900a_read_halfword(net->macaddr) mac addr=%x:%x:%x:%x:%x:%x\n", net_dev->macaddr[0], net_dev->macaddr[1], net_dev->macaddr[2], net_dev->macaddr[3], net_dev->macaddr[4], net_dev->macaddr[5]);
+#endif
 	int offset = (uint16) (addr - dev->base);
 	int ret = ADDR_HIT;
 
@@ -392,7 +399,15 @@ net_cs8900a_read_halfword (struct device_desc *dev, uint32 addr, uint16 * data)
 				(io->
 				 ieee_addr[io->pp_address - PP_IA + 1] << 8);
 			break;
-		case PP_ISQ:
+
+		case PP_MAC:
+		case PP_MAC + 2:
+		case PP_MAC + 4:
+			*data = io->smdk2410_macaddr[io->pp_address - PP_MAC] |
+				(io->
+				 smdk2410_macaddr[io->pp_address - PP_MAC + 1] << 8);
+			break;
+	case PP_ISQ:
 			isq_read (dev, data);
 			break;
 
@@ -421,6 +436,10 @@ net_cs8900a_write_halfword (struct device_desc *dev, uint32 addr, uint16 data)
 {
 	struct net_device *net_dev = (struct net_device *) dev->dev;
 	struct net_cs8900a_io *io = (struct net_cs8900a_io *) dev->data;
+#if 0
+	printf ("In net_cs8900a_write_halfword mac addr=%x:%x:%x:%x:%x:%x\n", io->ieee_addr[0], io->ieee_addr[1], io->ieee_addr[2], io->ieee_addr[3], io->ieee_addr[4], io->ieee_addr[5]);
+	printf ("In net_cs8900a_write_halfword(net->macaddr) mac addr=%x:%x:%x:%x:%x:%x\n", net_dev->macaddr[0], net_dev->macaddr[1], net_dev->macaddr[2], net_dev->macaddr[3], net_dev->macaddr[4], net_dev->macaddr[5]);
+#endif
 
 	int offset = (uint16) (addr - dev->base);
 	int ret = ADDR_HIT;
@@ -462,7 +481,14 @@ net_cs8900a_write_halfword (struct device_desc *dev, uint32 addr, uint16 data)
 			io->ieee_addr[io->pp_address - PP_IA + 1] =
 				(data >> 8) & 0xff;
 			break;
-		case PP_TxCMD:
+	    case PP_MAC:
+		case PP_MAC + 2:
+		case PP_MAC + 4:
+		    io->smdk2410_macaddr[io->pp_address - PP_MAC] = data & 0xff;
+			io->smdk2410_macaddr[io->pp_address - PP_MAC + 1] =
+				(data >> 8) & 0xff;
+			break;
+	case PP_TxCMD:
 			io->tx_cmd = data;
 			break;
 		case PP_TxLength:
