@@ -173,8 +173,8 @@ void arm_dyncom_init(arm_core_t* core){
 	else
 		cpu->syscall_func = NULL;
 
-	cpu->dyncom_engine->code_start = 0x80b4;
-	cpu->dyncom_engine->code_end = 0x60000;
+	cpu->dyncom_engine->code_start = 0x8000;
+	cpu->dyncom_engine->code_end = 0x100000;
 	cpu->dyncom_engine->code_entry = 0x80d0;
 
 	return;
