@@ -89,6 +89,7 @@
 #define PP_TxCMD			0x0144	/* Section 4.4.11  Transmit Command */
 #define PP_TxLength			0x0146	/* Section 4.5.2   Transmit Length */
 #define PP_IA				0x0158	/* Section 4.6.2   Individual Address (IEEE Address) */
+#define PP_MAC				0x0200	/* Section 4.6.2   Mac Address for smdk2410 */
 #define PP_RxStatus			0x0400	/* Section 4.7.1   Receive Status */
 #define PP_RxLength			0x0402	/* Section 4.7.1   Receive Length (in bytes) */
 #define PP_RxFrame			0x0404	/* Section 4.7.2   Receive Frame Location */
@@ -356,6 +357,7 @@ typedef struct net_cs8900a_io
 	/* Address Filter Registers */
 	uint8 hash_table[8];
 	uint8 ieee_addr[6];
+    uint8 smdk2410_macaddr[6];
 
 
 	/* Frame Location Registers */
