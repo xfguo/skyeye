@@ -665,6 +665,110 @@ Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	else	\
 		return R(RM);	\
 }while(0)
+
+#if 1
+/* 0 */
+Value *Data_ope_Reg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+{
+	if(!shift_imm){ /* Register */
+		//return R(RM);
+		OPERAND_RETURN_CHECK_PC;
+	}else{	/* logic shift left by imm */
+		return SHL(R(RM), CONST(shift_imm));
+	}
+}
+
+/* 1 */
+Value *Data_ope_LogLReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+{
+	/* logic shift left by reg ICMP_ULE(shamt, CONST(32)) ?????? */
+	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_UGE(shamt, CONST(32)), CONST(0), SHL(R(RM), shamt)));
+}
+
+/* 2 */
+Value *Data_ope_LogRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+{
+	/* logic shift right by imm */
+	if(!shift_imm)
+		return CONST(0);
+	else
+		return LSHR(R(RM), CONST(shift_imm));
+}
+
+/* 3 */
+Value *Data_ope_LogRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+{
+	/* logic shift right by reg*/
+	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_UGE(shamt, CONST(32)), CONST(0), LSHR(R(RM), shamt)));
+}
+
+/* 4 */
+Value *Data_ope_AriRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+{
+	/* shift right by imm */
+	if(!shift_imm)
+		SELECT(LSHR(R(RM), CONST(31)), CONST(0xffffffff), CONST(0));
+	else
+		return ASHR(R(RM), CONST(shift_imm));
+}
+
+/* 5 */
+Value *Data_ope_AriRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+{
+	/* arth shift right by reg */
+	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM),
+			SELECT(ICMP_ULT(shamt, CONST(32)), ASHR(R(RM), shamt),
+				SELECT(LSHR(R(RM), CONST(31)), CONST(0xffffffff), CONST(0))));
+}
+
+/* 6 */
+Value *Data_ope_RotRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+{
+	if(!shift_imm){
+		/* Rotate right with extend */
+		return ROTL(OR(SHL(ptr_C, CONST(31)), ASHR(R(RM), CONST(1))), CONST(1));
+	}else{
+		/* Rotate right by imm */
+		return ROTL(R(RM), CONST(shift_imm));
+	}
+}
+
+/* 7 */
+Value *Data_ope_RotRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+{
+	Value *sham = AND(R(BITS(8, 11)), CONST(0xf));
+	/* Rotate right by reg */
+	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_EQ(sham, CONST(0)), R(RM), ROTL(R(RM), sham)));
+}
+
+Value *(*Data_operand[8])(cpu_t*, uint32_t, BasicBlock *, uint32_t, Value*) = {Data_ope_Reg, Data_ope_LogLReg, Data_ope_LogRImm, Data_ope_LogRReg, Data_ope_AriRImm, Data_ope_AriRReg, Data_ope_RotRImm, Data_ope_RotRReg};
+
+Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
+{
+	uint32_t shift = BITS(4, 6);
+	uint32_t shift_imm = BITS(7,11);
+	Value *shamt = AND(R(BITS(8,11)), CONST(0xff));
+
+	if(I){
+		/* 32-bit immediate */
+		uint32_t immed_8 = instr & 0xFF;
+		int rotate_imm = ((instr >> 8) & 0xF) << 1;
+		/*
+		if(!rotate_imm)
+			new StoreInst(ptr_C, shifter_carry_out, bb);
+		else
+			new StoreInst(AND(ASHR(CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm))),
+							CONST(31)), CONST(1)), shifter_carry_out, bb);
+		*/
+		return CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm)));
+	}
+	else{
+		/* operand with BIT 4 ~ 6 */
+		return (Data_operand[shift])(cpu, instr, bb, shift_imm, shamt);
+	}
+}
+#endif
+#if 0
 Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 {
 
@@ -729,6 +833,7 @@ Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
                 }
         }
 }
+#endif
 
 Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 {
