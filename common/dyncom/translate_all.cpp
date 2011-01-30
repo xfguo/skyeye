@@ -105,8 +105,14 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 			/* get not-taken basic block */
 			if (tag & (TAG_CONDITIONAL | TAG_ZEROVERHEADLOOP | TAG_POSTCOND | TAG_WINDOWCHECK | TAG_LAST_INST))
  				bb_next = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, next_pc, bb_ret, BB_TYPE_NORMAL);
-			//update pc
+#if ENABLE_DEBUG_ME /**/
 			emit_store_pc(cpu, cur_bb, pc);
+#else
+			if(!(tag & TAG_CONTINUE))
+				//update pc
+				emit_store_pc(cpu, cur_bb, pc);
+#endif
+
 #if ENABLE_ICOUNTER
 			arch_inc_icounter(cpu, cur_bb);
 #endif
