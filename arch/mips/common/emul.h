@@ -3,6 +3,7 @@
 
 #include "cache.h"
 #include "cpu.h"
+#include <skyeye_types.h>
 
 /* 16 bit implementation and revision fields.  The upper 8 bits are 0x20
  * for R3000. The lower 8 bits should distinguish the
@@ -219,7 +220,13 @@ typedef struct MIPS_State_s{
 
 	unsigned bigendSig;
 	int irq_pending;
+
+	conf_object_t *dyncom_cpu;
+	uint32_t step;
+
 }MIPS_State;
+
+typedef MIPS_State mips_core_t;
 
 void reset(int warm);
 
@@ -250,7 +257,7 @@ void store_right(UInt32 x, VA va, int syscmd);		// SDR, SWR
 
 /* Complete any pending memory operations */
 //void sync();
-void process_reset(MIPS_State* mstate);
+extern void process_reset(MIPS_State* mstate);
 void process_exception(MIPS_State* mstate, UInt32 cause, int vec);
 
 /* Set the Coprocessor 0 timer interrupt */
@@ -276,5 +283,9 @@ int decode_swc1(MIPS_State* mstate, Instr instr);
 /* Some debugging help */
 void dump_gpr_registers() ;
 void dump_fpr_registers() ;
+
+/* Some declaration */
+int branch_delay_slot(MIPS_State* mstate);
+
 
 #endif //end of _EMUL_H__

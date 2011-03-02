@@ -1,7 +1,18 @@
-#include "libcpu.h"
+//#include "libcpu.h"
 #include "mips_internal.h"
 #include "mips_interface.h"
-#include "frontend.h"
+//#include "frontend.h"
+
+#include <skyeye_dyncom.h>
+#include <skyeye_types.h>
+#include <skyeye_obj.h>
+#include <skyeye.h>
+#include <bank_defs.h>
+#include <skyeye_pref.h>
+
+#include "memory.h"
+#include "dyncom/memory.h"
+#include "dyncom/frontend.h"
 
 static void
 arch_mips_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)

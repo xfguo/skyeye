@@ -94,6 +94,7 @@ typedef UInt64  ClockValue;
 	mstate->lo = (y);\
 }
 
+#if 0
 #define multiply(a, b) \
 {\
 	const int n = 8 * sizeof(typeof(a));\
@@ -101,12 +102,14 @@ typedef UInt64  ClockValue;
 	unsigned long long _z = _x * _y;\
 	MulResult(bits(_z, 2*n-1, n), bits(_z, n-1, 0));\
 }
+#endif
 
 #define DivResult(x,y) \
 {\
 	mstate->lo = x;\
 	mstate->hi = y;\
 }
+#if 0
 #define divide(a, b) \
 {\
     	const size_t n = 8 * sizeof(typeof(a));\
@@ -122,6 +125,7 @@ typedef UInt64  ClockValue;
 		DivResult(a / b, a % b)\
     	}\
 }
+#endif
 
 
 #endif //end of _SKYEYE_MIPS_INTTYPES_H_

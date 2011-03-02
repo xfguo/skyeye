@@ -1,19 +1,31 @@
-#include "libcpu.h"
+//#include "libcpu.h"
 #include "mips_internal.h"
 #include "mips_interface.h"
-#include "frontend.h"
+//#include "frontend.h"
+#include <skyeye_dyncom.h>
+#include <skyeye_types.h>
+#include <skyeye_obj.h>
+#include <skyeye.h>
+#include <bank_defs.h>
+#include <skyeye_pref.h>
+
+#include "dyncom/memory.h"
+#include "dyncom/frontend.h"
+#include "mips_types.h"
+#include "../common/emul.h"
+
 
 static uint32_t arch_mips_read_memory(cpu_t *cpu, addr_t addr, uint32_t size)
 {
 
 }
 
-static uint32_t arch_mips_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size)
+static void arch_mips_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size)
 {
 
 }
 
-static void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
+void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
 {
 	cpu->dyncom_engine->flags_codegen = f;
 }
@@ -85,7 +97,7 @@ arch_mips_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	//debug
 	cpu_set_flags_debug(cpu, 0
 		| CPU_DEBUG_PRINT_IR
-		| COU_DEBUG_LOG
+		| CPU_DEBUG_LOG
 	);
 	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
 
@@ -130,6 +142,7 @@ arch_func_t arch_func_mips = {
 	arch_mips_disasm_instr,
 	arch_mips_translate_cond,
 	arch_mips_translate_instr,
+	NULL, /*arch_mips_translate_loop_helper*/
 	// idbg support
 	arch_mips_get_psr,
 	arch_mips_get_reg,
@@ -158,7 +171,8 @@ void mips_dyncom_init(mips_core_t *core)
 
 	sky_pref_t *pref = get_skyeye_pref();
 	if(pref->user_mode_sim){
-		cpu->syscall_func = arm_dyncom_syscall;
+		//cpu->syscall_func = arm_dyncom_syscall;
+		cpu->syscall_func = NULL;
 	}
 	else
 		cpu->syscall_func = NULL;
@@ -181,7 +195,7 @@ void mips_dyncom_run(cpu_t *cpu)
 			break;
 		case JIT_RETURN_SINGLESTEP:
 		case JIT_RETURN_FUNCNOTFOUND:
-			cpu_tag(cpu, core->Reg[15]);
+			cpu_tag(cpu, core->gpr[15]);
 			cpu->dyncom_engine->functions = 0;
 			cpu_translate(cpu);
 

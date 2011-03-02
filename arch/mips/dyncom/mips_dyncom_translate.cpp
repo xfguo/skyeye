@@ -2,10 +2,13 @@
 
 #define OPT_LOCAL_REGISTERS //XXX
 
-#include "libcpu.h"
-#include "libcpu_llvm.h"
-#include "frontend.h"
+//#include "libcpu.h"
+#include <skyeye_dyncom.h>
+//#include "libcpu_llvm.h"
+#include "dyncom/dyncom_llvm.h"
+#include "dyncom/frontend.h"
 #include "mips_internal.h"
+#include "bank_defs.h"
 
 using namespace llvm;
 
@@ -35,10 +38,13 @@ using namespace llvm;
 // tagging
 //////////////////////////////////////////////////////////////////////
 
-#include "tag.h"
+#include "dyncom/tag.h"
 int arch_mips_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc) {
-	uint32_t instr = INSTR(pc);
+	//uint32_t instr = INSTR(pc);
+	uint32_t instr;
+	if(bus_read(32, pc, &instr)){
 
+	}
 	switch(instr >> 26) {
 		case 0x00: //INCPU_SPECIAL
 			switch(instr & 0x3F) {
@@ -286,7 +292,11 @@ arch_mips_get_sa(cpu_t *cpu, uint32_t instr, uint32_t bits, BasicBlock *bb) {
 Value *
 arch_mips_translate_cond(cpu_t *cpu, addr_t pc, BasicBlock *bb)
 {
-	uint32_t instr = INSTR(pc);
+	//uint32_t instr = INSTR(pc);
+	uint32_t instr;
+	if(bus_read(32, pc, &instr)){
+
+	}
 
 	LOG("cond (%08llx) %08x\n", pc, instr);
 
@@ -326,8 +336,12 @@ arch_mips_translate_instr(cpu_t *cpu, addr_t pc, BasicBlock *bb)
 
 //LOG("%s:%d %p, %p\n", __func__, __LINE__, bb_dispatch, bb);
 
-	uint32_t instr = INSTR(pc);
+	//uint32_t instr = INSTR(pc);
+	uint32_t instr;
 
+	if(bus_read(32, pc, &instr)){
+
+	}
 	LOG("translating (%08llx) %08x\n", pc, instr);
 
 	switch(instr >> 26) {

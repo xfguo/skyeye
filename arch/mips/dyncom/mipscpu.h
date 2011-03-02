@@ -28,7 +28,7 @@ typedef struct MIPS_CPU_State_s {
 	/* The core id that boot from
 	*/
 	uint32_t boot_core_id;
-}ARM_CPU_State;
+}MIPS_CPU_State;
 
 static inline MIPS_CPU_State* get_current_cpu(){
 	machine_config_t* mach = get_current_mach();
