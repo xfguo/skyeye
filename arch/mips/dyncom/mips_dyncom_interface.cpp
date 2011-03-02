@@ -168,6 +168,7 @@ mips_cpu_init()
 	for(i = 0; i < cpu->core_num; i++){
 		MIPS_State* core = &cpu->core[i];
 		mips_core_init(core, i);
+		mips_dyncom_init(core);
 		skyeye_exec_t* exec = create_exec();
 		exec->priv_data = get_conf_obj_by_cast(core, "MIPS_State");
 		exec->run = (void (*)(conf_object_t*))per_cpu_step;
