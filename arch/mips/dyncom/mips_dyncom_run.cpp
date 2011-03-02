@@ -17,12 +17,14 @@
 
 static uint32_t arch_mips_read_memory(cpu_t *cpu, addr_t addr, uint32_t size)
 {
-
+	uint32_t result;
+	bus_read(size, addr, &result);
+	return result;
 }
 
 static void arch_mips_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size)
 {
-
+	bus_write(size, addr, value);
 }
 
 void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
@@ -45,20 +47,13 @@ arch_mips_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	info->common_flags |= CPU_FLAG_HARDWIRE_GPR0;
 	info->common_flags |= CPU_FLAG_HARDWIRE_FPR0;
 	// The byte size is 8bits.
-	// The float size is 64bits.
 	info->byte_size = 8;
 	info->float_size = 80;
-	if (info->arch_flags & CPU_MIPS_IS_64BIT) {
-		// The word size is 64bits.
-		// The address size is 64bits.
-		info->word_size = 64;
-		info->address_size = 64; //XXX actually it's 32!
-	} else {
-		// The word size is 32bits.
-		// The address size is 32bits.
-		info->word_size = 32;
-		info->address_size = 32;
-	}
+	// The word size is 32bits.
+	// The address size is 32bits.
+	info->word_size = 32;
+	info->address_size = 32;
+
 	// Page size is 4K or 16M
 	info->min_page_size = 4096;
 	info->max_page_size = 16777216;
@@ -70,39 +65,8 @@ arch_mips_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	info->register_count[CPU_REG_XR] = 2;
 	info->register_size[CPU_REG_XR] = info->word_size;
 
-	if (info->arch_flags & CPU_MIPS_IS_64BIT) {
-		reg_mips64_t *reg;
-		reg = (reg_mips64_t*)malloc(sizeof(reg_mips64_t));
-		for (int i=0; i<32; i++)
-			reg->r[i] = 0;
-		reg->pc = 0;
-
-		cpu->rf.pc = &reg->pc;
-		cpu->rf.grf = reg;
-	} else {
-#if 0
-		reg_mips32_t *reg;
-		reg = (reg_mips32_t*)malloc(sizeof(reg_mips32_t));
-		for (int i=0; i<32; i++)
-			reg->r[i] = 0;
-		reg->pc = 0;
-
-		cpu->rf.pc = &reg->pc;
-		cpu->rf.grf = reg;
-#endif
-	}
-
 	cpu->redirection = false;
 
-	//debug
-	cpu_set_flags_debug(cpu, 0
-		| CPU_DEBUG_PRINT_IR
-		| CPU_DEBUG_LOG
-	);
-	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
-
-	set_memory_operator(arch_mips_read_memory, arch_mips_write_memory);
-	LOG("%d bit MIPS initialized.\n", info->word_size);
 }
 
 static void
@@ -165,13 +129,20 @@ void mips_dyncom_init(mips_core_t *core)
 	cpu->rf.frf = core->fpr;
 	cpu->rf.srf = core->cp0;
 
+	cpu_set_flags_debug(cpu, 0
+		| CPU_DEBUG_PRINT_IR
+		| CPU_DEBUG_LOG
+	);
+	cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT);
+
 	cpu->cpu_data = (conf_object_t*)core;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	cpu->debug_func = mips_debug_func;
-
 	sky_pref_t *pref = get_skyeye_pref();
+	set_memory_operator(arch_mips_read_memory, arch_mips_write_memory);
+
 	if(pref->user_mode_sim){
-		//cpu->syscall_func = arm_dyncom_syscall;
+		//cpu->syscall_func = mips_dyncom_syscall;
 		cpu->syscall_func = NULL;
 	}
 	else
