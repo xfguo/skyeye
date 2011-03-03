@@ -129,9 +129,11 @@ mips_core_init(MIPS_State *state, int i)
 
 	mstate->cp0[SR] = 0x40004;
 
+#if 0
 	init_icache();
 	init_dcache();
 	init_tlb();
+#endif
 }
 
 static void per_cpu_step(mips_core_t * core){
