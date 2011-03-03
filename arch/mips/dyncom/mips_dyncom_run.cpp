@@ -14,11 +14,20 @@
 #include "mips_types.h"
 #include "../common/emul.h"
 
-
 static uint32_t arch_mips_read_memory(cpu_t *cpu, addr_t addr, uint32_t size)
 {
 	uint32_t result;
-	bus_read(size, addr, &result);
+	uint32_t pa = addr;
+	/* if pa is located at kseg0 */
+	if(pa >= 0x80000000 && pa < 0xA0000000)
+		pa = pa & ~0x80000000;
+
+	/* if pa is located at kseg1 */
+	if(pa >= 0xa0000000 && pa < 0xC0000000)
+		pa = pa & ~0xE0000000;
+
+	bus_read(size, pa, &result);
+
 	return result;
 }
 
