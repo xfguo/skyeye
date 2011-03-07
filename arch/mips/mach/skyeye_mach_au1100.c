@@ -28,6 +28,7 @@
 #include "../common/inttypes.h"
 #include "../common/emul.h"
 #include "../common/cpu.h"
+#include "../common/mips_cpu.h"
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -36,7 +37,6 @@
 #include "skyeye_uart.h"
 //#include "au1000.h"
 
-extern MIPS_State* mstate;
 typedef struct gpio_ctrl_s{
 	uint32_t sys_trioutrd;
 	uint32_t sys_outrd;
@@ -179,6 +179,7 @@ typedef struct au1100_io_s {
 static au1100_io_t io;
 
 static void update_int(){
+	MIPS_State* mstate = get_current_core();
 	if(io.int_ctrl[0].req0int & 0x1){
 		//printf("hardware int happened!\n");
 		mstate->cp0[Cause] |= 1 << Cause_IP2;
@@ -279,7 +280,8 @@ au1100_io_read_byte(void * state, UInt32 addr)
 {
 	UInt32 ret;
 
-	MIPS_State * mstate = (MIPS_State *)state;
+	//MIPS_State * mstate = (MIPS_State *)state;
+	MIPS_State* mstate = get_current_core();
 	switch (addr) {
 		default:
 			fprintf(stderr,"I/O err in %s, addr=0x%x, pc=0x%x\n", __FUNCTION__, addr, mstate->pc);
@@ -293,7 +295,8 @@ static UInt32
 au1100_io_read_halfword(void * state, UInt32 addr)
 {
 	UInt32 ret;
-	MIPS_State * mstate = (MIPS_State *)state;
+	/*MIPS_State * mstate = (MIPS_State *)state;*/
+	MIPS_State* mstate = get_current_core();
 	switch (addr) {
 		default:
 			fprintf(stderr, "I/O err in %s, addr=0x%x, pc=0x%x\n", __FUNCTION__, addr, mstate->pc);
@@ -308,6 +311,7 @@ au1100_io_read_word(void * state, UInt32 addr)
 	
 	UInt32 ret;
 	//MIPS_State * mstate = (MIPS_State *)state;
+	MIPS_State* mstate = get_current_core();
 	 /* uart write word */
         if(addr >= 0x11100000 && addr <= (0x11400000 + 0x100)){
                 return au1100_uart_read_word((addr & 0x600000) >> 20, state, addr & 0xfff);
@@ -349,10 +353,10 @@ au1100_io_write_byte(void * state, UInt32 addr, UInt32 data)
 	unsigned char c = data & 0xff;
 
 //	MIPS_State * mstate = (MIPS_State *)state;
+	MIPS_State* mstate = get_current_core();
 	switch (addr) {
 		default:
 			{
-			extern MIPS_State * mstate;
 			fprintf(stderr, "I/O err in %s, addr=0x%x, pc=0x%x\n", __FUNCTION__, addr, mstate->pc);
                         //skyeye_exit(-1);
 			}
@@ -372,7 +376,7 @@ au1100_io_write_halfword(void * state, UInt32 addr, UInt32 data)
 			break;
 		default:
 			{
-			extern MIPS_State * mstate;
+			MIPS_State* mstate = get_current_core();
 			fprintf(stderr, "I/O err in %s, addr=0x%x,pc=0x%x\n", __FUNCTION__, addr, mstate->pc);
                         //skyeye_exit(-1);
 			}
@@ -436,7 +440,6 @@ static void au1100_uart_write_word(int index, void * state, UInt32 offset, UInt3
 }
 static void au1100_ic_write_word(int index, void * state, UInt32 offset, UInt32 data){
 	int_ctrl_t * int_ctrl_p = &io.int_ctrl[index];
-	MIPS_State * curr_state = (MIPS_State*)state;
 	 switch (offset) {
 		case 0x40:
 			int_ctrl_p->cfg0set = data;
@@ -506,7 +509,6 @@ static void au1100_ic_write_word(int index, void * state, UInt32 offset, UInt32 
 static void
 au1100_io_write_word(void * state, UInt32 addr, UInt32 data)
 {
-	//MIPS_State * curr_state = (MIPS_State*)state;
 	/* Interrupt controller 0 write word */
 	if(addr >= 0x10400000 && addr <= (0x10400000 + 0x80))	{
 		au1100_ic_write_word(0,state, addr - 0x10400000, data);
@@ -568,7 +570,7 @@ au1100_io_write_word(void * state, UInt32 addr, UInt32 data)
 
 		default:
 			{
-			extern MIPS_State * mstate;
+			MIPS_State* mstate = get_current_core();
 			fprintf(stderr, "I/O err in %s, addr=0x%x,pc=0x%x\n", __FUNCTION__, addr, mstate->pc);
 			//skyeye_exit(-1);
 			}
@@ -606,7 +608,7 @@ au1100_io_reset(machine_config_t *mach)
 void
 au1100_mach_init (void * arch_instance, machine_config_t * this_mach)
 {
-	extern MIPS_State * mstate;
+	MIPS_State* mstate = get_current_core();
 	 
 	io.uart[0].linestat = 0x20; /* according to 8250 uart spec, this bit should be THRE */
 	/*init io  value */
