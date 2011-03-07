@@ -1,4 +1,5 @@
 #include "emul.h"
+#include "mips_cpu.h"
 /*
         mips_regdefs.c - necessary mips definition for skyeye debugger
         Copyright (C) 2003 Skyeye Develop Group

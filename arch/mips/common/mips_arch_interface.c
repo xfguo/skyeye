@@ -13,14 +13,18 @@
 */
 
 #include "skyeye_config.h"
+#include "skyeye_exec.h"
+#include "skyeye_cell.h"
+#include "skyeye_arch.h"
 #include "skyeye_options.h"
 #include "emul.h"
 #include <stdlib.h>
 #include "mipsdef.h"
 #include <stdio.h>
+#include <stdbool.h>
 #include "mips_regformat.h"
-
-MIPS_State* mstate;
+#include "mips_cpu.h"
+//MIPS_State* mstate;
 static char *arch_name = "mips";
 mips_mem_config_t mips_mem_config;
 extern mips_mem_state_t mips_mem;
@@ -156,8 +160,103 @@ mips_mem_write(UInt32 pa, const UInt32* data, int len)
 	
 }
 
+static void
+per_cpu_stop(conf_object_t *running_core)
+{
+	mips_core_t* core = (mips_core_t *)get_cast_conf_obj(running_core, "mips_core_t");
+}
+
+static void
+per_cpu_step(conf_object_t *running_core)
+{
+	mips_core_t* mstate = (mips_core_t *)get_cast_conf_obj(running_core, "mips_core_t");
+	MIPS_CPU_State* cpu = get_current_cpu();
+	mstate->gpr[0] = 0;
+
+	/* Check for interrupts. In real hardware, these have a priority lower
+	 * than all exceptions, but simulating this effect is too hard to be
+	 * worth the effort (interrupts and resets are not meant to be
+	 * delivered accurately anyway.)
+         */
+	if(mstate->irq_pending)
+	{
+		mips_trigger_irq(mstate);
+	}
+
+	/* Look up the ITLB. It's not clear from the manuals whether the ITLB
+	 * stores the ASIDs or not. I assume it does. ITLB has the same size
+	 * as in the real hardware, mapping two 4KB pages.  Because decoding a
+	 * MIPS64 virtual address is far from trivial, ITLB and DTLB actually
+	 * improve the simulator's performance: something I cannot say about
+	 * caches and JTLB.
+	*/
+
+	PA pa; //Shi yang 2006-08-18
+	VA va;
+	Instr instr;
+	int next_state;
+	va = mstate->pc;
+	mstate->cycle++;
+	if(translate_vaddr(mstate, va, instr_fetch, &pa) == TLB_SUCC){
+		mips_mem_read(pa, &instr, 4);
+		next_state = decode(mstate, instr);
+		//skyeye_exit(-1);
+	}
+	else{
+		//fprintf(stderr, "Exception when get instruction!\n");
+	}
+
+	/* NOTE: mstate->pipeline is also possibely set in decode function */
+
+	static int flag = 0;
+	if(va == 0x40acb8)
+		flag = 0;
+	if(flag && skyeye_logfd)
+		//fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x, sp=0x%x, ra=0x%x,s1=0x%x, v0=0x%x\n", instr, pa, va, mstate->gpr[29], mstate->gpr[31],mstate->gpr[17], mstate->gpr[2]);
+		fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x, a0=0x%x, k1=0x%x, t0=0x%x, ra=0x%x, s4=0x%x, gp=0x%x\n", instr, pa, va, mstate->gpr[4], mstate->gpr[27], mstate->gpr[8], mstate->gpr[31], mstate->gpr[20], mstate->gpr[28]);
+		//fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x,v0=0x%x,t0=0x%x\n", instr, pa, va, mstate->gpr[2], mstate->gpr[8]);
+	/*if(mips_mem.rom[0][(0x1179a00 >> 2)] != 0){
+		if(mips_mem.rom[0][(0x1179a00 >> 2)] != 0x81179b28)
+			fprintf(stderr, "Value changed:0x81179a00 = 0x%x,pc=0x%x\n", mips_mem.rom[0][(0x1179a00 >> 2)],mstate->pc);
+	}*/
+
+	switch (mstate->pipeline) {
+		case nothing_special:
+			mstate->pc += 4;
+			break;
+		case branch_delay:
+			mstate->pc = mstate->branch_target;
+			break;
+		case instr_addr_error:
+			process_address_error(mstate, instr_fetch, mstate->branch_target);
+		case branch_nodelay: /* For syscall and TLB exp, we donot like to add pc */
+			mstate->pipeline = nothing_special;
+			return; /* do nothing */
+	}
+	mstate->pipeline = next_state;
+	/* if timer int is not mask and counter value is equal to compare value */
+	if(mstate->cp0[Count]++ >= mstate->cp0[Compare]){
+			/* update counter value in cp0 */
+			mstate->cp0[Count] = 0;
+
+		/* if interrupt is enabled? */
+		if((mstate->cp0[SR] & (1 << SR_IEC)) && (mstate-> cp0[SR] & 1 << SR_IM7)){
+			if(!(mstate->cp0[Cause] & 1 << Cause_IP7) && (!(mstate->cp0[SR] & 0x2)))
+			{
+				//fprintf(stderr, "counter=0x%x,pc=0x%x\n", mstate->cp0[Count], mstate->pc);
+				/* Set counter interrupt bit in IP section of Cause register */
+				mstate->cp0[Cause] |= 1 << Cause_IP7;
+			/* Set ExcCode to zero in Cause register */
+				process_exception(mstate, EXC_Int, common_vector);
+			}
+		}
+	}
+	//skyeye_config.mach->mach_io_do_cycle (mstate);
+	//exec_callback();
+}
+
 static void 
-init_icache()
+init_icache(mips_core_t* mstate)
 {
 	int i;
 	for(i = 0; i < Icache_log2_sets; i++)
@@ -168,7 +267,7 @@ init_icache()
 }
 
 static void 
-init_dcache()
+init_dcache(mips_core_t* mstate)
 {
 	int i;
 	for(i = 0; i < Dcache_log2_sets; i++)
@@ -178,7 +277,7 @@ init_dcache()
 }
 
 static void 
-init_tlb()
+init_tlb(mips_core_t* mstate)
 {
 	int i; 
 	for(i = 0;i < tlb_map_size + 1; i++)
@@ -187,12 +286,11 @@ init_tlb()
 	}
 }
 
-
 static void 
-mips_init_state()
+mips_core_init(mips_core_t* mstate,int core_id)
 {
 	set_bit(mstate->mode, 2);
-	mstate = (MIPS_State* )malloc(sizeof(MIPS_State));
+/*	mstate = (MIPS_State* )malloc(sizeof(MIPS_State)); */
 	if (!mstate) {
 		fprintf (stderr, "malloc error!\n");
 		skyeye_exit (-1);
@@ -209,25 +307,63 @@ mips_init_state()
 
 	mstate->cp0[SR] = 0x40004;
 	
-	init_icache();
-	init_dcache();
-	init_tlb();
+	init_icache(mstate);
+	init_dcache(mstate);
+	init_tlb(mstate);
 
-	 /* mach init */
-	//printf("Not finished porting.\n");
-#if 0
-	if(skyeye_config.mach->mach_init)
-        	skyeye_config.mach->mach_init (mstate, skyeye_config.mach);
-	else{
-		fprintf(stderr, "skyeye arch is not initializd correctly.\n");
+	return true;
+}
+
+static void
+mips_cpu_init()
+{
+	MIPS_CPU_State* cpu = skyeye_mm_zero(sizeof(MIPS_CPU_State));
+	machine_config_t* mach = get_current_mach();
+	mach->cpu_data = get_conf_obj_by_cast(cpu, "MIPS_CPU_State");
+	if(!mach->cpu_data)
+		return false;
+
+	cpu->core_num = 1;
+	if(!cpu->core_num){
+		fprintf(stderr, "ERROR:you need to set numbers of core in mach_init.\n");
 		skyeye_exit(-1);
 	}
-#endif		
+	else
+		cpu->core = skyeye_mm(sizeof(mips_core_t) * cpu->core_num);
+
+	if(!cpu->core){
+		fprintf(stderr, "Can not allocate memory for mips core.\n");
+		skyeye_exit(-1);
+	}
+	else
+		printf("%d core is initialized.\n", cpu->core_num);
+
+	int i;
+	for(i = 0; i < cpu->core_num; i++){
+		mips_core_t* core = &cpu->core[i];
+		mips_core_init(core, i);
+		skyeye_exec_t* exec = create_exec();
+		exec->priv_data = get_conf_obj_by_cast(core, "mips_core_t");
+		exec->run = per_cpu_step;
+		exec->stop = per_cpu_stop;
+		add_to_default_cell(exec);
+	}
+
+	cpu->boot_core_id = 0;
+	return true;
+}
+
+static void
+mips_init_state()
+{
+	mips_cpu_init();
 }
 
 static void 
 mips_reset_state()
 {
+	mips_core_t* mstate = get_current_core();
+
 	mips_mem_reset();
 
     	if (!mstate->warm) {
@@ -278,103 +414,32 @@ mips_trigger_irq(MIPS_State* mstate)
 	
 }
 
+
 static void 
 mips_step_once()
 {
-	mstate->gpr[0] = 0;
-	
-	/* Check for interrupts. In real hardware, these have a priority lower
-	 * than all exceptions, but simulating this effect is too hard to be
-	 * worth the effort (interrupts and resets are not meant to be
-	 * delivered accurately anyway.)
-         */
-	if(mstate->irq_pending)
-	{
-		mips_trigger_irq(mstate);
+	int i;
+	MIPS_CPU_State* cpu = get_current_cpu();
+	for( i = 0; i < cpu->core_num; i ++ ){
+		per_cpu_step(&cpu->core[i]);
 	}
 	
-	/* Look up the ITLB. It's not clear from the manuals whether the ITLB
-	 * stores the ASIDs or not. I assume it does. ITLB has the same size
-	 * as in the real hardware, mapping two 4KB pages.  Because decoding a
-	 * MIPS64 virtual address is far from trivial, ITLB and DTLB actually
-	 * improve the simulator's performance: something I cannot say about
-	 * caches and JTLB.
-   	 */
-
-	PA pa; //Shi yang 2006-08-18
-	VA va;
-	Instr instr;
-	int next_state;
-	va = mstate->pc;
-	mstate->cycle++;
-	if(translate_vaddr(mstate, va, instr_fetch, &pa) == TLB_SUCC){
-		mips_mem_read(pa, &instr, 4);
-		next_state = decode(mstate, instr);	
-		//skyeye_exit(-1);
-	}
-	else{
-		//fprintf(stderr, "Exception when get instruction!\n");
-	}
-
-	/* NOTE: mstate->pipeline is also possibely set in decode function */
-
-	static int flag = 0;
-	if(va == 0x40acb8)
-		flag = 0;
-	if(flag && skyeye_logfd)
-		//fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x, sp=0x%x, ra=0x%x,s1=0x%x, v0=0x%x\n", instr, pa, va, mstate->gpr[29], mstate->gpr[31],mstate->gpr[17], mstate->gpr[2]);
-		fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x, a0=0x%x, k1=0x%x, t0=0x%x, ra=0x%x, s4=0x%x, gp=0x%x\n", instr, pa, va, mstate->gpr[4], mstate->gpr[27], mstate->gpr[8], mstate->gpr[31], mstate->gpr[20], mstate->gpr[28]);
-		//fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x,v0=0x%x,t0=0x%x\n", instr, pa, va, mstate->gpr[2], mstate->gpr[8]);
-	/*if(mips_mem.rom[0][(0x1179a00 >> 2)] != 0){
-		if(mips_mem.rom[0][(0x1179a00 >> 2)] != 0x81179b28)
-			fprintf(stderr, "Value changed:0x81179a00 = 0x%x,pc=0x%x\n", mips_mem.rom[0][(0x1179a00 >> 2)],mstate->pc);
-	}*/
-
-	switch (mstate->pipeline) {
-		case nothing_special:
-	    		mstate->pc += 4;
-	    		break;
-		case branch_delay:
-		    	mstate->pc = mstate->branch_target;
-		    	break;
-		case instr_addr_error:
-		    	process_address_error(mstate, instr_fetch, mstate->branch_target);
-		case branch_nodelay: /* For syscall and TLB exp, we donot like to add pc */
-			mstate->pipeline = nothing_special;
-			return; /* do nothing */
-	}
-	mstate->pipeline = next_state;
-	/* if timer int is not mask and counter value is equal to compare value */
-	if(mstate->cp0[Count]++ >= mstate->cp0[Compare]){
-			/* update counter value in cp0 */
-			mstate->cp0[Count] = 0;
-	
-		/* if interrupt is enabled? */
-		if((mstate->cp0[SR] & (1 << SR_IEC)) && (mstate-> cp0[SR] & 1 << SR_IM7)){
-			if(!(mstate->cp0[Cause] & 1 << Cause_IP7) && (!(mstate->cp0[SR] & 0x2)))
-			{
-				//fprintf(stderr, "counter=0x%x,pc=0x%x\n", mstate->cp0[Count], mstate->pc);
-				/* Set counter interrupt bit in IP section of Cause register */
-				mstate->cp0[Cause] |= 1 << Cause_IP7;
-			/* Set ExcCode to zero in Cause register */
-				process_exception(mstate, EXC_Int, common_vector);
-			}
-		}
-	}
-	//skyeye_config.mach->mach_io_do_cycle (mstate);	
-	//exec_callback();
 }
 
 static void 
 mips_set_pc(UInt32 addr)
 {
-	mstate->pc = addr;
+	MIPS_CPU_State* cpu = get_current_cpu();
+	int i;
+	for( i = 0; i < cpu->core_num; i ++ )
+		cpu->core[i].pc = addr;
 }
 
 static UInt32 
 mips_get_pc()
 {
-	return  mstate->pc;
+	MIPS_CPU_State* cpu = get_current_cpu();
+	return  cpu->core[0].pc;
 }
 
 static void
@@ -581,19 +646,25 @@ static int mips_ICE_write_byte(WORD addr, uint8_t data){
 	return 0;
 }
 static uint32 mips_get_step(){
-	uint32 step = mstate->cycle;
+	MIPS_CPU_State* cpu = get_current_cpu();
+	uint32 step = cpu->core[0].cycle;
         return step;
 }
 static char* mips_get_regname_by_id(int id){
         return mips_regstr[id];
 }
 static uint32 mips_get_regval_by_id(int id){
+	MIPS_CPU_State* cpu = get_current_cpu();
+
 	if(id == PC)
-		return mstate->pc;
-        return mstate->gpr[id];
+		return cpu->core[0].pc;
+	return cpu->core[0].gpr[id];
 }
+
 static exception_t mips_set_register_by_id(int id, uint32 value){
-        mstate->gpr[id] = value;
+	MIPS_CPU_State* cpu = get_current_cpu();
+	cpu->core[0].gpr[id] = value;
+
         return No_exp;
 }
 

@@ -90,6 +90,7 @@ typedef UInt64  ClockValue;
 
 #define MulResult(x, y) \
 {\
+	mstate = get_current_core();\
 	mstate->hi = (x);\
 	mstate->lo = (y);\
 }
@@ -106,6 +107,7 @@ typedef UInt64  ClockValue;
 
 #define DivResult(x,y) \
 {\
+	mstate = get_current_core();\
 	mstate->lo = x;\
 	mstate->hi = y;\
 }
