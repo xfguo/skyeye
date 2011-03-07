@@ -1,0 +1,39 @@
+#ifndef __MIPS_DYNCOM_INSTR_MAIN__
+#define __MIPS_DYNCOM_INSTR_MAIN__
+int opc_j_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_jal_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_beq_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_bne_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_blez_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_bgtz_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_addi_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_addiu_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_slti_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_sltiu_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_andi_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_ori_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_xori_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lui_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_pref_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_beql_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_bnel_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_blezl_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_bgtzl_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lb_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lh_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lwl_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lw_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lbu_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lhu_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lwr_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lwu_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_sb_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_sh_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_swl_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_sw_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_cache_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_ll_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lwc1_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_lld_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+int opc_sc_trans(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+#endif

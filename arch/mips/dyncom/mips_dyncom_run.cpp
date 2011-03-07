@@ -1,6 +1,5 @@
 //#include "libcpu.h"
 #include "mips_internal.h"
-#include "mips_interface.h"
 //#include "frontend.h"
 #include <skyeye_dyncom.h>
 #include <skyeye_types.h>
@@ -11,7 +10,6 @@
 
 #include "dyncom/memory.h"
 #include "dyncom/frontend.h"
-#include "mips_types.h"
 #include "../common/emul.h"
 
 static uint32_t arch_mips_read_memory(cpu_t *cpu, addr_t addr, uint32_t size)
@@ -33,6 +31,15 @@ static uint32_t arch_mips_read_memory(cpu_t *cpu, addr_t addr, uint32_t size)
 
 static void arch_mips_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size)
 {
+	uint32_t pa = addr;
+	/* if pa is located at kseg0 */
+	if(pa >= 0x80000000 && pa < 0xA0000000)
+		pa = pa & ~0x80000000;
+
+	/* if pa is located at kseg1 */
+	if(pa >= 0xa0000000 && pa < 0xC0000000)
+		pa = pa & ~0xE0000000;
+
 	bus_write(size, addr, value);
 }
 
@@ -112,7 +119,7 @@ arch_func_t arch_func_mips = {
 	NULL, /* emit_decode_reg */
 	NULL, /* spill_reg_state */
 	arch_mips_tag_instr,
-	arch_mips_disasm_instr,
+	NULL, /*arch_mips_disasm_instr*/
 	arch_mips_translate_cond,
 	arch_mips_translate_instr,
 	NULL, /*arch_mips_translate_loop_helper*/

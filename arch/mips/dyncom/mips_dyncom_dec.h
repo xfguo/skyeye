@@ -1,3 +1,6 @@
+
+#ifndef __MIPS_DYNCOM_DEC__
+#define __MIPS_DYNCOM_DEC__
 //////////////////////////////////////////////////////////////////////
 // MIPS: instruction decoding
 //////////////////////////////////////////////////////////////////////
@@ -5,6 +8,9 @@
 #define RS	((instr >> 21) & 0x1F)
 #define RT	((instr >> 16) & 0x1F)
 #define RD	((instr >> 11) & 0x1F)
+#define SA	((instr >> 6) & 0x1F)
+#define BASE	((instr >> 16) & 0x1F)
+#define OFFSET	(instr & 0xFFFF)
 
 #define SHAMT	((instr >> 6) & 0x1F)
 #define FUNCT	(instr & 0x3F)
@@ -18,6 +24,7 @@
 #define COFUN	(instr & 0x1FFFFFF)
 
 #define BAD_INSTR do{printf("BAD instr in %s\n", __func__); exit(0);}while(0);
+#define BAD do{printf("BAD instr in %s\n", __func__); exit(0);}while(0);
 
 #define GetSA	((instr >> 6) & 0x1F)
 #define GetImmediate (instr & 0xFFFF)
@@ -34,6 +41,23 @@
 #define MIPS_BRANCH_TARGET ((uint32_t)(phys_pc + 4 + (uint32_t)(((sint32_t)(sint16_t)GetImmediate<<2))))
 #define MIPS_INSN_SIZE 4
 
+#define IMM arch_mips_get_imm(cpu, instr, 0, true, bb)
+#define IMMU arch_mips_get_imm(cpu, instr, 0, false, bb)
+#define IMM32 arch_mips_get_imm(cpu, instr, 32, true, bb)
+
+#define HI 32
+#define LO 33
+#define LET_PC(v) new StoreInst(v, cpu->ptr_PC, bb)
+#define PC new LoadInst(cpu->ptr_PC, "", false, bb)
+#define LINKr(i) LET32(i, CONST((uint64_t)(sint64_t)(sint32_t)pc+8))
+#define LINK LINKr(31)
+
+#define nothing_special         0       // nothing special
+#define branch_delay            1       // current instruction in the branch-delay slot
+#define instr_addr_error        2       // instruction address error
+#define branch_nodelay  3       // syscall instruction or eret instruction
+
+Value *arch_mips_get_imm(cpu_t *cpu, uint32_t instr, uint32_t bits, bool sext, BasicBlock *bb);
 typedef int (*tag_func_t)(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
 typedef int (*translate_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 typedef Value *(*translate_cond_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
@@ -220,3 +244,4 @@ extern mips_opc_func_t mips_opc_tlbp_func;
 extern mips_opc_func_t mips_opc_rfe_func;
 extern mips_opc_func_t mips_opc_eref_func;
 extern mips_opc_func_t mips_opc_wait_func;
+#endif
