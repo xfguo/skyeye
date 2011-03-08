@@ -27,6 +27,14 @@
 #include "sim_control.h"
 extern char *xmalloc ();
 
+#ifndef PARAMS
+#define PARAMS(protos) protos
+#endif
+
+#ifndef whitespace
+#define whitespace(c) (((c) == ' ') || ((c) == '\t'))
+#endif
+
 /* The names of functions that actually do the manipulation. */
 int com_list PARAMS((char *));
 int com_view PARAMS((char *));
@@ -76,6 +84,7 @@ void set_cli_done(){
 }
 void skyeye_cli ()
 {
+#if 0
   char *line, *s;
   //init_command_list();
   initialize_readline ();	/* Bind our completer. */
@@ -107,6 +116,7 @@ void skyeye_cli ()
       free (line);
     }
   //exit (0);
+#endif
 }
 
 /* Execute a command line. */
@@ -183,6 +193,7 @@ char **skyeye_completion PARAMS((const char *, int, int));
 /* Tell the GNU Readline library how to complete.  We want to try to complete
    on command names if this is the first word in the line, or on filenames
    if not. */
+#if 0
 void initialize_readline ()
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
@@ -191,12 +202,14 @@ void initialize_readline ()
   /* Tell the completer that we want a crack first. */
   rl_attempted_completion_function = skyeye_completion;
 }
+#endif
 
 /* Attempt to complete on the contents of TEXT.  START and END bound the
    region of rl_line_buffer that contains the word to complete.  TEXT is
    the word to complete.  We can use the entire contents of rl_line_buffer
    in case we want to do some simple parsing.  Return the array of matches,
    or NULL if there aren't any. */
+#if 0
 char **
 skyeye_completion (text, start, end)
      const char *text;
@@ -214,7 +227,7 @@ skyeye_completion (text, start, end)
 
   return (matches);
 }
-
+#endif
 
 /* Function which tells you that you can't do this. */
 too_dangerous (caller)

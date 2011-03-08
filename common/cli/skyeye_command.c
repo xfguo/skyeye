@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #if defined (HAVE_STRING_H)
 #  include <string.h>
@@ -23,13 +24,14 @@
 #  include <strings.h>
 #endif /* !HAVE_STRING_H */
 
-
+#if 0
 #ifdef READLINE_LIBRARY
 #  include "readline.h"
 #  include "history.h"
 #else
 #  include <readline/readline.h>
 #  include <readline/history.h>
+#endif
 #endif
 
 #include "skyeye_types.h"
@@ -70,7 +72,7 @@ COMMAND default_cli_commands[] = {
   {"load-conf", com_load_conf, "load a config file and parse it for SkyEye."},
   {"info", com_info, "show information for various objects. "},
   {"x", com_x, "display memory value at the address. "},
-  { (char *)NULL, (rl_icpfunc_t *)NULL, (char *)NULL }
+  { (char *)NULL, (icpfunc_t *)NULL, (char *)NULL }
 };
 
 static COMMAND *command_list;
@@ -88,7 +90,8 @@ void init_command_list(){
 	}	
 }
 
-exception_t add_command(char* command_str, rl_icpfunc_t *func, char* help_str){
+/* exception_t add_command(char* command_str, rl_icpfunc_t *func, char* help_str){ */
+exception_t add_command(char *command_str, icpfunc_t *func, char *help_str){
 	COMMAND *command = malloc(sizeof(COMMAND));
 	if(command == NULL){
 		return Malloc_exp;

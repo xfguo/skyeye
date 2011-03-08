@@ -29,6 +29,7 @@
 #  include <stdlib.h>
 #endif
 
+#if 0
 #ifdef READLINE_LIBRARY
 #  include "readline.h"
 #  include "history.h"
@@ -36,14 +37,18 @@
 #  include <readline/readline.h>
 #  include <readline/history.h>
 #endif
+#endif
 #include "skyeye_types.h"
 #include "skyeye_module.h"
 #include "skyeye_options.h"
+
+typedef int icpfunc_t (char *);
+
 /* A structure which contains information on the commands this program
    can understand. */
 struct command_s{
   char *name;			/* User printable name of the function. */
-  rl_icpfunc_t *func;		/* Function to call to do the job. */
+  icpfunc_t *func;		/* Function to call to do the job. */
   char *doc;			/* Documentation for this function.  */
   struct command_s *next;
 };

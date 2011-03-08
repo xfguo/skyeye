@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "skyeye_cli.h"
 #include "skyeye_module.h"
