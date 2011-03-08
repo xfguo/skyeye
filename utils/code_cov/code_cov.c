@@ -145,7 +145,7 @@ static void cov_writemem_callback(generic_arch_t* arch_instance)
 		cov_prof(2,arch_instance->get_pc());
 }
 
-static void cov_state_on(char *arg) 
+void cov_state_on(char *arg)
 {
 
 	if (cov_state == COV_START) { //run this function first time
@@ -159,7 +159,7 @@ static void cov_state_on(char *arg)
 	cov_state = COV_ON;
 }
 
-static void cov_state_off(char *arg) 
+void cov_state_off(char *arg)
 {
 	printf("code coverage state: off\n");
 	if (cov_state == COV_OFF || cov_state == COV_START)
@@ -168,7 +168,7 @@ static void cov_state_off(char *arg)
 	return;
 }
 
-static void cov_state_show(char *arg) 
+void cov_state_show(char *arg)
 {
 	if (cov_state == COV_OFF || cov_state == COV_START)
 		printf("code coverage state: off\n");

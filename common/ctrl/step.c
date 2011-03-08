@@ -26,7 +26,7 @@ static void check_steps(generic_arch_t* arch_instance){
 	return;
 }
 
-static int com_show_step(char* arg){
+int com_show_step(char *arg) {
 	generic_arch_t* arch_instance = get_arch_instance("");
 	if(!arch_instance)
 		return 1;

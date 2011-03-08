@@ -34,7 +34,7 @@ static void pmon_count(generic_arch_t* arch_instance){
 }
 
 /* enable log functionality */
-static void com_pmon(char* arg){
+void com_pmon(char *arg) {
 	enable_pmon_flag = 1;
 	/* open file for record performance data */
 	pmon_fd = fopen(pmon_filename, "w");	
