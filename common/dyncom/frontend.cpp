@@ -300,7 +300,18 @@ RAM32LE(uint8_t *RAM, addr_t a) {
 //////////////////////////////////////////////////////////////////////
 // GENERIC: memory access
 //////////////////////////////////////////////////////////////////////
-
+/* get a RAM pointer to a 8 bit value */
+static Value *
+arch_gep8(cpu_t *cpu, Value *a, BasicBlock *bb) {
+	return GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
+//	return new BitCastInst(a, PointerType::get(XgetType(Int8Ty), 0), "", bb);
+}
+/* get a RAM pointer to a 16 bit value */
+static Value *
+arch_gep16(cpu_t *cpu, Value *a, BasicBlock *bb) {
+	a = GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
+	return new BitCastInst(a, PointerType::get(XgetType(Int16Ty), 0), "", bb);
+}
 /* get a RAM pointer to a 32 bit value */
 static Value *
 arch_gep32(cpu_t *cpu, Value *a, BasicBlock *bb) {
@@ -354,7 +365,7 @@ arch_get_shift16(cpu_t *cpu, Value *addr, BasicBlock *bb)
 		shift = XOR(shift, CONST(1));
 	return SHL(shift, CONST(4));
 }
-
+#if 0
 Value *
 arch_load8(cpu_t *cpu, Value *addr, BasicBlock *bb) {
 	Value *shift = arch_get_shift8(cpu, addr, bb);
@@ -368,6 +379,21 @@ arch_load16_aligned(cpu_t *cpu, Value *addr, BasicBlock *bb) {
 	Value *val = arch_load32_aligned(cpu, AND(addr, CONST(~3ULL)), bb);
 	return TRUNC16(LSHR(val, shift));
 }
+#endif
+Value *
+arch_load8(cpu_t *cpu, Value *addr, BasicBlock *bb) {
+	Value *addr8 = arch_gep8(cpu, addr, bb);
+	return new LoadInst(addr8, "", false, bb);
+}
+
+Value *
+arch_load16_aligned(cpu_t *cpu, Value *addr, BasicBlock *bb) {
+	Value *addr16 = arch_gep16(cpu, addr, bb);
+	if (cpu->dyncom_engine->flags & CPU_FLAG_SWAPMEM)
+		return SWAP16(new LoadInst(addr16, "", false, bb));
+	else
+		return new LoadInst(addr16, "", false, bb);
+}
 /**
  * @brief store 8 bit value to RAM.The IR is stored in basic block bb
  *
@@ -376,6 +402,7 @@ arch_load16_aligned(cpu_t *cpu, Value *addr, BasicBlock *bb) {
  * @param addr Address to store the value
  * @param bb current basic block,which hold the llvm IR
  */
+#if 0
 void
 arch_store8(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 	Value *shift = arch_get_shift8(cpu, addr, bb);
@@ -385,6 +412,14 @@ arch_store8(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 	val = OR(old, SHL(AND(val, CONST(255)), shift));
 	arch_store32_aligned(cpu, val, addr, bb);
 }
+#endif
+//for bit endian
+void
+arch_store8(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
+//	addr = ADD(AND(addr, CONST(0xfffffffc)), XOR(AND(addr, CONST(3)), CONST(3)));
+	Value *addr8 = arch_gep8(cpu, addr, bb);
+	new StoreInst(TRUNC8(val), addr8, bb);
+}
 /**
  * @brief store 16 bit value RAM.The IR is stored in basic block bb
  *
@@ -393,6 +428,7 @@ arch_store8(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
  * @param addr Address to store the value
  * @param bb current basic block,which hold the llvm IR
  */
+#if 0
 void
 arch_store16(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 	Value *shift = arch_get_shift16(cpu, addr, bb);
@@ -402,7 +438,12 @@ arch_store16(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 	val = OR(old, SHL(AND(val, CONST(65535)), shift));
 	arch_store32_aligned(cpu, val, addr, bb);
 }
-
+#endif
+void
+arch_store16(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
+	Value *addr16 = arch_gep16(cpu, addr, bb);
+	new StoreInst(TRUNC16(val), addr16, bb);
+}
 //
 
 Value *
