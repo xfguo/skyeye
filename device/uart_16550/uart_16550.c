@@ -195,7 +195,7 @@ static int do_16550_option(skyeye_option_t* this_option, int num_params,
 /*
  * Create a 16550 uart by given base, len ,irq
  */
-static int com_create_16550(char* arg){
+int com_create_16550(char *arg) {
 	return 0;
 }
 void init_uart_16550(){

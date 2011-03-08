@@ -69,7 +69,7 @@ static void log_bus_callback(generic_arch_t* arch_instance){
 }
 
 /* enable log functionality */
-static void com_log_bus(char* arg){
+void com_log_bus(char *arg) {
 	enable_log_flag = 1;
 	/* open file for record pc */
 	log_fd = fopen(log_filename, "w");	
