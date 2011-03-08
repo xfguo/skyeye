@@ -34,11 +34,11 @@ nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 
 libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_dyncom) $(common_profile)
 
-libcommon_la_LIBADD = -L$(top_builddir)/third-party/bfd/.libs/ -lbfd -L$(top_builddir)/third-party/libiberty/pic -liberty -lreadline @LIBLTDL@ @LIBADD_DL@
+libcommon_la_LIBADD = -L$(top_builddir)/third-party/bfd/.libs/ -lbfd -L$(top_builddir)/third-party/libiberty/pic -liberty @LIBLTDL@ @LIBADD_DL@
 
 if WIN32
 else
-libcommon_la_LIBADD += -L$(top_builddir)/third-party/readline/
+#libcommon_la_LIBADD += -L$(top_builddir)/third-party/readline/
 endif
 # we will link the common module with main
 #libcommon_la_LDFLAGS = -module

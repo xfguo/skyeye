@@ -74,14 +74,11 @@ prof_convert_SOURCES = utils/code_cov/prof_convert.c
 if LCD
 skyeye_LDADD += @LCD_LIBS@
 endif
-all:third-party/readline/libreadline.a third-party/bfd/.libs/libbfd.so third-party/libiberty/libiberty.a third-party/opcodes/.libs/libopcodes.so
+all:third-party/bfd/.libs/libbfd.so third-party/libiberty/libiberty.a third-party/opcodes/.libs/libopcodes.so
 
 skyeye_gui:
 	cd gui/qt4_src && rm -f skyeye_gui && make
 	cp -f gui/qt4_src/skyeye-gui $(prefix)/bin/
-
-third-party/readline/libreadline.a:
-	mkdir -p third-party/readline/ && cd third-party/readline/ && ./../../$(top_srcdir)/third-party/readline/configure --prefix=$(prefix) --enable-shared;make;
 
 third-party/bfd/.libs/libbfd.so:
 	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
@@ -96,7 +93,6 @@ lib:
 	mkdir -p third-party/libiberty && cd third-party/libiberty && ./../../$(srcdir)/third-party/libiberty/configure --prefix=$(prefix) --enable-shared ;make;
 	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 	mkdir -p third-party/opcodes/ && cd third-party/opcodes/ && ./../../$(top_srcdir)/third-party/opcodes/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
-	mkdir -p third-party/readline/ && cd third-party/readline/ && ./../../$(top_srcdir)/third-party/readline/configure --prefix=$(prefix) --enable-shared;make;
 #cd $(top_srcdir)/third-party/bfd/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 #cd $(top_srcdir)/third-party/opcodes/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 #cd $(top_srcdir)/third-party/readline/ && ./configure --prefix=$(prefix) --enable-shared;make;
@@ -104,18 +100,15 @@ build_lib:
 	cd $(top_builddir)/third-party/libiberty && make;
 	cd $(top_builddir)/third-party/bfd/ && make;
 	cd $(top_builddir)third-party/opcodes/ && make;
-	cd $(top_builddir)third-party/readline/ && make;
 install_lib:
 	cd $(top_builddir)/third-party/libiberty && make install
 	cd $(top_builddir)/third-party/bfd/ && make install
 	cd $(top_builddir)/third-party/opcodes/ && make install
-	cd $(top_builddir)/third-party/readline/ && make install
 
 clean_lib:
 	cd $(top_builddir)/third-party/libiberty && make distclean
 	cd $(top_builddir)/third-party/bfd/ && make distclean
 	cd $(top_builddir)/third-party/opcodes/ && make distclean
-	cd $(top_builddir)/third-party/readline/ && make distclean
 install-data-hook:
 	rm -f -r $(prefix)/testsuite && mkdir $(prefix)/testsuite
 	cp -a $(top_srcdir)/testsuite/arm_hello $(prefix)/testsuite/arm_hello/
