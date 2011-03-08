@@ -43,8 +43,7 @@ static int opc_cmp_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	cr = 7 - cr;
 	Value * tmp1 = ICMP_SLT(R(rA), R(rB));
 	Value * tmp2 = ICMP_SGT(R(rA), R(rB));
-	Value * tmp3 = ICMP_EQ(R(rA), R(rB));
-	Value * c = SELECT(tmp1, CONST(8),SELECT(tmp2, CONST(4), SELECT(tmp3, CONST(2), CONST(0))));
+	Value * c = SELECT(tmp1, CONST(8),SELECT(tmp2, CONST(4), CONST(2)));
 	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
 	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
 	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, CONST(cr * 4))));
@@ -768,7 +767,6 @@ static int opc_cmpl_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	cr = 7-cr;
 	Value* c;
 	c = SELECT(ICMP_ULT(R(rA), R(rB)), CONST(8), SELECT(ICMP_UGT(R(rA), R(rB)), CONST(4), CONST(2)));
-	c = SELECT(ICMP_EQ(R(rA), R(rB)), CONST(2), c);
 	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
 	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
 	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, CONST(cr * 4))));
@@ -968,7 +966,7 @@ static int opc_lwarx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
 	uint32 r;
-	Value* addr = ADD(SELECT(ICMP_NE(CONST(rA), CONST(0)), R(rA), CONST(0)), R(rB));
+	Value* addr = rA? ADD(R(rA), R(rB)): R(rB);
 	Value* result = arch_read_memory(cpu, bb, addr, 0, 32);
 	LET(rD, result);
 	LETS(RESERVE_REGNUM, result);
@@ -982,6 +980,7 @@ static int opc_lwarx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int opc_stwcx__tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	*tag = TAG_CONDITIONAL;
 	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = *next_pc;
 	return PPC_INSN_SIZE;
 }
 Value* opc_stwcx__translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
@@ -995,7 +994,7 @@ static int opc_stwcx__translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
 	LETS(HAVE_RESERVATION_REGNUM, CONST(0));
-	Value* addr = ADD(SELECT(ICMP_NE(CONST(rA), CONST(0)), R(rA), CONST(0)), R(rB));
+	Value* addr = rA? ADD(R(rA), R(rB)): R(rB);
 	Value* v = arch_read_memory(cpu, bb, addr, 0, 32);
 	Value* tmp = SELECT(ICMP_EQ(v, RS(RESERVE_REGNUM)), R(rS), v);
 	arch_write_memory(cpu, bb, addr, tmp, 32);
@@ -1024,7 +1023,8 @@ static int opc_slwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 int opc_srawix_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	*tag = TAG_CONDITIONAL;
 	*next_pc = phys_pc + PPC_INSN_SIZE;
-	*new_pc = NEW_PC_NONE;
+	//*new_pc = NEW_PC_NONE;
+	*new_pc = *next_pc;
 	return PPC_INSN_SIZE;
 }
 Value* opc_srawix_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
@@ -1213,7 +1213,7 @@ static int opc_lbzx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	else
 		addr = R(rB);
 	Value* result = arch_read_memory(cpu, bb, addr, 0, 8);
-	LET(rD, AND(result, CONST(0x000000ff)));
+	LET(rD, result);
 	return 0;
 }
 /*
@@ -1246,7 +1246,7 @@ static int opc_lhzx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	else
 		addr = R(rB);
 	Value* result = arch_read_memory(cpu, bb, addr, 0, 16);
-	LET(rD, AND(result, CONST(0x0000ffff)));
+	LET(rD, result);
 	return 0;
 }
 /*
@@ -1319,9 +1319,8 @@ static int opc_lhax_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
 	uint16 r;
 	Value* addr = rA ? ADD(R(rB), R(rA)) : R(rB);
-	Value* result = arch_read_memory(cpu, bb, addr, 0, 16);
-	result = AND(result, CONST(0x0000ffff));
-	LET(rD, SELECT(ICMP_NE(AND(result, CONST(0x8000)), CONST(0)), OR(result, CONST(0xffff0000)), result));
+	Value* result = arch_read_memory(cpu, bb, addr, 1, 16);
+	LET(rD,result);
 	return 0;
 }
 /*

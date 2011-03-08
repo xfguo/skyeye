@@ -81,14 +81,12 @@ static int opc_cmpi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	uint32 cr;
 	int rA;
-	e500_core_t* current_core = get_current_core();
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, cr, rA, imm);
 	cr >>= 2;
 	cr = 7 - cr;
 	Value* c;
 	c = SELECT(ICMP_SLT(R(rA), CONST(imm)), CONST(8), SELECT(ICMP_SGT(R(rA), CONST(imm)), CONST(4), CONST(2)));
-	c = SELECT(ICMP_EQ(R(rA), CONST(imm)), CONST(2), c);
 	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
 	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
 	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, CONST(cr * 4))));
@@ -401,7 +399,6 @@ static int opc_cmpli_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	cr = 7-cr;
 	Value* c;
 	c = SELECT(ICMP_ULT(R(rA), CONST(imm)), CONST(8), SELECT(ICMP_UGT(R(rA), CONST(imm)), CONST(4), CONST(2)));
-	c = SELECT(ICMP_EQ(R(rA), CONST(imm)), CONST(2), c);
 	c = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), OR(c, CONST(1)), c);
 	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[cr])));
 	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c, CONST(cr * 4))));
@@ -631,7 +628,6 @@ ppc_opc_func_t ppc_opc_andis__func = {
  */
 static int opc_lbz_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
-	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
@@ -647,7 +643,7 @@ static int opc_lbz_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,8);
 	else
 		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,8);
-	LET(rD, AND(ret, CONST(0x000000ff)));
+	LET(rD, ret);
 	return 0;
 }
 
