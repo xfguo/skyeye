@@ -1351,9 +1351,9 @@ static int opc_subfzex_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rD, rA, rB;
 	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
 	PPC_OPC_ASSERT(rB == 0);
-	Value* ca = SELECT(AND(R(XER_REGNUM), CONST(XER_CA)), CONST(1), CONST(0));
+	Value* ca = SELECT(ICMP_NE(AND(R(XER_REGNUM), CONST(XER_CA)), CONST(0)), CONST(1), CONST(0));
 	LET(rD, ADD(XOR(R(rA), CONST(-1)), ca));
-	LET(XER_REGNUM, SELECT(LOG_AND(LOG_NOT(R(rA)), ca), OR(R(XER_REGNUM), CONST(XER_CA)), AND(R(XER_REGNUM), CONST(~XER_CA))));
+	LET(XER_REGNUM, SELECT(AND(LOG_NOT(R(rA)), ICMP_NE(ca, CONST(0))), OR(R(XER_REGNUM), CONST(XER_CA)), AND(R(XER_REGNUM), CONST(~XER_CA))));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
 		ppc_dyncom_update_cr0(cpu, bb, rD);
