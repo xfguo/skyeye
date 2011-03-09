@@ -102,6 +102,9 @@ bool_t get_autoboot()
 {
 	return skyeye_pref->autoboot;
 }
+void set_user_mode(const uint32_t value){
+	skyeye_pref->user_mode_sim = value;
+}
 bool_t get_user_mode(){
 	return skyeye_pref->user_mode_sim;
 }

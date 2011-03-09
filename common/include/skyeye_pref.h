@@ -32,6 +32,7 @@ void set_uart_port(const uint32_t value);
 uint32_t get_uart_port();
 
 bool_t get_user_mode();
+void set_user_mode(const uint32_t value);
 struct _sky_pref_s{
 	//generic_address_t elf_load_base;
 	//uinteger_t elf_load_mask;
