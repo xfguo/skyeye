@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "emul.h"
+#include "skyeye_pref.h"
 
 extern MIPS_State* mstate;
 
@@ -90,6 +91,10 @@ probe_tlb(MIPS_State* mstate, VA va)
 int 
 translate_vaddr(MIPS_State* mstate, VA va, int type, PA * pa)
 {
+	sky_pref_t* pref = get_skyeye_pref();
+	if(pref->user_mode_sim){
+		*pa = va;
+	}else{
     	UInt32 region_type; // one of SR_UX, SR_SX or SR_KX
 
     	// Decode the virtual address.
@@ -159,5 +164,6 @@ translate_vaddr(MIPS_State* mstate, VA va, int type, PA * pa)
 	/* we use 20 bit of lo , since we only implement 4k page map */
 	*pa = ((lo << 6) & 0xFFFFF000) | (va & 0xFFF);
 	//printf("Get pa 0x%x by entry %d,entry.lo=0x%x,lo << 2=0x%x,va=0x%x\n", *pa, entry->index, lo, (lo << 6), va);
+	}
 	return TLB_SUCC;
 }

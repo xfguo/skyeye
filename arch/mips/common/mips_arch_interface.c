@@ -17,6 +17,8 @@
 #include "skyeye_cell.h"
 #include "skyeye_arch.h"
 #include "skyeye_options.h"
+#include "skyeye_pref.h"
+
 #include "emul.h"
 #include <stdlib.h>
 #include "mipsdef.h"
@@ -92,12 +94,15 @@ mips_init_set(UInt32 addr, UInt8 value, int size)
 void 
 mips_mem_read(UInt32 pa, UInt32 *data, int len)
 {
-	/* if pa is located at kseg0 */
-	if(pa >= 0x80000000 && pa < 0xA0000000)
-		pa = pa & ~0x80000000;
-	/* if pa is located at kseg1 */
-	if(pa >= 0xA0000000 && pa < 0xC0000000)
-		pa = pa & ~0xE0000000;
+	sky_pref_t* pref = get_skyeye_pref();
+	if(!pref->user_mode_sim){
+		/* if pa is located at kseg0 */
+		if(pa >= 0x80000000 && pa < 0xA0000000)
+			pa = pa & ~0x80000000;
+		/* if pa is located at kseg1 */
+		if(pa >= 0xA0000000 && pa < 0xC0000000)
+			pa = pa & ~0xE0000000;
+	}
 	//if(pa >= 0x14a1a0 && pa <= 0x14c000)
 	//	printf("###############read addr pa=0x%x,pc=0x%x\n", pa, mstate->pc);
 	bus_read(len * 8, pa, data);
@@ -125,12 +130,15 @@ mips_mem_read(UInt32 pa, UInt32 *data, int len)
 void 
 mips_mem_write(UInt32 pa, const UInt32* data, int len)
 {
-	/* if pa is located at kseg0 */
-        if(pa >= 0x80000000 && pa < 0xA0000000)
-                pa = pa & ~0x80000000;
-        /* if pa is located at kseg1 */
-        if(pa >= 0xA0000000 && pa < 0xC0000000)
-                pa = pa & ~0xE0000000;
+	sky_pref_t* pref = get_skyeye_pref();
+	if(!pref->user_mode_sim){
+		/* if pa is located at kseg0 */
+		if(pa >= 0x80000000 && pa < 0xA0000000)
+			pa = pa & ~0x80000000;
+		/* if pa is located at kseg1 */
+		if(pa >= 0xA0000000 && pa < 0xC0000000)
+			pa = pa & ~0xE0000000;
+	}
 
 	UInt32 addr = bits(pa, 31, 0);
 	bus_write(len * 8, pa, *data);
@@ -197,6 +205,7 @@ per_cpu_step(conf_object_t *running_core)
 	int next_state;
 	va = mstate->pc;
 	mstate->cycle++;
+
 	if(translate_vaddr(mstate, va, instr_fetch, &pa) == TLB_SUCC){
 		mips_mem_read(pa, &instr, 4);
 		next_state = decode(mstate, instr);
@@ -207,7 +216,6 @@ per_cpu_step(conf_object_t *running_core)
 	}
 
 	/* NOTE: mstate->pipeline is also possibely set in decode function */
-
 	static int flag = 0;
 	if(va == 0x40acb8)
 		flag = 0;
@@ -357,6 +365,11 @@ static void
 mips_init_state()
 {
 	mips_cpu_init();
+	sky_pref_t* pref = get_skyeye_pref();
+	if(!pref->user_mode_sim){
+		mips_core_t* mstate = get_current_core();
+		mstate->gpr[30] = 0x10000000;
+	}
 }
 
 static void 
@@ -668,6 +681,11 @@ static exception_t mips_set_register_by_id(int id, uint32 value){
         return No_exp;
 }
 
+static int mips_get_regnum()
+{
+	return 32;
+}
+
 void 
 init_mips_arch ()
 {
@@ -686,5 +704,6 @@ init_mips_arch ()
 	//mips_arch.parse_mem = mips_parse_mem;
 	mips_arch.get_regval_by_id = mips_get_regval_by_id;
         mips_arch.get_regname_by_id = mips_get_regname_by_id;
+	mips_arch.get_regnum  = mips_get_regnum;
 	register_arch (&mips_arch);
 }

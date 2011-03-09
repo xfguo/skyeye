@@ -3,8 +3,9 @@ mips_comm = common/cache.c   common/decoder.c    common/icache.c common/mipsio.c
 common/cp0.c     common/emul.c       common/interrupt.c            common/mipsmem.c \
 common/dcache.c  common/exception.c  common/mips_arch_interface.c  common/multiply.c common/mips_module.c common/mips_regformat.c
 mips_dyncom = dyncom/mips_dyncom_run.cpp dyncom/mips_dyncom_translate.cpp dyncom/mips_dyncom_interface.cpp dyncom/mips_dyncom_dec.cpp dyncom/mips_dyncom_instr_main.cpp dyncom/mips_dyncom_instr_special.cpp dyncom/mips_dyncom_instr_regimm.cpp
+mips_syscall = linux_syscall/mips_syscall.c
 
-libmips_la_SOURCES = $(mips_mach) $(mips_comm) $(mips_dyncom)
+libmips_la_SOURCES = $(mips_mach) $(mips_comm) $(mips_dyncom) $(mips_syscall)
 pkglib_LTLIBRARIES = libmips.la
 
 # we will link the common module with main

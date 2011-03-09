@@ -1,6 +1,8 @@
 #include "instr.h"
+#include "skyeye_pref.h"
 #include "emul.h"
 #include <stdio.h>
+#include "mips_regformat.h"
 
 /* Anthony Lee: 2006-09-18 */
 #ifdef __MINGW32__
@@ -135,8 +137,13 @@ decode(MIPS_State* mstate, Instr instr)
 				}
 				case SYSCALL:
 				{
-				        // System Call
-					process_syscall(mstate);
+					// System Call
+					sky_pref_t* pref = get_skyeye_pref();
+					if(pref->user_mode_sim){
+						mips_syscall(mstate, mstate->gpr[v0]%1000);
+					}
+					else
+						process_syscall(mstate);
 	
 	    				return nothing_special;
 				}
