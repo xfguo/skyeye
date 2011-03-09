@@ -105,6 +105,14 @@ bool_t get_autoboot()
 bool_t get_user_mode(){
 	return skyeye_pref->user_mode_sim;
 }
+
+void set_uart_port(const uint32_t value){
+	skyeye_pref->uart_port = value;
+}
+uint32_t get_uart_port(){
+	return skyeye_pref->uart_port;
+}
+
 void update_skyeye_pref(sky_pref_t *pref){
 	/*
 	if(skyeye_pref->module_search_dir)

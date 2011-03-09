@@ -28,6 +28,9 @@ bool_t get_endian();
 void set_autoboot(const bool_t value);
 bool_t get_autoboot();
 
+void set_uart_port(const uint32_t value);
+uint32_t get_uart_port();
+
 bool_t get_user_mode();
 struct _sky_pref_s{
 	//generic_address_t elf_load_base;
