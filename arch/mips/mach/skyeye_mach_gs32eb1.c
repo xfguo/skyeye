@@ -28,6 +28,7 @@
 #include "../common/inttypes.h"
 #include "../common/emul.h"
 #include "../common/cpu.h"
+#include "../common/mips_cpu.h"
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -36,7 +37,6 @@
 #include "skyeye_uart.h"
 //#include "au1000.h"
 
-extern MIPS_State* mstate;
 typedef struct gpio_ctrl_s{
 	uint32_t sys_trioutrd;
 	uint32_t sys_outrd;
@@ -191,6 +191,7 @@ typedef struct gs32eb1_io_s {
 static gs32eb1_io_t io;
 
 static void update_int(){
+	MIPS_State* mstate = get_current_core();
 	if(io.int_ctrl[0].req0int & 0x1){
 		//printf("hardware int happened!\n");
 		mstate->cp0[Cause] |= 1 << Cause_IP2;
@@ -200,7 +201,7 @@ static void update_int(){
 static void
 gs32eb1_io_do_cycle (void * state)
 {
-	MIPS_State * mstate = (MIPS_State *)state;
+	MIPS_State* mstate = get_current_core();
 #if 1
 	if(!(mstate->cp0[Cause] & (1 << Cause_IP4))){
 		/* UART receive interrupt enable */
@@ -250,6 +251,7 @@ static UInt32 gs32eb1_uart_read_word(int index, void * state, UInt32 offset);
 
 /* gs32eb1 uart read function */
 static UInt32 gs32eb1_uart_read_word(int index, void * state, UInt32 offset){
+	MIPS_State* mstate = get_current_core();
 	gs32eb1_uart_t * uart_p = &io.uart[index];
 	UInt32 data;
 	//printf("read offset=0x%x\n", offset);
@@ -297,7 +299,7 @@ gs32eb1_io_read_byte(void * state, UInt32 addr)
 {
 	UInt32 ret;
 
-	MIPS_State * mstate = (MIPS_State *)state;
+	MIPS_State* mstate = get_current_core();
 	if(addr >= 0x14000100 && addr <= (0x14000100 + 0xff)){
                 return (0xff & gs32eb1_uart_read_word(0, state, addr & 0xff));
         }
@@ -316,7 +318,7 @@ static UInt32
 gs32eb1_io_read_halfword(void * state, UInt32 addr)
 {
 	UInt32 ret;
-	MIPS_State * mstate = (MIPS_State *)state;
+	MIPS_State* mstate = get_current_core();
 	switch (addr) {
 		
 		default:
@@ -332,7 +334,7 @@ gs32eb1_io_read_word(void * state, UInt32 addr)
 {
 	
 	UInt32 ret;
-	MIPS_State * mstate = (MIPS_State *)state;
+	MIPS_State* mstate = get_current_core();
 	 /* uart write word */
 	/*
         if(addr >= 0x11100000 && addr <= (0x11400000 + 0x100)){
@@ -378,7 +380,7 @@ gs32eb1_io_write_byte(void * state, UInt32 addr, UInt32 data)
 {
 	unsigned char c = data & 0xff;
 
-	MIPS_State * mstate = (MIPS_State *)state;
+	MIPS_State* mstate = get_current_core();
 	if(addr >= 0x14000100 && addr <= (0x14000100 + 0xff)){
                 gs32eb1_uart_write_word(0, state, addr & 0xff, data&0xff);
                 return;
@@ -394,7 +396,7 @@ gs32eb1_io_write_byte(void * state, UInt32 addr, UInt32 data)
 static void
 gs32eb1_io_write_halfword(void * state, UInt32 addr, UInt32 data)
 {
-	MIPS_State * mstate = (MIPS_State *)state;	
+	MIPS_State* mstate = get_current_core();
 	switch (addr) {
 		case 0x19800028:
 			io.bcsr.intclr_mask = data;
@@ -411,6 +413,7 @@ gs32eb1_io_write_halfword(void * state, UInt32 addr, UInt32 data)
 
 /* gs32eb1 uart write function */
 static void gs32eb1_uart_write_word(int index, void * state, UInt32 offset, UInt32 data){
+	MIPS_State* mstate = get_current_core();
 	gs32eb1_uart_t * uart_p = &io.uart[index];
 	//printf("KSDBG:in %s, offset=0x%x\n", __FUNCTION__, offset);
 	 switch (offset) {
@@ -640,8 +643,7 @@ gs32eb1_set_intr(UInt32 irq)
 void
 gs32eb1_mach_init (void * arch_instance, machine_config_t * this_mach)
 {
-	//MIPS_State * mstate = (MIPS_State*)state;
-	extern MIPS_State * mstate;
+	MIPS_State* mstate = get_current_core();
 	io.uart[0].lsr = 0x60; /* according to 8250 uart spec, this bit should be THRE */
 	/*init io  value */
 	io.clock.sys_cpupll = 0x10;
