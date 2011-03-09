@@ -13,8 +13,10 @@
 #include "skyeye_dyncom.h"
 #include "dyncom/tag.h"
 #include "dyncom/defines.h"
+#include "dyncom/basicblock.h"
 #include "sha1.h"
-
+#include <vector>
+using namespace std;
 /*
  * TODO: on architectures with constant instruction sizes,
  * this shouldn't waste extra tag data for every byte of
@@ -264,6 +266,17 @@ is_translated(cpu_t *cpu, addr_t a)
 
 extern void disasm_instr(cpu_t *cpu, addr_t pc);
 
+static void save_startbb_addr(cpu_t *cpu, addr_t pc){
+	if (is_start_of_basicblock(cpu, pc)){
+		vector<addr_t>::iterator i = cpu->dyncom_engine->startbb.begin();
+		for(; i < cpu->dyncom_engine->startbb.end(); i++){
+			if(*i == pc)
+				break;
+		}
+		if(i == cpu->dyncom_engine->startbb.end())
+			cpu->dyncom_engine->startbb.push_back(pc);
+	}
+}
 static void
 tag_recursive(cpu_t *cpu, addr_t pc, int level)
 {
@@ -358,11 +371,11 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 		if (tag & (TAG_RET | TAG_STOP))	/* execution ends here, the follwing location is not reached */
 			//return;
 			break;
-
+		save_startbb_addr(cpu, pc);
 		pc = next_pc;
 		/* save tag end address */
-		cpu->dyncom_engine->tag_end = pc;
 	}
+	save_startbb_addr(cpu, pc);
 	cpu->dyncom_engine->tag_end = pc;
 	LOG("tag end at %x\n", pc);
 }

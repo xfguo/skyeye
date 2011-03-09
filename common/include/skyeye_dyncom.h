@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <map>
+#include <vector>
 
 namespace llvm {
 	class BasicBlock;
@@ -50,6 +51,7 @@ namespace llvm {
 #include "dyncom/fp_types.h"
 
 using namespace llvm;
+using namespace std;
 
 typedef struct cpu cpu_t;
 
@@ -248,6 +250,7 @@ typedef std::map<addr_t, void *> fast_map;
 
 typedef struct dyncom_engine{
 	funcbb_map func_bb; // faster bb lookup
+	vector<addr_t> startbb;
 	addr_t code_start;
 	addr_t code_end;
 	addr_t code_entry;

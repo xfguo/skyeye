@@ -21,6 +21,7 @@
 #include "dyncom/defines.h"
 //#include "libcpu_run.h"
 
+
 /**
  * @brief translate all the instructions. 
  *
@@ -36,22 +37,13 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 	// find all instructions that need labels and create basic blocks for them
 	int bbs = 0;
 	addr_t pc;
-	pc = cpu->dyncom_engine->tag_start;
-	while (pc <= cpu->dyncom_engine->tag_end) { 
-		// Do not create the basic block if it is already present in some other function.
-		//if (is_start_of_basicblock(cpu, pc) && !(get_tag(cpu, pc) & TAG_TRANSLATED)) {
-		if (is_start_of_basicblock(cpu, pc)) {
-			//if ((get_tag(cpu, pc) & TAG_TRANSLATED)) {
-				//printf("TRANSLATED BB %x\n", pc);
-			//}
-				create_basicblock(cpu, pc, cpu->dyncom_engine->cur_func, BB_TYPE_NORMAL);
-				bbs++;
-		//	} else {
-		//		LOG("TRANSLATED BB %x\n", pc);
-		//	}
-		}
-		pc += (cpu->info.word_size / cpu->info.byte_size);
+	vector<addr_t>::iterator i = cpu->dyncom_engine->startbb.begin();
+	for(; i < cpu->dyncom_engine->startbb.end(); i++){
+		create_basicblock(cpu, *i, cpu->dyncom_engine->cur_func, BB_TYPE_NORMAL);
+		LOG("create bb 0x%x\n", *i);
+		bbs ++;
 	}
+	cpu->dyncom_engine->startbb.clear();
 	LOG("bbs: %d\n", bbs);
 
 	// create dispatch basicblock
