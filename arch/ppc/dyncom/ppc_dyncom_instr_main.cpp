@@ -25,6 +25,8 @@
 #include "dyncom/basicblock.h"
 #include "skyeye.h"
 #include "skyeye_pref.h"
+#include "dyncom/defines.h"
+#include "dyncom/tag.h"
 
 #include "ppc_dyncom_debug.h"
 #define TODO do{fprintf(stderr, "In %s, not implement\n", __FUNCTION__);exit(-1);}while(0);
@@ -454,15 +456,27 @@ ppc_opc_func_t ppc_opc_addic__func = {
         opc_addic__translate,
         opc_invalid_translate_cond,
 };
-
+int opc_sc_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+#ifdef OPT_LOCAL_REGISTERS
+	*tag = TAG_SYSCALL | TAG_CONTINUE;
+	*next_pc = phys_addr + PPC_INSN_SIZE;
+#else
+	*tag = TAG_CONTINUE;
+	*next_pc = phys_addr + PPC_INSN_SIZE;
+#endif
+	return PPC_INSN_SIZE;
+}
 static int opc_sc_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
+#ifdef OPT_LOCAL_REGISTERS
+#else
 	arch_syscall(cpu, bb, 0);
+#endif
 	return 0;
 }
 
 ppc_opc_func_t ppc_opc_sc_func = {
-        opc_default_tag,
+        opc_sc_tag,
         opc_sc_translate,
         opc_invalid_translate_cond,
 };

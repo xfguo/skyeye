@@ -70,6 +70,8 @@ static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf
 	//info->register_count[CPU_REG_XR] = PPC_XR_SIZE;
 	info->register_count[CPU_REG_XR] = 0;
 	info->register_size[CPU_REG_XR] = 32;
+	info->register_count[CPU_REG_FPR] = 0;
+	info->register_size[CPU_REG_FPR] = 64;
 	cpu->redirection = false;
 }
 
@@ -194,10 +196,11 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu_set_flags_debug(cpu, 0
 				//	| CPU_DEBUG_PRINT_IR
 				//	| CPU_DEBUG_LOG
-				//	| CPU_DEBUG_PROFILE
+					| CPU_DEBUG_PROFILE
                 );
 	/* set endian */
 	cpu->info.common_flags |= CPU_FLAG_ENDIAN_BIG;
+	cpu->info.psr_size = 0;
  
 	cpu->debug_func = ppc_debug_func;
 	sky_pref_t *pref = get_skyeye_pref();
@@ -236,9 +239,10 @@ void ppc_dyncom_run(cpu_t* cpu){
 			break;  
 		case JIT_RETURN_SINGLESTEP:
 		case JIT_RETURN_FUNCNOTFOUND:
+
 			debug(DEBUG_RUN, "In %s, function not found at 0x%x\n", __FUNCTION__, core->phys_pc);
 			cpu_tag(cpu, core->phys_pc);
-			cpu->dyncom_engine->functions = 0;
+		//	cpu->dyncom_engine->functions = 0;
 			cpu_translate(cpu);
 			/*
 			**If singlestep,we run it here,otherwise,break.
@@ -250,12 +254,15 @@ void ppc_dyncom_run(cpu_t* cpu){
 			}else
 				break;
 		case JIT_RETURN_TRAP:
+#ifdef OPT_LOCAL_REGISTERS
+			ppc_syscall(core);
+			core->phys_pc += 4;
+#endif
 			break;
 		default:
 			fprintf(stderr, "unknown return code: %d\n", rc);
 		skyeye_exit(-1);
 	}// switch (rc)
-return;
 }
 
 ////**profile**////
