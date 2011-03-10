@@ -313,7 +313,17 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 		bytes = cpu->f.tag_instr(cpu, pc, &tag, &new_pc, &next_pc);
 
 		or_tag(cpu, pc, tag | TAG_CODE);
-
+#ifdef OPT_LOCAL_REGISTERS
+		tag_t tmp_tag;
+		addr_t tmp_newpc, tmp_nextpc;
+		cpu->f.tag_instr(cpu, next_pc, &tmp_tag, &tmp_newpc, &tmp_nextpc);
+		if(tmp_tag & TAG_SYSCALL){
+			or_tag(cpu, pc, TAG_BEFORE_SYSCALL);
+		}
+		if(tag & TAG_SYSCALL){
+			or_tag(cpu, next_pc, TAG_AFTER_SYSCALL);
+		}
+#endif
 		if (tag & (TAG_CONDITIONAL))
 			or_tag(cpu, next_pc, TAG_AFTER_COND);
 

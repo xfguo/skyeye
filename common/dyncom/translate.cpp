@@ -17,6 +17,7 @@
 #include "dyncom/basicblock.h"
 #include "dyncom/frontend.h"
 #include "dyncom/dyncom_llvm.h"
+#include "dyncom/defines.h"
 /**
  * @brief translate a single instruction. 
  *
@@ -134,7 +135,16 @@ translate_instr(cpu_t *cpu, addr_t pc, tag_t tag,
 		BranchInst::Create(bb_next, cur_bb);
 		cur_bb = NULL;
 	}
-
+#ifdef OPT_LOCAL_REGISTERS
+	if (tag & TAG_BEFORE_SYSCALL) {//bb_instr needs a terminator inst.
+		emit_store_pc_return(cpu, cur_bb, pc + 4, bb_trap);
+		cur_bb = NULL;
+	}
+	if (tag & TAG_SYSCALL) {//bb_instr needs a terminator inst.
+		emit_store_pc_return(cpu, cur_bb, pc + 4, bb_ret);
+		cur_bb = NULL;
+	}
+#endif
 	if (tag & TAG_ZEROVERHEADLOOP) {
 		if (tag & TAG_CONTINUE) { /* jump to zol bb directly. */
 			BranchInst::Create(bb_zol, cur_bb);

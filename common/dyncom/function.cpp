@@ -19,6 +19,7 @@
 #include "skyeye_dyncom.h"
 #include "dyncom/dyncom_llvm.h"
 #include "dyncom/frontend.h" // XXX for arch_flags_encode() / arch_flags_decode()
+#include "dyncom/defines.h"
 
 //////////////////////////////////////////////////////////////////////
 // function
@@ -143,7 +144,7 @@ emit_decode_spr_reg_helper(cpu_t *cpu, uint32_t count, uint32_t width,
 	uint32_t offset, Value *rf, Value **in_ptr_r, Value **ptr_r,
 	char const *rcname, BasicBlock *bb)
 {
-#ifdef OPT_LOCAL_REGISTERS
+#ifdef OPT_LOCAL_REGISTERS_SPR
 	// decode struct reg and copy the registers into local variables
 	for (uint32_t i = 0; i < count; i++) {
 		char reg_name[16];
@@ -178,20 +179,20 @@ emit_decode_fp_reg_helper(cpu_t *cpu, uint32_t count, uint32_t width,
 			(width == 128 && (cpu->dyncom_engine->flags & CPU_FLAG_FP128) == 0)) {
 			snprintf(reg_name, sizeof(reg_name), "fpr_%u_0", i);
 
-			in_ptr_r[i*2+0] = get_struct_member_pointer(cpu->ptr_frf, i*2+0, bb);
+			in_ptr_r[i*2+0] = get_struct_member_pointer(cpu->dyncom_engine->ptr_frf, i*2+0, bb);
 			ptr_r[i*2+0] = new AllocaInst(getIntegerType(64), 0, 0, reg_name, bb);
 			LoadInst* v = new LoadInst(in_ptr_r[i*2+0], "", false, 0, bb);
 			new StoreInst(v, ptr_r[i*2+0], false, 0, bb);
 
 			snprintf(reg_name, sizeof(reg_name), "fpr_%u_1", i);
 
-			in_ptr_r[i*2+1] = get_struct_member_pointer(cpu->ptr_frf, i*2+1, bb);
+			in_ptr_r[i*2+1] = get_struct_member_pointer(cpu->dyncom_engine->ptr_frf, i*2+1, bb);
 			ptr_r[i*2+1] = new AllocaInst(getIntegerType(64), 0, 0, reg_name, bb);
 			v = new LoadInst(in_ptr_r[i*2+1], "", false, 0, bb);
 			new StoreInst(v, ptr_r[i*2+1], false, 0, bb);
 		} else {
 			snprintf(reg_name, sizeof(reg_name), "fpr_%u", i);
-			in_ptr_r[i] = get_struct_member_pointer(cpu->ptr_frf, i, bb);
+			in_ptr_r[i] = get_struct_member_pointer(cpu->dyncom_engine->ptr_frf, i, bb);
 			ptr_r[i] = new AllocaInst(getFloatType(width), 0, fp_alignment(width), reg_name, bb);
 			LoadInst* v = new LoadInst(in_ptr_r[i], "", false, fp_alignment(width), bb);
 			new StoreInst(v, ptr_r[i], false, fp_alignment(width), bb);
@@ -232,6 +233,7 @@ emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 	Constant *v_pc = ConstantInt::get(intptr_type, (uintptr_t)cpu->rf.pc);
 	cpu->ptr_PC = ConstantExpr::getIntToPtr(v_pc, PointerType::getUnqual(getIntegerType(cpu->info.address_size)));
 	cpu->ptr_PC->setName("pc");
+
 	/* Physical pc */
 	Constant *v_phys_pc = ConstantInt::get(intptr_type, (uintptr_t)cpu->rf.phys_pc);
 	cpu->ptr_PHYS_PC = ConstantExpr::getIntToPtr(v_phys_pc, PointerType::getUnqual(getIntegerType(cpu->info.address_size)));
@@ -290,7 +292,7 @@ static void
 spill_spr_reg_state_helper(uint32_t count, Value **in_ptr_r, Value **ptr_r,
 	BasicBlock *bb)
 {
-#ifdef OPT_LOCAL_REGISTERS
+#ifdef OPT_LOCAL_REGISTERS_SPR
 	for (uint32_t i = 0; i < count; i++) {
 		LoadInst* v = new LoadInst(ptr_r[i], "", false, bb);
 		new StoreInst(v, in_ptr_r[i], false, bb);
