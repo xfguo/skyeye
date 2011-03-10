@@ -19,6 +19,9 @@
 #define TAG_AFTER_WNDCHK	(1 << 19) //The instruction after windowcheck need a new basicblock
 #define TAG_LAST_INST		(1 << 20) /* This instruction is the last one in BB. Because next inst is translated. */
 
+#define TAG_SYSCALL (1 << 21)
+#define TAG_BEFORE_SYSCALL (1 << 22)
+#define TAG_AFTER_SYSCALL (1 << 23)
 #define TAG_COND_BRANCH (TAG_BRANCH|TAG_CONDITIONAL)
 
 /* flags internal to libcpu */
