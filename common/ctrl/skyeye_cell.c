@@ -6,6 +6,7 @@
 #include "skyeye_cell.h"
 #include "skyeye_mm.h"
 #include "sim_control.h"
+#include "skyeye_callback.h"
 
 static skyeye_cell_t* default_cell = NULL;
 void add_to_cell(skyeye_exec_t* exec, skyeye_cell_t* cell){
@@ -25,6 +26,8 @@ static void cell_running(conf_object_t* argp){
 	skyeye_cell_t* cell = (skyeye_cell_t *)get_cast_conf_obj(argp, "skyeye_cell_t");
 	assert(cell != NULL);
 	while(1){
+		generic_arch_t *arch_instance = get_arch_instance(NULL);
+		exec_callback(Step_callback, arch_instance);
 		while(!SIM_is_running()){
 			usleep(100);
 		}
@@ -110,6 +113,7 @@ void stop_all_cell(){
 conf_object_t* get_current_exec_priv(pthread_t id){
 	struct skyeye_exec_s *iterator ;
 	skyeye_cell_t* cell = get_cell_by_thread_id(id);
+
 	assert(cell != NULL);
 	LIST_FOREACH(iterator, &cell->exec_head,list_entry){
 		if(iterator->exec_id == cell->current_exec_id){
