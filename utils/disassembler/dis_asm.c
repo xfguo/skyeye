@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <libiberty.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "skyeye_types.h"
 #include "skyeye_arch.h"
@@ -110,6 +111,109 @@ objdump_symbol_at_address (bfd_vma vma, struct disassemble_info * info)
 	return (sym != NULL && (bfd_asymbol_value (sym) == vma));
 }
 
+/*disassemble buf for web_sprintf*/
+char web_disassemble_buf[1024];
+
+void clear_web_disassemble_buf()
+{
+    web_disassemble_buf[0] = '\0';
+}
+
+char * read_web_disassemble_buf()
+{
+    return web_disassemble_buf;
+}
+
+/*
+ *overload sprintf function for cloudskyeye.
+ *We will calculate the length of the data buffer has been first
+ *and continue to write the data buffer is not refreshed.
+ */
+int web_sprintf(char *str, const char *format, ...)
+{
+    va_list ap;
+    int size = 0;
+    int str_len = 0;
+
+    for (size = 0; '\0' != str[size]; size ++);
+    va_start(ap,format);
+    str_len = vsprintf(str + size, format,ap);
+    return str_len;
+}
+
+/*spacial for cloudskyeye disassemble*/
+void web_init_disassemble() {
+	abfd = malloc(sizeof(bfd));
+    /*register disassemble output function with web_sprintf.*/
+	init_disassemble_info (&disasm_info, web_disassemble_buf, (fprintf_ftype) web_sprintf);
+	disasm_info.print_address_func = objdump_print_address;
+	disasm_info.symbol_at_address_func = objdump_symbol_at_address;
+
+	/*
+	 * choose arch infor since we will select different disassemble function.
+	 */
+	generic_arch_t* arch_instance = get_arch_instance("");
+	machine = arch_instance->arch_name;
+	const bfd_arch_info_type *info = bfd_scan_arch(machine);
+	if (info == NULL) {
+   //fatal (_("Can't use supplied machine %s"), machine)
+		printf("Can't use supplied machine %s\n", machine);
+		return;
+	}
+
+	abfd->arch_info = info;
+
+	/*
+	 * endian selection
+	 */
+	if (endian != BFD_ENDIAN_UNKNOWN)
+	{
+		struct bfd_target *xvec;
+
+		xvec = xmalloc (sizeof(struct bfd_target));
+		//memcpy (xvec, abfd->xvec, sizeof(struct bfd_target));
+		xvec->byteorder = endian;
+		abfd->xvec = xvec;
+	}
+	/* Get a disassemble function according to the arch and endian of abfd */
+	disassemble_fn = disassembler(abfd);
+	if(!disassemble_fn)
+	{
+      /*
+	non_fatal (_("Can't disassemble for architecture %s\n"),
+                 bfd_printable_arch_mach(bfd_get_arch(abfd), 0));
+	*/
+		printf("Can't disassemble for architecture %s\n", bfd_printable_arch_mach(bfd_get_arch(abfd), 0));
+		exit_status = 1;
+		return;
+	}
+
+	disasm_info.flavour = bfd_get_flavour(abfd);
+	disasm_info.arch = bfd_get_arch(abfd);
+	disasm_info.mach = bfd_get_mach(abfd);
+	disasm_info.disassembler_options = disassembler_options;
+	disasm_info.octets_per_byte = bfd_octets_per_byte(abfd);
+	disasm_info.skip_zeroes = DEFAULT_SKIP_ZEROES;
+	disasm_info.skip_zeroes_at_end = DEFAULT_SKIP_ZEROES_AT_END;
+	disasm_info.disassembler_needs_relocs = FALSE;
+
+#if 1
+	if (bfd_big_endian(abfd))
+		disasm_info.display_endian = disasm_info.endian = BFD_ENDIAN_BIG;
+	else if (bfd_little_endian(abfd))
+		disasm_info.display_endian = disasm_info.endian = BFD_ENDIAN_LITTLE;
+	else
+ /* ??? Aborting here seems too drastic.  We could default to big or little
+       instead.  */
+	disasm_info.endian = BFD_ENDIAN_UNKNOWN;
+#endif
+	/* set the default endianess is BFD_ENDIAN_LITTLE */
+	disasm_info.display_endian = disasm_info.endian = BFD_ENDIAN_LITTLE;
+	disasm_info.symtab = sorted_syms;
+	disasm_info.symtab_size = sorted_symcount;
+	disasm_info.read_memory_func = disasm_read_memory;
+	free(sorted_syms);
+}
 
 void init_disassemble(){
 	abfd = malloc(sizeof(bfd));
@@ -183,6 +287,19 @@ void init_disassemble(){
 	free (sorted_syms);
 }
 
+/*special for cloudskyeye disassemble*/
+void web_disassemble(generic_address_t addr) {
+	//assert(disasm_info);
+	/* if abfd is NULL, we need to run initilization of disassembler */
+	if (abfd == NULL)
+		web_init_disassemble();
+	/* if disassemble_fn is NULL, some errors happened. */
+	if (disassemble_fn == NULL)
+		return;
+	printf("0x%x:", addr);
+	disassemble_fn(addr, &disasm_info);
+	printf("\n");
+}
 
 void disassemble(generic_address_t addr){
 	//assert(disasm_info);
