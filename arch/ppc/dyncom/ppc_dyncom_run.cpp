@@ -26,6 +26,8 @@
 #include "skyeye_ram.h"
 #include "ppc_dyncom_debug.h"
 
+#include <pthread.h>
+
 e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
@@ -177,6 +179,7 @@ static void ppc_dyncom_syscall(cpu_t* cpu, uint32_t num){
 	else
 		ppc_exception(core, core->gpr[0], 0, 0);
 }
+
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
 	cpu->dyncom_engine->code_start = 0x100000f4;
@@ -191,7 +194,7 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->rf.srf = &core->cr;
 	cpu_set_flags_codegen(cpu, 0
 					| CPU_CODEGEN_TAG_LIMIT
-			//		| CPU_CODEGEN_OPTIMIZE
+					| CPU_CODEGEN_OPTIMIZE
 				);
 	cpu_set_flags_debug(cpu, 0
 				//	| CPU_DEBUG_PRINT_IR
@@ -215,6 +218,16 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->dyncom_engine->RAM = (uint8_t*)get_dma_addr(0);
 #else
 	set_memory_operator(ppc_read_memory, ppc_write_memory);
+#endif
+	/* init thread clock for profile */
+#if THREAD_CLOCK
+	extern void *clock_thread(void*);
+	pthread_t thread;
+	int ret = pthread_create(&thread, NULL, clock_thread, NULL);
+	if(ret){
+		fprintf(stderr, "failed create timing thread\n");
+		exit(0);
+	}
 #endif
 	return;
 }
