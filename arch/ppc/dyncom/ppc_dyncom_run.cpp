@@ -3,6 +3,12 @@
  *
  * 08/22/2010 Michael.Kang (blackfin.kang@gmail.com)
  */
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
+
 #include <llvm/LLVMContext.h>
 #include <llvm/Type.h>
 #include <llvm/Function.h>
@@ -27,6 +33,9 @@
 #include "ppc_dyncom_debug.h"
 
 #include <pthread.h>
+#include <sys/utsname.h>
+
+using namespace std;
 
 e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
@@ -287,12 +296,30 @@ struct ppc_dyncom_profile{
 	unsigned int size_lt_50_func;
 	unsigned int size_ge_50_func;
 };
+static void print_cpuinfo() {
+	string line;
+	std::ifstream finfo("/proc/cpuinfo");
+	cout << "Machine:" << endl;
+	while(getline(finfo,line)) {
+		stringstream str(line);
+		string itype;
+		string info;
+		getline( str, itype, ':' );
+		getline(str,info);
+		if (itype.substr(0,10) == "model name" ) {
+			cout << info;
+		}else if (itype.substr(0,10) == "cache size" ) {
+			cout << ". Cache size:" << info << endl;
+		}
+	}
+}
 static void ppc_dyncom_profile(e500_core_t* core){
 	cpu_t* cpu = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
 	struct ppc_dyncom_profile profile;
 	memset(&profile, 0, sizeof(struct ppc_dyncom_profile));
-	printf("PROFILING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 	printf("DFS : %d \n", LIMIT_TAGGING_DFS);
+	printf("LLVM OPTIMIZE %s\n",
+			cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_OPTIMIZE ? "on" :"off");
 	profile.func_num = cpu->dyncom_engine->mod->size();
 	Module::iterator it = cpu->dyncom_engine->mod->begin();
 	unsigned int tmp_size = 0;
@@ -322,6 +349,8 @@ static void ppc_dyncom_profile(e500_core_t* core){
 void ppc_dyncom_stop(e500_core_t* core){
 	cpu_t* cpu = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
 #if JIT_FUNCTION_PROFILE
+	printf("PROFILING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+	print_cpuinfo();
 	ppc_dyncom_profile(core);
 #endif
 #if ENABLE_ICOUNTER
