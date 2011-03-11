@@ -21,6 +21,7 @@
  */
 #ifndef __DYNCOM_STAT_H__
 #define __DYNCOM_STAT_H__
+#include "dyncom/defines.h"
 void update_timing(cpu_t *cpu, int index, bool start);
 #if TIMING_PROF
 #define UPDATE_TIMING(cpu, index, start) update_timing(cpu, index, start)

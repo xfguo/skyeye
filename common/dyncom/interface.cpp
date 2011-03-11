@@ -529,11 +529,11 @@ void
 cpu_print_statistics(cpu_t *cpu)
 {
 	//printf("icounter = %8lld\n", REG(SR(ICOUNTER)));
-	printf("tag = %8lld\n", cpu->timer_total[TIMER_TAG]);
-	printf("fe  = %8lld\n", cpu->timer_total[TIMER_FE]);
-	printf("be  = %8lld\n", cpu->timer_total[TIMER_BE]);
-	printf("run = %8lld\n", cpu->timer_total[TIMER_RUN]);
-	printf("opt = %8lld\n", cpu->timer_total[TIMER_OPT]);
+	printf("tag = %8lld ms\n", cpu->timer_total[TIMER_TAG]);
+	printf("fe  = %8lld ms\n", cpu->timer_total[TIMER_FE]);
+	printf("be  = %8lld ms\n", cpu->timer_total[TIMER_BE]);
+	printf("run = %8lld ms\n", cpu->timer_total[TIMER_RUN]);
+	printf("opt = %8lld ms\n", cpu->timer_total[TIMER_OPT]);
 }
 
 extern "C" void debug_output(cpu_t* cpu){
