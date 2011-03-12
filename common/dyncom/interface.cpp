@@ -357,7 +357,8 @@ cpu_translate_function(cpu_t *cpu)
 	BranchInst::Create(bb_start, label_entry);
 
 	/* make sure everything is OK */
-	verifyFunction(*cpu->dyncom_engine->cur_func, AbortProcessAction);
+	if (cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_VERIFY)
+		verifyFunction(*cpu->dyncom_engine->cur_func, AbortProcessAction);
 
 	if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_PRINT_IR)
 		cpu->dyncom_engine->mod->dump();

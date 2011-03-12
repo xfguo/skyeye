@@ -368,6 +368,7 @@ enum {
 // and we start tagging at these addresses on load if the
 // cache exists.
 #define CPU_CODEGEN_TAG_LIMIT (1<<2)
+#define CPU_CODEGEN_VERIFY  (1<<3)
 
 //////////////////////////////////////////////////////////////////////
 // debug flags
