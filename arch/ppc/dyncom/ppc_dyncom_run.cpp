@@ -204,6 +204,7 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu_set_flags_codegen(cpu, 0
 					| CPU_CODEGEN_TAG_LIMIT
 					| CPU_CODEGEN_OPTIMIZE
+				//	| CPU_CODEGEN_VERIFY
 				);
 	cpu_set_flags_debug(cpu, 0
 				//	| CPU_DEBUG_PRINT_IR
@@ -320,6 +321,8 @@ static void ppc_dyncom_profile(e500_core_t* core){
 	printf("DFS : %d \n", LIMIT_TAGGING_DFS);
 	printf("LLVM OPTIMIZE %s\n",
 			cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_OPTIMIZE ? "on" :"off");
+	printf("Verify Function %s\n",
+			cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_VERIFY ? "on" :"off");
 	profile.func_num = cpu->dyncom_engine->mod->size();
 	Module::iterator it = cpu->dyncom_engine->mod->begin();
 	unsigned int tmp_size = 0;
