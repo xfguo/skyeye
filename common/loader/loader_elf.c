@@ -324,7 +324,11 @@ load_exec (const char *file, addr_type_t addr_type)
 		else {
 			/* clear .bss section if simulate applications */
 			if(get_user_mode()){
-				if(strcmp(bfd_section_name (tmp_bfd, s), ".bss") == 0){
+				//if(strcmp(bfd_section_name (tmp_bfd, s), ".bss") == 0){
+				if(strcmp(bfd_section_name (tmp_bfd, s), ".bss") == 0 ||
+					strcmp(bfd_section_name (tmp_bfd, s), ".sbss") == 0 ||
+					strcmp(bfd_section_name (tmp_bfd, s), "__libc_freeres_pt") == 0 ||
+					strcmp(bfd_section_name (tmp_bfd, s), ".tbss") == 0){
 					unsigned int bss_addr = (unsigned int) bfd_section_vma (tmp_bfd, s);
 					unsigned int bss_size = (unsigned int) bfd_section_size (tmp_bfd, s);
 					//printf ("find .bss section: addr = 0x%08x  size = 0x%08x .\n", bss_addr, bss_size);
