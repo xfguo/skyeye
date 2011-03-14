@@ -48,6 +48,7 @@ static void bus_write_string(char *buf, char *str){
 	bus_write(8, buf + i, '\0');
 }
 
+static int brk_static = 0x20000000;
 int mips_syscall(mips_core_t* core, int num){
 	int syscall_number = num;
 	switch(syscall_number){
@@ -127,7 +128,14 @@ int mips_syscall(mips_core_t* core, int num){
 			break;
 		}
 		case SYSCALL_brk:{		/* 45 */
-			printf("syscall 45 null\n");
+			printf("syscall 45\n");
+			if(core->gpr[a0]){
+				brk_static = core->gpr[a0];
+				core->gpr[v0] = 0;
+			}else
+				core->gpr[v0] = brk_static;
+
+			core->gpr[a3] = 0;
 			break;
 		}
 		case SYSCALL_getgid32:	/* 47 */
