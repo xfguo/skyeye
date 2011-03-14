@@ -25,15 +25,51 @@
 #include <sys/times.h>
 #include <linux/unistd.h>			//exit_group
 
+static void bus_read_string(char *buf, char *str){
+	int i = 0;
+	char tmp[1024];
+	while(1){
+		bus_read(8, str + i ,tmp + i);
+		if(tmp[i] != '\0'){
+			i++;
+		}else{
+			buf[i + 1] = '\0';
+			strcpy(buf, tmp);
+			break;
+		}
+	}
+}
+static void bus_write_string(char *buf, char *str){
+	int len = strlen(str);
+	int i = 0;
+	for (i = 0; i < len; i++){
+		bus_write(8, buf + i, *((char *)(str + i)));
+	}
+	bus_write(8, buf + i, '\0');
+}
+
 int mips_syscall(mips_core_t* core, int num){
 	int syscall_number = num;
 	switch(syscall_number){
-		case SYSCALL_exit:{		/* 3 */
+		case SYSCALL_exit:{		/* 1 */
 			exit(0);
 			break;
 		}
 		case SYSCALL_read:{		/* 3 */
-			printf("syscall 3 null\n");
+			printf("syscall 3\n");
+			int fd = core->gpr[a0];
+			char *buff = core->gpr[a1];
+			int count = core->gpr[a2];
+			void *tmp = malloc(count);
+			int size = read(fd, tmp, count);
+			int i;
+			for( i = 0; i < size; i ++){
+				bus_write(8, buff + i, ((char*)tmp)[i]);
+			}
+			free(tmp);
+			core->gpr[v0] = size;
+			core->gpr[a3] = 0;
+
 			break;
 		}
 		case SYSCALL_write:{		/* 4 */
@@ -55,15 +91,28 @@ int mips_syscall(mips_core_t* core, int num){
 			}
 			int result = write(fd, tmp, bytes);
 			core->gpr[v0] = result;
+			core->gpr[a3] = 0;
 			free(tmp);
 			break;
 		}
 		case SYSCALL_open:{		/* 5 */
-			printf("syscall 5 null\n");
+			printf("syscall 5\n");
+			char *path = (char *)core->gpr[a0];
+			int flags = core->gpr[a1];
+			int mode = core->gpr[a2];
+			char path_name[1024];
+			bus_read_string(path_name, path);
+			printf(" path name is %s\n", path_name);
+			//FIXME:how about open without mode ???
+			core->gpr[v0] = open(path_name, flags, mode);
+			core->gpr[a3] = 0;
 			break;
 		}
 		case SYSCALL_close:{		/* 6 */
-			printf("syscall 6 null\n");
+			printf("syscall 6\n");
+			int fd = core->gpr[a0];
+			close(fd);
+			core->gpr[a3] = 0;
 			break;
 		}
 		case SYSCALL_time:{		/* 13 */
@@ -103,7 +152,21 @@ int mips_syscall(mips_core_t* core, int num){
 			break;
 		}
 		case SYSCALL_uname:{		/* 122 */
-			printf("syscall 122 null\n");
+			printf("syscall 122\n");
+			struct utsname *tmp = (struct utsname *)core->gpr[a0];
+			struct utsname uname_tmp;
+			int result = uname(&uname_tmp);
+			if (result == 0){
+				bus_write_string(tmp->sysname, "Linux");
+				bus_write_string(tmp->nodename, "skyeye");
+				bus_write_string(tmp->release, uname_tmp.release);
+				bus_write_string(tmp->version, uname_tmp.version);
+				bus_write_string(tmp->machine, "mips");
+				core->gpr[a3] = 0;
+			}else{
+				core->gpr[a3] = -1;
+				//TODO:ERROR handle
+			}
 			break;
 		}
 		case SYSCALL_writev:{		/* 146 */
