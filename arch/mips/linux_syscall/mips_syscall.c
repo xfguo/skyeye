@@ -121,7 +121,9 @@ int mips_syscall(mips_core_t* core, int num){
 			break;
 		}
 		case SYSCALL_getuid32:	/* 24 */
-			printf("syscall 24 null\n");
+			printf("syscall 24 \n");
+			core->gpr[v0] = getuid();
+			core->gpr[a0] = 0;
 			break;
 		case SYSCALL_times:{		/* 43 */
 			printf("syscall 43 null\n");
@@ -139,13 +141,19 @@ int mips_syscall(mips_core_t* core, int num){
 			break;
 		}
 		case SYSCALL_getgid32:	/* 47 */
-			printf("syscall 47 null\n");
+			printf("syscall 47\n");
+			core->gpr[v0] = getgid();
+			core->gpr[a3] = 0;
 			break;
 		case SYSCALL_geteuid32:	/* 49 */
-			printf("syscall 49 null\n");
+			printf("syscall 49 \n");
+			core->gpr[v0] = geteuid();
+			core->gpr[a3] = 0;
 			break;
 		case SYSCALL_getegid32:	/* 50 */
-			printf("syscall 50 null\n");
+			printf("syscall 50 \n");
+			core->gpr[v0] = getegid();
+			core->gpr[a3] = 0;
 			break;
 		case SYSCALL_ioctl:{		/* 54 */
 			printf("syscall 54 null\n");
@@ -185,8 +193,14 @@ int mips_syscall(mips_core_t* core, int num){
 			printf("syscall 234 null\n");
 			break;
 		}
+		case SYSCALL_splice:{		/* 283 */
+			printf("syscall 283 null\n");
+
+			core->gpr[a3] = 0;
+			break;
+		}
 		default:
-			printf("in syscall num is %x\n", syscall_number);
+			printf("in syscall num is %d\n", syscall_number);
 			exit(-1);
 	}
 	return 0;
