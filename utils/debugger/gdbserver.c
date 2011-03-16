@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
+#include <errno.h>
 
 #ifdef __BEOS__
 #include <BeBuild.h>
@@ -55,6 +56,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #undef WORD
 #undef byte
 #include <windows.h>
+#include <winsock2.h>
+#include <pthread.h>
 #endif
 
 #if (defined(__MINGW32__) || (defined(__BEOS__) && B_BEOS_VERSION < 0x510))
@@ -115,6 +118,23 @@ remote_open (char *name)
 #ifndef __MINGW32__
 	if ((tmp_desc = socket (PF_INET, SOCK_STREAM, 0)) < 0) perror ("Can't open socket");
 #else
+	+   struct WSAData {
+		WORD wVersion;
+		char szSystemStatus[100+1];
+		unsigned short iMaxSockets;
+		unsigned short iMaxUdpDg;
+		char FAR * lpVendorInfo;
+	};
+	struct WSAData wsaData;
+	int err;
+	err = WSAStartup(MAKEWORD(2,2), &wsaData);
+	if(err != 0) perror("Can't init socket!!!!\n");
+	if(LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2){
+		WSACleanup();
+		printf("init failed!\n");
+		return 0;
+	}
+
 	if ((tmp_desc = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) perror("Can't open socket");
 #endif
 
@@ -128,13 +148,19 @@ remote_open (char *name)
 	sockaddr.sin_addr.s_addr = INADDR_ANY;
 
 	if (bind (tmp_desc, (struct sockaddr *) &sockaddr, sizeof (sockaddr))
-	    || listen (tmp_desc, 1))
+	    || listen (tmp_desc, 1)){
 		perror ("Can't bind address");
+		return -1;
+	}
+	printf("Listen seccess for connect!\n");
 
 	tmp = sizeof (sockaddr);
 	remote_desc = accept (tmp_desc, (struct sockaddr *) &sockaddr, &tmp);
-	if (remote_desc == -1)
+	if (remote_desc == -1){
 		perror ("Accept failed");
+		return -1;
+	}
+	printf("Wait for client connect\n");
 
 	/* 2007-02-02 disabled on BeOS R5.0.x by Anthony Lee */
 #if !(defined(__BEOS__) && B_BEOS_VERSION < 0x510)
@@ -188,7 +214,12 @@ void com_remote_gdb(){
 void
 remote_close ()
 {
+#ifndef __MINGW32__
 	Close (remote_desc);
+#else
+	closesocket (remote_desc);
+	WSACleanup();
+#endif
 }
 
 /* Convert hex digit A to a number.  */
