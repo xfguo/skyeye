@@ -581,9 +581,15 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 			case 0x61090:
 				return 0x1;	/* Who am I register for core 1 */
 			case 0x600a0:
-				return io->pic_percpu.iack[0];
+				if(core->ipr == 0)
+					return io->pic_global.svr;
+				else
+					return io->pic_percpu.iack[0];
 			case 0x610a0:
-				return io->pic_percpu.iack[1];
+				if(core->ipr == 0)
+					return io->pic_global.svr;
+				else
+					return io->pic_percpu.iack[1];
 				//printf("In %s, ack=0x%x\n", __FUNCTION__, *result);
 			default:
 				break;
