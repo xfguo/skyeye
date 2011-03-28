@@ -28,15 +28,18 @@
 #include <sys/types.h>
 #include <unistd.h>			//read,write...
 #include <string.h>
-#include <fcntl.h>
 #include <sys/utsname.h>	//uname
 #include <time.h>
 #include <sys/uio.h>		//writev
 #include <sys/mman.h>		//mmap
-#include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/times.h>
 #include <linux/unistd.h>			//exit_group
+#ifndef __USE_LARGEFILE64
+#define __USE_LARGEFILE64		/* When use 64 bit large file need define it! for stat64*/
+#endif
+#include <fcntl.h>
+#include <sys/stat.h>
 
 extern void ppc_dyncom_stop(e500_core_t* core);
 struct ppc_stat64{
@@ -521,7 +524,9 @@ int ppc_syscall(e500_core_t* core){
 		case TARGET_NR_exit_group:{		/* 234 */ 
 			int status = core->gpr[3];
 			dump("syscall %d exit_group(%d)\n",TARGET_NR_exit_group, status);
+#ifdef LLVM_EXIST
 			ppc_dyncom_stop(core);
+#endif
 			run_command("quit");
 			break;
 		}
