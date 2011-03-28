@@ -59,7 +59,10 @@ skyeye_LDADD = -lc
 # some functions in "libutils.a" which is required by other libs
 #skyeye_LDADD += $(top_srcdir)/utils/libutils.a
 #skyeye_LDADD += 
-skyeye_LDFLAGS = -L./common -lcommon `llvm-config --libs ` -lrt -L`llvm-config --libdir`
+skyeye_LDFLAGS = -L./common -lcommon
+if LLVM_EXIST
+skyeye_LDFLAGS += `llvm-config --libs ` -lrt -L`llvm-config --libdir`
+endif
 
 INCLUDES = @COMMON_INCLUDES@ -Ithird-party/bfd/
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@ 

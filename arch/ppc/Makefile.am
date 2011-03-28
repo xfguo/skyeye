@@ -7,11 +7,20 @@ ppc_dyncom = dyncom/ppc_dyncom_run.cpp dyncom/ppc_dyncom_translate.cpp dyncom/pp
 
 ppc_linux_syscall = linux_syscall/ppc_syscall.c
 #libppc_a_SOURCES = $(ppc_mach) $(ppc_comm)
-libppc_la_SOURCES = $(ppc_mach) $(ppc_comm) $(ppc_dyncom) $(ppc_linux_syscall)
+libppc_la_SOURCES = $(ppc_mach) $(ppc_comm) $(ppc_linux_syscall)
+
+if LLVM_EXIST
+libppc_la_SOURCES += $(ppc_dyncom)
+endif
+
 pkglib_LTLIBRARIES = libppc.la
 # we will link the common module with main
 libppc_la_LDFLAGS = -module
 #DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0
 DEFS = @COMMON_CFLAGS@
+if LLVM_EXIST
+DEFS += -DLLVM_EXIST
+endif
+
 #noinst_LIBRARIES =      libppc.a
 INCLUDES = -I$(top_srcdir)/common -I$(top_srcdir)/dyncom/ -I$(top_srcdir)/arch/ppc/common -I$(top_srcdir)/arch/ppc/linux_syscall `/usr/local/bin/llvm-config --cflags` -I$(top_srcdir)/utils/debugger @COMMON_INCLUDES@
