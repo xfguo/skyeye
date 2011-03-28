@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "skyeye_mach.h"
 #include "skyeye_module.h"
@@ -12,9 +13,14 @@ init_ppc_arch ();
 
 void module_init(){
 	init_ppc_arch ();
+#ifdef LLVM_EXIST
+	printf("ppc LLVM EXIST\n");
 	init_ppc_dyncom();
-	 /*
-         * register all the supported mach to the common library.
+#else
+	printf("ppc Don't have LLVM\n");
+#endif
+	/*
+	 * register all the supported mach to the common library.
          */
         int i = 0;
         while(ppc_machines[i].machine_name != NULL){
