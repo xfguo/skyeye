@@ -126,8 +126,14 @@ typedef struct pic_global_s{
 	uint32 gtvpr1;
 	uint32 gtvpr2;
 	uint32 gtvpr3;
+	uint32 gtbcr0; /* for vxworks */
+	uint32 gtbcr1; /* for vxworks */
+	uint32 gtbcr2; /* for vxworks */
+	uint32 gtbcr3; /* for vxworks */
 	uint32 svr;
 	uint32 iack;
+	uint32 mer;  /* for vxworks */
+	uint32 tcra;  /* for vxworks */
 }pic_global_t;
 
 typedef struct pic_ram_s{
@@ -544,18 +550,28 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 				return io->pic_global.svr;
 			case 0x410f0:
 				return io->pic_global.tfrr;
+			case 0x41110:
+				return io->pic_global.gtbcr0;
 			case 0x41120:
 				return io->pic_global.gtvpr0;
+			case 0x41150:
+				return io->pic_global.gtbcr1;
 			case 0x41160:
 				return io->pic_global.gtvpr1;
 			case 0x41170:
 				return io->pic_global.gtdr1;
+			case 0x41190:
+				return io->pic_global.gtbcr2;
 			case 0x411a0:
 				return io->pic_global.gtvpr2;
 			case 0x411B0:
 				return io->pic_global.gtdr2;
 			case 0x411E0:
 				return io->pic_global.gtvpr3;
+			case 0x411D0:
+				return io->pic_global.gtbcr3;
+			case 0x41300:
+				return io->pic_global.tcra;
 			default:
 				/*
 				   fprintf(stderr,"in %s, error when read global.offset=0x%x, \
@@ -563,7 +579,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 				   return r;
 				 */
 				break;
-			//skyeye_exit(-1);
+				//skyeye_exit(-1);
 		}
 
 		if (offset >= 0x50000 && offset <= 0x50170) {
@@ -580,6 +596,28 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 			else
 				return io->mpic.iivpr[index >> 1];
 		}
+		if (offset >= 0x51600 && offset <= 0x51670) {
+			int index = (offset - 0x51600) >> 4;
+			if (index & 0x1)
+				return io->mpic.midr[index >> 1];
+			else
+				return io->mpic.mivpr[index >> 1];
+		}
+
+		if (offset >= 0x51680 && offset <= 0x51bf0)	 /* Reserved region for MPC8641d*/
+			return;
+
+		if (offset >= 0x51c00 && offset <= 0x51cf0) {
+			int index = (offset - 0x51c00) >> 4;
+			if (index & 0x1)
+				return io->mpic.msidr[index >> 1];
+			else
+				return io->mpic.msivpr[index >> 1];
+		}
+
+		if (offset >= 0x51d00 && offset <= 0x5fff0)	 /* Reserved region for MPC8641d*/
+			return;
+
 		/*
 		   if(offset >= 0x50200 && offset <= 0x509F0){
 		   int index = (offset - 0x50200) >> 4;
@@ -606,8 +644,9 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 				if(core->ipr == 0)
 					return io->pic_global.svr;
 				else
+					//printf("In %s, ack=0x%x\n", __FUNCTION__, *result);
+					printf("In %s, ack=0x%x\n", __FUNCTION__, io->pic_percpu.iack[1] );
 					return io->pic_percpu.iack[1];
-				//printf("In %s, ack=0x%x\n", __FUNCTION__, *result);
 			default:
 				break;
 		}
@@ -764,6 +803,11 @@ mpc8641d_io_write_byte (void *state, uint32_t offset, uint32_t data)
 		case 0x4507:
 			io->uart[0].scr = data;
 			break;
+		case 0x4600:
+			skyeye_uart_write (-1, &data, 1, NULL);
+			io->uart[1].lsr |= 0x60;	/* set TEMT and THRE bit */
+			break;
+
 		case 0x4601:
 			if (io->uart[1].lcr & 0x80)
 				io->uart[1].dmb = data;
@@ -969,6 +1013,10 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 			case 0x410e0:
 				io->pic_global.svr = data;
 				break;
+			case 0x41110:
+				io->pic_global.gtbcr0 = data;
+				printf("data = 0x%x\n", data);
+				break;
 			case 0x41120:
 				io->pic_global.gtvpr0 = data;
 				break;
@@ -992,6 +1040,12 @@ mpc8641d_io_write_word (void *state, uint32_t offset, uint32_t data)
 				break;
 			case 0x411F0:
 				io->pic_global.gtdr3 = data;
+				break;
+			case 0x41500:
+				io->pic_global.mer = data;
+				break;
+			case 0x41300:
+				io->pic_global.tcra = data;
 				break;
 			default:
 				fprintf (stderr, "in %s, error when write mpic global, offset=0x%x, \
