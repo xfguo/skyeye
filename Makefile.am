@@ -115,6 +115,7 @@ clean_lib:
 install-data-hook:
 	rm -f -r $(prefix)/testsuite && mkdir $(prefix)/testsuite
 	cp -a $(top_srcdir)/testsuite/arm_hello $(prefix)/testsuite/arm_hello/
+	cp -a $(top_srcdir)/pyshell/* $(prefix)/bin/
 #	rm -f -r $(prefix)/conf && mkdir $(prefix)/conf
 #	cp -a $(top_srcdir)/conf/* $(prefix)/conf
 
