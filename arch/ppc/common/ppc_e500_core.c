@@ -137,6 +137,10 @@ void ppc_core_init(e500_core_t * core, int core_id){
 		core->dec_io_do_cycle = e600_dec_io_do_cycle;
 		core->get_ccsr_base = e600_get_ccsr_base;
 		core->ccsr_size = 0x100000;
+		/* FIXME, we should give the default value to all the register 
+		 * according to the reset settings section of e600 manual 
+		 */
+		core->msr = 0x00000040;
 	}
 
 	core->pir = core_id;
