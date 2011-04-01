@@ -70,6 +70,7 @@ mem_config_t * get_global_memmap();
 /* Mapping a range of address to the address space */
 exception_t addr_mapping(mem_bank_t* bank);
 
+int save_mem_to_file(void);
 #ifdef __cplusplus
 }
 #endif
