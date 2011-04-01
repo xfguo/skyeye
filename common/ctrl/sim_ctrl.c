@@ -97,6 +97,12 @@ void SIM_init(){
 
 	/* the management of named object */
 	init_conf_obj();
+
+	/*
+	 * initialization of breakpoint, that depends on callback module.
+	 */
+	init_chp();
+
 	/* 
 	 * get the current preference for simulator 
 	 */
