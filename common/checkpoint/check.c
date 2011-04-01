@@ -33,8 +33,9 @@ static int save_chp()
 			ret += fwrite(p->data + ret, 1, p->size, fp);
 		}while(p->size - ret > 0);
 
-		fclose(fp);
+		fprintf(fp,"\n");
 	}
+	fclose(fp);
 
 	save_mem_to_file();
 }
