@@ -18,15 +18,60 @@ chp_list chp_data_list;
 static int save_chp()
 {
 	chp_data *p;
-	int i;
+	int i,ret;
+	FILE *fp;
+
+	fp = fopen("config", "wb");
+	if(fp == NULL)
+		printf("can't create file config\n");
 	/* check for difference archtecture */
 	for( p = chp_data_list.head; p != NULL; p = p->next){
-		for( i = 0; i < p->size; i ++ ){
-			printf("%x", ((char*)(p->data))[i]);
-		}
+		ret = 0;
+		fprintf(fp, "%s=%d\n", p->name, p->size);
+
+		do{
+			ret += fwrite(p->data + ret, 1, p->size, fp);
+		}while(p->size - ret > 0);
+
+		fclose(fp);
 	}
 
 	save_mem_to_file();
+}
+
+static int load_chp()
+{
+	chp_data *p;
+	int ret,i;
+	FILE *fp;
+	char tmp[100],tmp2[100];
+
+	fp = fopen("config", "rb");
+	if(fp == NULL)
+		printf("can't create file config\n");
+
+	/* check for difference archtecture */
+	while(fgets(tmp, 100, fp) != NULL){
+		for( p = chp_data_list.head; p != NULL; p = p->next){
+			ret = 0;
+			sprintf(tmp2, "%s=%d\n", p->name, p->size);
+
+			if(!strcmp(tmp2, tmp)){
+				do{
+					ret += fread(p->data + ret + ret, 1, p->size, fp);
+				}while(p->size - ret > 0);
+
+				break;
+			}else
+				continue;
+		}
+		memset(tmp, 0, 100);
+		memset(tmp2, 0, 100);
+	}
+
+	fclose(fp);
+
+	load_mem_form_flie();
 }
 
 void add_chp_data(void *data, int size, char *name)
@@ -59,6 +104,7 @@ int init_chp(){
 	//register_callback(log_pc_callback, Step_callback);
 	/* add correspinding command */
 	add_command("write-configuration", save_chp, "save this breakpoint position and invention.\n");
+	add_command("read-configuration", load_chp, "load a breakpoint position.\n");
 #if 0
 	add_command("read-configuration", load_chpoint, "load a breakpoint position.\n");
 	add_command("set-bookmark", save_chpoint_mem, "set a bookmark position.\n");
