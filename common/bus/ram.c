@@ -21,7 +21,7 @@
 /*
  * 12/16/2006   Michael.Kang  <blackfin.kang@gmail.com>
  */
-
+#include <stdio.h>
 #include "skyeye_config.h"
 #include "assert.h"
 #include "bank_defs.h"
@@ -453,4 +453,32 @@ char warn_write(short size, int offset, uint32_t value){
 }
 mem_state_t * get_global_memory(){
 	return &global_memory;
+}
+
+/* for checkpoint */
+int save_mem_to_file(void)
+{
+	int i,j,bank,ret = 0;
+	mem_config_t *mc = get_global_memmap();
+	int num = mc->current_num;
+	char buf[10];
+	FILE *fp;
+
+	for (i = 0; i < num; i++) {
+		bank = i;
+		ret = 0;
+
+		sprintf(buf, "ram%d", i);
+		fp = fopen(buf, "wb");
+		if(fp == NULL)
+			printf("can't create a mem copy file %s \n", buf);
+
+		fprintf(fp, "%d=%d\n", bank, global_memory.rom_size[bank]);
+
+		do{
+			ret += fwrite(global_memory.rom[bank] + ret, 1, global_memory.rom_size[bank], fp);
+		}while(global_memory.rom_size[bank] - ret > 0);
+
+		fclose(fp);
+	}
 }
