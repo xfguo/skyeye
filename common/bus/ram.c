@@ -482,3 +482,38 @@ int save_mem_to_file(void)
 		fclose(fp);
 	}
 }
+
+
+int load_mem_form_flie(void)
+{
+
+	int i,j,bank,ret = 0;
+	mem_config_t *mc = get_global_memmap();
+	int num = mc->current_num;
+	char buf[10];
+	char tmp[100];
+	char tmp2[100];
+	FILE *fp;
+
+	for (i = 0; i < num; i++) {
+		bank = i;
+		ret = 0;
+
+		sprintf(buf, "ram%d", i);
+		fp = fopen(buf, "r");
+		if(fp == NULL)
+			printf("can't find a mem copy file %s, may be it lost or config file changed \n", buf);
+
+		fgets(tmp, 100, fp);
+		sprintf(tmp2, "%d=%d\n", bank, global_memory.rom_size[bank]);
+
+		if(!strcmp(tmp2, tmp))
+			do{
+				ret += fread(global_memory.rom[bank] + ret, 1, global_memory.rom_size[bank], fp);
+			}while(global_memory.rom_size[bank] - ret > 0);
+		else
+			printf("different size of a bank\n");
+
+		fclose(fp);
+	}
+}
