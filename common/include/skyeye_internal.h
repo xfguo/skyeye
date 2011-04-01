@@ -14,6 +14,8 @@ void init_arch();
 void init_bus();
 void init_mach();
 int init_bp();
+int init_chp();
+void add_chp_data(void *data, int size, char *name);
 void init_conf_obj();
 void stop_all_cell();
 void start_all_cell();
