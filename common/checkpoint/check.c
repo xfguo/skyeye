@@ -12,6 +12,7 @@
 #include "skyeye_mach.h"
 #include "checkpoint.h"
 #include "skyeye_mm.h"
+#include "bank_defs.h"
 
 chp_list chp_data_list;
 static int save_chp()
@@ -24,6 +25,8 @@ static int save_chp()
 			printf("%x", ((char*)(p->data))[i]);
 		}
 	}
+
+	save_mem_to_file();
 }
 
 void add_chp_data(void *data, int size, char *name)
