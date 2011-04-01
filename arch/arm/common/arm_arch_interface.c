@@ -3,6 +3,7 @@
 #include "armemu.h"
 #include "arm_regformat.h"
 
+#include "skyeye_internal.h"
 #include "skyeye_arch.h"
 #include "skyeye_options.h"
 #include "skyeye_types.h"
@@ -78,6 +79,7 @@ static arm_cpu_init()
 		printf("%d core is initialized.\n", cpu->core_num);
 
 	int i;
+	char buf[10];
 	for(i = 0; i < cpu->core_num; i++){
 		ARMul_State* core = &cpu->core[i];
 		arm_core_init(core, i);
@@ -86,6 +88,9 @@ static arm_cpu_init()
 		exec->run = per_cpu_step;
 		exec->stop = per_cpu_stop;
 		add_to_default_cell(exec);
+
+		sprintf(buf, "armcore%d", i);
+		add_chp_data((void*)core, sizeof(ARMul_State), buf);
 	}
 
 	cpu->boot_core_id = 0;
