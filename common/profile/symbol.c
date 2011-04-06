@@ -63,31 +63,34 @@ void init_symbol_table(char* filename, char* arch_name)
 		//exit(0);
 	}
 
-  storage_needed = bfd_get_symtab_upper_bound(abfd);
-  if (storage_needed < 0){
-    printf("FAIL\n");
-    exit(0);
-  }
+	storage_needed = bfd_get_symtab_upper_bound(abfd);
+	if (storage_needed < 0){
+		printf("FAIL\n");
+		exit(0);
+	}
 
-  // <tktan> BUG200105221946 :symbol_table = (asymbol **) malloc (storage_needed);
-  symbol_table = (asymbol **) malloc (storage_needed);
+	symbol_table = (asymbol **) malloc (storage_needed);
+	if(symbol_table == NULL){
+		fprintf(stderr, "Can not alloc memory for symbol table.\n");
+		exit(0);
+	}
 
-  number_of_symbols =
-     bfd_canonicalize_symtab (abfd, symbol_table);
-  kernel_number = number_of_symbols; /* <tktan> BUG200106022219 */
+	number_of_symbols =
+		bfd_canonicalize_symtab (abfd, symbol_table);
+	kernel_number = number_of_symbols; /* <tktan> BUG200106022219 */
 
-  if (number_of_symbols < 0){
-    printf("FAIL\n");
-    exit(0);
-  }
+	if (number_of_symbols < 0){
+		printf("FAIL\n");
+		exit(0);
+	}
 
-  if (!hcreate(number_of_symbols << 1)) {
-    printf("Not enough memory for hash table\n");
-    exit(0);
-  }
-  for (i = 0; i < number_of_symbols; i++) {
-    symptr = symbol_table[i] ;
-    key = symptr->value + symptr->section->vma; // adjust for section address
+	if (!hcreate(number_of_symbols << 1)) {
+		printf("Not enough memory for hash table\n");
+		exit(0);
+	}
+	for (i = 0; i < number_of_symbols; i++) {
+		symptr = symbol_table[i] ;
+		key = symptr->value + symptr->section->vma; // adjust for section address
 
     if (((i<kernel_number) && (symbol_table[i]->flags == 0x01)) || // <tktan> BUG200105172154, BUG200106022219 
 	((i<kernel_number) && (symbol_table[i]->flags == 0x02)) || // <tktan> BUG200204051654
@@ -138,29 +141,29 @@ void init_symbol_table(char* filename, char* arch_name)
 *************************************************************/
 char *get_sym(generic_address_t address)
 {
-  int j ;
-  ENTRY entry, *ep;
-  char text[9] ;
-  SYM_FUNC *symp;
+	int j ;
+	ENTRY entry, *ep;
+	char text[9] ;
+	SYM_FUNC *symp;
 
-  //printf("GetSym %x\n", address);
+	//printf("GetSym %x\n", address);
 	/*
 	 * If storage_needed is zero, means symbol table is not initialized.
 	 */
 	if(storage_needed == 0)
 		return NULL;
-	assert(!symbol_table);
-  entry.key = text ;
-  for (j=0;j<8;j++) {
-    entry.key[j] = itoa_tab[(address >> (j << 2)) & 0xf] ;
-  }
-  entry.key[8] = 0 ;
-/*a bug need to fixed */
-  ep = hsearch(entry, FIND) ;
+	//assert(!symbol_table);
+	entry.key = text ;
+	for (j=0;j<8;j++) {
+		entry.key[j] = itoa_tab[(address >> (j << 2)) & 0xf] ;
+	}
+	entry.key[8] = 0 ;
+	/*a bug need to fixed */
+	ep = hsearch(entry, FIND) ;
 
-  if (ep != 0) {
-    symp = (SYM_FUNC *) ep->data;
-    return(symp->name);
-  } else
-    return(NULL);
+	if (ep != 0) {
+		symp = (SYM_FUNC *) ep->data;
+		return(symp->name);
+	} else
+		return(NULL);
 }
