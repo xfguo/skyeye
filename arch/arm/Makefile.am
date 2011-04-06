@@ -4,7 +4,11 @@ arm_dbct = dbct/arm2x86.c dbct/arm2x86_coproc.c dbct/arm2x86_dp.c dbct/arm2x86_m
 arm_mach = \
 mach/skyeye_mach_lpc.c
 arm_dyncom = dyncom/arm_dyncom_interface.cpp dyncom/arm_disasm.cpp dyncom/arm_dyncom_translate.cpp dyncom/arm_dyncom_run.cpp dyncom/arm_dyncom_dec.cpp
-libarm_la_SOURCES = $(arm_comm) $(arm_mmu) $(arm_mach) $(arm_dyncom)
+libarm_la_SOURCES = $(arm_comm) $(arm_mmu) $(arm_mach)
+
+if LLVM_EXIST
+libarm_la_SOURCES += $(arm_dyncom)
+endif
 
 if DBCT
 libarm_la_SOURCES += $(arm_dbct)
@@ -13,6 +17,9 @@ libarm_la_LDFLAGS = -module
 pkglib_LTLIBRARIES = libarm.la
 #noinst_LIBRARIES =      libarm.a
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DNO_LCD @COMMON_CFLAGS@
+if LLVM_EXIST
+DEFS += -DLLVM_EXIST
+endif
 
 libarm_la_LIBADD = armemu32.lo
 INCLUDES = -I$(top_srcdir)/arch/arm/common -I$(top_srcdir)/arch/arm/mach/ -I$(top_srcdir)/common/dyncom/ `llvm-config --cflags` @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/

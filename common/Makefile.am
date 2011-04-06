@@ -32,7 +32,10 @@ nobase_include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
 ./include/skyeye_queue.h
 
-libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_dyncom) $(common_profile)
+libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_profile)
+if LLVM_EXIST
+libcommon_la_SOURCES += $(common_dyncom)
+endif
 
 libcommon_la_LIBADD = -L$(top_builddir)/third-party/bfd/.libs/ -lbfd -L$(top_builddir)/third-party/libiberty/pic -liberty @LIBLTDL@ @LIBADD_DL@
 
@@ -42,13 +45,17 @@ else
 endif
 # we will link the common module with main
 #libcommon_la_LDFLAGS = -module
-libcommon_la_LDFLAGS = `llvm-config --libs ` -lrt -L`llvm-config --libdir`
+libcommon_la_LDFLAGS = 
 
 skyeye_module_dir = \"$(prefix)/lib/skyeye\"
 
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_MODULE_DIR=$(skyeye_module_dir) @COMMON_CFLAGS@
 
-INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party @INCLTDL@ `llvm-config --cflags`
+INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party @INCLTDL@ 
+if LLVM_EXIST
+INCLUDES+= `llvm-config --cflags`
+libcommon_la_LDFLAGS += `llvm-config --libs ` -lrt -L`llvm-config --libdir`
+endif
 
 if LCD
 INCLUDES += @LCD_CFLAGS@
