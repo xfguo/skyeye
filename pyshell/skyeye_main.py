@@ -37,8 +37,18 @@ if __name__ == '__main__':
     from skyeye_init import init_opt
     init_opt(opts)
 
-    # Init skyeye cmdline
-    from skyeye_cli import *
-    SkyEyeCli().cmdloop()
+    #Skyeye cmdline
+    from skyeye_module import *
+    libcommon.get_autoboot.restype = c_uint
+    autoboot = libcommon.get_autoboot()
+    if autoboot == False:
+        from skyeye_cli import *
+        SkyEyeCli().cmdloop()
+    else:
+        print "\n***************"
+        print "No interactive."
+        print "***************\n"
+        while 1:
+            pass
 
 #End main func#
