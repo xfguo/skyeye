@@ -17,6 +17,7 @@
 #include "bank_defs.h"
 
 chp_list chp_data_list;
+
 static int save_chp(char *arg)
 {
 	chp_data *p;
@@ -127,6 +128,36 @@ void add_chp_data(void *data, int size, char *name)
 	chp_data_list.num ++;
 }
 
+static bookmark[100] = {0};
+static int set_bookmark(char *arg)
+{
+	if(arg == NULL || *arg == 0){
+		strcpy(bookmark, "defbookmark");
+	}else{
+		strcpy(bookmark, arg);
+	}
+
+	save_chp(bookmark);
+}
+
+static int reverse_to(char *arg)
+{
+
+	if(bookmark[0])
+		load_chp(bookmark);
+	else
+		printf("please set a bookmark first before using reverse command\n");
+
+	if(arg == NULL || *arg == 0){
+
+	}else{
+		int ret;
+		ret = atoi(arg);
+		if(ret)
+			skyeye_stepi(ret);
+	}
+}
+
 int init_chp(){
 
 	memset(&chp_data_list, 0, sizeof(chp_data_list));
@@ -135,11 +166,8 @@ int init_chp(){
 	/* add correspinding command */
 	add_command("write-configuration", save_chp, "save this breakpoint position and invention.\n");
 	add_command("read-configuration", load_chp, "load a breakpoint position.\n");
-#if 0
-	add_command("read-configuration", load_chpoint, "load a breakpoint position.\n");
-	add_command("set-bookmark", save_chpoint_mem, "set a bookmark position.\n");
+	add_command("set-bookmark", set_bookmark, "set a bookmark position.\n");
 	add_command("reverse-to", reverse_to, "reverse to an old position.\n");/* step or bookmark */
-#endif
 }
 
 /* destruction function for log functionality */
