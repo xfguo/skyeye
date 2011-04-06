@@ -23,6 +23,7 @@
 #include <skyeye_sched.h>
 #include <skyeye_lock.h>
 #include "s3c6410x.h"
+#include "skyeye_internal.h"
 
 #ifdef __CYGWIN__
 #include <time.h>
@@ -845,4 +846,6 @@ s3c6410x_mach_init (void *arch_instance, machine_config_t *this_mach)
 	this_mach->mach_pending_intr = s3c6410x_pending_ext_intr;
 	this_mach->mach_update_intr = s3c6410x_update_intr;
 	this_mach->state = (void *) arch_instance;
+
+	add_chp_data(&s3c6410x_io, sizeof(s3c6410x_io_t), "6410io");
 }
