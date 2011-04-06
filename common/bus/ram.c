@@ -464,7 +464,7 @@ int save_mem_to_file(char *dir)
 	int i,j,bank,ret = 0;
 	mem_config_t *mc = get_global_memmap();
 	int num = mc->current_num;
-	char buf[10];
+	char buf[100];
 	FILE *fp;
 
 	if(access(dir, 0) == -1){
@@ -501,7 +501,7 @@ int load_mem_form_flie(char *dir)
 	int i,j,bank,ret = 0;
 	mem_config_t *mc = get_global_memmap();
 	int num = mc->current_num;
-	char buf[10];
+	char buf[100];
 	char tmp[100];
 	char tmp2[100];
 	FILE *fp;
