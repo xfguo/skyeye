@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <pthread.h>
 #include <string.h>
 #include "skyeye_config.h"
@@ -15,20 +17,38 @@
 #include "bank_defs.h"
 
 chp_list chp_data_list;
-static int save_chp()
+static int save_chp(char *arg)
 {
 	chp_data *p;
 	int i,ret;
+	char dir[100];
 	FILE *fp;
 
-	fp = fopen("config", "wb");
+	if(arg == NULL || *arg == '\0'){
+		strcpy(dir,"default");
+	}else{
+		strcpy(dir, arg);
+	}
+
+	save_mem_to_file(dir);
+
+	if(access(dir, 0) == -1){
+		if(mkdir(dir, 0777)){
+			printf("create dir %s failed\n", dir);
+			return 0;
+		}
+	}
+
+	strcat(dir,"/config");
+
+	//fp = fopen("config", "wb");
+	fp = fopen(dir, "wb");
 	if(fp == NULL)
 		printf("can't create file config\n");
 	/* check for difference archtecture */
 	for( p = chp_data_list.head; p != NULL; p = p->next){
 		ret = 0;
 		fprintf(fp, "%s=%d\n", p->name, p->size);
-
 		do{
 			ret += fwrite(p->data + ret, 1, p->size, fp);
 		}while(p->size - ret > 0);
@@ -36,20 +56,31 @@ static int save_chp()
 		fprintf(fp,"\n");
 	}
 	fclose(fp);
-
-	save_mem_to_file();
 }
 
-static int load_chp()
+static int load_chp(char *arg)
 {
 	chp_data *p;
 	int ret,i;
 	FILE *fp;
+	char dir[100];
 	char tmp[100],tmp2[100];
 
-	fp = fopen("config", "rb");
-	if(fp == NULL)
-		printf("can't create file config\n");
+	if(arg == NULL || *arg == '\0'){
+		strcpy(dir,"default");
+	}else{
+		strcpy(dir, arg);
+	}
+
+	load_mem_form_flie(dir);
+
+	strcat(dir,"/config");
+	//fp = fopen("config", "rb");
+	fp = fopen(dir, "rb");
+	if(fp == NULL){
+		printf("can't open file %s\n", dir);
+		return 0;
+	}
 
 	/* check for difference archtecture */
 	while(fgets(tmp, 100, fp) != NULL){
@@ -71,8 +102,6 @@ static int load_chp()
 	}
 
 	fclose(fp);
-
-	load_mem_form_flie();
 }
 
 void add_chp_data(void *data, int size, char *name)

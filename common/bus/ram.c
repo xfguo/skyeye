@@ -22,6 +22,9 @@
  * 12/16/2006   Michael.Kang  <blackfin.kang@gmail.com>
  */
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "skyeye_config.h"
 #include "assert.h"
 #include "bank_defs.h"
@@ -456,7 +459,7 @@ mem_state_t * get_global_memory(){
 }
 
 /* for checkpoint */
-int save_mem_to_file(void)
+int save_mem_to_file(char *dir)
 {
 	int i,j,bank,ret = 0;
 	mem_config_t *mc = get_global_memmap();
@@ -464,11 +467,19 @@ int save_mem_to_file(void)
 	char buf[10];
 	FILE *fp;
 
+	if(access(dir, 0) == -1){
+		if(mkdir(dir, 0777)){
+			printf("create dir %s failed\n", dir);
+			return 0;
+		}
+	}
+
 	for (i = 0; i < num; i++) {
 		bank = i;
 		ret = 0;
 
-		sprintf(buf, "ram%d", i);
+		strcpy(buf, dir);
+		sprintf(buf+strlen(dir), "/ram%d", i);
 		fp = fopen(buf, "wb");
 		if(fp == NULL)
 			printf("can't create a mem copy file %s \n", buf);
@@ -484,7 +495,7 @@ int save_mem_to_file(void)
 }
 
 
-int load_mem_form_flie(void)
+int load_mem_form_flie(char *dir)
 {
 
 	int i,j,bank,ret = 0;
@@ -499,10 +510,13 @@ int load_mem_form_flie(void)
 		bank = i;
 		ret = 0;
 
-		sprintf(buf, "ram%d", i);
-		fp = fopen(buf, "r");
-		if(fp == NULL)
+		strcpy(buf, dir);
+		sprintf(buf+strlen(buf), "/ram%d", i);
+		fp = fopen(buf, "rb");
+		if(fp == NULL){
 			printf("can't find a mem copy file %s, may be it lost or config file changed \n", buf);
+			return 0;
+		}
 
 		fgets(tmp, 100, fp);
 		sprintf(tmp2, "%d=%d\n", bank, global_memory.rom_size[bank]);
