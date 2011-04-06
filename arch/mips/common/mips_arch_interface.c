@@ -18,6 +18,7 @@
 #include "skyeye_arch.h"
 #include "skyeye_options.h"
 #include "skyeye_pref.h"
+#include "skyeye_mm.h"
 
 #include "emul.h"
 #include <stdlib.h>
