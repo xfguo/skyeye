@@ -50,10 +50,10 @@ def set_uart_port(opt, libcommon):
     uart_port_new = libcommon.get_uart_port()
 
 def set_auto_mode(opt, libcommon):
-    libcommon.set_interactive_mode(opt)
+    libcommon.set_interactive_mode(0)
     libcommon.get_interactive_mode.restype = c_uint
     mode = libcommon.get_interactive_mode()
-    libcommon.set_autoboot(1)
+    libcommon.set_autoboot(opt)
     libcommon.get_autoboot.restype = c_uint
     autoboot = libcommon.get_autoboot()
 
