@@ -45,7 +45,7 @@ static int save_chp(char *arg)
 	//fp = fopen("config", "wb");
 	fp = fopen(dir, "wb");
 	if(fp == NULL)
-		printf("can't create file config\n");
+		printf("can't create file %s\n",dir);
 	/* check for difference archtecture */
 	for( p = chp_data_list.head; p != NULL; p = p->next){
 		ret = 0;
@@ -79,7 +79,7 @@ static int load_chp(char *arg)
 	//fp = fopen("config", "rb");
 	fp = fopen(dir, "rb");
 	if(fp == NULL){
-		printf("can't open file %s\n", dir);
+		printf("can't open file %s\n, may be it does not exist", dir);
 		return 0;
 	}
 

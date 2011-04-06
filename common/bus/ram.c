@@ -514,7 +514,7 @@ int load_mem_form_flie(char *dir)
 		sprintf(buf+strlen(buf), "/ram%d", i);
 		fp = fopen(buf, "rb");
 		if(fp == NULL){
-			printf("can't find a mem copy file %s, may be it lost or config file changed \n", buf);
+			printf("can't find a mem copy file %s, may be it does not exist \n", buf);
 			return 0;
 		}
 
