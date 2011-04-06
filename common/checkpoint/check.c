@@ -142,6 +142,10 @@ static int set_bookmark(char *arg)
 
 static int reverse_to(char *arg)
 {
+	generic_arch_t* arch_instance = get_arch_instance("");
+	if(!arch_instance)
+		return 1;
+	uint32 step = arch_instance->get_step();
 
 	if(bookmark[0])
 		load_chp(bookmark);
@@ -152,9 +156,14 @@ static int reverse_to(char *arg)
 
 	}else{
 		int ret;
+		step -= arch_instance->get_step();
 		ret = atoi(arg);
-		if(ret)
+		ret = step - ret;
+
+		if(ret > 0)
 			skyeye_stepi(ret);
+		else
+			printf("haven't exec enought steps,reverse to the bookmark\n");
 	}
 }
 
