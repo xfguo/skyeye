@@ -34,7 +34,7 @@
 #define NET_MOD_LINUX   0
 #define NET_MOD_TUNTAP  1
 #define NET_MOD_VNET    2
-
+#define NET_MOD_VHUB    3
 struct net_device
 {
 	int net_fd;
@@ -72,6 +72,13 @@ extern int vnet_close (struct net_device *net_dev);
 extern int vnet_read (struct net_device *net_dev, void *buf, size_t count);
 extern int vnet_write (struct net_device *net_dev, void *buf, size_t count);
 extern int vnet_wait_packet (struct net_device *net_dev, struct timeval *tv);
+
+/* VHUB */
+extern int vhub_open (struct net_device *net_dev);
+extern int vhub_close (struct net_device *net_dev);
+extern int vhub_read (struct net_device *net_dev, void *buf, size_t count);
+extern int vhub_write (struct net_device *net_dev, void *buf, size_t count);
+extern int vhub_wait_packet (struct net_device *net_dev, struct timeval *tv);
 
 /* ethernet controller initialize functions*/
 extern void net_rtl8019_init (struct device_module_set *mod_set);
