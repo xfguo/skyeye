@@ -94,7 +94,7 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 	cpu->info.name = "noname";
 	cpu->info.common_flags = flags;
 	cpu->info.arch_flags = arch_flags;
-	assert(!arch_func);
+	//assert(!arch_func);
 	cpu->f = arch_func;
 	cpu->icounter = 0;
 
