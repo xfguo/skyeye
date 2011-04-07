@@ -38,7 +38,7 @@ int do_os_option(skyeye_option_t *this_option, int num_params,
 	for (i = 0; i < MAX_SUPP_OS; i++) {
 		if (skyeye_os[i] == NULL)
 			continue;
-		if (!strncmp
+		if (!strncasecmp
 				(params[0], skyeye_os[i]->os_name, MAX_PARAM_NAME)) {
 			config->os = skyeye_os[i];
 			printf("OS name: %s\n",
@@ -52,7 +52,7 @@ int do_os_option(skyeye_option_t *this_option, int num_params,
 
 	/* Select default os name */
 	for (i = 0; i < MAX_SUPP_OS; i++) {
-		if (!strncmp
+		if (!strncasecmp
 				(default_os_name, skyeye_os[i]->os_name, MAX_PARAM_NAME)) {
 			config->os = skyeye_os[i];
 			printf("default OS name: %s\n\n",
