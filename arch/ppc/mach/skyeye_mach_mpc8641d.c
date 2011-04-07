@@ -260,7 +260,12 @@ std8250_io_do_cycle (void * state)
 								ipivpr
 								[UART_IRQ] &
 								0xFFFF);
-			io->pic_percpu.iack[core_id] = 0x26;
+			skyeye_config_t *config = get_current_config();
+			if (!strcmp(config->os->os_name, "linux")) {
+				io->pic_percpu.iack[core_id] = 0x2a;
+			}else if (!strcmp(config->os->os_name, "vxworks")) {
+				io->pic_percpu.iack[core_id] = 0x26;
+			}
 			//printf("In %s, ack=0x%x\n", __FUNCTION__, io->pic_percpu.iack[core_id]);
 			core->ipi_flag = 1;	/* we need to inform the core that npc is changed to exception vector */
 			ppc_exception (core, PPC_EXC_EXT_INT, 0, 0);
@@ -276,6 +281,8 @@ mpc8641d_io_do_cycle (void *state)
 
 extern void mpc8641d_boot_linux();
 extern void mpc8641d_boot_application();
+
+extern void mpc8641d_boot_vxworks();
 
 static void
 mpc8641d_io_reset (void *state)
@@ -304,11 +311,20 @@ mpc8641d_io_reset (void *state)
 		io->pic_ram.iidr[i] = 0x1;
 		io->pic_ram.iivpr[i] = 0x80800000;
 	}
-	sky_pref_t* pref = get_skyeye_pref();
-	if(pref->user_mode_sim)
-		mpc8641d_boot_application();
-	else
-		mpc8641d_boot_linux();
+
+	/* Match os to select boot setting */
+	skyeye_config_t *config = get_current_config();
+	if (!strcmp(config->os->os_name, "linux")) {
+		sky_pref_t* pref = get_skyeye_pref();
+		if(pref->user_mode_sim)
+			mpc8641d_boot_application();
+		else
+			mpc8641d_boot_linux();
+	} else if (!strcmp(config->os->os_name, "vxworks"))
+	{
+		mpc8641d_boot_vxworks();
+	}
+
 }
 static uint32_t
 mpc8641d_io_read_byte (void *state, uint32_t offset)
