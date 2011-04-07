@@ -59,10 +59,10 @@ DIST_SUBDIRS = $(SUBDIRS)
 # some functions in "libutils.a" which is required by other libs
 #skyeye_LDADD += $(top_srcdir)/utils/libutils.a
 #skyeye_LDADD += 
-skyeye_LDFLAGS = -L./common -lcommon
-if LLVM_EXIST
-skyeye_LDFLAGS += `llvm-config --libs ` -lrt -L`llvm-config --libdir`
-endif
+#skyeye_LDFLAGS = -L./common -lcommon
+#if LLVM_EXIST
+#skyeye_LDFLAGS += `llvm-config --libs ` -lrt -L`llvm-config --libdir`
+#endif
 
 
 INCLUDES = @COMMON_INCLUDES@ -Ithird-party/bfd/
