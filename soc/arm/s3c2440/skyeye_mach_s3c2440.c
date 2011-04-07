@@ -22,6 +22,7 @@
 #include <skyeye_arch.h>
 #include <skyeye_sched.h>
 #include <skyeye_lock.h>
+#include <skyeye_internal.h>
 #include "s3c2440.h"
 #include <assert.h>
 //zzc:2005-1-1
@@ -539,4 +540,6 @@ s3c2440_mach_init (void *arch_instance, machine_config_t *this_mach)
 	this_mach->mach_io_write_word = s3c2440_io_write_word;
 
 	this_mach->mach_update_int = s3c2440_update_int;
+
+	add_chp_data(&s3c2440_io, sizeof(s3c2440_io), "2440io");
 }
