@@ -86,7 +86,7 @@ static bool ppc_cpu_init()
 		skyeye_exit(-1);
 	}
 	else
-		cpu->core = (e500_core_t*)skyeye_mm(sizeof(e500_core_t) * cpu->core_num);
+		cpu->core = (e500_core_t*)skyeye_mm_zero(sizeof(e500_core_t) * cpu->core_num);
 	/* TODO: zero the memory by malloc */
 
 	if(!cpu->core){
