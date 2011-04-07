@@ -12,6 +12,8 @@
 #include "skyeye_cell.h"
 #include "bank_defs.h"
 #include "skyeye_log.h"
+#include "mmu/tlb.h"
+#include "mmu/cache.h"
 
 int debugmode = 0;
 //extern int big_endian;
@@ -56,6 +58,169 @@ static per_cpu_stop()
 {
 }
 
+static register_arm_core_chp(ARMul_State* core, int num)
+{
+	int j,k,l;
+	char buf[100];
+	sprintf(buf, "armregs%d", num);
+	add_chp_data((void*)(core->Reg),sizeof(core->Reg), buf);
+	sprintf(buf, "armregbank%d", num);
+	add_chp_data((void*)(core->RegBank),sizeof(core->RegBank), buf);
+	sprintf(buf, "cpsr%d", num);
+	add_chp_data((void*)&(core->Cpsr),sizeof(core->Cpsr), buf);
+	sprintf(buf, "Spsr%d", num);
+	add_chp_data((void*)(core->Spsr),sizeof(core->Spsr), buf);
+	sprintf(buf, "NF%d", num);
+	add_chp_data((void*)&(core->NFlag),sizeof(core->NFlag), buf);
+	sprintf(buf, "ZF%d", num);
+	add_chp_data((void*)&(core->ZFlag),sizeof(core->ZFlag), buf);
+	sprintf(buf, "CF%d", num);
+	add_chp_data((void*)&(core->CFlag),sizeof(core->CFlag), buf);
+	sprintf(buf, "VF%d", num);
+	add_chp_data((void*)&(core->VFlag),sizeof(core->VFlag), buf);
+	sprintf(buf, "SF%d", num);
+	add_chp_data((void*)&(core->SFlag),sizeof(core->SFlag), buf);
+	sprintf(buf, "IFF%d", num);
+	add_chp_data((void*)&(core->IFFlags),sizeof(core->IFFlags), buf);
+#ifdef MODET
+	sprintf(buf, "TFlag%d", num);
+	add_chp_data((void*)&(core->TFlag),sizeof(core->TFlag), buf);
+#endif
+	sprintf(buf, "Bank%d", num);
+	add_chp_data((void*)&(core->Bank),sizeof(core->Bank), buf);
+	sprintf(buf, "Mode%d", num);
+	add_chp_data((void*)&(core->Mode),sizeof(core->Mode), buf);
+	sprintf(buf, "instr%d", num);
+	add_chp_data((void*)&(core->instr),sizeof(core->instr), buf);
+	sprintf(buf, "pc%d", num);
+	add_chp_data((void*)&(core->pc),sizeof(core->pc), buf);
+	sprintf(buf, "temp%d", num);
+	add_chp_data((void*)&(core->temp),sizeof(core->temp), buf);
+	sprintf(buf, "loaded%d", num);
+	add_chp_data((void*)&(core->loaded),sizeof(core->loaded), buf);
+	sprintf(buf, "decded_addr%d", num);
+	add_chp_data((void*)&(core->loaded_addr),sizeof(core->loaded_addr), buf);
+	sprintf(buf, "decded_addr%d", num);
+	add_chp_data((void*)&(core->decoded_addr),sizeof(core->decoded), buf);
+	sprintf(buf, "NumInstrs%d", num);
+	add_chp_data((void*)&(core->NumInstrs),sizeof(core->NumInstrs), buf);
+	sprintf(buf, "NextInstr%d", num);
+	add_chp_data((void*)&(core->NextInstr),sizeof(core->NextInstr), buf);
+	sprintf(buf, "Vector%d", num);
+	add_chp_data((void*)&(core->Vector),sizeof(core->Vector), buf);
+	sprintf(buf, "Aborted%d", num);
+	add_chp_data((void*)&(core->Aborted),sizeof(core->Aborted), buf);
+	sprintf(buf, "Reseted%d", num);
+	add_chp_data((void*)&(core->Reseted),sizeof(core->Reseted), buf);
+	sprintf(buf, "Base%d", num);
+	add_chp_data((void*)&(core->Base),sizeof(core->Base), buf);
+	sprintf(buf, "AbortAddr%d", num);
+	add_chp_data((void*)&(core->AbortAddr),sizeof(core->AbortAddr), buf);
+	sprintf(buf, "NresetSig%d", num);
+	add_chp_data((void*)&(core->NresetSig),sizeof(core->NresetSig), buf);
+	sprintf(buf, "NfiqSig%d", num);
+	add_chp_data((void*)&(core->NfiqSig),sizeof(core->NfiqSig), buf);
+	sprintf(buf, "NirqSig%d", num);
+	add_chp_data((void*)&(core->NirqSig),sizeof(core->NirqSig), buf);
+	sprintf(buf, "abortSig%d", num);
+	add_chp_data((void*)&(core->abortSig),sizeof(core->abortSig), buf);
+	sprintf(buf, "NtransSig%d", num);
+	add_chp_data((void*)&(core->NtransSig),sizeof(core->NtransSig), buf);
+	sprintf(buf, "bigendSig%d", num);
+	add_chp_data((void*)&(core->bigendSig),sizeof(core->bigendSig), buf);
+	sprintf(buf, "prog32Sig%d", num);
+	add_chp_data((void*)&(core->prog32Sig),sizeof(core->prog32Sig), buf);
+	sprintf(buf, "data32Sig%d", num);
+	add_chp_data((void*)&(core->data32Sig),sizeof(core->data32Sig), buf);
+	sprintf(buf, "mmu_inited%d", num);
+	add_chp_data((void*)&(core->mmu_inited),sizeof(core->mmu_inited), buf);
+	sprintf(buf, "mmucontrol%d", num);
+	add_chp_data((void*)(&(core->mmu.control)),sizeof(core->mmu.control), buf);
+	sprintf(buf, "transtablebase%d", num);
+	add_chp_data((void*)(&(core->mmu.translation_table_base)),sizeof(core->mmu.translation_table_base), buf);
+	sprintf(buf, "transtable0base%d", num);
+	add_chp_data((void*)(&(core->mmu.translation_table_base0)),sizeof(core->mmu.translation_table_base0), buf);
+	sprintf(buf, "transtable1base%d", num);
+	add_chp_data((void*)(&(core->mmu.translation_table_base1)),sizeof(core->mmu.translation_table_base1), buf);
+	sprintf(buf, "transtablectrl%d", num);
+	add_chp_data((void*)(&(core->mmu.translation_table_ctrl)),sizeof(core->mmu.translation_table_ctrl), buf);
+	sprintf(buf, "domainaccess%d", num);
+	add_chp_data((void*)(&(core->mmu.domain_access_control)),sizeof(core->mmu.domain_access_control), buf);
+	sprintf(buf, "fault_status%d", num);
+	add_chp_data((void*)(&(core->mmu.fault_status)),sizeof(core->mmu.fault_status), buf);
+	sprintf(buf, "fault_statusi%d", num);
+	add_chp_data((void*)(&(core->mmu.fault_statusi)),sizeof(core->mmu.fault_statusi), buf);
+	sprintf(buf, "fault_address%d", num);
+	add_chp_data((void*)(&(core->mmu.fault_address)),sizeof(core->mmu.fault_address), buf);
+	sprintf(buf, "last_domain%d", num);
+	add_chp_data((void*)(&(core->mmu.last_domain)),sizeof(core->mmu.last_domain), buf);
+	sprintf(buf, "process_id%d", num);
+	add_chp_data((void*)(&(core->mmu.process_id)),sizeof(core->mmu.process_id), buf);
+
+	/* save cache line will be instead by invalid all cache when saving chp */
+	switch (core->cpu->cpu_val & core->cpu->cpu_mask) {
+	case SA1100:
+	case SA1110:
+		//sa;
+		break;
+	case PXA250:
+	case PXA270:		//xscale
+		//xscale;
+		break;
+	case 0x41807200:	//arm720t
+	case 0x41007700:	//arm7tdmi
+	case 0x41007100:	//arm7100
+		//arm7100;
+		break;
+	case 0x41009200:	//arm920t
+		for(j = 0; j < core->mmu.u.arm920t_mmu.i_cache.set; j++){
+			for( k = 0; k < core->mmu.u.arm920t_mmu.i_cache.way; k ++ ){
+				sprintf(buf, "arm920t_icache_%d_%dtag%d",j,k,num);
+				add_chp_data((void*)(&(core->mmu.u.arm920t_mmu.i_cache.sets[j].lines[k].tag)), sizeof(ARMword), buf);
+				sprintf(buf, "arm920t_icache_%d_%dpa%d",j,k,num);
+				add_chp_data((void*)(&(core->mmu.u.arm920t_mmu.i_cache.sets[j].lines[k].pa)), sizeof(ARMword), buf);
+				sprintf(buf, "arm920t_icache_%d_%ddata%d",j,k,num);
+				add_chp_data((void*)(core->mmu.u.arm920t_mmu.i_cache.sets[j].lines[k].data), core->mmu.u.arm920t_mmu.i_cache.width, buf);
+			}
+		}
+
+		for(j = 0; j < core->mmu.u.arm920t_mmu.d_cache.set; j++){
+			for( k = 0; k < core->mmu.u.arm920t_mmu.d_cache.way; k ++ ){
+				sprintf(buf, "arm920t_d_cache_%d_%dtag%d",j,k,num);
+				add_chp_data((void*)(&(core->mmu.u.arm920t_mmu.d_cache.sets[j].lines[k].tag)), sizeof(ARMword), buf);
+				sprintf(buf, "arm920t_d_cache_%d_%dpa%d",j,k,num);
+				add_chp_data((void*)(&(core->mmu.u.arm920t_mmu.d_cache.sets[j].lines[k].pa)), sizeof(ARMword), buf);
+				sprintf(buf, "arm920t_d_cache_%d_%ddata%d",j,k,num);
+				add_chp_data((void*)(core->mmu.u.arm920t_mmu.d_cache.sets[j].lines[k].data), core->mmu.u.arm920t_mmu.d_cache.width, buf);
+
+				}
+		}
+
+		for(j = 0; j < core->mmu.u.arm920t_mmu.wb_t.num; j++){
+
+			for( k = 0; k < core->mmu.u.arm920t_mmu.wb_t.entrys[j].nb; k ++ ){
+				sprintf(buf, "arm920t_wb_t_%d_%dpa%d",j,k,num);
+				add_chp_data((void*)(&(core->mmu.u.arm920t_mmu.wb_t.entrys[j].pa)), sizeof(wb_entry_t), buf);
+				sprintf(buf, "arm920t_wb_t_%d_%ddata%d",j,k,num);
+				add_chp_data((void*)(core->mmu.u.arm920t_mmu.wb_t.entrys[j].data),core->mmu.u.arm920t_mmu.wb_t.entrys[j].nb , buf);
+			}
+		}
+		break;
+	case 0x41069260:
+		//arm926ejs;
+		break;
+	/* case 0x560f5810: */
+	case 0x0007b000:
+		//arm1176jzf;
+		break;
+
+	default:
+		skyeye_exit (-1);
+		break;
+
+	};
+}
+
 static arm_cpu_init()
 {
 	ARM_CPU_State *cpu = skyeye_mm(sizeof(ARM_CPU_State));
@@ -79,7 +244,6 @@ static arm_cpu_init()
 		printf("%d core is initialized.\n", cpu->core_num);
 
 	int i;
-	char buf[100];
 	for(i = 0; i < cpu->core_num; i++){
 		ARMul_State* core = &cpu->core[i];
 		arm_core_init(core, i);
@@ -89,80 +253,7 @@ static arm_cpu_init()
 		exec->stop = per_cpu_stop;
 		add_to_default_cell(exec);
 
-		sprintf(buf, "armregs%d", i);
-		add_chp_data((void*)(core->Reg),sizeof(core->Reg), buf);
-		sprintf(buf, "armregbank%d", i);
-		add_chp_data((void*)(core->Reg),sizeof(core->RegBank), buf);
-		sprintf(buf, "cpsr%d", i);
-		add_chp_data((void*)&(core->Cpsr),sizeof(core->Cpsr), buf);
-		sprintf(buf, "Spsr%d", i);
-		add_chp_data((void*)&(core->Spsr),sizeof(core->Spsr), buf);
-		sprintf(buf, "NF%d", i);
-		add_chp_data((void*)&(core->NFlag),sizeof(core->NFlag), buf);
-		sprintf(buf, "ZF%d", i);
-		add_chp_data((void*)&(core->ZFlag),sizeof(core->ZFlag), buf);
-		sprintf(buf, "CF%d", i);
-		add_chp_data((void*)&(core->CFlag),sizeof(core->CFlag), buf);
-		sprintf(buf, "VF%d", i);
-		add_chp_data((void*)&(core->VFlag),sizeof(core->VFlag), buf);
-		sprintf(buf, "IFF%d", i);
-		add_chp_data((void*)&(core->IFFlags),sizeof(core->IFFlags), buf);
-		sprintf(buf, "Bank%d", i);
-		add_chp_data((void*)&(core->Bank),sizeof(core->Bank), buf);
-		sprintf(buf, "Mode%d", i);
-		add_chp_data((void*)&(core->Mode),sizeof(core->Mode), buf);
-		sprintf(buf, "instr%d", i);
-		add_chp_data((void*)&(core->instr),sizeof(core->instr), buf);
-		sprintf(buf, "pc%d", i);
-		add_chp_data((void*)&(core->pc),sizeof(core->pc), buf);
-		sprintf(buf, "temp%d", i);
-		add_chp_data((void*)&(core->temp),sizeof(core->temp), buf);
-		sprintf(buf, "loaded%d", i);
-		add_chp_data((void*)&(core->loaded),sizeof(core->loaded), buf);
-		sprintf(buf, "decded%d", i);
-		add_chp_data((void*)&(core->decoded),sizeof(core->decoded), buf);
-		sprintf(buf, "NumInstrs%d", i);
-		add_chp_data((void*)&(core->NumInstrs),sizeof(core->NumInstrs), buf);
-		sprintf(buf, "NextInstr%d", i);
-		add_chp_data((void*)&(core->NextInstr),sizeof(core->NextInstr), buf);
-		sprintf(buf, "Vector%d", i);
-		add_chp_data((void*)&(core->Vector),sizeof(core->Vector), buf);
-		sprintf(buf, "Aborted%d", i);
-		add_chp_data((void*)&(core->Aborted),sizeof(core->Aborted), buf);
-		sprintf(buf, "Reseted%d", i);
-		add_chp_data((void*)&(core->Reseted),sizeof(core->Reseted), buf);
-		sprintf(buf, "Base%d", i);
-		add_chp_data((void*)&(core->Base),sizeof(core->Base), buf);
-		sprintf(buf, "AbortAddr%d", i);
-		add_chp_data((void*)&(core->AbortAddr),sizeof(core->AbortAddr), buf);
-		sprintf(buf, "mmu_inited%d", i);
-		add_chp_data((void*)&(core->mmu_inited),sizeof(core->mmu_inited), buf);
-		sprintf(buf, "mmucontrol%d", i);
-		add_chp_data((void*)(&(core->mmu.control)),sizeof(core->mmu.control), buf);
-		sprintf(buf, "transtablebase%d", i);
-		add_chp_data((void*)(&(core->mmu.translation_table_base)),sizeof(core->mmu.translation_table_base), buf);
-		sprintf(buf, "transtable0base%d", i);
-		add_chp_data((void*)(&(core->mmu.translation_table_base0)),sizeof(core->mmu.translation_table_base0), buf);
-		sprintf(buf, "transtable1base%d", i);
-		add_chp_data((void*)(&(core->mmu.translation_table_base1)),sizeof(core->mmu.translation_table_base1), buf);
-		sprintf(buf, "transtablectrl%d", i);
-		add_chp_data((void*)(&(core->mmu.translation_table_ctrl)),sizeof(core->mmu.translation_table_ctrl), buf);
-		sprintf(buf, "domainaccess%d", i);
-		add_chp_data((void*)(&(core->mmu.domain_access_control)),sizeof(core->mmu.domain_access_control), buf);
-		sprintf(buf, "fault_status%d", i);
-		add_chp_data((void*)(&(core->mmu.fault_status)),sizeof(core->mmu.fault_status), buf);
-		sprintf(buf, "fault_statusi%d", i);
-		add_chp_data((void*)(&(core->mmu.fault_statusi)),sizeof(core->mmu.fault_statusi), buf);
-		sprintf(buf, "fault_address%d", i);
-		add_chp_data((void*)(&(core->mmu.fault_address)),sizeof(core->mmu.fault_address), buf);
-		sprintf(buf, "last_domain%d", i);
-		add_chp_data((void*)(&(core->mmu.last_domain)),sizeof(core->mmu.last_domain), buf);
-		sprintf(buf, "process_id%d", i);
-		add_chp_data((void*)(&(core->mmu.process_id)),sizeof(core->mmu.process_id), buf);
-		sprintf(buf, "cache_locked_down%d", i);
-		add_chp_data((void*)(&(core->mmu.cache_locked_down)),sizeof(core->mmu.cache_locked_down), buf);
-		sprintf(buf, "tlb_locked_down%d", i);
-		add_chp_data((void*)(&(core->mmu.tlb_locked_down)),sizeof(core->mmu.tlb_locked_down), buf);
+		register_arm_core_chp(core, i);
 	}
 
 	cpu->boot_core_id = 0;
