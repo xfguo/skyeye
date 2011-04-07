@@ -13,6 +13,8 @@ utils_pmon = perf_monitor/pmon.c perf_monitor/pmon_module.c
 
 utils_shutdown = shutdown/shutdown_module.c
 
+utils_os = os_supp/os_module.c  os_supp/skyeye_os.c
+
 libgdbserver_la_SOURCES = $(utils_debugger)
 libgdbserver_la_LDFLAGS = -module
 
@@ -34,7 +36,10 @@ libshutdown_la_LDFLAGS = -module
 libdisasm_la_SOURCES = $(utils_disassembler)
 libdisasm_la_LDFLAGS = -module -L./$(top_builddir)/third-party/opcodes/.libs/ -L./$(top_builddir)/third-party/bfd/.libs/ -L./$(top_builddir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
 
-pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la
+libos_supp_la_SOURCES = $(utils_os)
+libos_supp_la_LDFLAGS = -module
+
+pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la libos_supp.la
 #pkglib_LTLIBRARIES = libutils.la libgdbserver.la
 
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@

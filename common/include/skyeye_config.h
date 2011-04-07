@@ -207,10 +207,17 @@ typedef struct code_cov_option code_cov_t;
 
 typedef struct
 {
+	char *os_name;
+
+} os_config_t;
+
+typedef struct
+{
 	arch_config_t *arch;
 	//cpu_config_t *cpu;
 	machine_config_t *mach;
 	//mem_config_t mem;
+	os_config_t *os;
 //chy 2003-09-12, now support more io banks
 //      ioaddr_config_t ioaddr; //used for ARMul_notIOaddr funciton
 	net_config_t net[NET_MAXNICNUM_PER_HOST];
