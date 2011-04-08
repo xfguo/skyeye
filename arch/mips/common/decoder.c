@@ -1,5 +1,6 @@
 #include "instr.h"
 #include "skyeye_pref.h"
+#include "skyeye_thread.h"
 #include "emul.h"
 #include <stdio.h>
 #include "mips_regformat.h"
