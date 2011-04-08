@@ -4,6 +4,7 @@
 
 const char* skyeye_module = "mips";
 
+extern void init_mips_arch ();
 extern machine_config_t mips_machines[];
 void module_init(){
 	init_mips_arch ();
