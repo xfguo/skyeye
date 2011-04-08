@@ -105,7 +105,7 @@ translate_vaddr(MIPS_State* mstate, VA va, int type, PA * pa)
 		region_type = KUSEG;
     	} else if (vaddr_region(va) == vaddr_region(kseg0)) { //KSEG0's most significant three bits are 100
 		if (mstate->mode & umode) { //User mode access kernel space
-	    		process_address_error(type, va);
+			process_address_error(mstate, type, va);
 	    		return TLB_FAIL; // shut up the compiler
 		} else {
 	    		// Proceed with the TLB lookup.
@@ -116,7 +116,7 @@ translate_vaddr(MIPS_State* mstate, VA va, int type, PA * pa)
 		}
     	} else if (vaddr_region(va) == vaddr_region(kseg1)) { //KSEG1's most significant three bits are 101 
 		if (mstate->mode & umode) {
-	    		process_address_error(type, va);
+			process_address_error(mstate, type, va);
 	    		return TLB_FAIL; // shut up the compiler
 		} else {
 	    		// The physical address is already encoded.
@@ -127,7 +127,7 @@ translate_vaddr(MIPS_State* mstate, VA va, int type, PA * pa)
 		}
    	 } else {
 		if (mstate->mode & umode) {
-	    		process_address_error(type, va);
+			process_address_error(mstate, type, va);
 	    		return TLB_FAIL; // shut up the compiler
 		} else {
 	    		// Proceed with the TLB lookup.
