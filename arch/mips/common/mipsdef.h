@@ -48,4 +48,6 @@ typedef struct mips_mem_state_s
 
 }mips_mem_state_t;
 
+void mips_mem_read(UInt32 pa, UInt32 *data, int len);
+void mips_mem_write(UInt32 pa, const UInt32* data, int len);
 #endif //end of _MIPSDEF_H_
