@@ -304,4 +304,7 @@ UInt32 swizzle_word(UInt32 x, UInt32 addr);
 
 int tlb_hash(VA va);
 int vaddr_region(VA va);
+int get_random(MIPS_State* mstate);
+
+void leave_kernel_mode(MIPS_State* mstate);
 #endif //end of _EMUL_H__
