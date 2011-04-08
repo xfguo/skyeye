@@ -19,6 +19,7 @@
 #include "skyeye_options.h"
 #include "skyeye_pref.h"
 #include "skyeye_mm.h"
+#include "bank_defs.h"
 
 #include "emul.h"
 #include <stdlib.h>
@@ -79,7 +80,6 @@ extern UInt64 mips_mem_read_doubleword (UInt64 phys_addr);
 extern void mipsMul_WriteByte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
 extern void mips_mmu_write_byte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
 
-
 //chy 20060717
 int SKYPRINTF(char * fmt,...)
 { 
@@ -93,6 +93,36 @@ mips_init_set(UInt32 addr, UInt8 value, int size)
 }
 
 void 
+mips_trigger_irq(MIPS_State* mstate)
+{
+	VA epc;
+
+	//Get the content of the cause register
+	UInt32 cause = mstate->cp0[Cause];
+
+	//When the instruction is in the delay slot, we have to delay an instruction
+	if (!branch_delay_slot(mstate))
+		epc = mstate->pc;
+	else {
+		epc = mstate->pc - 4;
+		cause = set_bit(cause, Cause_BD);
+	}
+	mstate->cp0[Cause] = cause;
+	mstate->cp0[EPC] = epc;
+
+	//Change the pointer pc to deal with the interrupt handler
+	if(bit(mstate->cp0[SR], SR_BEV) )
+	{
+		mstate->pc = 0xbfc00380;
+	} else {
+		mstate->pc = 0x80000180;
+	}
+
+	mstate->pipeline = nothing_special;
+
+}
+
+void
 mips_mem_read(UInt32 pa, UInt32 *data, int len)
 {
 	sky_pref_t* pref = get_skyeye_pref();
@@ -397,37 +427,6 @@ mips_reset_state()
 
     	process_reset(mstate);
 }
-
-void 
-mips_trigger_irq(MIPS_State* mstate)
-{
-	VA epc;
-
-	//Get the content of the cause register
-	UInt32 cause = mstate->cp0[Cause];
-
-	//When the instruction is in the delay slot, we have to delay an instruction 
-    	if (!branch_delay_slot(mstate))
-		epc = mstate->pc;
-    	else {
-		epc = mstate->pc - 4;
-		cause = set_bit(cause, Cause_BD);
-    	}
-    	mstate->cp0[Cause] = cause;
-	mstate->cp0[EPC] = epc;
-
-	//Change the pointer pc to deal with the interrupt handler
-	if(bit(mstate->cp0[SR], SR_BEV) )
-	{
-		mstate->pc = 0xbfc00380;
-	} else {
-		mstate->pc = 0x80000180;
-	}
-
-	mstate->pipeline = nothing_special;
-	
-}
-
 
 static void 
 mips_step_once()
