@@ -3,6 +3,7 @@
 #include "emul.h"
 #include <stdio.h>
 #include "mips_regformat.h"
+#include "../linux_syscall/mips_syscall.h"
 
 /* Anthony Lee: 2006-09-18 */
 #ifdef __MINGW32__
@@ -302,7 +303,7 @@ decode(MIPS_State* mstate, Instr instr)
 					Int32 y = mstate->gpr[rt(instr)];
 	    				Int32 z = (UInt32)x - (UInt32)y;
 				    	if ((y < 0 && z < x) || (y > 0 && z > x))
-						process_integer_overflow();
+						process_integer_overflow(mstate);
 				    	mstate->gpr[rd(instr)] = z;
 
 					return nothing_special;
@@ -1057,7 +1058,7 @@ decode(MIPS_State* mstate, Instr instr)
 			VA va = sign_extend_UInt32(offset(instr), 16) + mstate->gpr[base(instr)];
 
 			if (bit(va, 0)) //Check alignment
-				process_address_error(data_load, va);
+				process_address_error(mstate, data_load, va);
 			PA pa;
 			if(translate_vaddr(mstate,va, data_load, &pa) != TLB_SUCC)
 				return nothing_special; //Shi yang 2006-08-10
