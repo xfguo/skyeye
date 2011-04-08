@@ -307,6 +307,7 @@ int vaddr_region(VA va);
 int get_random(MIPS_State* mstate);
 
 void leave_kernel_mode(MIPS_State* mstate);
+void enter_kernel_mode(MIPS_State* mstate);
 
 void mips_mem_read(UInt32 pa, UInt32 *data, int len);
 void mips_mem_write(UInt32 pa, const UInt32* data, int len);
