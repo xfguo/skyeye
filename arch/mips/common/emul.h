@@ -297,4 +297,5 @@ inline void divide_Int32(Int32 a, Int32 b);
 inline void divide_UInt32(UInt32 a, UInt32 b);
 
 int big_endian_cpu(MIPS_State* mstate) ;
+UInt32 swizzle_word(UInt32 x, UInt32 addr);
 #endif //end of _EMUL_H__
