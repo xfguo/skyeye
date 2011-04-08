@@ -259,6 +259,11 @@ void store_right(UInt32 x, VA va, int syscmd);		// SDR, SWR
 //void sync();
 extern void process_reset(MIPS_State* mstate);
 void process_exception(MIPS_State* mstate, UInt32 cause, int vec);
+void process_coprocessor_unusable(MIPS_State* mstate, int c);
+void process_syscall(MIPS_State* mstate);
+void process_reserved_instruction(MIPS_State* mstate);
+void process_integer_overflow(MIPS_State* mstate);
+void process_address_error(MIPS_State* mstate, int type, VA va);
 
 /* Set the Coprocessor 0 timer interrupt */
 void set_timer();
@@ -287,5 +292,9 @@ void dump_fpr_registers() ;
 /* Some declaration */
 int branch_delay_slot(MIPS_State* mstate);
 
+inline UInt32 sign_extend_UInt32(UInt32 x, int n);
+inline void divide_Int32(Int32 a, Int32 b);
+inline void divide_UInt32(UInt32 a, UInt32 b);
 
+int big_endian_cpu(MIPS_State* mstate) ;
 #endif //end of _EMUL_H__
