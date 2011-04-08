@@ -264,6 +264,9 @@ void process_syscall(MIPS_State* mstate);
 void process_reserved_instruction(MIPS_State* mstate);
 void process_integer_overflow(MIPS_State* mstate);
 void process_address_error(MIPS_State* mstate, int type, VA va);
+void process_tlb_refill(MIPS_State* mstate, int type, VA va);
+void process_tlb_invalid(MIPS_State* mstate, int type, VA va);
+void process_tlb_modified(MIPS_State* mstate, VA va);
 
 /* Set the Coprocessor 0 timer interrupt */
 void set_timer();
