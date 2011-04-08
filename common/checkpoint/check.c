@@ -167,6 +167,11 @@ static int reverse_to(char *arg)
 	}
 }
 
+static int reverse_step_insn(char *arg)
+{
+	reverse_to("1");
+}
+
 int init_chp(){
 
 	memset(&chp_data_list, 0, sizeof(chp_data_list));
@@ -177,6 +182,7 @@ int init_chp(){
 	add_command("read-configuration", load_chp, "load a breakpoint position.\n");
 	add_command("set-bookmark", set_bookmark, "set a bookmark position.\n");
 	add_command("reverse-to", reverse_to, "reverse to an old position.\n");/* step or bookmark */
+	add_command("reverse-step-instruction", reverse_step_insn, "reverse setp instruction.\n");/* reverse step*/
 }
 
 /* destruction function for log functionality */
