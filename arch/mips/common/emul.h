@@ -301,4 +301,7 @@ inline void divide_UInt32(UInt32 a, UInt32 b);
 
 int big_endian_cpu(MIPS_State* mstate) ;
 UInt32 swizzle_word(UInt32 x, UInt32 addr);
+
+int tlb_hash(VA va);
+int vaddr_region(VA va);
 #endif //end of _EMUL_H__
