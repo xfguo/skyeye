@@ -30,9 +30,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
-
-/* 2007-01-18 added by Anthony Lee : for new uart device frame */
-#include "skyeye_uart.h"
+#include "skyeye_uart_ops.h"
 
 typedef struct gpio_ctrl_s{
 	uint32_t sys_trioutrd;
