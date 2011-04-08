@@ -264,6 +264,11 @@ skyeye_read_config (char* skyeye_conf_filename)
 	if(config->arch == NULL){
 		config->arch = get_default_arch();
 	}
+	/* init config->os if os module not load, "linux" default. */
+	if(config->os == NULL){
+		config->os = (char*)malloc(sizeof(config->os));
+		config->os->os_name = "linux";
+	}
 
 	return No_exp;
 }
