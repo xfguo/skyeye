@@ -47,36 +47,6 @@ extern UInt32 mips_mem_read_halfword (UInt32 phys_addr);
 extern UInt32 mips_mem_read_word (UInt32 phys_addr);
 extern UInt64 mips_mem_read_doubleword (UInt64 phys_addr);
 
-void
-mips_mem_read(UInt32 pa, UInt32 *data, int len)
-{
-	/* if pa is located at kseg0 */
-	if(pa >= 0x80000000 && pa < 0xA0000000)
-		pa = pa & ~0x80000000;
-	/* if pa is located at kseg1 */
-	if(pa >= 0xA0000000 && pa < 0xC0000000)
-		pa = pa & ~0xE0000000;
-	//if(pa >= 0x14a1a0 && pa <= 0x14c000)
-	//	printf("###############read addr pa=0x%x,pc=0x%x\n", pa, mstate->pc);
-	bus_read(len * 8, pa, data);
-}
-
-void
-mips_mem_write(UInt32 pa, const UInt32* data, int len)
-{
-	/* if pa is located at kseg0 */
-	if(pa >= 0x80000000 && pa < 0xA0000000)
-		pa = pa & ~0x80000000;
-	/* if pa is located at kseg1 */
-	if(pa >= 0xA0000000 && pa < 0xC0000000)
-		pa = pa & ~0xE0000000;
-
-	UInt32 addr = bits(pa, 31, 0);
-	bus_write(len * 8, pa, *data);
-	return;
-
-}
-
 static void
 init_icache()
 {
@@ -372,11 +342,9 @@ mips_parse_cpu(const char* param[])
 }
 
 static int mips_ICE_read_byte(WORD addr, uint8_t *data){
-	//mips_mem_read(addr, (UInt32 *)data, 1);
 	return 0;
 }
 static int mips_ICE_write_byte(WORD addr, uint8_t data){
-	//mips_mem_write(addr, &data, 1);
 	return 0;
 }
 static uint32 mips_get_step(){
