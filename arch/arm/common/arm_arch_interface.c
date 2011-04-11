@@ -244,6 +244,8 @@ static arm_cpu_init()
 		printf("%d core is initialized.\n", cpu->core_num);
 
 	int i;
+
+	cpu->boot_core_id = 0;
 	for(i = 0; i < cpu->core_num; i++){
 		ARMul_State* core = &cpu->core[i];
 		arm_core_init(core, i);
@@ -255,8 +257,6 @@ static arm_cpu_init()
 
 		register_arm_core_chp(core, i);
 	}
-
-	cpu->boot_core_id = 0;
 }
 
 static void
