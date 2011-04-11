@@ -234,13 +234,7 @@ struct ARMul_State
 	unsigned CanWatch;	/* set by memory interface if its willing to suffer the
 				   overhead of checking for watchpoints on each memory
 				   access */
-	unsigned MemReadDebug, MemWriteDebug;
 	unsigned int StopHandle;
-
-	unsigned char *MemInPtr;	/* the Data In bus */
-	unsigned char *MemOutPtr;	/* the Data Out bus (which you may not need */
-	unsigned char *MemSparePtr;	/* extra space */
-	ARMword MemSize;
 
 	char *CommandLine;	/* Command Line from ARMsd */
 

@@ -103,11 +103,6 @@ ARMul_NewState (ARMul_State *state)
 	state->Inted = 3;
 	state->LastInted = 3;
 
-	state->MemInPtr = NULL;
-	state->MemOutPtr = NULL;
-	state->MemSparePtr = NULL;
-	state->MemSize = 0;
-
 	state->CommandLine = NULL;
 
 	state->EventSet = 0;
