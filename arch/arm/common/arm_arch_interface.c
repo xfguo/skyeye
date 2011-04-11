@@ -223,7 +223,7 @@ static register_arm_core_chp(ARMul_State* core, int num)
 
 static arm_cpu_init()
 {
-	ARM_CPU_State *cpu = skyeye_mm(sizeof(ARM_CPU_State));
+	ARM_CPU_State *cpu = skyeye_mm_zero(sizeof(ARM_CPU_State));
         machine_config_t *mach = get_current_mach();
         mach->cpu_data = get_conf_obj_by_cast(cpu, "ARM_CPU_State");
 
@@ -233,7 +233,7 @@ static arm_cpu_init()
 		skyeye_exit(-1);
 	}
 	else
-		cpu->core = skyeye_mm(sizeof(ARMul_State) * cpu->core_num);
+		cpu->core = skyeye_mm_zero(sizeof(ARMul_State) * cpu->core_num);
 	/* TODO: zero the memory by malloc */
 
 	if(!cpu->core){
