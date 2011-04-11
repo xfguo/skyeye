@@ -91,7 +91,7 @@ static int load_chp(char *arg)
 
 			if(!strcmp(tmp2, tmp)){
 				do{
-					ret += fread(p->data + ret + ret, 1, p->size, fp);
+					ret += fread(p->data + ret, 1, p->size, fp);
 				}while(p->size - ret > 0);
 
 				break;
