@@ -107,7 +107,7 @@ int instr_log_parse(struct skyeye_option_t *option, int num_params, const char *
 static void log_pc_callback(generic_arch_t* arch_instance){
 	if(SIM_is_running() != True)
 		return;
-	assert(arch_instance->get_regnum());
+	assert(arch_instance->get_regnum);
 	uint32 regnum = arch_instance->get_regnum();
 	if(reg_array == NULL){
 		reg_array = skyeye_mm_zero(regnum * sizeof(reg_size_t));
