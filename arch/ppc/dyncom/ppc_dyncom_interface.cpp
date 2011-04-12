@@ -271,6 +271,9 @@ static uint32 ppc_get_regval_by_id(int id){
 			return 0;
 	}
 }
+static uint32 ppc_get_regnum(){
+       return PPC_MAX_REGNUM;
+}
 
 static exception_t ppc_mmu_read(short size, generic_address_t addr, uint32_t * value){
 	uint32 result;
@@ -340,6 +343,7 @@ init_ppc_dyncom ()
 	ppc_arch->parse_cpu = ppc_parse_cpu;
 	ppc_arch->get_regval_by_id = ppc_get_regval_by_id;
         ppc_arch->get_regname_by_id = ppc_get_regname_by_id;
+	ppc_arch->get_regnum = ppc_get_regnum;
 	ppc_arch->mmu_read = ppc_mmu_read;
 	ppc_arch->mmu_write = ppc_mmu_write;
 
