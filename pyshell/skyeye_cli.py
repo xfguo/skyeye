@@ -290,7 +290,7 @@ class SkyEyeCli(cmd.Cmd):
 
     def do_remote_gdb(self, arg):
 #        print "In do_remote_gdb"
-        libgdbserver.com_remote_gdb
+        libgdbserver.com_remote_gdb()
 
     def help_remote_gdb(self):
         help_info_open()
