@@ -1445,7 +1445,25 @@ static int opc_addmex_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	NOT_TESTED();
 	return 0;
 }
-
+/*
+ *	srawx		Shift Right Algebraic Word
+ *	.628
+ */
+static int opc_srawx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rS, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	Value *sh = AND(R(rB), CONST(0x1f));
+	Value *rS_v = R(rS);
+	LET(rA, ASHR(rS_v, sh));
+	Value *ca_flag = ICMP_NE(AND(rS_v, SUB(LSHR(CONST(0x80000000),SUB(sh, CONST(1))), CONST(1))), CONST(0));
+	Value *is_negtive = ICMP_EQ(AND(rS_v, CONST(0x80000000)), CONST(1));
+	Value *xer_v = RS(XER_REGNUM);
+	LETS(XER_REGNUM, SELECT(ICMP_EQ(AND(ca_flag, is_negtive), CONST1(1)), OR(xer_v, CONST(XER_CA)), AND(xer_v, CONST(~XER_CA))));
+	if (instr & PPC_OPC_Rc) {
+		ppc_dyncom_update_cr0(cpu, bb, rA);
+	}
+}
 /* Interfaces */
 ppc_opc_func_t ppc_opc_cmp_func = {
 	opc_default_tag,
@@ -1726,7 +1744,11 @@ ppc_opc_func_t ppc_opc_dcba_func;
 ppc_opc_func_t ppc_opc_stfdux_func;
 ppc_opc_func_t ppc_opc_tlbivax_func; /* TLB invalidated virtual address indexed */
 ppc_opc_func_t ppc_opc_lhbrx_func;
-ppc_opc_func_t ppc_opc_srawx_func;
+ppc_opc_func_t ppc_opc_srawx_func = {
+	opc_default_tag,
+	opc_srawx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_srawix_func = {
 	opc_srawix_tag,
 	opc_srawix_translate,
