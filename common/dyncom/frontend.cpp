@@ -442,7 +442,10 @@ arch_store16(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 void
 arch_store16(cpu_t *cpu, Value *val, Value *addr, BasicBlock *bb) {
 	Value *addr16 = arch_gep16(cpu, addr, bb);
-	new StoreInst(TRUNC16(val), addr16, bb);
+	if (cpu->dyncom_engine->flags & CPU_FLAG_SWAPMEM)
+		new StoreInst(SWAP16(TRUNC16(val)), addr16, bb);
+	else
+		new StoreInst(TRUNC16(val), addr16, bb);
 }
 //
 
