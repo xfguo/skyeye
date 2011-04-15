@@ -49,7 +49,7 @@ int arch_powerpc_tag_instr(cpu_t *cpu, addr_t phys_pc, tag_t *tag, addr_t *new_p
 	ppc_opc_func_t* opc_func = ppc_get_opc_func(instr);
 	if(!opc_func)
 		BAD_INSTR;
-	assert(opc_func->tag != NULL);
+	//assert(opc_func->tag != NULL);
 	if(opc_func->tag == NULL){
 		printf("Some NULL tag functions at 0x%x\n", phys_pc);	
 		opc_default_tag(cpu, instr, phys_pc,tag, new_pc, next_pc);
