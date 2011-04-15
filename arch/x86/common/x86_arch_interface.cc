@@ -94,55 +94,55 @@ void
 x86_init_state ()
 {
 	bx_user_quit = 0;
-  bx_init_siminterface();   // create the SIM object
-  static jmp_buf context;
-  if (setjmp (context) == 0) {
-    SIM->set_quit_context (&context);
-    BX_INSTR_INIT_ENV();
-    if (bx_init_main(bx_startup_flags.argc, bx_startup_flags.argv) < 0)
-    { BX_INSTR_EXIT_ENV();
-      //return 0;
-	return;
-    }
-    // read a param to decide which config interface to start.
-    // If one exists, start it.  If not, just begin.
-    bx_param_enum_c *ci_param = SIM->get_param_enum(BXPN_SEL_CONFIG_INTERFACE);
-	 const char *ci_name = ci_param->get_selected();
-    if (!strcmp(ci_name, "textconfig")) {
-#if BX_USE_TEXTCONFIG
-      init_text_config_interface();   // in textconfig.h
-#else
-      BX_PANIC(("configuration interface 'textconfig' not present"));
-#endif
-    }
-    else if (!strcmp(ci_name, "win32config")) {
+	bx_init_siminterface();   // create the SIM object
+	static jmp_buf context;
+	if (setjmp (context) == 0) {
+		SIM->set_quit_context (&context);
+		BX_INSTR_INIT_ENV();
+		if (bx_init_main(bx_startup_flags.argc, bx_startup_flags.argv) < 0)
+		{ BX_INSTR_EXIT_ENV();
+			//return 0;
+			return;
+		}
+		// read a param to decide which config interface to start.
+		// If one exists, start it.  If not, just begin.
+		bx_param_enum_c *ci_param = SIM->get_param_enum(BXPN_SEL_CONFIG_INTERFACE);
+		const char *ci_name = ci_param->get_selected();
+		if (!strcmp(ci_name, "textconfig")) {
+		#if BX_USE_TEXTCONFIG
+			init_text_config_interface();   // in textconfig.h
+		#else
+			BX_PANIC(("configuration interface 'textconfig' not present"));
+		#endif
+		}
+		else if (!strcmp(ci_name, "win32config")) {
 #if BX_USE_TEXTCONFIG && defined(WIN32)
 	/* FIXME, we should use the configure to check the current build environment. */
-      //init_win32_config_interface();
+			//init_win32_config_interface();
 #else
-      BX_PANIC(("configuration interface 'win32config' not present"));
+			BX_PANIC(("configuration interface 'win32config' not present"));
 #endif
-    }
+		}
 #if BX_WITH_WX
-    else if (!strcmp(ci_name, "wx")) {
-      PLUG_load_plugin(wx, PLUGTYPE_CORE);
-    }
+		else if (!strcmp(ci_name, "wx")) {
+			PLUG_load_plugin(wx, PLUGTYPE_CORE);
+		}
 #endif
-    else {
-      BX_PANIC(("unsupported configuration interface '%s'", ci_name));
-    }
-	    ci_param->set_enabled(0);
-	SIM->get_param_enum(BXPN_BOCHS_START)->set(BX_QUICK_START);
-	//SIM->begin_simulation(bx_startup_flags.argc, bx_startup_flags.argv);
-#if 1  /* we do not launch configuration interface. */
-    int status = SIM->configuration_interface(ci_name, CI_START);
-    if (status == CI_ERR_NO_TEXT_CONSOLE)
-      BX_PANIC(("Bochs needed the text console, but it was not usable"));
-#endif
+		else {
+			BX_PANIC(("unsupported configuration interface '%s'", ci_name));
+		}
+		ci_param->set_enabled(0);
+		SIM->get_param_enum(BXPN_BOCHS_START)->set(BX_QUICK_START);
+		//SIM->begin_simulation(bx_startup_flags.argc, bx_startup_flags.argv);
+		#if 1  /* we do not launch configuration interface. */
+		int status = SIM->configuration_interface(ci_name, CI_START);
+		if (status == CI_ERR_NO_TEXT_CONSOLE)
+			BX_PANIC(("Bochs needed the text console, but it was not usable"));
+		#endif
     // user quit the config interface, so just quit
-  } else {
-    // quit via longjmp
-  }
+	} else {
+		// quit via longjmp
+	}
 }
 void
 x86_reset_state ()
@@ -159,11 +159,9 @@ x86_step_once ()
 	cycles++;
 	if (BX_SMP_PROCESSORS == 1) {
       // only one processor, run as fast as possible by notmessing with quantums and loops.
-	//while (1) {
-        	BX_CPU(0)->cpu_loop(0);
+		BX_CPU(0)->cpu_loop(0);
         	if (bx_pc_system.kill_bochs_request)
           		return;
-      	//}
       // for one processor, the only reason for cpu_loop toreturn is
       // that kill_bochs_request was set by the GUI interface.
     	}
@@ -173,7 +171,6 @@ x86_step_once ()
       // reduces granularity of synchronization between processors.
 		int processor = 0;
 		int quantum = SIM->get_param_num(BXPN_SMP_QUANTUM)->get();
-		//while (1) {
 		// do some instructions in each processor
 			BX_CPU(processor)->cpu_loop(quantum);
 			processor = (processor+1) % BX_SMP_PROCESSORS;
@@ -181,7 +178,6 @@ x86_step_once ()
 				return;
 			if (processor == 0)
 				BX_TICKN(quantum);
-		//}
 	}
 }
 static void
