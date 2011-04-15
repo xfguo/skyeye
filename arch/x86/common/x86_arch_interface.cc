@@ -32,6 +32,9 @@
 #include "skyeye_config.h"
 #include "skyeye_options.h"
 #include "skyeye_arch.h"
+#include "skyeye_exec.h"
+#include "skyeye_cell.h"
+#include "skyeye_obj.h"
 #include "x86_regformat.h"
 //#include "x86_defs.h"
 #define InstrumentICACHE 0
@@ -89,6 +92,9 @@ sim_size ()
 {
 }
 
+static void x86_step_once ();
+static void per_cpu_step(conf_object_t* cpu);
+static void per_cpu_stop(conf_object_t* cpu);
 
 void
 x86_init_state ()
@@ -143,6 +149,18 @@ x86_init_state ()
 	} else {
 		// quit via longjmp
 	}
+	skyeye_exec_t* exec = create_exec();
+	exec->priv_data = get_conf_obj_by_cast(NULL, "BX_CPU_C");
+	exec->run = per_cpu_step;
+	exec->stop = per_cpu_stop;
+	add_to_default_cell(exec);
+}
+
+static void per_cpu_step(conf_object_t* cpu){
+	while(1)
+		x86_step_once();
+} 
+static void per_cpu_stop(conf_object_t* cpu){
 }
 void
 x86_reset_state ()
