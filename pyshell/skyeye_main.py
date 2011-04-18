@@ -38,7 +38,7 @@ if __name__ == '__main__':
     init_opt(opts)
 
     #Skyeye cmdline
-    from skyeye_module import *
+    from skyeye_common_module import *
     libcommon.get_autoboot.restype = c_uint
     autoboot = libcommon.get_autoboot()
     if autoboot == False:

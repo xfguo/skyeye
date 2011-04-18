@@ -1,6 +1,7 @@
 import cmd, sys
 import skyeye_lib_path
 from skyeye_module import *
+from skyeye_common_module import *
 
 def help_info_open():
     print "help info:"

@@ -1,7 +1,7 @@
 from ctypes import *
 import string
 import struct
-from skyeye_module import *
+from skyeye_common_module import *
 
 
 def set_exec_path(file_path, libcommon):
