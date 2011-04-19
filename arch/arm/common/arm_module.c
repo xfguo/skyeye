@@ -41,10 +41,10 @@ void module_init(){
 	/* register the arm core to the common library */
 	init_arm_arch ();
 #ifdef LLVM_EXIST
-	printf("arm LLVM EXIST \n");
+	printf("LLVM EXIST \n");
 	init_arm_dyncom ();
 #else
-	printf("arm Don't have LLVM\n");
+	printf("LLVM NOT EXIST \n");
 #endif
 	/*
 	 * register all the supported mach to the common library.

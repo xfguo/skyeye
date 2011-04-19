@@ -14,10 +14,10 @@ init_ppc_arch ();
 void module_init(){
 	init_ppc_arch ();
 #ifdef LLVM_EXIST
-	printf("ppc LLVM EXIST\n");
+	printf("LLVM EXIST\n");
 	init_ppc_dyncom();
 #else
-	printf("ppc Don't have LLVM\n");
+	printf("LLVM NOT EXIST\n");
 #endif
 	/*
 	 * register all the supported mach to the common library.

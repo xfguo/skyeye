@@ -176,9 +176,19 @@ AC_CHECK_LIB([n], [main])
 AC_CHECK_LIB([socket], [socket])
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([ncurses],[tputs])
-
 AC_CHECK_PROG(LLVM,llvm-config,llvm, "no")
 AM_CONDITIONAL([LLVM_EXIST], [test x$LLVM = xllvm])
+	if test x$LLVM = xllvm ; then
+	AC_CACHE_CHECK(for llvm version, version_cv_, llvm-config --version)
+	case `llvm-config --version` in
+	2.8)
+	;;
+	*)
+	AC_MSG_WARN(llvm should be 2.8 If you want to compile skyeye with other version!)
+	AC_MSG_ERROR(Delete me from configuer.in!)
+	;;
+	esac
+	fi
 
 #AC_CONFIG_SUBDIRS([third-party/libiberty])
 #AC_CONFIG_SUBDIRS([third-party/bfd])
