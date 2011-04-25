@@ -1124,6 +1124,9 @@ void ppc_opc_mtspr()
 		case 24:
 			current_core->e600_ldstcr = current_core->gpr[rS];
 			return;	
+		case 25:
+			current_core->e600_l2cr = current_core->gpr[rS];
+			return;
 		case 27:
 			PPC_OPC_WARN("write(%08x) to spr %d:%d (ICTC) not supported!\n", current_core->gpr[rS], spr1, spr2);
 			return;
