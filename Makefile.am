@@ -50,7 +50,7 @@ DIST_SUBDIRS = $(SUBDIRS)
 #skyeye_LDADD =  $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/device/libdev.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/sparc/libsparc.a $(top_srcdir)/memory/libmemory.a $(top_srcdir)/third-party/bfd/libbfd.a $(top_srcdir)/third-party/libiberty/libiberty.a $(top_srcdir)/third-party/readline/libreadline.a
 
 # workaround getopt issue on Cygwin platform
-skyeye_LDADD = -lc 
+#skyeye_LDADD = -lc 
 # add curses library for ubentu system.
 # skyeye_LDADD += -lncurses
 
@@ -59,23 +59,23 @@ skyeye_LDADD = -lc
 # some functions in "libutils.a" which is required by other libs
 #skyeye_LDADD += $(top_srcdir)/utils/libutils.a
 #skyeye_LDADD += 
-skyeye_LDFLAGS = -L./common -lcommon
+#skyeye_LDFLAGS = -L./common -lcommon
 if LLVM_EXIST
-skyeye_LDFLAGS += `llvm-config --libs ` -lrt -L`llvm-config --libdir`
+#skyeye_LDFLAGS += `llvm-config --libs ` -lrt -L`llvm-config --libdir`
 endif
 
 INCLUDES = @COMMON_INCLUDES@ -Ithird-party/bfd/
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@ 
 AM_CFLAGS = -W -Wall -Wstrict-prototypes -Wmissing-prototypes 
 ACLOCAL_AMFLAGS=-I m4
-bin_PROGRAMS = skyeye uart_instance mknandflashdump prof_convert
+bin_PROGRAMS = uart_instance mknandflashdump prof_convert
 
-skyeye_SOURCES = utils/main/skyeye.c
+#skyeye_SOURCES = utils/main/skyeye.c
 uart_instance_SOURCES = utils/uart_console/uart_console.c
 mknandflashdump_SOURCES = utils/nandflash_dump/mknandflashdump.c
 prof_convert_SOURCES = utils/code_cov/prof_convert.c
 if LCD
-skyeye_LDADD += @LCD_LIBS@
+#skyeye_LDADD += @LCD_LIBS@
 endif
 all:third-party/bfd/.libs/libbfd.so third-party/libiberty/libiberty.a third-party/opcodes/.libs/libopcodes.so
 
