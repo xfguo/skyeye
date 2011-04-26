@@ -309,7 +309,7 @@ load_exec (const char *file, addr_type_t addr_type)
                                                                       s));
 				}
 				else if(addr_type == Virt_addr){
-					write_virt (bfd_section_vma (tmp_bfd, s),
+					write_virt (bfd_section_lma (tmp_bfd, s),
 				   		tmp_str, bfd_section_size (tmp_bfd,
 						      s));
 				}
