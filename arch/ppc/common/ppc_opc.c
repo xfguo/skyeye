@@ -48,7 +48,7 @@ void ppc_set_msr(uint32 newmsr)
 			current_core->ext_exception = true;
 		}
 	}*/
-	ppc_mmu_tlb_invalidate();
+	ppc_mmu_tlb_invalidate(current_core);
 #ifndef PPC_CPU_ENABLE_SINGLESTEP
 	if (newmsr & MSR_SE) {
 		PPC_CPU_WARN("MSR[SE] (singlestep enable) set, but compiled w/o SE support.\n");
@@ -1240,7 +1240,7 @@ void ppc_opc_tlbia()
 	int rS, rA, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	// FIXME: check rS.. for 0
-	ppc_mmu_tlb_invalidate();
+	ppc_mmu_tlb_invalidate(current_core);
 }
 
 /*
@@ -1257,7 +1257,7 @@ void ppc_opc_tlbie()
 	int rS, rA, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	// FIXME: check rS.. for 0     
-	ppc_mmu_tlb_invalidate();
+	ppc_mmu_tlb_invalidate(current_core);
 }
 
 /*
@@ -1274,7 +1274,7 @@ void ppc_opc_tlbsync()
 	int rS, rA, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
 	// FIXME: check rS.. for 0     
-	ppc_mmu_tlb_invalidate();
+	ppc_mmu_tlb_invalidate(current_core);
 }
 
 /*

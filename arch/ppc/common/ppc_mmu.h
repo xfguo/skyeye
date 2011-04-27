@@ -49,7 +49,7 @@ int   ppc_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint
 int   e600_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
 int   e500_effective_to_physical(e500_core_t * core, uint32 addr, int flags, uint32 *result);
 bool_t   ppc_mmu_set_sdr1(uint32 newval, bool_t quiesce);
-void ppc_mmu_tlb_invalidate();
+void ppc_mmu_tlb_invalidate(e500_core_t * core);
 
 int   ppc_read_physical_dword(uint32 addr, uint64 *result);
 int   ppc_read_physical_word(uint32 addr, uint32 *result);
