@@ -1079,7 +1079,11 @@ sim_debug ()
 				switch (own_buf[1]) {
 					case 'T':
 						//Status
-						if (get_trace_status() == TRACE_STARTED)
+						if (own_buf[2] == 'f')	//Shielding the packet of qTfV and qTfp ,so we don't support the features request data about tracepoints that are being used by the target temporarily.We can refer the web "http://sourceforge.net/tracker/?func=detail&aid=3122955&group_id=85554&atid=576533."
+						{
+							own_buf[0] = '\0';
+    					}
+                       else if (get_trace_status() == TRACE_STARTED)
 						{
 							own_buf[0] = 'T';
 							own_buf[1] = '1';
