@@ -14,6 +14,13 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+/**
+* @file symbol.c
+* @brief the symbol management
+* @author Michael.Kang blackfin.kang@gmail.com
+* @version 
+* @date 2011-04-30
+*/
 
 #include <config.h>
 #include <assert.h>
@@ -41,6 +48,13 @@ static unsigned long number_of_symbols = 0, kernel_number = 0;
 /***************
  * added by ksh
  ***************/ 
+
+/**
+* @brief  initialization of a symbol table
+*
+* @param filename
+* @param arch_name
+*/
 void init_symbol_table(char* filename, char* arch_name)
 {
   long i,j, digit;
@@ -139,6 +153,14 @@ void init_symbol_table(char* filename, char* arch_name)
   If it exists, the corresponding pointer to the SYM_FUNC will
   be returned
 *************************************************************/
+
+/**
+* @brief get the symbol of a given address
+*
+* @param address
+*
+* @return 
+*/
 char *get_sym(generic_address_t address)
 {
 	int j ;

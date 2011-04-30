@@ -36,6 +36,9 @@
 #include "skyeye_lock.h"
 #include "skyeye_mm.h"
 
+/**
+* @brief the event type
+*/
 struct event{
 	sched_mode_t mode;		/* scheduler mode  */
 	sched_func_t func;		/* scheduler callback function */	
@@ -48,9 +51,20 @@ struct event{
 
 /* thread scheduler */
 LIST_HEAD(list_thread_head, event) thread_head;
+
+/**
+* @brief the thread lock
+*/
 RWLOCK_T  thread_lock;
+
+/**
+* @brief the pthread id running event list
+*/
 static pthread_t pid;
 
+/**
+* @brief the scheduler of event thread
+*/
 static void thread_scheduler(void){
 	/* 
 	 * Check if there is some timer is expiried, we
@@ -96,6 +110,12 @@ RW_UNLOCK(thread_lock);
 /*
  * we add a period scheduler .
  */
+
+/**
+* @brief initialization of thread scheduler
+*
+* @return 
+*/
 int init_thread_scheduler(){
 	RWLOCK_INIT(thread_lock);
 	LIST_INIT(&thread_head);
@@ -104,7 +124,17 @@ int init_thread_scheduler(){
 	create_thread(thread_scheduler, NULL, &pid); 
 }
 
-/* create and add an thread event */
+/**
+* @brief create a thread event
+*
+* @param ms
+* @param mode
+* @param func
+* @param arg
+* @param id
+*
+* @return 
+*/
 int create_thread_scheduler(unsigned int ms, sched_mode_t mode, sched_func_t func, void *arg, int *id){
 	
 	/* create a new event */
@@ -144,7 +174,15 @@ RW_UNLOCK(thread_lock);
 	return No_exp;
 }
 
-/* modify expiration and mode of the thread scheduler */
+/**
+* @brief modify expiration and mode of the thread scheduler
+*
+* @param id
+* @param ms
+* @param mode
+*
+* @return 
+*/
 int mod_thread_scheduler(int id,unsigned int ms, sched_mode_t mode){
 	struct event *tmp;
 	LIST_FOREACH(tmp, &thread_head,list_entry){
@@ -169,6 +207,13 @@ RW_UNLOCK(thread_lock);
 	return  Invarg_exp;
 }
 
+/**
+* @brief delete an event in a thread scheduler
+*
+* @param id
+*
+* @return 
+*/
 int del_thread_scheduler(int id){
 	struct event *tmp ;
 	struct event *q = NULL;
@@ -185,7 +230,9 @@ RW_UNLOCK(thread_lock);
 	return Invarg_exp;
 }
 
-/* list the attributes of all timer scheduler */
+/**
+* @brief list all the event in thread scheduler
+*/
 void list_thread_scheduler(void)
 {
 	struct event *tmp ;
@@ -195,6 +242,11 @@ void list_thread_scheduler(void)
 	}
 }
 
+/**
+* @brief destructor for the thread scheduler
+*
+* @return 
+*/
 int fini_thread_scheduler(){
 	struct event *tmp ;
 	struct event *q = NULL;

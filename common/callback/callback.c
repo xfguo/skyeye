@@ -25,14 +25,25 @@
 #include "skyeye_mm.h"
 #include "skyeye_callback.h"
 
+/**
+* @brief the queue of call back
+*/
 typedef struct callback_queue{
 	callback_kind_t kind;
 	callback_func_t* func;
 	callback_func_t* next;
 }callback_queue_t;
 
+/**
+* @brief the array of call back queue
+*/
 callback_queue_t callbacks[Max_callback];
 
+/**
+* @brief initilization of the given callback
+*
+* @param kind
+*/
 static void init_callback_queue(callback_kind_t kind){
 	if(kind >= Max_callback){
 		/* some error happens */
@@ -44,6 +55,14 @@ static void init_callback_queue(callback_kind_t kind){
 	queue->next = NULL;
 }
 
+/**
+* @brief add a callback function to a callback queue
+*
+* @param func the callback function
+* @param kind the callback type
+*
+* @return 
+*/
 static exception_t add_callback_func(callback_func_t func, callback_kind_t kind){
 	callback_queue_t* queue = &callbacks[kind];	
 	/*
@@ -70,6 +89,9 @@ static exception_t add_callback_func(callback_func_t func, callback_kind_t kind)
 static void remove_callback(){
 }
 
+/**
+* @brief initializtion of callback module
+*/
 void init_callback(){
 	int i = 0;
 	while(i < Max_callback){
@@ -78,6 +100,12 @@ void init_callback(){
 	}
 }
 
+/**
+* @brief Add a callback handler to a given callback queue
+*
+* @param func
+* @param kind
+*/
 void register_callback(callback_func_t func, callback_kind_t kind){
 	int i;
 	for(i = 0; i < Max_callback; i++)
@@ -92,9 +120,15 @@ void register_callback(callback_func_t func, callback_kind_t kind){
 	/* put func to the corresponding queue */	
 	add_callback_func(func, kind);
 }
-/*
- * scan the callback queue and execute the function in the queue.
- */
+
+/**
+* @brief scan the callback queue and execute the function in the queue.
+*
+* @param kind the callback type
+* @param arch_instance
+*
+* @return 
+*/
 int exec_callback(callback_kind_t kind, generic_arch_t* arch_instance){
 	callback_queue_t* queue = &callbacks[kind];
 	while(queue){

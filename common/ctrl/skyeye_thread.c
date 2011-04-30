@@ -28,17 +28,34 @@
 #include <skyeye_exec.h>
 #include <skyeye_log.h>
 #include <sim_control.h>
+
+/**
+* @brief skyeye running flag
+*/
 static bool_t skyeye_running;
+
+/**
+* @brief the default running exec object
+*/
 static skyeye_exec_t* default_exec;
 
+/**
+* @brief pause skyeye running
+*/
 void skyeye_pause(void){
 	skyeye_running = False;
 }
 
+/**
+* @brief set the running is true
+*/
 void skyeye_continue(void){
 	skyeye_running = True;
 }
 
+/**
+* @brief start the simulator
+*/
 void skyeye_start(void){
 	skyeye_running = True;
 }
@@ -48,6 +65,13 @@ void skyeye_start(void){
  * some unknown exception happened.we need to stop the simulator
  * and return to CLI.
  */
+
+/**
+* @brief some unknown exception happened.we need to stop the simulator 
+*	 and return to CLI.
+*
+* @param ret
+*/
 void skyeye_exit(int ret){
 	skyeye_pause();
 	skyeye_log(Error_log, __FUNCTION__, "Some unknown exception happened.\n");
@@ -82,6 +106,13 @@ void skyeye_loop(generic_arch_t *arch_instance){
 	}
 }
 
+/**
+* @brief get the default exec object
+*
+* @param arch_instance
+*
+* @return 
+*/
 skyeye_exec_t* get_default_exec(arch_instance){
 	if(default_exec == NULL){
 		default_exec = create_exec();

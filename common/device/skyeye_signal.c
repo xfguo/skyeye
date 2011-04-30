@@ -26,8 +26,12 @@
 #include "skyeye_signal.h"
 
 /**
- * Send interrupt signal to the processor core.
- */
+* @brief send interrupt signal to the processor
+*
+* @param signal
+*
+* @return 
+*/
 exception_t send_signal(interrupt_signal_t* signal){
 	generic_arch_t* arch_instance = get_arch_instance("");
 	arch_instance->signal(signal);

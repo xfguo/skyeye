@@ -32,9 +32,26 @@
 #include "flash.h"
 #include "skyeye_module.h"
 
+/**
+* @brief parse the memory related option
+*
+* @param num_params
+* @param params[]
+*
+* @return 
+*/
 static int 
 parse_mem(int num_params, const char* params[]);
 
+/**
+* @brief the handler of memory bank option
+*
+* @param this_option the option
+* @param num_params
+* @param params[]
+*
+* @return 
+*/
 static int
 do_mem_bank_option (skyeye_option_t * this_option, int num_params,
 		    const char *params[]);
@@ -44,6 +61,9 @@ do_bus_bank_option (skyeye_option_t * this_option, int num_params,
 
 static void insert_bank(mem_bank_t* bank);
 
+/**
+* @brief initiliztion the memory bank
+*/
 void init_bus(){
 	register_option("mem_bank", do_mem_bank_option, "");
 	mem_config_t *mc = get_global_memmap();
@@ -51,11 +71,23 @@ void init_bus(){
 	//register_option("mem_bank", do_bus_bank_option, "");
 }
 
+/**
+* @brief insert a bank to the memory bank array
+*
+* @param bank the insert bank
+*
+* @return the possible exception
+*/
 exception_t addr_mapping(mem_bank_t* bank){
 	insert_bank(bank);
 	return No_exp;
 }
 
+/**
+* @brief insert a bank to the memory bank array
+*
+* @param bank
+*/
 static void insert_bank(mem_bank_t* bank){
 	int num;
 	mem_config_t *mc = get_global_memmap();

@@ -33,13 +33,33 @@
 
 //chy 2005-07-30
 //int skyeye_instr_debug=0;
+
+/**
+* @brief the file descriptor of log
+*/
 FILE *skyeye_logfd;
+
+/**
+* @brief the config struct used to save config data
+*/
 static skyeye_config_t skyeye_config;
 
+/**
+* @brief get current skyeye config
+*
+* @return 
+*/
 skyeye_config_t* get_current_config(){
 	return &skyeye_config;
 }
 
+/**
+* @brief used to parse the unformatted line in config file
+*
+* @param line
+*
+* @return 
+*/
 static int
 parse_line_unformatted (char *line)
 {
@@ -185,6 +205,14 @@ extern char *inferior_io_terminal;
 
 extern void usage();
 extern void display_all_support();
+
+/**
+* @brief Read a skyeye config file
+*
+* @param skyeye_conf_filename
+*
+* @return 
+*/
 exception_t
 skyeye_read_config (char* skyeye_conf_filename)
 {

@@ -18,11 +18,22 @@
         Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 */
+/**
+* @file checkpoint.h
+* @brief 
+* @author Michael.Kang blackfin.kang@gmail.com
+* @version 
+* @date 2011-04-30
+*/
+
 #ifndef __COMMON_CHECKPOINT_H__
 #define __COMMON_CHECKPOINT_H__
 
 #include "skyeye_types.h"
 
+/**
+* @brief data type saved to checkpoint
+*/
 typedef struct chp_data{
 	char *name;
 	int size;
@@ -30,6 +41,9 @@ typedef struct chp_data{
 	struct	chp_data *next;
 }chp_data;
 
+/**
+* @brief the checkpoint data list
+*/
 typedef struct chp_list{
 	chp_data *head;
 	chp_data *tail;

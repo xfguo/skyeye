@@ -1,3 +1,28 @@
+/* Copyright (C) 
+* 2011 - Michael.Kang blackfin.kang@gmail.com
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* 
+*/
+/**
+* @file flash.c
+* @brief the read/write implementation for Nor flash
+* @author Michael.Kang blackfin.kang@gmail.com
+* @version 
+* @date 2011-04-30
+*/
+
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -7,6 +32,13 @@
 
 //#include "armdefs.h"
 
+/**
+* @brief the byte read function of flash
+*
+* @param addr the data address
+*
+* @return  data
+*/
 static uint32
 flash_read_byte (uint32 addr)
 {
@@ -39,6 +71,13 @@ flash_read_byte (uint32 addr)
 	return data;
 }
 
+/**
+* @brief the halfword reading of flash
+*
+* @param addr the data address
+*
+* @return data
+*/
 static uint32
 flash_read_halfword (uint32 addr)
 {
@@ -69,7 +108,14 @@ flash_read_halfword (uint32 addr)
 	return data;
 }
 
-uint32
+/**
+* @brief The word read function of flash
+*
+* @param addr data address
+*
+* @return data 
+*/
+static uint32
 flash_read_word (uint32 addr)
 {
 	struct device_desc *dev;
@@ -99,7 +145,13 @@ flash_read_word (uint32 addr)
 	return data;
 }
 
-void
+/**
+* @brief the byte write function of the flash
+*
+* @param addr the data address
+* @param data the written data
+*/
+static void
 flash_write_byte (uint32 addr, uint32 data)
 {
 	struct device_desc *dev;
@@ -127,6 +179,12 @@ flash_write_byte (uint32 addr, uint32 data)
 	fprintf(stderr, "In %s, addr 0x%x is invalid.\n", __FUNCTION__, addr);
 }
 
+/**
+* @brief the halfword write function of the flash
+*
+* @param addr the data address
+* @param data the written data
+*/
 void
 flash_write_halfword (uint32 addr, uint32 data)
 {
@@ -155,6 +213,12 @@ flash_write_halfword (uint32 addr, uint32 data)
 	fprintf(stderr, "In %s, addr 0x%x is invalid.\n", __FUNCTION__, addr);
 }
 
+/**
+* @brief The word write function of the flash
+*
+* @param addr the address of written data
+* @param data the data
+*/
 static void
 flash_write_word (uint32 addr, uint32 data)
 {
@@ -180,6 +244,16 @@ flash_write_word (uint32 addr, uint32 data)
 	}
 	fprintf(stderr, "In %s, addr 0x%x is invalid.\n", __FUNCTION__, addr);
 }
+
+/**
+* @brief The common flash read function
+*
+* @param size the data width
+* @param offset the data offset
+* @param value the data read from
+*
+* @return the flash to indicate the success or failure
+*/
 char flash_read(short size, int offset, uint32 * value){
 	switch(size){
 		case 8:
@@ -197,6 +271,16 @@ char flash_read(short size, int offset, uint32 * value){
 	return 0;
 
 }
+
+/**
+* @brief The flash write function
+*
+* @param sizea the data width
+* @param offset the offset of write operation
+* @param value the data write to
+*
+* @return 
+*/
 char flash_write(short size, int offset, uint32 value){
 	switch(size){
 		case 8:
@@ -213,5 +297,4 @@ char flash_write(short size, int offset, uint32 value){
 
 	}
 	return 0;
-
 }

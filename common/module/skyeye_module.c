@@ -43,18 +43,38 @@ const char* Default_libsuffix = ".so";
 /* we will not load the prefix with the following string */
 const char* Reserved_libprefix = "libcommon";
 
+/**
+* @brief the default directory splitter
+*/
 const char Dir_splitter = '/';
 
+/**
+* @brief the module struct
+*/
 typedef struct skyeye_modules_s{
 	skyeye_module_t* list;
 	int total;
 }skyeye_modules_t;
 
+/**
+* @brief the module list
+*/
 static skyeye_modules_t* skyeye_modules;
 
+/**
+* @brief set the module list
+*
+* @param node
+*/
 static void set_module_list(skyeye_module_t *node){
 	skyeye_modules = node;
 }
+
+/**
+* @brief initialization of module list
+*
+* @return 
+*/
 exception_t init_module_list(){
 	int errors = 0;
 	//skyeye_modules = skyeye_mm(sizeof(skyeye_modules_t));
@@ -66,10 +86,25 @@ exception_t init_module_list(){
 		return Malloc_exp;
 	return No_exp;
 }
+
+/**
+* @brief get the module list
+*
+* @return 
+*/
 skyeye_module_t* get_module_list(){
 	return skyeye_modules;
 }
 
+/**
+* @brief register a skyeye module to the common library
+*
+* @param module_name
+* @param filename
+* @param handler
+*
+* @return 
+*/
 static exception_t register_skyeye_module(char* module_name, char* filename, void* handler){
 	exception_t ret;
 	skyeye_module_t* node;
@@ -116,6 +151,14 @@ dlerrordup (char *errormsg)
   return errormsg;
 }
 //#define Check_Failed_Module 0
+
+/**
+* @brief load a module to skyeye common library
+*
+* @param module_filename
+*
+* @return 
+*/
 exception_t SKY_load_module(const char* module_filename){
 	exception_t ret;
 	char **module_name;
@@ -156,6 +199,13 @@ exception_t SKY_load_module(const char* module_filename){
 	}
 	return No_exp;	
 }
+
+/**
+* @brief load all the module under a directory
+*
+* @param lib_dir
+* @param suffix
+*/
 void SKY_load_all_modules(char* lib_dir, char* suffix){
 	/* we assume the length of dirname + filename does not over 1024 */
 	char full_filename[1024];
@@ -203,6 +253,14 @@ void SKY_load_all_modules(char* lib_dir, char* suffix){
 	}
 	closedir(module_dir);
 }
+
+/**
+* @brief get a module by its name
+*
+* @param module_name
+*
+* @return 
+*/
 skyeye_module_t * get_module_by_name(const char* module_name){
 	skyeye_module_t* list = get_module_list();
 	while(list != NULL){
@@ -217,6 +275,9 @@ void get_modules(){
 		
 }
 
+/**
+* @brief unload all the modules
+*/
 void SKY_unload_all_modules(){
 	skyeye_module_t* list = get_module_list();
         while(list != NULL){

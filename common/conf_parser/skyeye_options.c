@@ -53,6 +53,16 @@ do_load_file_option (skyeye_option_t * this_option, int num_params,
 		 const char *params[]);
 
 extern FILE *skyeye_logfd;
+
+/**
+* @brief utility used to split the parameter
+*
+* @param param
+* @param name
+* @param value
+*
+* @return 
+*/
 int
 split_param (const char *param, char *name, char *value)
 {
@@ -79,6 +89,14 @@ split_param (const char *param, char *name, char *value)
 
 /* 2007-01-22 : SKYEYE4ECLIPSE moved to skyeye_config.c */
 static skyeye_option_t* skyeye_option_list;
+
+/**
+* @brief initialization of skyeye option parser
+*
+* @param config
+*
+* @return 
+*/
 int
 skyeye_option_init (skyeye_config_t * config)
 {
@@ -102,6 +120,15 @@ skyeye_option_init (skyeye_config_t * config)
 	register_option("load_file", do_load_file_option, "Set load base address and size value for initrd file loading.\n");
 }
 
+/**
+* @brief used to register some options and its handler
+*
+* @param option_name
+* @param do_option_func
+* @param helper
+*
+* @return 
+*/
 exception_t register_option(char* option_name, do_option_t do_option_func, char* helper){
 	if(option_name == NULL || !do_option_func)
 		return Invarg_exp;
@@ -127,6 +154,11 @@ exception_t register_option(char* option_name, do_option_t do_option_func, char*
 	return No_exp;
 }
 
+/**
+* @brief Get the skyeye option list
+*
+* @return 
+*/
 skyeye_option_t* get_option_list(){
 	return skyeye_option_list;
 }
@@ -144,6 +176,15 @@ int com_list_options(char* arg){
 }
 #endif
 
+/**
+* @brief the handler of do nothing for some options
+*
+* @param this_option
+* @param num_params
+* @param params[]
+*
+* @return 
+*/
 int
 do_dummy_option (skyeye_option_t * this_option, int num_params,
 		 const char *params[])
@@ -151,7 +192,14 @@ do_dummy_option (skyeye_option_t * this_option, int num_params,
 	return 0;
 };
 
-/* parse "int" parameters. e.g. int=16:17*/
+/**
+* @brief used to parse "int" parameter
+*
+* @param value[]
+* @param interrupts
+*
+* @return 
+*/
 int
 get_interrupts (char value[], uint32 * interrupts)
 {
@@ -275,6 +323,14 @@ do_step_disassemble_option (skyeye_option_t * this_option, int num_params,
 #endif
 
 
+/**
+* @brief parse the formatted line in skyeye config file
+*
+* @param num_params
+* @param params[]
+*
+* @return 
+*/
 int
 parse_line_formatted (int num_params, const char *params[])
 {

@@ -29,9 +29,15 @@
 #include "skyeye_loader.h"
 #include "bank_defs.h"
 
-/*
- * load a block of data to the memory.
- */
+/**
+* @brief load a block of data to the memory
+*
+* @param src
+* @param len
+* @param load_addr
+*
+* @return 
+*/
 exception_t load_data(void* src, size_t len, generic_address_t load_addr){
 	char* p = src;
 	generic_address_t addr = load_addr;
@@ -45,10 +51,14 @@ exception_t load_data(void* src, size_t len, generic_address_t load_addr){
 	return No_exp;
 }
 
-/*
- * load a file to the memory
- */
-
+/**
+* @brief Load a file to guest memory
+*
+* @param filename
+* @param load_addr
+*
+* @return 
+*/
 exception_t load_file(const char* filename, generic_address_t load_addr){
 	FILE* f;
 	uint8 data;

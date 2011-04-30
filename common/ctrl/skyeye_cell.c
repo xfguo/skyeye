@@ -1,3 +1,28 @@
+/* Copyright (C) 
+* 2011 - Michael.Kang blackfin.kang@gmail.com
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* 
+*/
+/**
+* @file skyeye_cell.c
+* @brief the cell implementation
+* @author Michael.Kang blackfin.kang@gmail.com
+* @version 
+* @date 2011-04-30
+*/
+
 #include <assert.h>
 #include <unistd.h>
 #include "skyeye_obj.h"
@@ -8,12 +33,29 @@
 #include "sim_control.h"
 #include "skyeye_callback.h"
 
+/**
+* @brief the default cell
+*/
 static skyeye_cell_t* default_cell = NULL;
+
+/**
+* @brief Add an exec object to the cell
+*
+* @param exec
+* @param cell
+*/
 void add_to_cell(skyeye_exec_t* exec, skyeye_cell_t* cell){
 	exec->exec_id = cell->max_exec_id++;
 	LIST_INSERT_HEAD(&cell->exec_head, exec, list_entry);
 }
 
+/**
+* @brief get the thread object by its cell
+*
+* @param cell
+*
+* @return 
+*/
 work_thread_t* get_thread_by_cell(skyeye_cell_t* cell){
 	return get_thread_by_id(cell->thread_id);
 }
@@ -100,16 +142,29 @@ exception_t stop_cell(skyeye_cell_t* cell){
 	return No_exp;
 }
 
+/**
+* @brief start all the cell
+*/
 void start_all_cell(){
 	start_all_thread();
 	return;
 }
 
+/**
+* @brief stop all the cell
+*/
 void stop_all_cell(){
 	stop_all_thread();
 	return;
 }
 
+/**
+* @brief get the current running exec object from the cell
+*
+* @param id
+*
+* @return 
+*/
 conf_object_t* get_current_exec_priv(pthread_t id){
 	struct skyeye_exec_s *iterator ;
 	skyeye_cell_t* cell = get_cell_by_thread_id(id);

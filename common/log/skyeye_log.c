@@ -1,3 +1,28 @@
+/* Copyright (C) 
+* 2011 - Michael.Kang blackfin.kang@gmail.com
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* 
+*/
+/**
+* @file skyeye_log.c
+* @brief the log module of skyeye
+* @author Michael.Kang blackfin.kang@gmail.com
+* @version 
+* @date 2011-04-30
+*/
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <config.h>
@@ -5,15 +30,32 @@
 #include "skyeye_config.h"
 #include "skyeye_log.h"
 
+/**
+* @brief the welcome message of cli
+*/
 const char* Front_message = "SkyEye is an Open Source project under GPL. All rights of different parts or modules are reserved by their author. Any modification or redistributions of SkyEye should not remove or modify the annoucement of SkyEye copyright. \n\
 Get more information about it, please visit the homepage http://www.skyeye.org.\n\
 Type \"help\" to get command list. \n ";
 
+/**
+* @brief get the welcome message
+*
+* @return 
+*/
 char* get_front_message(){
 	printf("%s\n%s", PACKAGE_STRING, Front_message);
 	return Front_message;
 }
 
+/**
+* @brief the handler for log option
+*
+* @param this_option
+* @param num_params
+* @param params[]
+*
+* @return 
+*/
 int
 do_log_option (skyeye_option_t * this_option, int num_params,
 	       const char *params[])
@@ -97,6 +139,9 @@ do_log_option (skyeye_option_t * this_option, int num_params,
 	return 0;
 }
 
+/**
+* @brief the exception string for various exception type
+*/
 static char* exp_str[] = {
 	"No exception",
 	"Malloc failed",
@@ -106,6 +151,14 @@ static char* exp_str[] = {
 	"Invalid module",
 	NULL
 };
+
+/**
+* @brief get the exception string for the given exception
+*
+* @param exp
+*
+* @return 
+*/
 char* get_exp_str(exception_t exp){
 	const char* no_exp_str = "No such exception";
 	int exp_str_len = 0;
@@ -115,6 +168,15 @@ char* get_exp_str(exception_t exp){
 		return no_exp_str;
 	return exp_str[exp];
 }
+
+/**
+* @brief log function of skyeye
+*
+* @param log_level
+* @param func_name
+* @param format
+* @param ...
+*/
 void skyeye_log(log_level_t log_level,const char* func_name, char* format, ...){
 	static char buf[1024];
 	memset(buf, '\0', 1024);

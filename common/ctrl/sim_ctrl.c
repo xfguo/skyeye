@@ -1,3 +1,28 @@
+/* Copyright (C) 
+* 2011 - Michael.Kang blackfin.kang@gmail.com
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* 
+*/
+/**
+* @file sim_ctrl.c
+* @brief the control function set of the simulator
+* @author Michael.Kang blackfin.kang@gmail.com
+* @version 
+* @date 2011-04-30
+*/
+
 #include <stdlib.h>
 #include <sim_control.h>
 #include "skyeye_types.h"
@@ -19,11 +44,25 @@ const char* default_lib_dir = "/opt/skyeye/lib/skyeye/";
 #else
 const char* default_lib_dir = SKYEYE_MODULE_DIR;
 #endif
+
+/**
+* @brief the default cell of the simulator
+*/
 static skyeye_cell_t* default_cell = NULL;
+
+/**
+* @brief the flag of running or stop
+*/
 static bool_t SIM_running = False;
 void SIM_init_command_line(void){
 }
 
+/**
+* @brief initialization of environment
+*
+* @param argv
+* @param handle_signals
+*/
 void SIM_init_environment(char** argv, bool_t handle_signals){
 }
 
@@ -36,9 +75,9 @@ static exception_t try_init(){
 
 void SIM_cli();
 
-/*
- *
- */
+/**
+* @brief all the initilization of the simulator
+*/
 void SIM_init(){
 	sky_pref_t* pref;
 	char* welcome_str = get_front_message();
@@ -143,6 +182,9 @@ void SIM_init(){
 	}
 }
 
+/**
+* @brief launch the simlator
+*/
 void SIM_start(void){
 	sky_pref_t *pref;
 	/* get the current preference for simulator */
@@ -218,9 +260,17 @@ void SIM_start(void){
 	}
 #endif	
 }
+
+/**
+* @brief all the cli
+*/
 void SIM_cli(){
 	skyeye_cli();
 }
+
+/**
+* @brief set the running state for the simulator
+*/
 void SIM_run(){
 	//skyeye_start();
 	SIM_running = True;
@@ -233,20 +283,42 @@ void SIM_pause(){
 	skyeye_pause();
 }
 #endif
+
+/**
+* @brief continue the last stop state
+*
+* @param arch_instance
+*/
 void SIM_continue(generic_arch_t* arch_instance){
 	//skyeye_continue();
 	SIM_running = True;
 	start_all_cell();
 }
 
+/**
+* @brief stop the simulator
+*
+* @param arch_instance
+*/
 void SIM_stop(generic_arch_t* arch_instance){
 	//skyeye_pause();
 	SIM_running = False;
 	stop_all_cell();
 }
+
+/**
+* @brief if the simulator is in running state
+*
+* @param arch_instance
+*/
+
 bool_t SIM_is_running(){
 	return SIM_running;
 }
+
+/**
+* @brief destructor of the simulator
+*/
 void SIM_fini(){
 	sky_pref_t *pref = get_skyeye_pref();
 	//pthread_cancel();

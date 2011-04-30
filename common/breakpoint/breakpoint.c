@@ -1,3 +1,28 @@
+/* Copyright (C) 
+* 2011 - Michael.kang
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* 
+*/
+/**
+* @file breakpoint.c
+* @brief The breakpoint management and implementation.
+* @author Michael.kang
+* @version 
+* @date 2011-04-28
+*/
+
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -10,7 +35,15 @@
 #include "sim_control.h"
 
 //const int max_bp_number = 255;
+
+/**
+* @brief The max number of breakpoint
+*/
 #define MAX_BP_NUMBER 255
+
+/**
+* @brief The breakpoint struct
+*/
 typedef struct breakpoint_s{
 	breakpoint_id_t id;
 	access_t access_type;
@@ -19,6 +52,9 @@ typedef struct breakpoint_s{
 	uint32 hits;
 }breakpoint_t;
 
+/**
+* @brief The struct used to management breakpoint
+*/
 typedef struct breakpoint_mgt{
 	/* currently max breakpoint number supported by us is MAX_BP_NUMBER */
 	breakpoint_t breakpoint[MAX_BP_NUMBER];
@@ -26,10 +62,25 @@ typedef struct breakpoint_mgt{
 	int bp_number;
 }breakpoint_mgt_t;
 
+/**
+* @brief the instance of breakpoint management
+*/
 static breakpoint_mgt_t breakpoint_mgt;
 
+/**
+* @brief Check if the breakpoint is trigger
+*
+* @param arch_instance
+*/
 static void check_breakpoint(generic_arch_t* arch_instance);
 
+/**
+* @brief Get a breakpoint by its id
+*
+* @param id
+*
+* @return a breakpoint instance
+*/
 static breakpoint_t* get_bp_by_id(breakpoint_id_t id){
 	/* scan the breakpoint if the breakpoint exists */
 	int i;
@@ -40,6 +91,13 @@ static breakpoint_t* get_bp_by_id(breakpoint_id_t id){
 	return NULL;
 }
 
+/**
+* @brief if the breakpoint is valid
+*
+* @param bp
+*
+* @return 
+*/
 static bool_t valid_bp(breakpoint_t* bp){
 	if(bp->id != 0)
 		return True;
@@ -47,6 +105,13 @@ static bool_t valid_bp(breakpoint_t* bp){
 		return False;
 }
 
+/**
+* @brief get a breakpoint by its address
+*
+* @param addr
+*
+* @return 
+*/
 breakpoint_t* get_bp_by_addr(generic_address_t addr){
 	int i;
 	/* scan the breakpoint if the breakpoint exists */
@@ -58,6 +123,15 @@ breakpoint_t* get_bp_by_addr(generic_address_t addr){
 	return NULL;
 }
 
+/**
+* @brief insert a breakpoint at an address
+*
+* @param access_type
+* @param address_type
+* @param addr
+*
+* @return 
+*/
 exception_t skyeye_insert_bp(access_t access_type, breakpoint_kind_t address_type, generic_address_t addr)
 {
 	breakpoint_t* bp;
@@ -85,6 +159,13 @@ exception_t skyeye_insert_bp(access_t access_type, breakpoint_kind_t address_typ
 }
 
 
+/**
+* @brief remove a breakpoint by id
+*
+* @param id
+*
+* @return 
+*/
 exception_t skyeye_remove_bp(breakpoint_id_t id)
 {
 	int i;
@@ -109,6 +190,13 @@ found:
 #endif
 }
 
+/**
+* @brief remove a breakpoint at the address
+*
+* @param addr
+*
+* @return 
+*/
 exception_t skyeye_remove_bp_by_addr(generic_address_t addr){
 	breakpoint_t* bp = get_bp_by_addr(addr);
 	if(bp != NULL)
@@ -122,6 +210,13 @@ class breakpoint:public breakpoint_interface{
 }
 #endif
 
+/**
+* @brief handler of break command
+*
+* @param arg
+*
+* @return 
+*/
 int com_break(char*arg){
 	char** endptr;
 	generic_address_t addr;
@@ -159,6 +254,11 @@ int com_break(char*arg){
 	return 0;
 }
 
+/**
+* @brief The handler of list all the breakpoint
+*
+* @return 
+*/
 int com_list_bp(){
 	int i = 0;
 	char* format = "%d\t0x%x\t%d\n";
@@ -171,6 +271,13 @@ int com_list_bp(){
 	}
 }
 
+/**
+* @brief Delete a breakpoint by id
+*
+* @param arg
+*
+* @return 
+*/
 int com_delete_bp(char*arg){
 	char** endptr;
 	int id;
@@ -207,6 +314,11 @@ int com_delete_bp(char*arg){
 	return 0;
 }
 
+/**
+* @brief Initilization of breakpoint
+*
+* @return 
+*/
 int init_bp(){
 	exception_t exp;
 	register_callback(check_breakpoint, Step_callback);
@@ -222,9 +334,11 @@ breakpoint_t* get_first_bp(){
 breakpoint_t* get_next_bp(breakpoint_t* bp){
 }
 
-/*
- * Return: 1 means hit of breakpoint, 0 means not.
- */
+/**
+* @brief check if the breakpoint is hit in every step
+*
+* @param arch_instance
+*/
 static void check_breakpoint(generic_arch_t* arch_instance){
 #if 1
 	int i;

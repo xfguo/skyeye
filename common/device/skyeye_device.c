@@ -28,10 +28,18 @@
 #include "skyeye_device.h"
 #include "skyeye_config.h"
 #include "skyeye_options.h"
+
+/**
+* @brief the module set of all the device
+*/
 static struct device_module_set **global_mod_set;
 static int mod_set_count = 0, mod_set_count_max = 0;
 
 
+/**
+* @brief initialize all the devices.
+* @Deprecated
+*/
 void
 initialize_all_devices ()
 {
@@ -91,6 +99,14 @@ find_module (const char *name, struct device_module_set *mod_set)
 	}
 	return dev_mod;
 }
+
+/**
+* @brief find a device module set according to its device name
+*
+* @param name
+*
+* @return 
+*/
 static struct device_module_set *
 find_module_set (const char *name)
 {
@@ -104,6 +120,16 @@ find_module_set (const char *name)
 	return mod_set;
 }
 
+/**
+* @brief setup a device
+*
+* @param dev_name
+* @param conf
+* @param option
+* @param mc
+*
+* @return 
+*/
 int
 setup_device (char *dev_name, struct common_config *conf,
 	      void *option, machine_config_t * mc)

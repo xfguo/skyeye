@@ -37,6 +37,13 @@
 //unsigned long load_base = 0x0;
 //unsigned long load_mask = 0xffffffff;
 
+/**
+* @brief write a buffer to the given physical address
+*
+* @param addr
+* @param buffer
+* @param size
+*/
 static inline void
 write_phys (uint32 addr, uint8_t * buffer, int size)
 {
@@ -63,6 +70,13 @@ write_phys (uint32 addr, uint8_t * buffer, int size)
 	}
 }
 
+/**
+* @brief Write a buffer data to the given virtual address
+*
+* @param addr
+* @param buffer
+* @param size
+*/
 static inline void
 write_virt (uint32 addr, uint8_t * buffer, int size)
 {
@@ -244,6 +258,14 @@ out:
 #define ELF_LOADING_INFO 0
 #include <bfd.h>
 
+/**
+* @brief load an elf file
+*
+* @param file
+* @param addr_type
+*
+* @return 
+*/
 static exception_t
 load_exec (const char *file, addr_type_t addr_type)
 {
@@ -363,6 +385,14 @@ load_exec (const char *file, addr_type_t addr_type)
 }
 
 #endif //#ifndef HAVE_LIBBFD
+
+/**
+* @brief get the endian of an elf file
+*
+* @param elf_filename
+*
+* @return 
+*/
 endian_t get_elf_endian(const char* elf_filename){
 	endian_t endian;
 	Elf32_Ehdr elf_header;
@@ -390,6 +420,15 @@ endian_t get_elf_endian(const char* elf_filename){
 	fclose(file);
 	return endian;
 }
+
+/**
+* @brief the elf loading function
+*
+* @param elf_filename
+* @param addr_type
+*
+* @return 
+*/
 exception_t load_elf(const char* elf_filename, addr_type_t addr_type){
 	return load_exec(elf_filename, addr_type);
 }

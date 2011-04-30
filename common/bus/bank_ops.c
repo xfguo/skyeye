@@ -29,9 +29,18 @@
 #include "skyeye_callback.h"
 #include "skyeye_bus.h"
 
-/* Here is the global memory map */
+/**
+* @brief The global memory map
+*/
 static mem_config_t global_memmap;
 
+/**
+* @brief Get a memory bank for given address
+*
+* @param addr
+*
+* @return 
+*/
 mem_bank_t *
 bank_ptr (uint32_t addr)
 {
@@ -47,24 +56,15 @@ bank_ptr (uint32_t addr)
 	return (NULL);
 }
 
-/* called by dbct/tb.c tb_find FUNCTION */
-mem_bank_t *
-insn_bank_ptr (uint32_t addr)
-{
-	static mem_bank_t *mbp = NULL;
-	if (mbp) {
-		if (mbp->addr <= addr && (addr - mbp->addr) < mbp->len)
-			return (mbp);
-	}
-	for (mbp = global_memmap.mem_banks; mbp->len; mbp++)
-		if (mbp->addr <= addr && (addr - mbp->addr) < mbp->len)
-			return (mbp);
-	return (NULL);
-}
-
 /**
- *  The interface of read data from bus
- */
+* @brief generic data read interface
+*
+* @param size the width of data
+* @param addr the address for the data
+* @param value the value of data
+*
+* @return 
+*/
 int bus_read(short size, int addr, uint32_t * value){
 	mem_bank_t * bank;
 	generic_arch_t* arch_instance = get_arch_instance("");
@@ -84,6 +84,16 @@ int bus_read(short size, int addr, uint32_t * value){
 /**
  * The interface of write data from bus
  */
+
+/**
+* @brief the generic data write interface
+*
+* @param size the width of data
+* @param addr the address of the data
+* @param value the value of the data
+*
+* @return 
+*/
 int bus_write(short size, int addr, uint32_t value){
 	mem_bank_t * bank;
 	generic_arch_t* arch_instance = get_arch_instance("");
@@ -98,9 +108,19 @@ int bus_write(short size, int addr, uint32_t value){
 	}
        return 0; 
 }
+
+/**
+* @brief initialization of global memory map
+*/
 void reset_global_memmap(){
 	memset(&global_memmap, 0, sizeof(mem_config_t));
 }
+
+/**
+* @brief get globalo memory map
+*
+* @return the pointer of global memory map
+*/
 mem_config_t * get_global_memmap(){
 	return &global_memmap;
 }

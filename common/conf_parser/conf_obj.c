@@ -37,15 +37,33 @@
 #include "skyeye_mm.h"
 #include "skyeye_log.h"
 
+/**
+* @brief the data saved to hash table
+*/
 struct hsearch_data *conf_tab = NULL;
+
+/**
+* @brief The max object number in hash table
+*/
 const static max_conf_obj = 1024;
 
+/**
+* @brief initialization of config object management
+*/
 void init_conf_obj(){
 	conf_tab = skyeye_mm(sizeof(struct hsearch_data));
 	memset(conf_tab, 0, sizeof(struct hsearch_data));
 	hcreate_r(max_conf_obj, conf_tab);
 }
 
+/**
+* @brief place an object to the hash table
+*
+* @param objname
+* @param obj
+*
+* @return 
+*/
 exception_t put_conf_obj(char* objname, void* obj){
 	ENTRY item, *retval;
 	//printf("In %s, objname=%s\n", __FUNCTION__, objname);
@@ -96,6 +114,15 @@ void* get_cast_conf_obj(conf_object_t* conf_obj, const char* type_string){
 		return NULL;
 	}
 }
+
+/**
+* @brief get its conf_obj from an object and its name
+*
+* @param obj
+* @param type_string
+*
+* @return 
+*/
 conf_object_t* get_conf_obj_by_cast(void* obj, const char* type_string){
 	//printf("In %s,sizeof(conf_object_t)=0x%x\n", __FUNCTION__, sizeof(conf_object_t));
 	conf_object_t* conf_obj = skyeye_mm(sizeof(struct conf_object_s));
@@ -110,9 +137,18 @@ conf_object_t* get_conf_obj_by_cast(void* obj, const char* type_string){
 	//put_conf_obj(obj, type_string);
 	return conf_obj;
 }
+
+/**
+* @brief List all the object in the hash
+*
+* @return 
+*/
 void* list_all_obj(){
 }
 
+/**
+* @brief destruction of the hash
+*/
 void fini_conf_obj(){
 	hdestroy_r(conf_tab);
 }

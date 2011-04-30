@@ -31,6 +31,10 @@
 
 /* the number of supported architecture */
 #define MAX_SUPP_ARCH 32
+
+/**
+* @brief the architecture supported by skyeye
+*/
 static arch_config_t *skyeye_archs[MAX_SUPP_ARCH];
 
 /*
@@ -38,8 +42,16 @@ static arch_config_t *skyeye_archs[MAX_SUPP_ARCH];
  */
 static generic_arch_t* running_arch_list;
 
+/**
+* @brief the default architecture
+*/
 static char *default_arch_name = "arm";
 
+/**
+* @brief used to register a supported architecture to skyeye
+*
+* @param arch
+*/
 void
 register_arch (arch_config_t * arch)
 {
@@ -55,6 +67,14 @@ register_arch (arch_config_t * arch)
 /*
  * get arch instance in running by its name.
  */
+
+/**
+* @brief get the current running architecture
+*
+* @param arch_name
+*
+* @return 
+*/
 generic_arch_t * get_arch_instance(const char* arch_name){
 	if(running_arch_list == NULL){
 		running_arch_list = skyeye_mm_zero(sizeof(generic_arch_t));
@@ -82,6 +102,16 @@ generic_arch_t * get_arch_instance(const char* arch_name){
 	}
 	return running_arch_list;
 }
+
+/**
+* @brief The handler of arch option
+*
+* @param this_option
+* @param num_params
+* @param params[]
+*
+* @return 
+*/
 static int
 do_arch_option (skyeye_option_t * this_option, int num_params,
 		const char *params[])
@@ -107,6 +137,11 @@ do_arch_option (skyeye_option_t * this_option, int num_params,
 	return -1;
 }
 
+/**
+* @brief get the default architecture supported by skyeye
+*
+* @return 
+*/
 generic_arch_t* get_default_arch(){
 	int i;
 	for (i = 0; i < MAX_SUPP_ARCH; i++) {
@@ -121,6 +156,9 @@ generic_arch_t* get_default_arch(){
 	return NULL;
 }
 
+/**
+* @brief the initialization of arch
+*/
 void init_arch(){
 	register_option("arch", do_arch_option, "support different architectures.\n");
 }

@@ -1,3 +1,28 @@
+/* Copyright (C) 
+* 2011 - Michael.Kang
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* 
+*/
+/**
+* @file check.c
+* @brief The checkpoint implementation
+* @author Du jeffdo.du@gmail.com
+* @version 
+* @date 2011-04-28
+*/
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -16,8 +41,18 @@
 #include "skyeye_mm.h"
 #include "bank_defs.h"
 
+/**
+* @brief the data of checkpoint
+*/
 chp_list chp_data_list;
 
+/**
+* @brief save the checkpoint
+*
+* @param arg
+*
+* @return 
+*/
 static int save_chp(char *arg)
 {
 	chp_data *p;
@@ -59,6 +94,13 @@ static int save_chp(char *arg)
 	fclose(fp);
 }
 
+/**
+* @brief load the checkpoint
+*
+* @param arg
+*
+* @return 
+*/
 static int load_chp(char *arg)
 {
 	chp_data *p;
@@ -105,6 +147,13 @@ static int load_chp(char *arg)
 	fclose(fp);
 }
 
+/**
+* @brief register a checkpoint data to the saved list
+*
+* @param data
+* @param size
+* @param name
+*/
 void add_chp_data(void *data, int size, char *name)
 {
 	chp_data *tmp;
@@ -128,7 +177,18 @@ void add_chp_data(void *data, int size, char *name)
 	chp_data_list.num ++;
 }
 
+/**
+* @brief bookmart array used to save
+*/
 static bookmark[100] = {0};
+
+/**
+* @brief set a bookmark
+*
+* @param arg
+*
+* @return 
+*/
 static int set_bookmark(char *arg)
 {
 	if(arg == NULL || *arg == 0){
@@ -140,6 +200,13 @@ static int set_bookmark(char *arg)
 	save_chp(bookmark);
 }
 
+/**
+* @brief reverse to the previous steps
+*
+* @param arg
+*
+* @return 
+*/
 static int reverse_to(char *arg)
 {
 	generic_arch_t* arch_instance = get_arch_instance("");
@@ -167,11 +234,23 @@ static int reverse_to(char *arg)
 	}
 }
 
+/**
+* @brief reverse only one step
+*
+* @param arg
+*
+* @return 
+*/
 static int reverse_step_insn(char *arg)
 {
 	reverse_to("1");
 }
 
+/**
+* @brief initialization of checkpoint module
+*
+* @return 
+*/
 int init_chp(){
 
 	memset(&chp_data_list, 0, sizeof(chp_data_list));
@@ -185,6 +264,10 @@ int init_chp(){
 	add_command("reverse-step-instruction", reverse_step_insn, "reverse setp instruction.\n");/* reverse step*/
 }
 
-/* destruction function for log functionality */
+/**
+* @brief destruction function
+*
+* @return 
+*/
 int chpoint_fini(){
 }

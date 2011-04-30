@@ -35,7 +35,19 @@
 #include "skyeye_mm.h"
 
 /* All the memory including rom and dram */
+
+/**
+* @brief The whole memory including rom and dram
+*/
 static mem_state_t global_memory;
+
+/**
+* @brief byte read function of ram
+*
+* @param addr
+*
+* @return 
+*/
 static uint32_t
 mem_read_byte (uint32_t addr)
 {
@@ -75,6 +87,13 @@ mem_read_byte (uint32_t addr)
 
 }
 
+/**
+* @brief the half read function of the data
+*
+* @param addr
+*
+* @return 
+*/
 static uint32_t
 mem_read_halfword (uint32_t addr)
 {
@@ -109,6 +128,13 @@ mem_read_halfword (uint32_t addr)
 	}
 }
 
+/**
+* @brief Word read of the ram
+*
+* @param addr
+*
+* @return 
+*/
 static uint32_t
 mem_read_word (uint32_t addr)
 {
@@ -139,6 +165,12 @@ mem_read_word (uint32_t addr)
 	
 }
 
+/**
+* @brief the byte write of the ram
+*
+* @param addr the written address
+* @param data the written data
+*/
 static void
 mem_write_byte (uint32_t addr, uint32_t data)
 {
@@ -182,6 +214,12 @@ mem_write_byte (uint32_t addr, uint32_t data)
 		*(uint8_t *)temp = data;
 }
 
+/**
+* @brief the halfword write function
+*
+* @param addr the written address
+* @param data the written data
+*/
 static void
 mem_write_halfword (uint32_t addr, uint32_t data)
 {
@@ -220,6 +258,12 @@ mem_write_halfword (uint32_t addr, uint32_t data)
 		*(uint16_t *)temp = half_to_BE(data);
 }
 
+/**
+* @brief the word write function of the ram
+*
+* @param addr the written address
+* @param data the written data
+*/
 static void
 mem_write_word (uint32_t addr, uint32_t data)
 {
@@ -257,6 +301,12 @@ mem_write_word (uint32_t addr, uint32_t data)
 /*
  * allocate memory space for the banks
  */
+
+/**
+* @brief The memory initialization that do memory allocation
+*
+* @return the exception
+*/
 exception_t
 mem_reset ()
 {
@@ -379,6 +429,15 @@ mem_reset ()
 
 }
 
+/**
+* @brief The generic memory read function
+*
+* @param size data width
+* @param offset data offset
+* @param value the return value of read from
+*
+* @return the flash used to indicate the success or failure
+*/
 char mem_read(short size, int offset, uint32_t * value){
 	void * state;
 	switch(size){
@@ -399,6 +458,15 @@ char mem_read(short size, int offset, uint32_t * value){
 
 }
 
+/**
+* @brief the write function of the ram
+*
+* @param size the data width
+* @param offset the data offset
+* @param value the data value written to
+*
+* @return the flag
+*/
 char mem_write(short size, int offset, uint32_t value){
 	switch(size){
 		case 8:
@@ -434,6 +502,14 @@ unsigned char * get_dma_addr(unsigned long guest_addr){
         return host_addr;
 }
 #endif
+
+/**
+* @brief get the host address for a guest address
+*
+* @param guest_addr the guest address
+*
+* @return the host address for the given guest address
+*/
 unsigned long get_dma_addr(unsigned long guest_addr){
         unsigned char * host_addr;
         mem_bank_t * global_mbp = bank_ptr(guest_addr);
@@ -451,14 +527,35 @@ unsigned long get_dma_addr(unsigned long guest_addr){
 }
 
 
+/**
+* @brief the warnning function of the read-only memory
+*
+* @param size the data width
+* @param offset the data offset
+* @param value the data written to
+*
+* @return 
+*/
 char warn_write(short size, int offset, uint32_t value){
 	SKYEYE_ERR("Read-only ram\n");
 }
+
+/**
+* @brief get the whole memory block
+*
+* @return 
+*/
 mem_state_t * get_global_memory(){
 	return &global_memory;
 }
 
-/* for checkpoint */
+/**
+* @brief save all the memory data to a file
+*
+* @param dir the location of saved memory data
+*
+* @return the result of operation
+*/
 int save_mem_to_file(char *dir)
 {
 	int i,j,bank,ret = 0;
@@ -495,6 +592,13 @@ int save_mem_to_file(char *dir)
 }
 
 
+/**
+* @brief load all the memory data from a saved image file
+*
+* @param dir the location of the saved memory image file
+*
+* @return 
+*/
 int load_mem_form_flie(char *dir)
 {
 

@@ -10,6 +10,12 @@
  * That is an absolute value for step. Simulator should stop when hit this value 
  */
 static int stopped_step = 0;
+
+/**
+* @brief check steps for stopping
+*
+* @param arch_instance
+*/
 static void check_steps(generic_arch_t* arch_instance){
 	int current_step;
 	if(arch_instance->get_step){
@@ -26,6 +32,13 @@ static void check_steps(generic_arch_t* arch_instance){
 	return;
 }
 
+/**
+* @brief the handler of show step command
+*
+* @param arg
+*
+* @return 
+*/
 int com_show_step(char *arg) {
 	generic_arch_t* arch_instance = get_arch_instance("");
 	if(!arch_instance)
@@ -34,6 +47,9 @@ int com_show_step(char *arg) {
 	printf("steps: %d\n", step);
 }
 
+/**
+* @brief initialization of step running
+*/
 void init_stepi(){
 	register_callback(check_steps, Step_callback);
 	add_command("show-step", com_show_step, "Show the steps of current processor.\n");

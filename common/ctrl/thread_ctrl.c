@@ -39,7 +39,19 @@
 #include "skyeye_log.h"
 
 #define MAX_THREAD_NUMBER 256
+
+/**
+* @brief the work thread number of the simulator
+*/
 static work_thread_t pthread_pool[MAX_THREAD_NUMBER];
+
+/**
+* @brief allocate a thread
+*
+* @param thread
+*
+* @return 
+*/
 static exception_t alloc_thread(work_thread_t** thread){
 	int i;
         for(i = 0; i < MAX_THREAD_NUMBER; i++)
@@ -70,11 +82,26 @@ work_thread_t* get_thread_by_id(pthread_t id){
 	return NULL;
 }
 
+/**
+* @brief get the cell for given thread id
+*
+* @param id
+*
+* @return 
+*/
 skyeye_cell_t* get_cell_by_thread_id(pthread_t id){
 	work_thread_t* thread = get_thread_by_id(id);
 	skyeye_cell_t* cell = (skyeye_cell_t*)get_cast_conf_obj(thread->priv_data, "skyeye_cell_t");
 	return cell;
 }
+
+/**
+* @brief create a thread
+*
+* @param start_funcp
+* @param argp
+* @param idp
+*/
 void create_thread(void *(*start_funcp)(void *), void* argp, pthread_t * idp)
 {
         int res;
@@ -123,13 +150,31 @@ void stop_thread_by_id(pthread_t id){
 	thread->state = Stopped_state;
 }
 
+/**
+* @brief set the running state for a thread
+*
+* @param thread
+*/
 void start_thread(work_thread_t* thread){
 	thread->state = Running_state;
 }
 
+/**
+* @brief stop the running of a thread
+*
+* @param thread
+*/
 void stop_thread(work_thread_t* thread){
 	thread->state = Stopped_state;
 }
+
+/**
+* @brief get the thread state for a given thread id
+*
+* @param id
+*
+* @return 
+*/
 thread_state_t get_thread_state(pthread_t id){
        work_thread_t* thread = get_thread_by_id(id);
        if(thread != NULL)
@@ -215,6 +260,13 @@ void stop_all_thread(){
 	}
 }
 
+/**
+* @brief get the private data of a thread
+*
+* @param id
+*
+* @return 
+*/
 conf_object_t* get_thread_priv(pthread_t id){
 	work_thread_t* thread = get_thread_by_id(id);
 	return thread->priv_data;

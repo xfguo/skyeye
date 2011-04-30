@@ -23,10 +23,28 @@
  */
 
 #include "skyeye_bus.h"
+
+/**
+* @brief The buffer for the memory record
+*/
 static bus_recorder_t buffer;
+
+
+/**
+* @brief initialization of bus recorder
+*/
 void init_bus_recorder(){
 }
 
+/**
+* @brief Snooping the bus activity
+*
+* @param rw the flag of read or write
+* @param size
+* @param addr
+* @param value
+* @param when before or after of the bus activity
+*/
 void bus_snoop(access_t rw, short size, int addr, uint32_t value, before_after_t when){
 	buffer.rw = rw;	
 	buffer.size = size;
@@ -35,6 +53,13 @@ void bus_snoop(access_t rw, short size, int addr, uint32_t value, before_after_t
 	buffer.when = when;
 }
 
+/**
+* @brief Get last bus activity
+*
+* @param rw The flag of read or write
+*
+* @return return the last bus record
+*/
 bus_recorder_t* get_last_bus_access(access_t rw){
 	return &buffer;
 }
