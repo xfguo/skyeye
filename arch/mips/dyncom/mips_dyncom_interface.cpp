@@ -29,23 +29,12 @@ extern "C" {
 #include "mipscpu.h"
 #include "skyeye_mm.h"
 #include "skyeye_cell.h"
-#include "../common/mipsmem.h"
 #include "skyeye_arch.h"
 
 MIPS_State* mstate;
 mips_mem_config_t mips_mem_config;
-extern mips_mem_state_t mips_mem;
 extern FILE *skyeye_logfd;
 extern int trace_level;
-extern UInt8* mem_bunks;
-extern "C" {
-extern void mips_mem_reset ();
-}
-
-extern UInt32 mips_mem_read_byte (UInt32 phys_addr);
-extern UInt32 mips_mem_read_halfword (UInt32 phys_addr);
-extern UInt32 mips_mem_read_word (UInt32 phys_addr);
-extern UInt64 mips_mem_read_doubleword (UInt64 phys_addr);
 
 static void
 init_icache()
@@ -160,8 +149,6 @@ mips_init_state()
 static void
 mips_reset_state()
 {
-	mips_mem_reset();
-
 	if (!mstate->warm) {
 		memset(mstate->cp1, 0, sizeof(mstate->cp1[32]));
 		memset(mstate->fpr, 0, sizeof(mstate->fpr[32]));
@@ -317,7 +304,6 @@ mips_get_pc()
 static void
 mips_write_byte (WORD addr, uint8_t v)
 {
-	mips_mem_write_byte (addr, v);
 }
 
 extern void nedved_mach_init(void * state, machine_config_t * mach);
