@@ -1,5 +1,10 @@
 #ifndef __MIPS_REGFORMAT_H__
 #define __MIPS_REGFORMAT_H__
+
+
+/**
+* @brief initial mips register name
+*/
 enum mips_regnameno{
 	zero = 0,
 	at,
@@ -35,6 +40,9 @@ enum mips_regnameno{
 	ra
 };
 
+/**
+* @brief initial mips register name
+*/
 enum mips_regno{
 	R0 = 0,
 	R1,
