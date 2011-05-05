@@ -9,7 +9,7 @@
 using namespace llvm;
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 #define BIT(n) ((instr >> (n)) & 1)
-#define BAD	do{printf("meet BAD at %s, instr is %x\n", __FUNCTION__, instr ); exit(0);}while(0);
+#define BAD	do{printf("meet BAD at %s, instr is %x\n", __FUNCTION__, instr ); /*exit(0);*/}while(0);
 #define ptr_N	cpu->ptr_N
 #define ptr_Z	cpu->ptr_Z
 #define ptr_C	cpu->ptr_C
