@@ -1,15 +1,27 @@
-/* Simulator for MIPS R3000 architecture.
+/* Copyright (C)
+* 2011 - SkyEye Team
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*
+*/
 
-		THIS SOFTWARE IS NOT COPYRIGHTED
-
-   Cygnus offers the following for use in the public domain.  Cygnus
-   makes no warranty with regard to the software or it's performance
-   and the user accepts the software "AS IS" with all faults.
-
-   CYGNUS DISCLAIMS ANY WARRANTIES, EXPRESS OR IMPLIED, WITH REGARD TO
-   THIS SOFTWARE INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-   MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-
+/**
+* @file mips_arch_interface.c
+* @brief initial and register mips architecture interface.
+* @author SkyEye Team
+* @version
+* @date 2011-05-05
 */
 
 #include "skyeye_config.h"
@@ -79,12 +91,6 @@ extern UInt32 mips_mem_read_word (UInt32 phys_addr);
 extern UInt64 mips_mem_read_doubleword (UInt64 phys_addr);
 extern void mipsMul_WriteByte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
 extern void mips_mmu_write_byte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
-
-void 
-mips_init_set(UInt32 addr, UInt8 value, int size)
-{
-
-}
 
 void 
 mips_trigger_irq(MIPS_State* mstate)
