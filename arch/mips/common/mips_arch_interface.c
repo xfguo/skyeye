@@ -80,12 +80,6 @@ extern UInt64 mips_mem_read_doubleword (UInt64 phys_addr);
 extern void mipsMul_WriteByte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
 extern void mips_mmu_write_byte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
 
-//chy 20060717
-int SKYPRINTF(char * fmt,...)
-{ 
-	return 0;
-}
-
 void 
 mips_init_set(UInt32 addr, UInt8 value, int size)
 {
