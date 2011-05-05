@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include "mips_regformat.h"
+
+/**
+* @brief initial mips register name strings
+*/
 const char* mips_regstr[] = {
 	"R0",
 	"R1",
