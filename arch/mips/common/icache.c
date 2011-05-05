@@ -1,6 +1,36 @@
+/* Copyright (C)
+* 2011 - skyeye team
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*
+*/
+
+/**
+* @file icache.c
+* @brief  icache operations
+* @author skyeye team
+* @version
+* @date 2011-05-05
+*/
+
 #include "emul.h"
 
-// Reset the L1 instruction cache.
+/**
+* @brief Reset the L1 instruction cache.
+*
+* @param mstate
+*/
 void
 reset_icache(MIPS_State* mstate)
 {
@@ -15,7 +45,15 @@ reset_icache(MIPS_State* mstate)
 }
 
 
-// Perform a cache operation (for use by decode_cache()).
+/**
+* @brief Perform a cache operation (for use by decode_cache()).
+*
+* @param mstate
+* @param va
+* @param pa
+* @param op
+* @param type
+*/
 void
 control_icache(MIPS_State* mstate, VA va, PA pa, int op, int type)
 {
@@ -78,9 +116,7 @@ control_icache(MIPS_State* mstate, VA va, PA pa, int op, int type)
  * algorithm to use is encoded in high-order bits of (pa) using the same
  * encoding as that of the xkphys address space region.
  */
-
 // WARNING: currently, the memory access latencies are not simulated.
-
 Instr 
 fetch(MIPS_State* mstate, VA va, PA pa)
 {  
