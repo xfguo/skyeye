@@ -131,25 +131,6 @@ mips_mem_read(UInt32 pa, UInt32 *data, int len)
 	//if(pa >= 0x14a1a0 && pa <= 0x14c000)
 	//	printf("###############read addr pa=0x%x,pc=0x%x\n", pa, mstate->pc);
 	bus_read(len * 8, pa, data);
-#if 0
-	switch(len) {
-		
-        	case 1: {
-			*data = mips_mem_read_byte(pa);
-			break;
-		}
-	 	case 2: {
-	 		*data = mips_mem_read_halfword(pa);
-			break;
-	 	}
-	 	case 4: {
-			*data = mips_mem_read_word(pa);
-			break;
-	 	}
-		default:
-			break;
-	}
-#endif
 }
 
 void 
@@ -167,28 +148,6 @@ mips_mem_write(UInt32 pa, const UInt32* data, int len)
 
 	UInt32 addr = bits(pa, 31, 0);
 	bus_write(len * 8, pa, *data);
-#if 0
-	if(pa >= 0x14a1a0 && pa <= 0x14c000)
-		printf("###############write addr pa=0x%x,pc=0x%x\n", addr, mstate->pc);
-	switch(len) {
-		
-        	case 1: {
-			mips_mem_write_byte(pa, *data);
-			break;
-		}
-	 	case 2: {
-	 		mips_mem_write_halfword(pa, *data);
-			break;
-	 	}
-	 	case 4: {
-			mips_mem_write_word(pa, *data);
-			break;
-	 	}
-		default:
-			fprintf(stderr, "unimplemented write for size %d in %s\n", len, __FUNCTION__);
-			break;
-	}
-#endif
 	return;
 	
 }
@@ -487,168 +446,12 @@ mips_parse_cpu(const char* param[])
 {
 	return 1;
 }
-#if 0
-static int 
-mips_parse_mach(machine_config_t * mach, const char* params[])
-{
-	int i;
-	for (i = 0; i < (sizeof (mips_machines) / sizeof (machine_config_t));
-	     i++) {
-		if (!strncmp
-		    (params[0], mips_machines[i].machine_name,
-		     MAX_PARAM_NAME)) {
-			skyeye_config.mach = &mips_machines[i];
-			SKYEYE_INFO
-				("mach info: name %s, mach_init addr %p\n",
-				 skyeye_config.mach->machine_name,
-				 skyeye_config.mach->mach_init);
-			return 0;
-		}
-	}
-	SKYEYE_ERR ("Error: Unkonw mach name \"%s\"\n", params[0]);
-	return -1;
-
-}
-#endif
-
-#if 0
-static int 
-mips_parse_mem(int num_params, const char* params[])
-{
-	char name[MAX_PARAM_NAME], value[MAX_PARAM_NAME];
-	int i, num;
-	mips_mem_config_t *mc = &mips_mem_config;
-	mips_mem_bank_t *mb = mc->mem_banks;
-
-	mc->bank_num = mc->current_num++;
-
-	num = mc->current_num - 1;	/*mem_banks should begin from 0. */
-	mb[num].filename[0] = '\0';
-	for (i = 0; i < num_params; i++) {
-		if (split_param (params[i], name, value) < 0)
-			SKYEYE_ERR
-				("Error: mem_bank %d has wrong parameter \"%s\".\n",
-				 num, name);
-
-		if (!strncmp ("map", name, strlen (name))) {
-			if (!strncmp ("M", value, strlen (value))) {
-				mb[num].read_byte = mips_real_read_byte;
-				mb[num].write_byte = mips_real_write_byte;
-				mb[num].read_halfword = mips_real_read_halfword;
-				mb[num].write_halfword = mips_real_write_halfword;
-				mb[num].read_word = mips_real_read_word;
-				mb[num].write_word = mips_real_write_word;
-				mb[num].read_doubleword = mips_real_read_doubleword;
-				mb[num].write_doubleword = mips_real_write_doubleword;
-				mb[num].type = MEMTYPE_RAM;
-			}
-			else if (!strncmp ("I", value, strlen (value))) {
-				mb[num].read_byte = mips_io_read_byte;
-				mb[num].write_byte = mips_io_write_byte;
-				mb[num].read_halfword = mips_io_read_halfword;
-				mb[num].write_halfword = mips_io_write_halfword;
-				mb[num].read_word = mips_io_read_word;
-				mb[num].write_word = mips_io_write_word;
-				mb[num].read_doubleword = mips_io_read_doubleword;
-				mb[num].write_doubleword = mips_io_write_doubleword;
-
-				mb[num].type = MEMTYPE_IO;
-
-				/*ywc 2005-03-30 */
-			}
-			else if (!strncmp ("F", value, strlen (value))) {
-				mb[num].read_byte = mips_flash_read_byte;
-				mb[num].write_byte = mips_flash_write_byte;
-				mb[num].read_halfword = mips_flash_read_halfword;
-				mb[num].write_halfword = mips_flash_write_halfword;
-				mb[num].read_word = mips_flash_read_word;
-				mb[num].write_word = mips_flash_write_word;
-				mb[num].read_doubleword = mips_flash_read_doubleword;
-				mb[num].write_doubleword = mips_flash_write_doubleword;
-				mb[num].type = MEMTYPE_FLASH;
-
-			}
-			else {
-				SKYEYE_ERR
-					("Error: mem_bank %d \"%s\" parameter has wrong value \"%s\"\n",
-					 num, name, value);
-			}
-		}
-		else if (!strncmp ("type", name, strlen (name))) {
-			//chy 2003-09-21: process type
-			if (!strncmp ("R", value, strlen (value))) {
-				if (mb[num].type == MEMTYPE_RAM)
-					mb[num].type = MEMTYPE_ROM;
-				mb[num].write_byte = mips_warn_write_byte;
-				mb[num].write_halfword = mips_warn_write_halfword;
-				mb[num].write_word = mips_warn_write_word;
-			}
-		}
-		else if (!strncmp ("addr", name, strlen (name))) {
-
-			if (value[0] == '0' && value[1] == 'x')
-				mb[num].addr = strtoul (value, NULL, 16);
-			else
-				mb[num].addr = strtoul (value, NULL, 10);
-
-		}
-		else if (!strncmp ("size", name, strlen (name))) {
-
-			if (value[0] == '0' && value[1] == 'x')
-				mb[num].len = strtoul (value, NULL, 16);
-			else
-				mb[num].len = strtoul (value, NULL, 10);
-
-		}
-		else if (!strncmp ("file", name, strlen (name))) {
-			strncpy (mb[num].filename, value, strlen (value) + 1);
-		}
-		else if (!strncmp ("boot", name, strlen (name))) {
-			/*this must be the last parameter. */
-			if (!strncmp ("yes", value, strlen (value)))
-				skyeye_config.start_address = mb[num].addr;
-		}
-		else {
-			SKYEYE_ERR
-				("Error: mem_bank %d has unknow parameter \"%s\".\n",
-				 num, name);
-		}
-	}
-
-	return 0;
-}
-#endif
 
 static int mips_ICE_read_byte(WORD addr, uint8_t *data){
 	mips_mem_read(addr, (UInt32 *)data, 1);
 	return 0;
 }
 static int mips_ICE_write_byte(WORD addr, uint8_t data){
-#if 0
-	extern mips_mem_bank_t *mips_global_mbp;
-        /* if pa is located at kseg0 */
-        if(addr >= 0x80000000 && addr < 0xA0000000)
-                addr = addr & ~0x80000000;
-        /* if pa is located at kseg1 */
-        if(addr >= 0xA0000000 && addr < 0xC0000000)
-                addr = addr & ~0xE0000000;
-
-
-	uint8_t  *temp;
-	 //get the memory bank of the address
-        mips_global_mbp = mips_bank_ptr (addr);
-
-        if (mips_global_mbp ) {
-		temp = &(mips_mem.rom[mips_global_mbp -
-                               mips_mem_config.mem_banks][(addr -
-                            mips_global_mbp->addr) >> 2]);
-		temp += addr & 0x3;
-        	*temp = data ;
-        } else {
-                fprintf(stderr,"mips memory write error in %s, addr=0x%x,pc=0x%x..\n",__FUNCTION__,addr, mstate->pc);
-                skyeye_exit(-1);
-        }
-#endif
       	mips_mem_write(addr, &data, 1);  
 	return 0;
 }
