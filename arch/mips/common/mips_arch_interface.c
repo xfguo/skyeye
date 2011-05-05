@@ -92,6 +92,12 @@ extern UInt64 mips_mem_read_doubleword (UInt64 phys_addr);
 extern void mipsMul_WriteByte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
 extern void mips_mmu_write_byte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
 
+
+/**
+* @brief  Trigger a irq and set
+*
+* @param mstate
+*/
 void 
 mips_trigger_irq(MIPS_State* mstate)
 {
@@ -119,9 +125,16 @@ mips_trigger_irq(MIPS_State* mstate)
 	}
 
 	mstate->pipeline = nothing_special;
-
 }
 
+
+/**
+* @brief mips read mem interface
+*
+* @param pa	physic addr
+* @param data  data pointer
+* @param len	data length
+*/
 void
 mips_mem_read(UInt32 pa, UInt32 *data, int len)
 {
@@ -139,6 +152,13 @@ mips_mem_read(UInt32 pa, UInt32 *data, int len)
 	bus_read(len * 8, pa, data);
 }
 
+/**
+* @brief mips write memory interface
+*
+* @param pa	physic addr
+* @param data	data pointer
+* @param len	data length
+*/
 void 
 mips_mem_write(UInt32 pa, const UInt32* data, int len)
 {
@@ -155,15 +175,24 @@ mips_mem_write(UInt32 pa, const UInt32* data, int len)
 	UInt32 addr = bits(pa, 31, 0);
 	bus_write(len * 8, pa, *data);
 	return;
-	
 }
 
+/**
+* @brief cpu stop interface.
+*
+* @param running_core	core state
+*/
 static void
 per_cpu_stop(conf_object_t *running_core)
 {
 	mips_core_t* core = (mips_core_t *)get_cast_conf_obj(running_core, "mips_core_t");
 }
 
+/**
+* @brief cpu exec one step
+*
+* @param running_core core state
+*/
 static void
 per_cpu_step(conf_object_t *running_core)
 {
@@ -253,6 +282,12 @@ per_cpu_step(conf_object_t *running_core)
 	//exec_callback();
 }
 
+
+/**
+* @brief inital icache
+*
+* @param mstate core state
+*/
 static void 
 init_icache(mips_core_t* mstate)
 {
@@ -261,9 +296,13 @@ init_icache(mips_core_t* mstate)
 	{  
 		Icache_lru_init(mstate->icache.set[i].Icache_lru);
 	}
-
 }
 
+/**
+* @brief inital dcache
+*
+* @param mstate core state
+*/
 static void 
 init_dcache(mips_core_t* mstate)
 {
@@ -274,6 +313,11 @@ init_dcache(mips_core_t* mstate)
 	}
 }
 
+/**
+* @brief inital tlb
+*
+* @param mstate	core state
+*/
 static void 
 init_tlb(mips_core_t* mstate)
 {
@@ -284,6 +328,12 @@ init_tlb(mips_core_t* mstate)
 	}
 }
 
+/**
+* @brief  initial a cpu core
+*
+* @param mstate core state
+* @param core_id core id
+*/
 static void 
 mips_core_init(mips_core_t* mstate,int core_id)
 {
@@ -312,6 +362,9 @@ mips_core_init(mips_core_t* mstate,int core_id)
 	return true;
 }
 
+/**
+* @brief cpu state initalization
+*/
 static void
 mips_cpu_init()
 {
@@ -351,6 +404,9 @@ mips_cpu_init()
 	return true;
 }
 
+/**
+* @brief inital mips architecture
+*/
 static void
 mips_init_state()
 {
@@ -362,6 +418,9 @@ mips_init_state()
 	}
 }
 
+/**
+* @brief reset mips architecture
+*/
 static void 
 mips_reset_state()
 {
@@ -387,6 +446,9 @@ mips_reset_state()
     	process_reset(mstate);
 }
 
+/**
+* @brief every core in current cpu step once
+*/
 static void 
 mips_step_once()
 {
@@ -398,6 +460,11 @@ mips_step_once()
 	
 }
 
+/**
+* @brief Set core pc value
+*
+* @param addr Address set to pc
+*/
 static void 
 mips_set_pc(UInt32 addr)
 {
@@ -407,6 +474,11 @@ mips_set_pc(UInt32 addr)
 		cpu->core[i].pc = addr;
 }
 
+/**
+* @brief Get current pc value
+*
+* @return The pc.
+*/
 static UInt32 
 mips_get_pc()
 {
@@ -432,13 +504,12 @@ mips_read_byte64(UInt64 addr)
 
 }
 
-
 extern void nedved_mach_init(void * state, machine_config_t * mach);
 extern void au1100_mach_init(void * state, machine_config_t * mach);
 extern void fulong_mach_init(void * state, machine_config_t * mach);
 extern void gs32eb1_mach_init(void * state, machine_config_t * mach);
 
-
+/* machines register arrary */
 machine_config_t mips_machines[] = {
 	{"nedved", nedved_mach_init, NULL, NULL, NULL},
 	{"au1100", au1100_mach_init, NULL, NULL, NULL},
@@ -453,22 +524,61 @@ mips_parse_cpu(const char* param[])
 	return 1;
 }
 
+/**
+* @brief mips read byte
+*
+* @param addr read address
+* @param data	data pointer
+*
+* @return
+*/
 static int mips_ICE_read_byte(WORD addr, uint8_t *data){
 	mips_mem_read(addr, (UInt32 *)data, 1);
 	return 0;
 }
+
+/**
+* @brief mips write byte
+*
+* @param addr write address
+* @param data write value
+*
+* @return
+*/
 static int mips_ICE_write_byte(WORD addr, uint8_t data){
       	mips_mem_write(addr, &data, 1);  
 	return 0;
 }
+
+/**
+* @brief get current step counter
+*
+* @return  step counter
+*/
 static uint32 mips_get_step(){
 	MIPS_CPU_State* cpu = get_current_cpu();
 	uint32 step = cpu->core[0].cycle;
         return step;
 }
+
+/**
+* @brief get register name
+*
+* @param id register id
+*
+* @return  register value
+*/
 static char* mips_get_regname_by_id(int id){
         return mips_regstr[id];
 }
+
+/**
+* @brief Set a register value
+*
+* @param id register id
+*
+* @return register value
+*/
 static uint32 mips_get_regval_by_id(int id){
 	MIPS_CPU_State* cpu = get_current_cpu();
 
@@ -477,6 +587,14 @@ static uint32 mips_get_regval_by_id(int id){
 	return cpu->core[0].gpr[id];
 }
 
+/**
+* @brief Set a register value
+*
+* @param id register id
+* @param value	register value
+*
+* @return func state
+*/
 static exception_t mips_set_register_by_id(int id, uint32 value){
 	MIPS_CPU_State* cpu = get_current_cpu();
 	cpu->core[0].gpr[id] = value;
@@ -484,11 +602,19 @@ static exception_t mips_set_register_by_id(int id, uint32 value){
         return No_exp;
 }
 
+/**
+* @brief get mips arch register number
+*
+* @return register number
+*/
 static int mips_get_regnum()
 {
 	return 32;
 }
 
+/**
+* @brief register mips architecture.
+*/
 void 
 init_mips_arch ()
 {
