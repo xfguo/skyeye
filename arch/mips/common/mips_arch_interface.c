@@ -43,55 +43,7 @@
 //MIPS_State* mstate;
 static char *arch_name = "mips";
 mips_mem_config_t mips_mem_config;
-extern mips_mem_state_t mips_mem;
 extern FILE *skyeye_logfd;
-extern int trace_level;
-extern UInt8* mem_bunks;
-extern void mips_mem_reset ();
-extern UInt32 mips_real_read_byte (UInt32 addr);
-extern UInt32 mips_real_read_halfword (UInt32 addr);
-extern UInt32 mips_real_read_word (UInt32 addr);
-extern UInt64 mips_real_read_doubleword (UInt32 addr);
-extern void mips_real_write_byte (UInt32 addr, UInt32 data);
-extern void mips_real_write_halfword ( UInt32 addr, UInt32 data);
-extern void mips_real_write_word ( UInt32 addr, UInt32 data);
-extern void mips_real_write_doubleword ( UInt32 addr, UInt64 data);
-
-//IO address space
-extern UInt32 mips_io_read_byte (UInt32 addr);
-extern UInt32 mips_io_read_halfword (UInt32 addr);
-extern UInt32 mips_io_read_word (UInt32 addr);
-extern UInt64 mips_io_read_doubleword (UInt32 addr);
-extern void mips_io_write_byte (UInt32 addr, UInt32 data);
-extern void mips_io_write_halfword (UInt32 addr, UInt32 data);
-extern void mips_io_write_word (UInt32 addr, UInt32 data);
-extern void mips_io_write_doubleword (UInt32 addr, UInt64 data);
-
-//Flash address space
-extern UInt32 mips_flash_read_byte (UInt32 addr);
-extern UInt32 mips_flash_read_halfword (UInt32 addr);
-extern UInt32 mips_flash_read_word (UInt32 addr);
-extern UInt64 mips_flash_read_doubleword ( UInt32 addr);
-extern void mips_flash_write_byte (UInt32 addr, UInt32 data);
-extern void mips_flash_write_halfword (UInt32 addr, UInt32 data);
-extern void mips_flash_write_word (UInt32 addr, UInt32 data);
-extern void mips_flash_write_doubleword (UInt32 addr, UInt64 data);
-
-extern void mips_warn_write_byte (UInt32 addr, UInt32 data);
-extern void mips_warn_write_halfword (UInt32 addr, UInt32 data);
-extern void mips_warn_write_word (UInt32 addr, UInt32 data);
-extern mips_mem_bank_t* mips_bank_ptr (UInt32 addr);
-extern void mips_mem_write_byte (UInt32 phys_addr, UInt32 v);
-extern void mips_mem_write_halfword (UInt32 phys_addr, UInt32 v);
-extern void mips_mem_write_word (UInt32 phys_addr, UInt32 v);
-extern void mips_mem_write_doubleword (UInt64 phys_addr, UInt64 v);
-extern UInt32 mips_mem_read_byte (UInt32 phys_addr);
-extern UInt32 mips_mem_read_halfword (UInt32 phys_addr);
-extern UInt32 mips_mem_read_word (UInt32 phys_addr);
-extern UInt64 mips_mem_read_doubleword (UInt64 phys_addr);
-extern void mipsMul_WriteByte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
-extern void mips_mmu_write_byte (MIPS_State* mstate, UInt32 vir_addr, UInt32 v);
-
 
 /**
 * @brief  Trigger a irq and set
@@ -242,10 +194,6 @@ per_cpu_step(conf_object_t *running_core)
 		//fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x, sp=0x%x, ra=0x%x,s1=0x%x, v0=0x%x\n", instr, pa, va, mstate->gpr[29], mstate->gpr[31],mstate->gpr[17], mstate->gpr[2]);
 		fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x, a0=0x%x, k1=0x%x, t0=0x%x, ra=0x%x, s4=0x%x, gp=0x%x\n", instr, pa, va, mstate->gpr[4], mstate->gpr[27], mstate->gpr[8], mstate->gpr[31], mstate->gpr[20], mstate->gpr[28]);
 		//fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x,v0=0x%x,t0=0x%x\n", instr, pa, va, mstate->gpr[2], mstate->gpr[8]);
-	/*if(mips_mem.rom[0][(0x1179a00 >> 2)] != 0){
-		if(mips_mem.rom[0][(0x1179a00 >> 2)] != 0x81179b28)
-			fprintf(stderr, "Value changed:0x81179a00 = 0x%x,pc=0x%x\n", mips_mem.rom[0][(0x1179a00 >> 2)],mstate->pc);
-	}*/
 
 	switch (mstate->pipeline) {
 		case nothing_special:
@@ -426,8 +374,6 @@ mips_reset_state()
 {
 	mips_core_t* mstate = get_current_core();
 
-	mips_mem_reset();
-
     	if (!mstate->warm) {
 		memset(mstate->cp1, 0, sizeof(mstate->cp1[32]));
 		memset(mstate->fpr, 0, sizeof(mstate->fpr[32]));
@@ -489,7 +435,7 @@ mips_get_pc()
 static void
 mips_write_byte (WORD addr, uint8_t v)
 {
-	mips_mem_write_byte (addr, v);
+	/* mips_mem_write_byte (addr, v); */
 }
 
 static void 
