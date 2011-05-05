@@ -1,6 +1,3 @@
-#include "emul.h"
-#include <stdio.h>
-
 /* Exception processing functions.  Before handling the exception, these
  * functions check for a higher- priority exception occuring elsewhere in the
  * pipeline, and handle those instead if necessary.
@@ -23,6 +20,23 @@
  * to be invoked *after* the scheduled time.)
  */
 
+/**
+* @file exception.c
+* @brief processor reset and exception operation interfaces
+* @author skyeye team
+* @version
+* @date 2011-05-05
+*/
+
+#include "emul.h"
+#include <stdio.h>
+
+
+/**
+* @brief reset processor
+*
+* @param mstate mips state
+*/
 void 
 process_reset(MIPS_State* mstate)
 {
@@ -54,6 +68,14 @@ process_reset(MIPS_State* mstate)
  * simply by incrementing the clock by five.
  */
 
+
+/**
+* @brief processor exception interface
+*
+* @param mstate
+* @param cause
+* @param vec
+*/
 void 
 process_exception(MIPS_State* mstate, UInt32 cause, int vec)
 {
