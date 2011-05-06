@@ -80,7 +80,7 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		if(pfunc){
 			e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 			core->phys_pc = core->pc;
-			printf("In %s, found compiled pc = 0x%x\n", __FUNCTION__, pc);
+			//printf("In %s, found compiled pc = 0x%x\n", __FUNCTION__, pc);
 
 			rc = cpu_run(cpu);
 			core->pc = core->phys_pc;
@@ -91,7 +91,7 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 #endif
 			}	
 			if(rc == JIT_RETURN_FUNCNOTFOUND){
-				printf("In %s, FUNCNOTFOUND, push compiled pc = 0x%x\n", __FUNCTION__, core->pc);
+				//printf("In %s, FUNCNOTFOUND, push compiled pc = 0x%x\n", __FUNCTION__, core->pc);
 				push_compiled_work(cpu, core->pc);
 						//launch_dyncom_flag = False;
 			}	
@@ -106,18 +106,18 @@ static int cur_queue_pos = 0;
 static void push_compiled_work(cpu_t* cpu, uint32_t pc){
 	int i = 0;
 	int cur_pos;
-	//cur_pos = cpu->dyncom_engine->cur_tagging_pos;
+	cur_pos = cpu->dyncom_engine->cur_tagging_pos;
 	/* check if the pc already exist in the queue */
-	for(i = 0; i < cur_queue_pos; i++)
+	for(i = 0; i < cur_pos; i++)
 		if(compiled_queue[i] == pc){
-			printf("pc 0x%x is also exist at %d\n", pc, cur_queue_pos);
+			//printf("pc 0x%x is also exist at %d\n", pc, cur_pos);
 			return;
 		}
 
 	if(cur_pos >= 0 && cur_pos < QUEUE_LENGTH){
 		cpu_tag(cpu, pc);
 		pthread_rwlock_wrlock(&compiled_queue_rwlock);
-		printf("In %s,place the pc=0x%x to the pos %d\n",__FUNCTION__, pc, cur_pos);
+		//printf("In %s,place the pc=0x%x to the pos %d\n",__FUNCTION__, pc, cur_pos);
 		compiled_queue[cur_pos] = pc;
 		pthread_rwlock_unlock(&compiled_queue_rwlock);
 		cpu->dyncom_engine->cur_tagging_pos ++;
