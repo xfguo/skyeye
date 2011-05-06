@@ -31,6 +31,7 @@
 #include "bank_defs.h"
 #include "skyeye_ram.h"
 #include "ppc_dyncom_debug.h"
+#include "ppc_dyncom_parallel.h"
 
 #include <pthread.h>
 #include <sys/utsname.h>
@@ -239,6 +240,7 @@ void ppc_dyncom_init(e500_core_t* core){
 		exit(0);
 	}
 #endif
+	init_compiled_queue(cpu);
 	return;
 }
 
@@ -266,7 +268,7 @@ void ppc_dyncom_run(cpu_t* cpu){
 			debug(DEBUG_RUN, "In %s, function not found at 0x%x\n", __FUNCTION__, core->phys_pc);
 			cpu_tag(cpu, core->phys_pc);
 		//	cpu->dyncom_engine->functions = 0;
-			cpu_translate(cpu);
+			cpu_translate(cpu, core->phys_pc);
 			/*
 			**If singlestep,we run it here,otherwise,break.
 			*/

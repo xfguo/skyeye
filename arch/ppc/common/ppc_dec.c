@@ -667,11 +667,10 @@ static ppc_opc_function ppc_opc_table_main[64] = {
 	&ppc_opc_group_f2,	// 63
 };
 
-void FASTCALL ppc_exec_opc()
+void FASTCALL ppc_exec_opc(e500_core_t* core)
 {
-	e500_core_t* current_core = get_current_core();
-	uint32 mainopc = PPC_OPC_MAIN(current_core->current_opc);
-//                        printf("DBG:before exec pc=0x%x,opc=0x%x,mainopc=0x%x\n", current_core->pc, current_core->current_opc,mainopc);
+	uint32 mainopc = PPC_OPC_MAIN(core->current_opc);
+	//printf("DBG:before exec pc=0x%x,opc=0x%x,mainopc=0x%x\n", core->pc, core->current_opc,mainopc);
 	ppc_opc_table_main[mainopc]();
 }
 

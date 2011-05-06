@@ -156,7 +156,6 @@ ppc_opc_func_t ppc_opc_lwz_func = {
  */
 static int opc_lwzu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);

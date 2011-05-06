@@ -3,7 +3,7 @@ ppc_comm = common/ppc_alu.c common/ppc_cpu.c common/ppc_exc.c  common/ppc_mmu.c 
 common/ppc_arch_interface.c  common/ppc_dec.c       common/ppc_fpu.c  common/ppc_opc.c \
 common/ppc_e500_core.c	      common/ppc_cpm.c						\
 common/ppc_e500_exc.c  common/ppc_io.c   common/ppc_tools.c common/ppc_e500_mpic.c common/ppc_module.c
-ppc_dyncom = dyncom/ppc_dyncom_run.cpp dyncom/ppc_dyncom_translate.cpp dyncom/ppc_dyncom_interface.cpp dyncom/ppc_dyncom_instr_group1.cpp dyncom/ppc_dyncom_instr_group2.cpp dyncom/ppc_dyncom_instr_group_f1.cpp dyncom/ppc_dyncom_instr_group_f2.cpp dyncom/ppc_dyncom_instr_main.cpp dyncom/ppc_dyncom_instr_groupv.cpp dyncom/ppc_dyncom_dec.cpp dyncom/ppc_dyncom_diff_log.cpp
+ppc_dyncom = dyncom/ppc_dyncom_run.cpp dyncom/ppc_dyncom_translate.cpp dyncom/ppc_dyncom_interface.cpp dyncom/ppc_dyncom_instr_group1.cpp dyncom/ppc_dyncom_instr_group2.cpp dyncom/ppc_dyncom_instr_group_f1.cpp dyncom/ppc_dyncom_instr_group_f2.cpp dyncom/ppc_dyncom_instr_main.cpp dyncom/ppc_dyncom_instr_groupv.cpp dyncom/ppc_dyncom_dec.cpp dyncom/ppc_dyncom_diff_log.cpp dyncom/ppc_dyncom_parallel.cpp
 
 ppc_linux_syscall = linux_syscall/ppc_syscall.c
 #libppc_a_SOURCES = $(ppc_mach) $(ppc_comm)

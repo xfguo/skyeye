@@ -24,8 +24,15 @@
 #include "skyeye_types.h"
 #include "ppc_e500_core.h"
 
-void ppc_exec_opc();
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+void ppc_exec_opc(e500_core_t* core);
 void ppc_dec_init(e500_core_t* core);
+#ifdef __cplusplus
+}
+#endif
 
 typedef void (*ppc_opc_function)();
 

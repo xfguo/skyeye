@@ -37,7 +37,7 @@ static int opc_cmp_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	NOT_TESTED();
 	uint32 cr;
 	int rA, rB;
-	e500_core_t* current_core = get_current_core();
+	//e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(instr, cr, rA, rB);
 	cr >>= 2;
 	cr = 7 - cr;
@@ -100,7 +100,8 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rS, spr1, spr2;
 	PPC_OPC_TEMPL_X(instr, rS, spr1, spr2);
-	e500_core_t* current_core = get_current_core();
+	//e500_core_t* current_core = get_current_core();
+	e500_core_t* current_core = NULL;
 	switch (spr2) {
 	case 0:
 		switch (spr1) {
@@ -112,7 +113,7 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	
 	case 8:	//altivec makes this register unpriviledged
 		if (spr1 == 0) {
-			LET32_BY_PTR(&current_core->vrsave, R(rS)); 
+			//LET32_BY_PTR(&current_core->vrsave, R(rS)); 
 			return 0;
 		}
 		switch(spr1){
@@ -450,15 +451,17 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  */
 static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t* current_core = NULL;
 	int rD, spr1, spr2;
 	PPC_OPC_TEMPL_XO(instr, rD, spr1, spr2);
+	#if 0	
 	if (current_core->msr & MSR_PR) {
 		//ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		if(!(spr2 == 0 && spr1 == 8)) /* read lr*/
 			printf("Warning, execute mfspr in user mode, pc=0x%x\n", current_core->pc);
 		//return;
 	}
+	#endif
 	debug(DEBUG_TRANSLATE, "In %s, spr2=%d, spr1=%d\n", __func__, spr2, spr1);
 	switch(spr2) {
 	case 0:

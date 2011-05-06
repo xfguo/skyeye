@@ -32,7 +32,6 @@
 #define PPC_INSN_SIZE 4
 
 void ppc_translate_opc(cpu_t* cpu, uint32_t opc, BasicBlock *bb);
-void ppc_dec_init();
 
 typedef int (*tag_func_t)(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
 typedef int (*translate_func_t)(cpu_t *cpu, uint32_t instr, BasicBlock *bb);

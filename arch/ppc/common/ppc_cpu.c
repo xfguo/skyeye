@@ -125,7 +125,7 @@ void ppc_cpu_run()
 			current_core->effective_code_page = current_core->pc & ~0xfff;
 			continue;
 		}
-		ppc_exec_opc();
+		//ppc_exec_opc();
 		ops++;
 		current_core->ptb++;
 		if (current_core->pdec == 0) {
