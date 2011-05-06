@@ -402,11 +402,7 @@ cpu_translate_function(cpu_t *cpu, addr_t addr)
 void
 cpu_translate(cpu_t *cpu, addr_t addr)
 {
-	/* on demand translation */
-	if (cpu->dyncom_engine->tags_dirty)
-		cpu_translate_function(cpu, addr);
-
-	cpu->dyncom_engine->tags_dirty = false;
+	cpu_translate_function(cpu, addr);
 }
 
 //typedef int (*fp_t)(uint8_t *RAM, void *grf, void *frf, read_memory_t readfp, write_memory_t writefp);
