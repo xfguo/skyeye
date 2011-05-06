@@ -11,6 +11,7 @@
  * @date 11/11/2010
  */
 #include "skyeye_dyncom.h"
+#include "skyeye_mm.h"
 #include "dyncom/tag.h"
 #include "dyncom/defines.h"
 #include "dyncom/basicblock.h"
@@ -62,7 +63,7 @@ is_tag_level3_table_allocated(cpu_t *cpu, addr_t addr)
 static void
 init_tag_level2_table(cpu_t *cpu, addr_t addr)
 {
-	tag_t **tag = (tag_t**)malloc(TAG_LEVEL2_TABLE_SIZE * sizeof(tag_t *));
+	tag_t **tag = (tag_t**)skyeye_mm_zero(TAG_LEVEL2_TABLE_SIZE * sizeof(tag_t *));
 	memset(tag, 0, TAG_LEVEL2_TABLE_SIZE * sizeof(tag_t *));
 
 	uint32_t level1_offset = TAG_LEVEL1_OFFSET(addr);
@@ -82,7 +83,7 @@ init_tag_level3_table(cpu_t *cpu, addr_t addr)
 
 	nitems = TAG_LEVEL3_TABLE_SIZE;
 
-	cpu->dyncom_engine->tag = (tag_t*)malloc(nitems * sizeof(tag_t));
+	cpu->dyncom_engine->tag = (tag_t*)skyeye_mm_zero(nitems * sizeof(tag_t));
 	for (i = 0; i < nitems; i++)
 		cpu->dyncom_engine->tag[i] = TAG_UNKNOWN;
 

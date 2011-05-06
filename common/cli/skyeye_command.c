@@ -38,6 +38,7 @@
 #include "skyeye_cli.h"
 #include "default_command.h"
 #include "skyeye_command.h"
+#include "skyeye_mm.h"
 
 
 /* **************************************************************** */
@@ -92,7 +93,7 @@ void init_command_list(){
 
 /* exception_t add_command(char* command_str, rl_icpfunc_t *func, char* help_str){ */
 exception_t add_command(char *command_str, icpfunc_t *func, char *help_str){
-	COMMAND *command = malloc(sizeof(COMMAND));
+	COMMAND *command = skyeye_mm(sizeof(COMMAND));
 	if(command == NULL){
 		return Malloc_exp;
 	}

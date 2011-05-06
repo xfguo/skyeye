@@ -19,6 +19,7 @@
 
 /* project global headers */
 #include "skyeye_dyncom.h"
+#include "skyeye_mm.h"
 #include "dyncom/dyncom_llvm.h"
 #include "dyncom/tag.h"
 #include "translate_all.h"
@@ -106,16 +107,14 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 
 	/* init hash fast map */
 #ifdef HASH_FAST_MAP
-	cpu->dyncom_engine->fmap = (fast_map)malloc(sizeof(void*) * HASH_FAST_MAP_SIZE);
-	memset(cpu->dyncom_engine->fmap, 0, sizeof(addr_t) * HASH_FAST_MAP_SIZE);
+	cpu->dyncom_engine->fmap = (fast_map)skyeye_mm_zero(sizeof(void*) * HASH_FAST_MAP_SIZE);
 #endif
 	uint32_t i;
 	for (i = 0; i < 4; i++) {
 		cpu->dyncom_engine->tag_array[i] = NULL;
 		cpu->dyncom_engine->code_size[i] = 0;
 	}
-	cpu->dyncom_engine->tag_table = (tag_t ***)malloc(TAG_LEVEL1_TABLE_SIZE * sizeof(tag_t **));
-	memset(cpu->dyncom_engine->tag_table, 0, TAG_LEVEL1_TABLE_SIZE * sizeof(tag_t **));
+	cpu->dyncom_engine->tag_table = (tag_t ***)skyeye_mm_zero(TAG_LEVEL1_TABLE_SIZE * sizeof(tag_t **));
 
 	for (i = 0; i < sizeof(cpu->dyncom_engine->func)/sizeof(*cpu->dyncom_engine->func); i++)
 		cpu->dyncom_engine->func[i] = NULL;

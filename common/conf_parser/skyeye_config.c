@@ -30,7 +30,7 @@
 #include "skyeye_options.h"
 #include "skyeye_log.h"
 #include "skyeye_arch.h"
-
+#include "skyeye_mm.h"
 //chy 2005-07-30
 //int skyeye_instr_debug=0;
 
@@ -110,9 +110,8 @@ parse_line_unformatted (char *line)
 		}
 		if (num_params < MAX_PARAMS_LEN) {
 			//chy 2003-08-21, only malloc string_i byte  is error!
-			//params[num_params] = malloc(string_i);
 			params[num_params] =
-				malloc ((string_i + 16) & 0xfffffff0);
+				skyeye_mm_zero ((string_i + 16) & 0xfffffff0);
 			if (!params[num_params]) {
 				printf ("SKYEYE:parse_line_unformatted: malloc params[%d] error\n", num_params);
 				//skyeye_exit (-1);
@@ -294,7 +293,7 @@ skyeye_read_config (char* skyeye_conf_filename)
 	}
 	/* init config->os if os module not load, "linux" default. */
 	if(config->os == NULL){
-		config->os = (char*)malloc(sizeof(config->os));
+		config->os = (char*)skyeye_mm_zero(sizeof(config->os));
 		config->os->os_name = "linux";
 	}
 

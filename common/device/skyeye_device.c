@@ -28,6 +28,7 @@
 #include "skyeye_device.h"
 #include "skyeye_config.h"
 #include "skyeye_options.h"
+#include "skyeye_mm.h"
 
 /**
 * @brief the module set of all the device
@@ -159,7 +160,7 @@ setup_device (char *dev_name, struct common_config *conf,
 			    mod_set->name, conf->type);
 		return 1;
 	}
-	dev = malloc (sizeof (struct device_desc));
+	dev = skyeye_mm_zero (sizeof (struct device_desc));
 	if (dev == NULL) {
 		SKYEYE_ERR ("can't alloc memory for new device: (name:%s, type:%s)\n",
 			    mod_set->name, conf->type);
@@ -167,7 +168,6 @@ setup_device (char *dev_name, struct common_config *conf,
 	}
 	/* init device
 	 * */
-	memset (dev, 0, sizeof (struct device_desc));
 	strncpy (dev->type, conf->type, MAX_STR_NAME);
 	dev->type[MAX_STR_NAME - 1] = '\0';
 
@@ -247,7 +247,7 @@ register_device_module (char *name, struct device_module_set *mod_set,
 			return 1;
 
 	}
-	dev_mod = malloc (sizeof (struct device_module));
+	dev_mod = skyeye_mm_zero (sizeof (struct device_module));
 	if (dev_mod == NULL)
 		return 1;
 	dev_mod->type_name = strdup (name);

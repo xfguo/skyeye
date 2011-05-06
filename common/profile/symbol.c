@@ -27,6 +27,7 @@
 #include "bfd.h"
 #include <search.h>
 #include "skyeye_symbol.h"
+#include "skyeye_mm.h"
 #include "symbol.h"
 
 /*
@@ -83,7 +84,7 @@ void init_symbol_table(char* filename, char* arch_name)
 		exit(0);
 	}
 
-	symbol_table = (asymbol **) malloc (storage_needed);
+	symbol_table = (asymbol **) skyeye_mm_zero (storage_needed);
 	if(symbol_table == NULL){
 		fprintf(stderr, "Can not alloc memory for symbol table.\n");
 		exit(0);
@@ -115,7 +116,7 @@ void init_symbol_table(char* filename, char* arch_name)
       // This is converting the function symbol value to char string
       // and use it as a key in the GNU hash table
       // ********************************************************
-      newentry.key = (char *) malloc(9);
+      newentry.key = (char *) skyeye_mm_zero(9);
       for (j=0;j<8;j++) {
         newentry.key[j] = itoa_tab[((key) >> (j << 2)) & 0xf] ;
       }
@@ -124,7 +125,7 @@ void init_symbol_table(char* filename, char* arch_name)
       // *************************************************
       // This is allocating memory for a struct funcsym
       // *************************************************
-      symp = (SYM_FUNC *) malloc(sizeof(SYM_FUNC));
+      symp = (SYM_FUNC *) skyeye_mm_zero(sizeof(SYM_FUNC));
       newentry.data = (char *) symp; 
       symp->name = (char *) symbol_table[i]->name ;
       symp->total_cycle = 0;

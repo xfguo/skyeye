@@ -342,20 +342,7 @@ mem_reset ()
 		global_memory.rom_size[bank] = 0;
 		//chy 2003-09-21: if mem type =MEMTYPE_IO, we need not malloc space for it.
 		global_memory.rom_size[bank] = mb[bank].len;
-		//global_memory.rom[bank] = skyeye_mm (mb[bank].len);
-		global_memory.rom[bank] = malloc (mb[bank].len);
-	#if 0 /* FIXME we can not use skyeye_mm in the above line or will segmentation fault. */
-		printf("len=0x%x, \n", mb[bank].len);
-		//tmp = skyeye_mm (mb[bank].len);
-		//tmp = skyeye_mm (0x100000);
-		tmp = malloc(0x400000);
-		printf("tmp=0x%lx, sizeof(tmp)=0x%x\n", tmp, sizeof(tmp));
-		printf("tmp=0x%lx\n", tmp);
-        	tmp[5] = 0x123;
-		printf("len=0x%x, \n", mb[bank].len);
-		printf("global_memory.rom[0]=0x%x, \n", global_memory.rom[bank]);
-		printf("global_memory.rom[0]=0x%x, global_memory.rom[0][0]=0x%x\n", global_memory.rom[bank], global_memory.rom[bank][0]);
-	#endif
+		global_memory.rom[bank] = skyeye_mm_zero (mb[bank].len);
 		if (!global_memory.rom[bank]) {
 			fprintf (stderr,
 				 "SKYEYE: mem_reset: Error allocating mem for bank number %d.\n", bank);

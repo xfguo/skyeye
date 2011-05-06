@@ -31,6 +31,7 @@
 #include "skyeye_ram.h"
 #include "skyeye_arch.h"
 #include "elf.h"
+#include "skyeye_mm.h"
 /** 
  * add by michael.Kang, to load elf file to another address 
  */
@@ -309,7 +310,7 @@ load_exec (const char *file, addr_type_t addr_type)
 #endif
             }
 	if (bfd_section_size (tmp_bfd, s) > 0) {
-		tmp_str = (char *)malloc (bfd_section_size
+		tmp_str = (char *)skyeye_mm (bfd_section_size
 						(tmp_bfd, s));
 		if (!tmp_str) {
 			fprintf (stderr, "alloc memory to load session %s error.\n",

@@ -52,12 +52,12 @@ int getpagesize(void)
 void* mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
 	if (flags == MAP_ANONYMOUS && length > 0) {
-		void *retVal = malloc(length);
+		void *retVal = skyeye_mm(length);
 		if(retVal != NULL) return retVal;
 
 	} else if (flags == MAP_PRIVATE && prot == PROT_READ && fd != -1 && length > 0) {
 		ssize_t nBytes = 0;
-		void *retVal = malloc(length);
+		void *retVal = skyeye_mm(length);
 
 		if (retVal != NULL) {
 			if (lseek(fd, offset, SEEK_SET) != (off_t)-1) {

@@ -114,19 +114,19 @@ static exception_t register_skyeye_module(char* module_name, char* filename, voi
 	if(module_name == NULL|| filename == NULL)
 		return Invarg_exp;
 
-	node = malloc(sizeof(skyeye_module_t));
+	node = skyeye_mm_zero(sizeof(skyeye_module_t));
 	if(node == NULL){
 		skyeye_log(Error_log, __FUNCTION__, get_exp_str(Malloc_exp));
 		return Malloc_exp;
 	}
 		
-	node->module_name = strdup(module_name);
+	node->module_name = skyeye_strdup(module_name);
 	if(node->module_name == NULL){
 		free(node);
 		return Malloc_exp;
 	}
 
-	node->filename = strdup(filename);
+	node->filename = skyeye_strdup(filename);
 	if(node->filename == NULL){
 		free(node->module_name);
 		free(node);

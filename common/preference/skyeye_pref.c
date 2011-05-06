@@ -28,6 +28,7 @@
 #include <assert.h>
 #include "skyeye_pref.h"
 #include "skyeye_log.h"
+#include "skyeye_mm.h"
 
 /**
 * @brief the preference struct 
@@ -42,7 +43,7 @@ static sky_pref_t *skyeye_pref;
 * @return 
 */
 static exception_t init_skyeye_pref(sky_pref_t** pref){
-	*pref = malloc(sizeof(sky_pref_t));
+	*pref = skyeye_mm_zero(sizeof(sky_pref_t));
 	//skyeye_log(Debug_log, __FUNCTION__, "pref = 0x%x\n", *pref);
 	if(*pref == NULL){
 		skyeye_log(Error_log, __FUNCTION__, get_exp_str(Malloc_exp));

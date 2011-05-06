@@ -284,7 +284,7 @@ static void timer_scheduler(int signo){
 	 * Check if there is some timer is expiried, we
 	 * should execute the corresponding event.
 	 */
-	struct event *tmp ;
+	struct event *tmp;
 	LIST_FOREACH(tmp, &timer_head,list_entry){
 		/* Decrease dleta */
 		tmp->delta -= 1;

@@ -132,7 +132,7 @@ skyeye_option_init (skyeye_config_t * config)
 exception_t register_option(char* option_name, do_option_t do_option_func, char* helper){
 	if(option_name == NULL || !do_option_func)
 		return Invarg_exp;
-	skyeye_option_t* node = malloc(sizeof(skyeye_option_t));
+	skyeye_option_t* node = skyeye_mm_zero(sizeof(skyeye_option_t));
 	if(node == NULL)
 		return Malloc_exp; 
 	node->option_name = skyeye_strdup(option_name);
