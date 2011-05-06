@@ -247,10 +247,23 @@ typedef void** fast_map;
 /* This map save <address, native code function pointer> */
 typedef std::map<addr_t, void *> fast_map;
 #endif
-
+typedef struct compiled_func{
+	/* The compiled native code section */
+	void* fp;
+	/* The translate function of llvm */
+	Function* func;
+	/* The bb set by tagging procedure */
+	vector<addr_t> startbb;
+}compiled_func_t;
 typedef struct dyncom_engine{
 	funcbb_map func_bb; // faster bb lookup
-	vector<addr_t> startbb;
+
+	/* for every JIT, we will save its startbb */
+	vector<addr_t> startbb[1024];
+	int cur_tagging_pos;
+	/* the lock for the compiled thread and running thread */
+	pthread_rwlock_t rwlock;
+
 	addr_t code_start;
 	addr_t code_end;
 	addr_t code_entry;
@@ -408,7 +421,7 @@ API_FUNC void cpu_set_flags_hint(cpu_t *cpu, uint32_t f);
 API_FUNC void cpu_set_flags_debug(cpu_t *cpu, uint32_t f);
 API_FUNC void cpu_tag(cpu_t *cpu, addr_t pc);
 API_FUNC int cpu_run(cpu_t *cpu);
-API_FUNC void cpu_translate(cpu_t *cpu);
+API_FUNC void cpu_translate(cpu_t *cpu, addr_t pc);
 API_FUNC void cpu_set_ram(cpu_t *cpu, uint8_t *RAM);
 API_FUNC void cpu_flush(cpu_t *cpu);
 API_FUNC void cpu_print_statistics(cpu_t *cpu);

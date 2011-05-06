@@ -212,6 +212,10 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 
 	debug_func_init(cpu);
 	syscall_func_init(cpu);
+	if(pthread_rwlock_init(&(cpu->dyncom_engine->rwlock), NULL)){
+		fprintf(stderr, "can not initilize the rwlock\n");
+	}
+
 	return cpu;
 }
 /**
@@ -316,8 +320,13 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 #ifdef HASH_FAST_MAP
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
+	pthread_rwlock_wrlock(&(cpu->dyncom_engine->rwlock));
 	for (; i != bb_addr.end(); i++)
 		cpu->dyncom_engine->fmap[i->first & 0x1fffff] = native_code_func;
+	if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
+		fprintf(stderr, "unlock error\n");
+	}
+
 #else
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
@@ -332,11 +341,12 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
  * @param cpu CPU core structure
  */
 static void
-cpu_translate_function(cpu_t *cpu)
+cpu_translate_function(cpu_t *cpu, addr_t addr)
 {
 	BasicBlock *bb_ret, *bb_trap, *label_entry, *bb_start;
 
-	addr_t start_addr = cpu->f.get_pc(cpu, cpu->rf.grf);
+	//addr_t start_addr = cpu->f.get_pc(cpu, cpu->rf.grf);
+	addr_t start_addr = addr;
 
 	/* create function and fill it with std basic blocks */
 	cpu->dyncom_engine->cur_func = cpu_create_function(cpu, "jitmain", &bb_ret, &bb_trap, &label_entry);
@@ -390,11 +400,11 @@ cpu_translate_function(cpu_t *cpu)
  * @param cpu CPU core structure
  */
 void
-cpu_translate(cpu_t *cpu)
+cpu_translate(cpu_t *cpu, addr_t addr)
 {
 	/* on demand translation */
 	if (cpu->dyncom_engine->tags_dirty)
-		cpu_translate_function(cpu);
+		cpu_translate_function(cpu, addr);
 
 	cpu->dyncom_engine->tags_dirty = false;
 }

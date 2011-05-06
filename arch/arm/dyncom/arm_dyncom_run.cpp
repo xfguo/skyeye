@@ -205,7 +205,7 @@ void arm_dyncom_run(cpu_t* cpu){
                 case JIT_RETURN_FUNCNOTFOUND:
                         cpu_tag(cpu, core->Reg[15]);
                         cpu->dyncom_engine->functions = 0;
-                        cpu_translate(cpu);
+                        cpu_translate(cpu, core->Reg[15]);
 		 /*
                   *If singlestep,we run it here,otherwise,break.
                   */

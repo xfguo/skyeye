@@ -37,13 +37,14 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 	// find all instructions that need labels and create basic blocks for them
 	int bbs = 0;
 	addr_t pc;
-	vector<addr_t>::iterator i = cpu->dyncom_engine->startbb.begin();
-	for(; i < cpu->dyncom_engine->startbb.end(); i++){
+	int cur_pos = cpu->dyncom_engine->functions;
+	vector<addr_t>::iterator i = cpu->dyncom_engine->startbb[cur_pos].begin();
+	for(; i < cpu->dyncom_engine->startbb[cur_pos].end(); i++){
+
 		create_basicblock(cpu, *i, cpu->dyncom_engine->cur_func, BB_TYPE_NORMAL);
 		LOG("create bb 0x%x\n", *i);
 		bbs ++;
 	}
-	cpu->dyncom_engine->startbb.clear();
 	LOG("bbs: %d\n", bbs);
 
 	// create dispatch basicblock

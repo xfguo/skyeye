@@ -269,13 +269,17 @@ extern void disasm_instr(cpu_t *cpu, addr_t pc);
 
 static void save_startbb_addr(cpu_t *cpu, addr_t pc){
 	if (is_start_of_basicblock(cpu, pc)){
-		vector<addr_t>::iterator i = cpu->dyncom_engine->startbb.begin();
-		for(; i < cpu->dyncom_engine->startbb.end(); i++){
+		int cur_pos;
+		cur_pos = cpu->dyncom_engine->cur_tagging_pos;
+		vector<addr_t>::iterator i = cpu->dyncom_engine->startbb[cur_pos].begin();
+		for(; i < cpu->dyncom_engine->startbb[cur_pos].end(); i++){
+
 			if(*i == pc)
 				break;
 		}
-		if(i == cpu->dyncom_engine->startbb.end())
-			cpu->dyncom_engine->startbb.push_back(pc);
+		if(i == cpu->dyncom_engine->startbb[cur_pos].end())
+			cpu->dyncom_engine->startbb[cur_pos].push_back(pc);
+
 	}
 }
 static void

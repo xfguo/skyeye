@@ -184,7 +184,7 @@ void mips_dyncom_run(cpu_t *cpu)
 		case JIT_RETURN_FUNCNOTFOUND:
 			cpu_tag(cpu, core->gpr[15]);
 			cpu->dyncom_engine->functions = 0;
-			cpu_translate(cpu);
+			cpu_translate(cpu, core->gpr[15]);
 
 		/*
 		 *	IF singlestep, we run it here, otherwise, break.
