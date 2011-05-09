@@ -133,48 +133,6 @@ ppc_init_state ()
 	arch_instance->alignment = UnAlign;
 	arch_instance->endianess = Big_endian;
 }
-static void interpret_cpu_step(conf_object_t * running_core){
-	uint32 real_addr;
-	e500_core_t *core = (e500_core_t *)get_cast_conf_obj(running_core, "e500_core_t");
-	
-	/* check if we need to run some callback functions at this time */
-	if(!core->pir){
-		generic_arch_t *arch_instance = get_arch_instance("");
-		//exec_callback(Step_callback, arch_instance);
-	}
-
-	core->step++;
-	core->npc = core->pc + 4;
-
-	switch(	ppc_effective_to_physical(core, core->pc, PPC_MMU_CODE, &real_addr))
-	{
-		case PPC_MMU_OK:
-			break;
-		/* we had TLB miss and need to jump to its handler */
-		case PPC_MMU_EXC:
-			goto exec_npc;
-		case PPC_MMU_FATAL:
-			/* TLB miss */
-        	        fprintf(stderr, "TLB missed at 0x%x\n", core->pc);
-       	        	skyeye_exit(-1);
-		default:
-			 /* TLB miss */
-   			fprintf(stderr, "Something wrong during address translation at 0x%x\n", core->pc);
-			skyeye_exit(-1);
-	};
-
-	uint32 instr;
-	if(bus_read(32, real_addr, &instr) != 0){
-		/* some error handler */
-	}
-	//core->current_opc = ppc_word_from_BE(instr);
-	core->current_opc = instr;
-
-	ppc_exec_opc(core);
-	//debug_log(core);	
-exec_npc:
-	core->pc = core->npc;
-}
 
 static void per_cpu_step(conf_object_t * running_core){
 	/* Use typecast directly for performance issue */
@@ -189,7 +147,6 @@ static void per_cpu_step(conf_object_t * running_core){
 	debug(DEBUG_INTERFACE, "In %s, core[%d].pc=0x%x\n", __FUNCTION__, core->pir, core->pc);
 	//ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 	launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->pc);	
-	interpret_cpu_step(running_core);
 }
 
 static void per_cpu_stop(conf_object_t * core){

@@ -31,6 +31,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "ppc_regformat.h"
 #include "bank_defs.h"
 #include "ppc_dyncom_run.h"
+#include "ppc_dec.h"
 #include "ppc_dyncom_dec.h"
 #include "ppc_dyncom_parallel.h"
 
@@ -57,6 +58,28 @@ void init_compiled_queue(cpu_t* cpu){
 	cpu->dyncom_engine->cur_tagging_pos = 0;
 }
 static bool_t launch_dyncom_flag = True;
+
+static void interpret_cpu_step(conf_object_t * running_core){
+	uint32 real_addr;
+	e500_core_t *core = (e500_core_t *)running_core->obj;
+	
+	core->step++;
+	core->npc = core->pc + 4;
+	/* do not need to mmu translation for user program */
+	real_addr = core->pc;	
+	uint32 instr;
+	if(bus_read(32, real_addr, &instr) != 0){
+		/* some error handler */
+	}
+	//core->current_opc = ppc_word_from_BE(instr);
+	core->current_opc = instr;
+
+	ppc_exec_opc(core);
+	//debug_log(core);	
+exec_npc:
+	core->pc = core->npc;
+}
+
 void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 #if HYBRID_RUNNING
 	void* pfunc = NULL;
@@ -101,6 +124,7 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		}
 	}
 #endif
+	interpret_cpu_step(cpu->cpu_data);
 }
 static int cur_queue_pos = 0;
 static void push_compiled_work(cpu_t* cpu, uint32_t pc){
@@ -151,7 +175,7 @@ try_compile:
 			}
 			if(pfunc == NULL){
 				cpu_translate(cpu, compiled_addr);
-				printf("In %s, finish translate addr 0x%x, functions=%d, compiling_pos=%d\n", __FUNCTION__, compiled_addr, cpu->dyncom_engine->functions, compiling_pos);
+				//printf("In %s, finish translate addr 0x%x, functions=%d, compiling_pos=%d\n", __FUNCTION__, compiled_addr, cpu->dyncom_engine->functions, compiling_pos);
 			}
 			compiling_pos++;
 			//cur_pos = cpu->dyncom_engine->functions;
