@@ -23,9 +23,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 void init_compiled_queue(cpu_t* cpu);
 void launch_compiled_queue(cpu_t* cpu, uint32_t pc);
 
-#define INTERPRET_RUNNING 0
-#define DYNCOM_RUNNING
-#define HYBRID_RUNNING 1
+typedef enum{
+	PURE_INTERPRET = 0,
+	PURE_DYNCOM,
+	HYBRID,
+	MAX_RUNNING_MODE,
+}running_mode_t;
 
 #endif
 

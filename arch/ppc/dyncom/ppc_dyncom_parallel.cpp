@@ -45,19 +45,31 @@ static uint32_t compiled_queue[QUEUE_LENGTH];
 static pthread_rwlock_t compiled_queue_rwlock;
 static void* compiled_worker(void* cpu);
 static void push_compiled_work(cpu_t* cpu, uint32_t pc);
+/*
+ * Three running mode: PURE_INTERPRET, PURE_DYNCOM, HYBRID
+ */
+static running_mode_t mode = PURE_INTERPRET;
+static char* running_mode_str[] = {
+	"pure interpret running",
+	"pure dyncom running",
+	"hybrid running",
+	NULL
+};
 
 void init_compiled_queue(cpu_t* cpu){
 	memset(&compiled_queue[0], 0xff, sizeof(uint32_t) * QUEUE_LENGTH);
-	if(pthread_rwlock_init(&compiled_queue_rwlock, NULL)){
-		fprintf(stderr, "can not initilize the rwlock\n");
-	}
+	printf("Current running mode: %s\n", running_mode_str[mode]);
+	if(mode == HYBRID){
+		if(pthread_rwlock_init(&compiled_queue_rwlock, NULL)){
+			fprintf(stderr, "can not initilize the rwlock\n");
+		}
 
-	/* Create a thread to compile IR to native code */
-	pthread_t id;
-	create_thread(compiled_worker, (void*)cpu, &id);
+		/* Create a thread to compile IR to native code */
+		pthread_t id;
+		create_thread(compiled_worker, (void*)cpu, &id);
+	}
 	cpu->dyncom_engine->cur_tagging_pos = 0;
 }
-static bool_t launch_dyncom_flag = True;
 
 static void interpret_cpu_step(conf_object_t * running_core){
 	uint32 real_addr;
@@ -81,26 +93,17 @@ exec_npc:
 }
 
 void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
-#if HYBRID_RUNNING
-	void* pfunc = NULL;
-	if(get_tag(cpu, pc) == TAG_UNKNOWN){
-		//printf("In %s, TAG_UNKNOWN, push compiled pc = 0x%x\n", __FUNCTION__, pc);
-		push_compiled_work(cpu, pc);
-	}
-	/* 
-	 * in the entry of jit, we want to know if JIT is compiled 
-	 */
-	if(is_start_of_basicblock(cpu, pc)){
-		pthread_rwlock_rdlock(&(cpu->dyncom_engine->rwlock));
-		fast_map hash_map = cpu->dyncom_engine->fmap;
-		pfunc = (void*)hash_map[pc & 0x1fffff];
-		if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
-			fprintf(stderr, "In %s, unlock error\n", __FUNCTION__);
+	if(mode != PURE_INTERPRET){
+		if(get_tag(cpu, pc) == TAG_UNKNOWN){
+			//printf("In %s, TAG_UNKNOWN, push compiled pc = 0x%x\n", __FUNCTION__, pc);
+			push_compiled_work(cpu, pc);
 		}
-		int i;
-		int rc;
-		rc = JIT_RETURN_NOERR;
-		if(pfunc){
+		/* 
+		 * in the entry of jit, we want to know if JIT is compiled 
+	 	*/
+		if(is_start_of_basicblock(cpu, pc)){
+			int rc;
+			rc = JIT_RETURN_NOERR;
 			e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 			core->phys_pc = core->pc;
 			//printf("In %s, found compiled pc = 0x%x\n", __FUNCTION__, pc);
@@ -115,16 +118,17 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 			}	
 			if(rc == JIT_RETURN_FUNCNOTFOUND){
 				//printf("In %s, FUNCNOTFOUND, push compiled pc = 0x%x\n", __FUNCTION__, core->pc);
-				push_compiled_work(cpu, core->pc);
-						//launch_dyncom_flag = False;
+				/* cpu_run have already run some JIT functions */
+				if(core->pc != pc)
+					push_compiled_work(cpu, core->pc);
 			}	
 			else{
 				fprintf(stderr, "In %s, wrong return value\n", __FUNCTION__);
 			}
 		}
-	}
-#endif
-	interpret_cpu_step(cpu->cpu_data);
+	}//if(mode != PURE_INTERPRET)
+	if(mode != PURE_DYNCOM)
+		interpret_cpu_step(cpu->cpu_data);
 }
 static int cur_queue_pos = 0;
 static void push_compiled_work(cpu_t* cpu, uint32_t pc){
@@ -140,14 +144,19 @@ static void push_compiled_work(cpu_t* cpu, uint32_t pc){
 
 	if(cur_pos >= 0 && cur_pos < QUEUE_LENGTH){
 		cpu_tag(cpu, pc);
-		pthread_rwlock_wrlock(&compiled_queue_rwlock);
-		//printf("In %s,place the pc=0x%x to the pos %d\n",__FUNCTION__, pc, cur_pos);
-		compiled_queue[cur_pos] = pc;
-		pthread_rwlock_unlock(&compiled_queue_rwlock);
+		if(mode == PURE_DYNCOM){
+			cpu_translate(cpu, pc);
+		}
+		else{
+			pthread_rwlock_wrlock(&compiled_queue_rwlock);
+			//printf("In %s,place the pc=0x%x to the pos %d\n",__FUNCTION__, pc, cur_pos);
+			compiled_queue[cur_pos] = pc;
+			pthread_rwlock_unlock(&compiled_queue_rwlock);
+		}
 		cpu->dyncom_engine->cur_tagging_pos ++;
 	}
 	else{
-		printf("In %s, compiled queue overflowed\n");
+		printf("In %s, compiled queue overflowed\n", __FUNCTION__);
 	}
 }
 /* Compiled the target to the host address */
