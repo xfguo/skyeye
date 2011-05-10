@@ -71,7 +71,7 @@ mem_config_t * get_global_memmap();
 exception_t addr_mapping(mem_bank_t* bank);
 
 int save_mem_to_file(char *dir);
-int load_mem_form_flie(char *dir);
+int load_mem_from_file(char *dir);
 #ifdef __cplusplus
 }
 #endif

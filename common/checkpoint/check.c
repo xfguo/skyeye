@@ -116,7 +116,7 @@ static void load_chp(char *arg)
 		strcpy(dir, arg);
 	}
 
-	load_mem_form_flie(dir);
+	load_mem_from_file(dir);
 
 	strcat(dir,"/config");
 	//fp = fopen("config", "rb");

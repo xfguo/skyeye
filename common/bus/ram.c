@@ -586,7 +586,7 @@ int save_mem_to_file(char *dir)
 *
 * @return 
 */
-int load_mem_form_flie(char *dir)
+int load_mem_from_file(char *dir)
 {
 
 	int i,j,bank,ret = 0;
