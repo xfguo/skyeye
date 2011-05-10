@@ -39,6 +39,7 @@
 #include "skyeye_mach.h"
 #include "checkpoint.h"
 #include "skyeye_mm.h"
+#include "skyeye_log.h"
 #include "bank_defs.h"
 
 /**
@@ -53,7 +54,7 @@ chp_list chp_data_list;
 *
 * @return 
 */
-static int save_chp(char *arg)
+static void save_chp(char *arg)
 {
 	chp_data *p;
 	int i,ret;
@@ -70,8 +71,8 @@ static int save_chp(char *arg)
 
 	if(access(dir, 0) == -1){
 		if(mkdir(dir, 0777)){
-			printf("create dir %s failed\n", dir);
-			return 0;
+			skyeye_log(Warnning_log, __func__, "create dir %s failed\n", dir);
+			return;
 		}
 	}
 
@@ -80,7 +81,7 @@ static int save_chp(char *arg)
 	//fp = fopen("config", "wb");
 	fp = fopen(dir, "wb");
 	if(fp == NULL)
-		printf("can't create file %s\n",dir);
+		skyeye_log(Warnning_log, __func__, "can't create file %s\n",dir);
 	/* check for difference archtecture */
 	for( p = chp_data_list.head; p != NULL; p = p->next){
 		ret = 0;
@@ -101,7 +102,7 @@ static int save_chp(char *arg)
 *
 * @return 
 */
-static int load_chp(char *arg)
+static void load_chp(char *arg)
 {
 	chp_data *p;
 	int ret,i;
@@ -121,8 +122,8 @@ static int load_chp(char *arg)
 	//fp = fopen("config", "rb");
 	fp = fopen(dir, "rb");
 	if(fp == NULL){
-		printf("can't open file %s\n, may be it does not exist", dir);
-		return 0;
+		skyeye_log(Warnning_log, __func__, "can't open file %s\n, may be it does not exist", dir);
+		return;
 	}
 
 	/* check for difference archtecture */
@@ -189,7 +190,7 @@ static char bookmark[100] = {'\0'};
 *
 * @return 
 */
-static int set_bookmark(char *arg)
+static void set_bookmark(char *arg)
 {
 	if(arg == NULL || *arg == 0){
 		strcpy(bookmark, "defbookmark");
@@ -207,17 +208,19 @@ static int set_bookmark(char *arg)
 *
 * @return 
 */
-static int reverse_to(char *arg)
+static void reverse_to(char *arg)
 {
 	generic_arch_t* arch_instance = get_arch_instance("");
-	if(!arch_instance)
-		return 1;
+	if (!arch_instance) {
+		skyeye_log(Warnning_log, __func__, "Can't get the current arch instance\n");
+		return;
+	}
 	uint32 step = arch_instance->get_step();
 
 	if(bookmark[0])
 		load_chp(bookmark);
 	else
-		printf("please set a bookmark first before using reverse command\n");
+		skyeye_log(Warnning_log, __func__, "please set a bookmark first before using reverse command\n");
 
 	if(arg == NULL || *arg == 0){
 
@@ -230,7 +233,7 @@ static int reverse_to(char *arg)
 		if(ret > 0)
 			skyeye_stepi(ret);
 		else
-			printf("haven't exec enought steps,reverse to the bookmark\n");
+			skyeye_log(Warnning_log, __func__, "haven't exec enought steps,reverse to the bookmark\n");
 	}
 }
 
@@ -241,7 +244,7 @@ static int reverse_to(char *arg)
 *
 * @return 
 */
-static int reverse_step_insn(char *arg)
+static void reverse_step_insn(char *arg)
 {
 	reverse_to("1");
 }
@@ -262,6 +265,8 @@ int init_chp(){
 	add_command("set-bookmark", set_bookmark, "set a bookmark position.\n");
 	add_command("reverse-to", reverse_to, "reverse to an old position.\n");/* step or bookmark */
 	add_command("reverse-step-instruction", reverse_step_insn, "reverse setp instruction.\n");/* reverse step*/
+
+	return No_exp;
 }
 
 /**
@@ -270,4 +275,5 @@ int init_chp(){
 * @return 
 */
 int chpoint_fini(){
+	return No_exp;
 }
