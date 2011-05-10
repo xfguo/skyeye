@@ -180,7 +180,7 @@ void add_chp_data(void *data, int size, char *name)
 /**
 * @brief bookmart array used to save
 */
-static bookmark[100] = {0};
+static char bookmark[100] = {'\0'};
 
 /**
 * @brief set a bookmark
