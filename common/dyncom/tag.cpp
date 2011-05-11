@@ -374,10 +374,6 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 				break;
 		}
 
-		if (tag & TAG_WINDOWCHECK) {
-			or_tag(cpu, next_pc, TAG_AFTER_WNDCHK);
-		}
-
 		if (is_translated(cpu, next_pc)) {
 			or_tag(cpu, pc, tag | TAG_STOP | TAG_LAST_INST);
 			//return;

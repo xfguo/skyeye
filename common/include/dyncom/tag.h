@@ -11,12 +11,8 @@
 #define TAG_CONDITIONAL	(1<<5)	/* this is a conditional instr, e.g. conditional move */
 #define TAG_DELAY_SLOT	(1<<6)	/* there is a delay slot following (only in comb. w/ CALL/RET/BRANCH */
 
-#define TAG_ZEROVERHEADLOOP (1 << 15)
-
 #define TAG_STOP (1 << 16)
-#define TAG_WINDOWCHECK         (1 << 17)
 #define TAG_POSTCOND            (1 << 18) /* for zol only */
-#define TAG_AFTER_WNDCHK	(1 << 19) //The instruction after windowcheck need a new basicblock
 #define TAG_LAST_INST		(1 << 20) /* This instruction is the last one in BB. Because next inst is translated. */
 
 #define TAG_SYSCALL (1 << 21)
