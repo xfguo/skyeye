@@ -14,7 +14,11 @@
 #include <llvm/Function.h>
 #include <llvm/Module.h>
 #include <llvm/Constant.h>
-
+#include <llvm/Constants.h>
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Instructions.h"
+ 
 #include <skyeye_dyncom.h>
 #include <skyeye_types.h>
 #include <skyeye_obj.h>
@@ -22,9 +26,10 @@
 #include <dyncom/dyncom_llvm.h>
 #include <skyeye_pref.h>
 #include "dyncom/defines.h"
-
+#include "dyncom/frontend.h"
+ 
+#include "ppc_e500_core.h"
 #include "ppc_cpu.h"
-#include "ppc_mmu.h"
 #include "ppc_dyncom.h"
 #include "ppc_dyncom_run.h"
 #include "dyncom/memory.h"
@@ -32,11 +37,20 @@
 #include "skyeye_ram.h"
 #include "ppc_dyncom_debug.h"
 #include "ppc_dyncom_parallel.h"
-
-#include <pthread.h>
+extern "C" {
+#include "ppc_mmu.h"
+#include "ppc_exc.h"
+};
 #include <sys/utsname.h>
 
 using namespace std;
+/*
+ * PowerPC dyncom callout function index
+ * 0 --debug function
+ * 1 --syscall for user mode simulation
+ * */
+#define PPC_DYNCOM_CALLOUT_EXC 2
+#define PPC_DYNCOM_CALLOUT_MMU_SET_SDR1 3
 
 e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
@@ -45,12 +59,40 @@ e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 }
 
 static uint32_t ppc_read_memory(cpu_t *cpu, addr_t addr, uint32_t size){
-	uint32_t result;
-	bus_read(size, addr, &result);
+	uint32_t result, ret;
+	uint8_t result_8;
+	uint16_t result_16;
+	if(is_user_mode(cpu)){
+		bus_read(size, addr, &result);
+	}else{
+		if(size == 8){
+			ret = ppc_read_effective_byte(addr, &result_8);
+			result = result_8;
+		}
+		else if(size == 16){
+			ret = ppc_read_effective_half(addr, &result_16);
+			result = result_16;
+		}
+		else if(size == 32)
+			ret = ppc_read_effective_word(addr, &result);
+		else
+			fprintf(stderr, "in %s, ppc read memory error.\n", __func__);
+	}
 	return result;
 }
 static void ppc_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size){
-	bus_write(size, addr, value);
+	if(is_user_mode(cpu)){
+		bus_write(size, addr, value);
+	}else{
+		if(size == 8)
+			ppc_write_effective_byte(addr, value);
+		else if(size == 16)
+			ppc_write_effective_half(addr, value);
+		else if(size == 32)
+			ppc_write_effective_word(addr, value);
+		else
+			fprintf(stderr, "in %s, ppc write memory error.\n", __func__);
+	}
 }
 
 /* physical register for powerpc archtecture */
@@ -76,7 +118,10 @@ static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf
 	// There are 16 32-bit GPRs
 	info->register_count[CPU_REG_GPR] = PPC_DYNCOM_GPR_SIZE;
 	info->register_size[CPU_REG_GPR] = info->word_size;
-	info->register_count[CPU_REG_SPR] = PPC_DYNCOM_MAX_SPR_REGNUM;
+	if(is_user_mode(cpu))
+		info->register_count[CPU_REG_SPR] = IBATU_REGNUM;
+	else
+		info->register_count[CPU_REG_SPR] = PPC_DYNCOM_MAX_SPR_REGNUM;
 	info->register_size[CPU_REG_SPR] = info->word_size;
 	// There is also 1 extra register to handle PSR.
 	//info->register_count[CPU_REG_XR] = PPC_XR_SIZE;
@@ -96,11 +141,11 @@ arch_powerpc_done(cpu_t *cpu)
 static addr_t
 arch_powerpc_get_pc(cpu_t *cpu, void *reg)
 {
-	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
-
-	return core->phys_pc;
-	//return ((reg_powerpc_t *)reg)->pc;
+	if(is_user_mode(cpu))
+		return core->phys_pc;
+	else
+		return core->pc;
 }
 
 static uint64_t
@@ -121,6 +166,16 @@ static int arch_powerpc_disasm_instr(cpu_t *cpu, addr_t pc, char* line, unsigned
 static int arch_powerpc_translate_loop_helper(cpu_t *cpu, addr_t pc, BasicBlock *bb_ret, BasicBlock *bb_next, BasicBlock *bb, BasicBlock *bb_zol_cond){
 	return 0;
 }
+static int arch_powerpc_effective_to_physical(struct cpu *cpu, uint32_t addr, uint32_t *result){
+	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	if(is_user_mode(cpu)) {
+		*result = addr;
+		return 0;
+	} else {
+		/* only support PPC_MMU_CODE */
+		return core->effective_to_physical(core, addr, PPC_MMU_CODE, result);
+	}
+}
 static arch_func_t powerpc_arch_func = {
 	arch_powerpc_init,
 	arch_powerpc_done,
@@ -131,11 +186,12 @@ static arch_func_t powerpc_arch_func = {
 	arch_powerpc_disasm_instr,
 	arch_powerpc_translate_cond,
 	arch_powerpc_translate_instr,
-        arch_powerpc_translate_loop_helper,
+	arch_powerpc_translate_loop_helper,
 	// idbg support
 	arch_powerpc_get_psr,
 	arch_powerpc_get_reg,
-	NULL
+	NULL,
+	arch_powerpc_effective_to_physical
 };
 
 int ppc_dyncom_start_debug_flag = 0;
@@ -157,21 +213,38 @@ static void ppc_debug_func(cpu_t* cpu){
 				printf("\n ");
 		}
 		printf("\nsprs:\n ");
-		printf("PC = 0x%x\n ", core->phys_pc);
+		printf("PAGE_BASE(effec) = 0x%x\n ", cpu->current_page_effec);
+		printf("PAGE_BASE(phys) = 0x%x\n ", cpu->current_page_phys);
+		printf("EFFEC_PC = 0x%x\n ", core->pc);
+		printf("PHYS_PC = 0x%x\n ", core->phys_pc);
 		printf("LR = 0x%x\n ", core->lr);
 		printf("CR = 0x%x\n ", core->cr);
 		printf("CTR= 0x%x\n ", core->ctr);
-		printf("ICOUNT = %d\n", core->icount);
+		printf("XER= 0x%x\n ", core->xer);
+		printf("MSR= 0x%x\n ", core->msr);
+		printf("ICOUNT = %d\n ", core->icount);
+		printf("HID[0] = %x\n ", core->hid[0]);
+		printf("SRR[0] = %x\n ", core->srr[0]);
+		printf("TBL = %x\n ", core->tbl);
+		printf("TBU = %x\n ", core->tbu);
 	}
-	if(core->icount == START_DEBUG_ICOUNT){
+	if(core->icount == START_DEBUG_ICOUNT || core->phys_pc == START_DEBUG_PC){
 		ppc_dyncom_start_debug_flag = 1;
-		cpu_set_flags_debug(cpu, CPU_DEBUG_LOG);
+		cpu_set_flags_debug(cpu, CPU_DEBUG_LOG
+			| CPU_DEBUG_PRINT_IR
+			);
+
 	}
-	core->icount ++;
 #if 0
-	extern void ppc_dyncom_diff_log(const unsigned int pc, const unsigned int lr, const unsigned int cr, const unsigned int ctr, const unsigned int reg[]);
-	ppc_dyncom_diff_log(*(addr_t*)cpu->rf.phys_pc, ((uint32_t*)cpu->rf.srf)[LR_REGNUM], ((uint32_t*)cpu->rf.srf)[CR_REGNUM], ((uint32_t*)cpu->rf.srf)[CTR_REGNUM], core->gpr);
+#define START_DIFF 0 
+extern void ppc_dyncom_diff_log(const unsigned long long icount,
+		const unsigned int pc,
+		const unsigned int gpr[],
+		const unsigned int spr[]);
+	if(core->icount > START_DIFF)
+		ppc_dyncom_diff_log(core->icount, *(addr_t*)cpu->rf.phys_pc, core->gpr, &core->cr);
 #endif
+	core->icount ++;
 	return;
 }
 /**
@@ -184,17 +257,121 @@ extern "C" bool_t ppc_exception(e500_core_t *core, uint32 type, uint32 flags, ui
 static void ppc_dyncom_syscall(cpu_t* cpu, uint32_t num){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	sky_pref_t* pref = get_skyeye_pref();
-	if(pref->user_mode_sim)
+	if(is_user_mode(cpu))
 		ppc_syscall(core);
 	else
 		ppc_exception(core, core->gpr[0], 0, 0);
 }
+/**
+ * llvm invoke ppc exception
+ * bool_t (*ppc_exception)(struct e500_core_s *core, uint32 type, uint32 flags, uint32 a);
+ */
+void _ppc_dyncom_exception(cpu_t *cpu, bool cond, uint32 type, uint32 flags, uint32 a){
+	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+	if (cond)
+		ppc_exception(core, type, flags, a);
+}
+static void ppc_dyncom_exception_init(cpu_t *cpu){
+	//types
+	std::vector<const Type*> type_func_exception_args;
+	PointerType *type_intptr = PointerType::get(cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX()), 0);
+	const IntegerType *type_i32 = IntegerType::get(_CTX(), 32);
+	const IntegerType *type_i1 = IntegerType::get(_CTX(), 1);
+	type_func_exception_args.push_back(type_intptr);	/* intptr *cpu */
+	type_func_exception_args.push_back(type_i32);	/* unsinged int */
+	type_func_exception_args.push_back(type_i1);	/* cond */
+	type_func_exception_args.push_back(type_i32);	/* unsinged int */
+	type_func_exception_args.push_back(type_i32);	/* unsinged int */
+	type_func_exception_args.push_back(type_i32);	/* unsinged int */
+	FunctionType *type_func_exception_callout = FunctionType::get(
+		Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
+		type_func_exception_args,	/* Params */
+		false);		      	/* isVarArg */
+	Constant *exception_const = cpu->dyncom_engine->mod->getOrInsertFunction("dyncom_callout4",	//function name
+		type_func_exception_callout);	//return
+	if(exception_const == NULL)
+		fprintf(stderr, "Error:cannot insert function:exception.\n");
+	Function *exception_func = cast<Function>(exception_const);
+	exception_func->setCallingConv(CallingConv::C);
+	cpu->dyncom_engine->ptr_arch_func[PPC_DYNCOM_CALLOUT_EXC] = exception_func;
+	cpu->dyncom_engine->arch_func[PPC_DYNCOM_CALLOUT_EXC] = (void*)_ppc_dyncom_exception;
+}
+void
+arch_ppc_dyncom_exception(cpu_t *cpu, BasicBlock *bb, Value *cond, uint32 type, uint32 flags, uint32 a)
+{
+	if (cpu->dyncom_engine->ptr_arch_func[PPC_DYNCOM_CALLOUT_EXC] == NULL)
+		return;
+	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
+	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
+	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
+	std::vector<Value *> params;
+	params.push_back(v_cpu_ptr);
+	params.push_back(CONST(PPC_DYNCOM_CALLOUT_EXC));
+	params.push_back(cond);
+	params.push_back(CONST(type));
+	params.push_back(CONST(flags));
+	params.push_back(CONST(a));
+	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_arch_func[PPC_DYNCOM_CALLOUT_EXC], params.begin(), params.end(), "", bb);
+}
+
+void _ppc_dyncom_mmu_set_sdr1(cpu_t *cpu, uint32_t rS){
+	if (!ppc_mmu_set_sdr1(((uint32_t*)cpu->rf.grf)[rS], True)) {
+		printf("cannot set sdr1\n");
+	}
+}
+static void ppc_dyncom_mmu_set_sdr1_init(cpu_t *cpu){
+	//types
+	std::vector<const Type*> type_func_args;
+	PointerType *type_intptr = PointerType::get(cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX()), 0);
+	const IntegerType *type_i32 = IntegerType::get(_CTX(), 32);
+	type_func_args.push_back(type_intptr);	/* intptr *cpu */
+	type_func_args.push_back(type_i32);	/* unsinged int */
+	type_func_args.push_back(type_i32);	/* unsinged int */
+	FunctionType *type_func_callout = FunctionType::get(
+		Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
+		type_func_args,	/* Params */
+		false);		      	/* isVarArg */
+	Constant *func_const = cpu->dyncom_engine->mod->getOrInsertFunction("dyncom_callout1",	//function name
+		type_func_callout);	//return
+	if(func_const == NULL)
+		fprintf(stderr, "Error:cannot insert function:func.\n");
+	Function *func = cast<Function>(func_const);
+	func->setCallingConv(CallingConv::C);
+	cpu->dyncom_engine->ptr_arch_func[PPC_DYNCOM_CALLOUT_MMU_SET_SDR1] = func;
+	cpu->dyncom_engine->arch_func[PPC_DYNCOM_CALLOUT_MMU_SET_SDR1] = (void*)_ppc_dyncom_mmu_set_sdr1;
+}
+void
+arch_ppc_dyncom_mmu_set_sdr1(cpu_t *cpu, BasicBlock *bb, uint32_t rS)
+{
+	if (cpu->dyncom_engine->ptr_arch_func[PPC_DYNCOM_CALLOUT_MMU_SET_SDR1] == NULL)
+		return;
+	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
+	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
+	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
+	std::vector<Value *> params;
+	params.push_back(v_cpu_ptr);
+	params.push_back(CONST(PPC_DYNCOM_CALLOUT_MMU_SET_SDR1));
+	params.push_back(CONST(rS));
+	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_arch_func[PPC_DYNCOM_CALLOUT_MMU_SET_SDR1], params.begin(), params.end(), "", bb);
+}
 
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
-	cpu->dyncom_engine->code_start = 0x100000f4;
-	cpu->dyncom_engine->code_entry = 0x10000140;
-	cpu->dyncom_engine->code_end = 0x11000000;
+	/* set user mode or not */
+	sky_pref_t *pref = get_skyeye_pref();
+	if(pref->user_mode_sim)
+		cpu->is_user_mode = 1;
+	else
+		cpu->is_user_mode = 0;
+	if(is_user_mode(cpu)){
+		cpu->dyncom_engine->code_start = 0x100000f4;
+		cpu->dyncom_engine->code_entry = 0x10000140;
+		cpu->dyncom_engine->code_end = 0x11000000;
+	}else{
+		cpu->dyncom_engine->code_start = 0x00000000;
+		cpu->dyncom_engine->code_entry = 0x00000000;
+		cpu->dyncom_engine->code_end = 0x11000000;
+	}
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
 	/* Initilize different register set for different core */
 	cpu->rf.pc = &core->pc;
@@ -217,8 +394,9 @@ void ppc_dyncom_init(e500_core_t* core){
 	cpu->info.psr_size = 0;
  
 	cpu->debug_func = ppc_debug_func;
-	sky_pref_t *pref = get_skyeye_pref();
-	if(pref->user_mode_sim){
+	ppc_dyncom_exception_init(cpu);
+	ppc_dyncom_mmu_set_sdr1_init(cpu);
+	if(is_user_mode(cpu)){
 		extern void ppc_dyncom_syscall(cpu_t* cpu, uint32_t num);
 		cpu->syscall_func = ppc_dyncom_syscall;
 	}
@@ -230,44 +408,61 @@ void ppc_dyncom_init(e500_core_t* core){
 #else
 	set_memory_operator(ppc_read_memory, ppc_write_memory);
 #endif
-	/* init thread clock for profile */
-#if THREAD_CLOCK
-	extern void *clock_thread(void*);
-	pthread_t thread;
-	int ret = pthread_create(&thread, NULL, clock_thread, NULL);
-	if(ret){
-		fprintf(stderr, "failed create timing thread\n");
-		exit(0);
-	}
-#endif
 	init_compiled_queue(cpu);
 	return;
 }
-
-void ppc_dyncom_run(cpu_t* cpu){
-	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
+static void flush_current_page(cpu_t *cpu){
 	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
-	addr_t phys_pc = *(addr_t*)cpu->rf.phys_pc;
-	#if 0	
-	if(ppc_effective_to_physical(core, *(addr_t*)cpu->rf.phys_pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
-		/* we donot allow mmu exception in tagging state */
-		fprintf(stderr, "In %s, can not translate the pc 0x%x\n", __FUNCTION__, core->pc);
-		exit(-1);
+	addr_t effec_pc = *(addr_t*)cpu->rf.pc;
+	ppc_effective_to_physical(core, effec_pc, PPC_MMU_CODE, (uint32_t*)cpu->rf.phys_pc);
+	cpu->current_page_phys = *(addr_t*)cpu->rf.phys_pc & 0xfffff000;
+	cpu->current_page_effec = effec_pc & 0xfffff000; 
+}
+static int dectec_exception(cpu_t *cpu, e500_core_t *core)
+{
+	core->dec_io_do_cycle(core);
+	if(core->interrupt_flag){
+		switch (core->interrupt_type){
+			case PPC_EXC_DEC:
+				core->srr[0] = core->pc;
+				core->srr[1] = core->msr & 0x87c0ffff;
+				break;
+			case PPC_EXC_EXT_INT:
+				core->srr[0] = core->pc;
+				core->srr[1] = core->msr & 0x87c0ffff;
+				break;
+		}
+		ppc_mmu_tlb_invalidate(core);
+		core->msr = 0;
+		core->pc = core->interrupt_type;
+		core->phys_pc = core->interrupt_type;
+		core->interrupt_flag -= 1;
+		core->interrupt_type = 0;
+		return 1;
 	}
-	#endif
-	debug(DEBUG_RUN, "In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, phys_pc);
-	core->phys_pc = phys_pc;
-
+	return 0;
+}
+void ppc_dyncom_run(cpu_t* cpu){
+	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
+	debug(DEBUG_RUN, "In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, core->phys_pc);
 	int rc = cpu_run(cpu);
+	if(!is_user_mode(cpu))
+		dectec_exception(cpu, core);
 	switch (rc) {   
 		case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
+		case JIT_RETURN_TIMEOUT:
 			break;  
 		case JIT_RETURN_SINGLESTEP:
 		case JIT_RETURN_FUNCNOTFOUND:
-
-			debug(DEBUG_RUN, "In %s, function not found at 0x%x\n", __FUNCTION__, core->phys_pc);
+			debug(DEBUG_RUN, "In %s, function not found at pc=0x%x, phys_pc=0x%x\n",
+					__FUNCTION__, core->pc, core->phys_pc);
+			/* flush the current page before translate the next instruction.
+			 * When running here, return from JIT Function, ONLY effective pc is
+			 * valid, we need to update physics pc and page bases. Tagging and
+			 * translate need them. */
+			if(!is_user_mode(cpu))
+				flush_current_page(cpu);
 			cpu_tag(cpu, core->phys_pc);
-		//	cpu->dyncom_engine->functions = 0;
 			cpu_translate(cpu, core->phys_pc);
 			/*
 			**If singlestep,we run it here,otherwise,break.
