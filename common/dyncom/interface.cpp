@@ -30,6 +30,8 @@
 #include "stat.h"
 
 #include "dyncom/memory.h"
+#include "skyeye_log.h"
+#include "skyeye.h"
 
 static void debug_func_init(cpu_t *cpu);
 static void syscall_func_init(cpu_t *cpu);
@@ -108,6 +110,7 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 	/* init hash fast map */
 #ifdef HASH_FAST_MAP
 	cpu->dyncom_engine->fmap = (fast_map)skyeye_mm_zero(sizeof(void*) * HASH_FAST_MAP_SIZE);
+	memset(cpu->dyncom_engine->fmap, NULL, sizeof(addr_t) * HASH_FAST_MAP_SIZE);
 #endif
 	uint32_t i;
 	for (i = 0; i < 4; i++) {
@@ -322,7 +325,7 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 	bbaddr_map::iterator i = bb_addr.begin();
 	pthread_rwlock_wrlock(&(cpu->dyncom_engine->rwlock));
 	for (; i != bb_addr.end(); i++)
-		cpu->dyncom_engine->fmap[i->first & 0x1fffff] = native_code_func;
+		cpu->dyncom_engine->fmap[HASH_INDEX(i->first)] = native_code_func;
 	if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
 		fprintf(stderr, "unlock error\n");
 	}
@@ -427,7 +430,7 @@ void breakpoint() {}
 int
 cpu_run(cpu_t *cpu)
 {
-	addr_t pc = 0, orig_pc = 0;
+	addr_t pc = 0, orig_pc = 0, phys_pc = 0;
 	uint64_t icounter, orig_icounter;
 	uint32_t i;
 	int ret;
@@ -435,16 +438,27 @@ cpu_run(cpu_t *cpu)
 	bool do_translate = true;
 	fp_t pfunc = NULL;
 
+	/* before running jit, update old_icounter first */
+	cpu->old_icounter = cpu->icounter;
+
 	/* try to find the entry in all functions */
 	while(true) {
 		pc = cpu->f.get_pc(cpu, cpu->rf.grf);
+		cpu->f.effective_to_physical(cpu, pc, &phys_pc);
+		*(addr_t*)cpu->rf.phys_pc = phys_pc;
+		if(!is_user_mode(cpu)){
+			cpu->current_page_phys = phys_pc & 0xfffff000;
+			cpu->current_page_effec = pc & 0xfffff000; 
+		}
 #ifdef HASH_FAST_MAP
 		fast_map hash_map = cpu->dyncom_engine->fmap;
-		pfunc = (fp_t)hash_map[pc & 0x1fffff];
-		if(pfunc)
+		pfunc = (fp_t)hash_map[HASH_INDEX(phys_pc)];
+		if(pfunc){
 			do_translate = false;
-		else
+		}
+		else{
 			return JIT_RETURN_FUNCNOTFOUND;
+		}
 #else
 		fast_map &func_addr = cpu->dyncom_engine->fmap;
 		fast_map::const_iterator it = func_addr.find(pc);
@@ -456,57 +470,17 @@ cpu_run(cpu_t *cpu)
 			return JIT_RETURN_FUNCNOTFOUND;
 		}
 #endif
-		//LOG("find jitfunction:key=0x%x\n", pc);
-
-		//orig_pc = pc;
-		//orig_icounter = REG(SR(ICOUNTER));
-		//success = false;
 		UPDATE_TIMING(cpu, TIMER_RUN, true);
-		//breakpoint();
-#if PRINT_REG
-		for (int i = 0; i < 16; i++) {
-			LOG("%d:%x ", i, *(uint32_t*)((uint8_t*)cpu->rf.grf + 4*i));
-		}
-		LOG("\n");
-		LOG("############### Begin to execute JIT\n");
-#endif
 		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, read_memory, write_memory);
-		//*(uint32_t*)((uint8_t*)cpu->rf.grf + 8) = 0;
-		//ret = FP(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.frf, debug_function);
-#if PRINT_REG
-		for (int i = 0; i < 16; i++) {
-			LOG("%d:%x ", i, *(uint32_t*)((uint8_t*)cpu->rf.grf + 4*i));
-		}
-		LOG("pc : %x\n ret : %x", cpu->f.get_pc(cpu, cpu->rf.grf), ret);
-		LOG("\n");
-#endif
 		UPDATE_TIMING(cpu, TIMER_RUN, false);
-		//pc = cpu->f.get_pc(cpu, cpu->rf.grf);
-		//icounter = REG(SR(ICOUNTER));
-		//pc = 0x4d495354;
-		//return ret;
 		if (ret != JIT_RETURN_FUNCNOTFOUND)
 			return ret;
-#if 0
-		if (!is_inside_code_area(cpu, pc))
-			return ret;
-#endif
-#if 0
-		/* simulator run new instructions ? */
-		if (icounter != orig_icounter) {
-			success = true;
-			//break;
+		if(!is_user_mode(cpu)){
+			if(cpu->icounter - cpu->old_icounter >= TIMEOUT_THRESHOLD)
+				return JIT_RETURN_TIMEOUT;
 		}
-		//}
-		if (!success) {
-			LOG("{%llx}", pc);
-			cpu_tag(cpu, pc);
-			do_translate = true;
-		}
-#endif
 	}
 }
-//LOG("%d\n", __LINE__);
 /**
  * @brief Clear the function:address map and free the memory of all the native code function.
  *
@@ -591,4 +565,53 @@ static void syscall_func_init(cpu_t *cpu){
 	Function *syscall_func = cast<Function>(syscall_const);
 	syscall_func->setCallingConv(CallingConv::C);
 	cpu->dyncom_engine->ptr_arch_func[1] = syscall_func;
+}
+
+/**
+ * @brief Callout functions
+ *
+ * @param cpu
+ * @param index
+ *
+ * @return 
+ */
+extern "C" void dyncom_callout(cpu_t *cpu, uint32_t index)
+{
+	if(index > MAX_ARCH_FUNC_NUM || index < 0){
+		skyeye_log(Error_log, __func__, "In %s Callout function %d not exsit.\n", __func__, index);
+		skyeye_exit(0);
+	}
+	((callout)cpu->dyncom_engine->arch_func[index])(cpu);
+}
+extern "C" void dyncom_callout1(cpu_t *cpu, uint32_t index, uint32_t arg1)
+{
+	if(index > MAX_ARCH_FUNC_NUM || index < 0){
+		skyeye_log(Error_log, __func__, "In %s Callout function %d not exsit.\n", __func__, index);
+		skyeye_exit(0);
+	}
+	((callout1)cpu->dyncom_engine->arch_func[index])(cpu, arg1);
+}
+extern "C" void dyncom_callout2(cpu_t *cpu, uint32_t index, uint32_t arg1, uint32_t arg2)
+{
+	if(index > MAX_ARCH_FUNC_NUM || index < 0){
+		skyeye_log(Error_log, __func__, "In %s Callout function %d not exsit.\n", __func__, index);
+		skyeye_exit(0);
+	}
+	((callout2)cpu->dyncom_engine->arch_func[index])(cpu, arg1, arg2);
+}
+extern "C" void dyncom_callout3(cpu_t *cpu, uint32_t index, uint32_t arg1, uint32_t arg2, uint32_t arg3)
+{
+	if(index > MAX_ARCH_FUNC_NUM || index < 0){
+		skyeye_log(Error_log, __func__, "In %s Callout function %d not exsit.\n", __func__, index);
+		skyeye_exit(0);
+	}
+	((callout3)cpu->dyncom_engine->arch_func[index])(cpu, arg1, arg2, arg3);
+}
+extern "C" void dyncom_callout4(cpu_t *cpu, uint32_t index, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4)
+{
+	if(index > MAX_ARCH_FUNC_NUM || index < 0){
+		skyeye_log(Error_log, __func__, "In %s Callout function %d not exsit.\n", __func__, index);
+		skyeye_exit(0);
+	}
+	((callout4)cpu->dyncom_engine->arch_func[index])(cpu, arg1, arg2, arg3, arg4);
 }
