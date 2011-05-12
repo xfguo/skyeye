@@ -16,6 +16,16 @@
 #include "skyeye_types.h"
 
 #include "ppc_dyncom_debug.h"
+static uint32 ppc_cmp_and_mask[8] = {
+	0xfffffff0,
+	0xffffff0f,
+	0xfffff0ff,
+	0xffff0fff,
+	0xfff0ffff,
+	0xff0fffff,
+	0xf0ffffff,
+	0x0fffffff,
+};
 /*
  *	bcctrx		Branch Conditional to Count Register
  *	.438
@@ -37,9 +47,14 @@ Value* opc_bcctrx_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
 }
 static int opc_bcctrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
 	if (instr & PPC_OPC_LK) {
-		LETS(LR_REGNUM, ADD(RS(PHYS_PC_REGNUM), CONST(4)));
+		if(is_user_mode(cpu))
+			LETS(LR_REGNUM, ADD(RS(PHYS_PC_REGNUM), CONST(4)));
+		else
+			LETS(LR_REGNUM, ADD(RS(PC_REGNUM), CONST(4)));
 	}
 	arch_store(AND(RS(CTR_REGNUM), CONST(0xfffffffc)), cpu->ptr_PHYS_PC, bb);
+	if(!is_user_mode(cpu))
+		arch_store(AND(RS(CTR_REGNUM), CONST(0xfffffffc)), cpu->ptr_PC, bb);
 }
 /*
  *	bclrx		Branch Conditional to Link Register
@@ -77,9 +92,14 @@ Value* opc_bclrx_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
 static int opc_bclrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
 	Value *tmp = AND(RS(LR_REGNUM), CONST(0xfffffffc));
 	if (instr & PPC_OPC_LK) {
-		LETS(LR_REGNUM, ADD(RS(PHYS_PC_REGNUM), CONST(4)));
+		if(is_user_mode(cpu))
+			LETS(LR_REGNUM, ADD(RS(PHYS_PC_REGNUM), CONST(4)));
+		else
+			LETS(LR_REGNUM, ADD(RS(PC_REGNUM), CONST(4)));
 	}
 	arch_store(tmp, cpu->ptr_PHYS_PC, bb);
+	if(!is_user_mode(cpu))
+		arch_store(tmp, cpu->ptr_PC, bb);
 }
 /*
  *	isync		Instruction Synchronize
@@ -87,6 +107,57 @@ static int opc_bclrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
  */
 static int opc_isync_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
 	// NO-OP
+}
+/*
+ *	rfi		Return from Interrupt
+ *	.607
+ */
+int opc_rfi_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_BRANCH;
+	*tag |= TAG_EXCEPTION;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
+static int opc_rfi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	Value *old_pc = RS(PC_REGNUM);
+	Value *cond = ICMP_NE(AND(RS(MSR_REGNUM), CONST(MSR_PR)), CONST(0));
+	arch_ppc_dyncom_exception(cpu, bb, cond, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
+	ppc_dyncom_set_msr(cpu, bb, AND(RS(SRR_REGNUM + 1), CONST(MSR_RFI_SAVE_MASK)), cond);
+	LETS(PC_REGNUM, SELECT(cond, old_pc, AND(RS(SRR_REGNUM), CONST(0xfffffffc))));
+//	LETS(TMP_EFFECTIVE_ADDR_REGNUM, AND(RS(SRR_REGNUM), CONST(0xfffffffc)));
+//	arch_ppc_dyncom_effective_to_physical(cpu, bb, PPC_MMU_CODE);
+//	LETS(PC_REGNUM, SELECT(cond, RS(PC_REGNUM), RS(TMP_PHYSICAL_ADDR_REGNUM)));
+	//should update page base
+}
+/*
+ *	mcrf		Move Condition Register Field
+ *	.561
+ */
+static int opc_mcrf_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	uint32 crD, crS, bla;
+	PPC_OPC_TEMPL_X(instr, crD, crS, bla);
+	// FIXME: bla == 0
+	crD >>= 2;
+	crS >>= 2;
+	crD = 7-crD;
+	crS = 7-crS;
+	Value *c_v = AND(LSHR(RS(CR_REGNUM), CONST(crS * 4)), CONST(0xf)); 
+	LETS(CR_REGNUM, AND(RS(CR_REGNUM), CONST(ppc_cmp_and_mask[crD])));
+	LETS(CR_REGNUM, OR(RS(CR_REGNUM), SHL(c_v, CONST(crD * 4))));
+}
+/*
+ *	cror		Condition Register OR
+ *	.453
+ */
+static int opc_cror_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	int crD, crA, crB;
+	PPC_OPC_TEMPL_X(instr, crD, crA, crB);
+	uint32 t = (1<<(31-crA)) | (1<<(31-crB));
+	LETS(CR_REGNUM, SELECT(
+				ICMP_NE(AND(RS(CR_REGNUM), CONST(t)), CONST(0)),
+				OR(RS(CR_REGNUM), CONST(1<<(31-crD))),
+				AND(RS(CR_REGNUM), CONST(~(1<<(31-crD))))
+				));
 }
 /* Interfaces */
 ppc_opc_func_t ppc_opc_crnor_func;
@@ -96,7 +167,12 @@ ppc_opc_func_t ppc_opc_crnand_func;
 ppc_opc_func_t ppc_opc_crand_func;
 ppc_opc_func_t ppc_opc_creqv_func;
 ppc_opc_func_t ppc_opc_crorc_func;
-ppc_opc_func_t ppc_opc_cror_func;
+ppc_opc_func_t ppc_opc_cror_func = {
+	opc_default_tag,
+	opc_cror_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_bcctrx_func = {
 	opc_bcctrx_tag,
 	opc_bcctrx_translate,
@@ -107,8 +183,16 @@ ppc_opc_func_t ppc_opc_bclrx_func = {
 	opc_bclrx_translate,
 	opc_bclrx_translate_cond,
 };
-ppc_opc_func_t ppc_opc_mcrf_func;
-ppc_opc_func_t ppc_opc_rfi_func;
+ppc_opc_func_t ppc_opc_mcrf_func = {
+	opc_default_tag,
+	opc_mcrf_translate,
+	opc_invalid_translate_cond,
+};
+ppc_opc_func_t ppc_opc_rfi_func = {
+	opc_rfi_tag,
+	opc_rfi_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_isync_func = {
 	opc_default_tag,
 	opc_isync_translate,

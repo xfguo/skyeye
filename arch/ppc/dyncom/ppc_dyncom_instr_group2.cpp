@@ -9,12 +9,14 @@
 #include "ppc_mmu.h"
 
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include <dyncom/dyncom_llvm.h>
 #include <dyncom/frontend.h>
 #include "dyncom/basicblock.h"
 #include "skyeye.h"
 
 #include "ppc_dyncom_debug.h"
+#include "ppc_dyncom_run.h"
 
 #define NOT_TESTED() do { debug(DEBUG_NOT_TEST, "INSTRUCTION NOT TESTED:%s", __FUNCTION__); } while(0)
 /*
@@ -37,7 +39,6 @@ static int opc_cmp_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	NOT_TESTED();
 	uint32 cr;
 	int rA, rB;
-	//e500_core_t* current_core = get_current_core();
 	PPC_OPC_TEMPL_X(instr, cr, rA, rB);
 	cr >>= 2;
 	cr = 7 - cr;
@@ -96,69 +97,35 @@ static int opc_lwzx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  *	mtspr		Move to Special-Purpose Register
  *	.584
  */
+#define dyncom_BATU_BL(v)	LSHR(AND(v, CONST(0x1ffc)), CONST(2))
 static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rS, spr1, spr2;
 	PPC_OPC_TEMPL_X(instr, rS, spr1, spr2);
-	//e500_core_t* current_core = get_current_core();
-	e500_core_t* current_core = NULL;
+	e500_core_t* current_core = get_current_core();
+//	printf("In %s, spr2 = %d, spr1 = %d, rS = %d\n", __func__, spr2, spr1, rS);
 	switch (spr2) {
 	case 0:
 		switch (spr1) {
-		case 1: LETS(XER_REGNUM, R(rS)); return 0;
-		case 8:	LETS(LR_REGNUM, R(rS)); return 0;
-		case 9:	LETS(CTR_REGNUM,R(rS)); return 0;
-		}
-		break;
-	
-	case 8:	//altivec makes this register unpriviledged
-		if (spr1 == 0) {
-			//LET32_BY_PTR(&current_core->vrsave, R(rS)); 
-			return 0;
-		}
-		switch(spr1){
-			case 28:
-				LET32_BY_PTR(&current_core->tbl, R(rS)); 
+			case 1: LETS(XER_REGNUM, R(rS)); return 0;
+			case 8:	LETS(LR_REGNUM, R(rS)); return 0;
+			case 9:	LETS(CTR_REGNUM,R(rS)); return 0;
+			case 22: {
+				Value *rS_v = R(rS);
+				LETS(DEC_REGNUM, rS_v);
+				LETS(PDEC_REGNUM, MUL(rS_v, CONST(TB_TO_PTB_FACTOR)));
 				return 0;
-			case 29:
-				current_core->tbu = current_core->gpr[rS];
-				return 0;
-		}
-		break;
-	}
-	if (current_core->msr & MSR_PR) {
-		//	ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
-		//printf("Warning: execute mtspr in user mode\n");
-		//return;
-	}
-	switch (spr2) {
-	case 0:
-		switch (spr1) {
-/*		case 18: current_core->gpr[rD] = current_core->dsisr; return;
-		case 19: current_core->gpr[rD] = current_core->dar; return;*/
-		case 22: {
-			//printf("In %s, write DEC=0x%x\n", __FUNCTION__, current_core->gpr[rS]);
-			current_core->dec = current_core->gpr[rS];
-			current_core->pdec = current_core->dec;
-			current_core->pdec *= TB_TO_PTB_FACTOR;
-			return 0;
-		}
-		case 25: 
-			if (!ppc_mmu_set_sdr1(current_core->gpr[rS], True)) {
-				PPC_OPC_ERR("cannot set sdr1\n");
 			}
-			return 0;
-		case 26: current_core->srr[0] = current_core->gpr[rS]; return 0;
-		case 27: current_core->srr[1] = current_core->gpr[rS]; return 0;
-		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+			case 25: arch_ppc_dyncom_mmu_set_sdr1(cpu, bb, rS); return 0;
+			case 26: LETS(SRR_REGNUM, R(rS)); return 0;
+			case 27: LETS(SRR_REGNUM + 1, R(rS)); return 0;
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
 		}
 		break;
 	case 1:
-		switch (spr1) {
-			case 16:
-				current_core->mmu.pid[0] = current_core->gpr[rS]; 
-				//printf("write pid0=0x%x\n", current_core->gpr[rS]);
-				return 0;
+		switch (spr1) {//TODO...
+			printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
+			case 16:current_core->mmu.pid[0] = current_core->gpr[rS];return 0;
 			case 26:current_core->csrr[0] = current_core->gpr[rS];return 0;
 			case 27:current_core->csrr[1] = current_core->gpr[rS];return 0;
 			case 29:current_core->dear = current_core->gpr[rS];return 0;
@@ -168,43 +135,44 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		}
 	case 8:
 		switch (spr1) {
-		case 16: current_core->sprg[0] = current_core->gpr[rS]; return 0;
-		case 17: current_core->sprg[1] = current_core->gpr[rS]; return 0;
-		case 18: current_core->sprg[2] = current_core->gpr[rS]; return 0;
-		case 19: current_core->sprg[3] = current_core->gpr[rS]; return 0;
-		case 20: current_core->sprg[4] = current_core->gpr[rS]; return 0;
-		case 21: current_core->sprg[5] = current_core->gpr[rS]; return 0;
-		case 22: current_core->sprg[6] = current_core->gpr[rS]; return 0;
-		case 23: current_core->sprg[7] = current_core->gpr[rS]; return 0;
-/*		case 26: current_core->gpr[rD] = current_core->ear; return;
-		case 31: current_core->gpr[rD] = current_core->pvr; return;*/
-		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+			case 0:	LETS(VRSAVE_REGNUM, R(rS)); return 0;
+			case 16: LETS(SPRG_REGNUM, R(rS)); return 0;
+			case 17: LETS(SPRG_REGNUM + 1, R(rS)); return 0;
+			case 18: LETS(SPRG_REGNUM + 2, R(rS)); return 0;
+			case 19: LETS(SPRG_REGNUM + 3, R(rS)); return 0;
+			case 20: LETS(SPRG_REGNUM + 4, R(rS)); return 0;
+			case 21: LETS(SPRG_REGNUM + 5, R(rS)); return 0;
+			case 22: LETS(SPRG_REGNUM + 6, R(rS)); return 0;
+			case 23: LETS(SPRG_REGNUM + 7, R(rS)); return 0;
+			case 28: LETS(TBL_REGNUM, R(rS)); return 0;
+			case 29: LETS(TBU_REGNUM, R(rS)); return 0;
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
 		}
 		break;
 	case 9:
 		switch (spr1) {
-			case 16:current_core->dbsr = current_core->gpr[rS]; return 0;
-			case 20:current_core->dbcr[0] = current_core->gpr[rS]; return 0;
-			case 21:current_core->dbcr[1] = current_core->gpr[rS]; return 0;
-			case 22:current_core->dbcr[2] = current_core->gpr[rS]; return 0;
-			case 28:current_core->dac[0] = current_core->gpr[rS]; return 0;
-			case 29:current_core->dac[1] = current_core->gpr[rS]; return 0;
+			case 16:LETS(DBSR_REGNUM, R(rS)); return 0;
+			case 20:LETS(DBCR_REGNUM, R(rS)); return 0;
+			case 21:LETS(DBCR_REGNUM + 1, R(rS)); return 0;
+			case 22:LETS(DBCR_REGNUM + 2, R(rS)); return 0;
+			case 28:LETS(DAC_REGNUM, R(rS)); return 0;
+			case 29:LETS(DAC_REGNUM + 1, R(rS)); return 0;
 			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
 		}
 		break;
 	case 10:
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch (spr1){
-			
 			case 16:
 				/* W1C, write one to clear */
 				current_core->tsr &= ~(current_core->tsr & current_core->gpr[rS]) ;
 				return 0;
 			case 20:current_core->tcr = current_core->gpr[rS];return 0;
 			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
-
 		}
 		break;
 	case 12:
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		if(spr1 >= 16 && spr1 < 32){
 			current_core->ivor[spr1 - 16] = current_core->gpr[rS];
 			return 0;
@@ -216,135 +184,122 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	case 16:
 		switch (spr1) {
 		case 0: 
-			current_core->spefscr = current_core->gpr[rS]; 
+			LETS(SPEFSCR_REGNUM, R(rS));
 			return 0;
 		case 16:
-			current_core->ibatu[0] = current_core->gpr[rS];
-			current_core->ibat_bl17[0] = ~(BATU_BL(current_core->ibatu[0])<<17);
+			LETS(IBATU_REGNUM, R(rS));
+			LETS(IBAT_BL17_REGNUM, XOR((SHL(dyncom_BATU_BL(RS(IBATU_REGNUM)), CONST(17))), CONST(-1)));
 			return 0;
 		case 17:
-			current_core->ibatl[0] = current_core->gpr[rS];
+			LETS(IBATL_REGNUM, R(rS));
 			return 0;
 		case 18:
-			current_core->ibatu[1] = current_core->gpr[rS];
-			current_core->ibat_bl17[1] = ~(BATU_BL(current_core->ibatu[1])<<17);
+			LETS(IBATU_REGNUM + 1, R(rS));
+			LETS(IBAT_BL17_REGNUM + 1, XOR((SHL(dyncom_BATU_BL(RS(IBATU_REGNUM + 1)), CONST(17))), CONST(-1)));
 			return 0;
 		case 19:
-			current_core->ibatl[1] = current_core->gpr[rS];
+			LETS(IBATL_REGNUM + 1, R(rS));
 			return 0;
 		case 20:
-			current_core->ibatu[2] = current_core->gpr[rS];
-			current_core->ibat_bl17[2] = ~(BATU_BL(current_core->ibatu[2])<<17);
+			LETS(IBATU_REGNUM + 2, R(rS));
+			LETS(IBAT_BL17_REGNUM + 2, XOR((SHL(dyncom_BATU_BL(RS(IBATU_REGNUM + 2)), CONST(17))), CONST(-1)));
 			return 0;
 		case 21:
-			current_core->ibatl[2] = current_core->gpr[rS];
+			LETS(IBATL_REGNUM + 2, R(rS));
 			return 0;
 		case 22:
-			current_core->ibatu[3] = current_core->gpr[rS];
-			current_core->ibat_bl17[3] = ~(BATU_BL(current_core->ibatu[3])<<17);
+			LETS(IBATU_REGNUM + 3, R(rS));
+			LETS(IBAT_BL17_REGNUM + 3, XOR((SHL(dyncom_BATU_BL(RS(IBATU_REGNUM + 3)), CONST(17))), CONST(-1)));
 			return 0;
 		case 23:
-			current_core->ibatl[3] = current_core->gpr[rS];
+			LETS(IBATL_REGNUM + 3, R(rS));
 			return 0;
 		case 24:
-			current_core->dbatu[0] = current_core->gpr[rS];
-			current_core->dbat_bl17[0] = ~(BATU_BL(current_core->dbatu[0])<<17);
+			LETS(DBATU_REGNUM, R(rS));
+			LETS(DBAT_BL17_REGNUM, XOR((SHL(dyncom_BATU_BL(RS(DBATU_REGNUM)), CONST(17))), CONST(-1)));
 			return 0;
 		case 25:
-			current_core->dbatl[0] = current_core->gpr[rS];
+			LETS(DBATL_REGNUM, R(rS));
 			return 0;
 		case 26:
-			current_core->dbatu[1] = current_core->gpr[rS];
-			current_core->dbat_bl17[1] = ~(BATU_BL(current_core->dbatu[1])<<17);
+			LETS(DBATU_REGNUM + 1, R(rS));
+			LETS(DBAT_BL17_REGNUM + 1, XOR((SHL(dyncom_BATU_BL(RS(DBATU_REGNUM + 1)), CONST(17))), CONST(-1)));
 			return 0;
 		case 27:
-			current_core->dbatl[1] = current_core->gpr[rS];
+			LETS(DBATL_REGNUM + 1, R(rS));
 			return 0;
 		case 28:
-			current_core->dbatu[2] = current_core->gpr[rS];
-			current_core->dbat_bl17[2] = ~(BATU_BL(current_core->dbatu[2])<<17);
+			LETS(DBATU_REGNUM + 2, R(rS));
+			LETS(DBAT_BL17_REGNUM + 2, XOR((SHL(dyncom_BATU_BL(RS(DBATU_REGNUM + 2)), CONST(17))), CONST(-1)));
 			return 0;
 		case 29:
-			current_core->dbatl[2] = current_core->gpr[rS];
+			LETS(DBATL_REGNUM + 2, R(rS));
 			return 0;
 		case 30:
-			current_core->dbatu[3] = current_core->gpr[rS];
-			current_core->dbat_bl17[3] = ~(BATU_BL(current_core->dbatu[3])<<17);
+			LETS(DBATU_REGNUM + 3, R(rS));
+			LETS(DBAT_BL17_REGNUM + 3, XOR((SHL(dyncom_BATU_BL(RS(DBATU_REGNUM + 3)), CONST(17))), CONST(-1)));
 			return 0;
 		case 31:
-			current_core->dbatl[3] = current_core->gpr[rS];
+			LETS(DBATL_REGNUM + 3, R(rS));
 			return 0;
 		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
 		}
 		break;
 	case 17:
 		switch(spr1){
-		printf("YUAN:func=%s,line=%d, write_e600_BAT", __func__, __LINE__);
 		case 16://LCH
-			current_core->e600_ibatu[0] = current_core->gpr[rS];
+			LETS(E600_IBATU_REGNUM, R(rS));
 			return 0;
 		case 17://LCH
-			current_core->e600_ibatl[0] = current_core->gpr[rS];
+			LETS(E600_IBATL_REGNUM, R(rS));
 			return 0;
 		case 18://LCH
-			current_core->e600_ibatu[1] = current_core->gpr[rS];
+			LETS(E600_IBATU_REGNUM + 1, R(rS));
 			return 0;
 		case 19://LCH
-			current_core->e600_ibatl[1] = current_core->gpr[rS];
+			LETS(E600_IBATL_REGNUM + 1, R(rS));
 			return 0;
 		case 20://LCH
-			current_core->e600_ibatu[2] = current_core->gpr[rS];
+			LETS(E600_IBATU_REGNUM + 2, R(rS));
 			return 0;
 		case 21://LCH
-			current_core->e600_ibatl[2] = current_core->gpr[rS];
+			LETS(E600_IBATL_REGNUM + 2, R(rS));
 			return 0;
 		case 22://LCH
-			current_core->e600_ibatu[3] = current_core->gpr[rS];
+			LETS(E600_IBATU_REGNUM + 3, R(rS));
 			return 0;
 		case 23://LCH
-			current_core->e600_ibatl[3] = current_core->gpr[rS];
+			LETS(E600_IBATL_REGNUM + 3, R(rS));
 			return 0;
 		case 24://LCH
-			current_core->e600_dbatu[0] = current_core->gpr[rS];
+			LETS(E600_DBATU_REGNUM, R(rS));
 			return 0;
 		case 25://LCH
-			current_core->e600_dbatl[0] = current_core->gpr[rS];
+			LETS(E600_DBATL_REGNUM, R(rS));
 			return 0;
 		case 26://LCH
-			current_core->e600_dbatu[1] = current_core->gpr[rS];
+			LETS(E600_DBATU_REGNUM + 1, R(rS));
 			return 0;
 		case 27://LCH
-			current_core->e600_dbatl[1] = current_core->gpr[rS];
+			LETS(E600_DBATL_REGNUM + 1, R(rS));
 			return 0;
 		case 28://LCH
-			current_core->e600_dbatu[2] = current_core->gpr[rS];
+			LETS(E600_DBATU_REGNUM + 2, R(rS));
 			return 0;
 		case 29://LCH
-			current_core->e600_dbatl[2] = current_core->gpr[rS];
+			LETS(E600_DBATL_REGNUM + 2, R(rS));
 			return 0;
 		case 30://LCH
-			current_core->e600_dbatu[3] = current_core->gpr[rS];
+			LETS(E600_DBATU_REGNUM + 3, R(rS));
 			return 0;
 		case 31://LCH
-			current_core->e600_dbatl[3] = current_core->gpr[rS];
+			LETS(E600_DBATL_REGNUM + 3, R(rS));
 			return 0;
-
-			/*
-		case 26:
-			current_core->mcsrr[0] = current_core->gpr[rS];
-			return;
-		case 27:
-                        current_core->mcsrr[1] = current_core->gpr[rS];
-                        return;
-		case 28:
-			current_core->mcsr = current_core->gpr[rS];
-			return;
-			*/
 		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
 		}
-
 		break;
 	case 19:
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch(spr1){
 			case 16:
 				current_core->mmu.mas[0] = current_core->gpr[rS];
@@ -377,12 +332,13 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		break;
 	case 29:
 		switch(spr1) {
-		case 17: return 0;
-		case 24: return 0;
-		case 25: return 0;
-		case 26: return 0;
+			case 17: return 0;
+			case 24: return 0;
+			case 25: return 0;
+			case 26: return 0;
 		}
 	case 30://LCH
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch(spr1) {
 		case 20: 
 			current_core->e600_tlbmiss = current_core->gpr[rS];
@@ -398,45 +354,32 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	case 31:
 		switch (spr1) {
 		case 16:
-//			PPC_OPC_WARN("write(%08x) to spr %d:%d (HID0) not supported! @%08x\n", current_core->gpr[rS], spr1, spr2, current_core->pc);
-			current_core->hid[0] = current_core->gpr[rS];
-			//printf("YUAN:func=%s, line=%d, current_core->hid[0]=0x%x\n", __func__, __LINE__, current_core->hid[0]);
+			LETS(HID_REGNUM, R(rS));
 			return 0;
 		case 17: return 0;
 		case 18:
 			PPC_OPC_ERR("write(%08x) to spr %d:%d (IABR) not supported!\n", current_core->gpr[rS], spr1, spr2);
 			return 0;
 		case 19:
-                        current_core->l1csr[1] = current_core->gpr[rS];
-                        return 0;
+			LETS(L1CSR_REGNUM + 1, R(rS));return 0;
 		case 20:
-                        current_core->iac[0] = current_core->gpr[rS];
-                        return 0;
-
+			LETS(IAC_REGNUM, R(rS));return 0;
 		case 21:
 			PPC_OPC_ERR("write(%08x) to spr %d:%d (DABR) not supported!\n", current_core->gpr[rS], spr1, spr2);
 			return 0;
 		case 22:
-			current_core->e600_msscr0 = current_core->gpr[rS];
+			LETS(E600_MSSCR0_REGNUM, R(rS));
 			return 0;
 		case 23:
-			current_core->e600_msssr0 = current_core->gpr[rS];
+			LETS(E600_MSSSR0_REGNUM, R(rS));
 			return 0;
 		case 24:
-			current_core->e600_ldstcr = current_core->gpr[rS];
+			LETS(E600_LDSTCR_REGNUM, R(rS));
 			return 0;	
 		case 27:
-			PPC_OPC_WARN("write(%08x) to spr %d:%d (ICTC) not supported!\n", current_core->gpr[rS], spr1, spr2);
-			return 0;
 		case 28:
-//			PPC_OPC_WARN("write(%08x) to spr %d:%d (THRM1) not supported!\n", current_core->gpr[rS], spr1, spr2);
-			return 0;
 		case 29:
-//			PPC_OPC_WARN("write(%08x) to spr %d:%d (THRM2) not supported!\n", current_core->gpr[rS], spr1, spr2);
-			return 0;
 		case 30:
-//			PPC_OPC_WARN("write(%08x) to spr %d:%d (THRM3) not supported!\n", current_core->gpr[rS], spr1, spr2);
-			return 0;
 		case 31: return 0;
 		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
 		}
@@ -451,97 +394,72 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  */
 static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	e500_core_t* current_core = NULL;
+	e500_core_t* current_core = get_current_core();
 	int rD, spr1, spr2;
 	PPC_OPC_TEMPL_XO(instr, rD, spr1, spr2);
-	#if 0	
 	if (current_core->msr & MSR_PR) {
 		//ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		if(!(spr2 == 0 && spr1 == 8)) /* read lr*/
 			printf("Warning, execute mfspr in user mode, pc=0x%x\n", current_core->pc);
 		//return;
 	}
-	#endif
 	debug(DEBUG_TRANSLATE, "In %s, spr2=%d, spr1=%d\n", __func__, spr2, spr1);
+//	printf("In %s, spr2=%d, spr1=%d\n", __func__, spr2, spr1);
 	switch(spr2) {
 	case 0:
 		switch (spr1) {
 		case 1: LET(rD, RS(XER_REGNUM)); return 0;
 		case 8: LET(rD, RS(LR_REGNUM)); return 0;
 		case 9: LET(rD, RS(CTR_REGNUM)); return 0;
-
-		case 18: current_core->gpr[rD] = current_core->dsisr; return 0;
-		case 19: current_core->gpr[rD] = current_core->dar; return 0;
+		case 18: LET(rD, RS(DSISR_REGNUM)); return 0;
+		case 19: LET(rD, RS(DAR_REGNUM)); return 0;
 		case 22: {
-			current_core->dec = current_core->pdec / TB_TO_PTB_FACTOR;
-			current_core->gpr[rD] = current_core->dec;
+			LETS(DEC_REGNUM, UDIV(RS(PDEC_REGNUM), CONST(TB_TO_PTB_FACTOR)));
+			LET(rD, RS(DEC_REGNUM));
 			return 0;
 		}
-		case 25: current_core->gpr[rD] = current_core->sdr1; return 0;
-		case 26: current_core->gpr[rD] = current_core->srr[0]; return 0;
-		case 27: current_core->gpr[rD] = current_core->srr[1]; return 0;
+		case 25: LET(rD, RS(SDR1_REGNUM)); return 0;
+		case 26: LET(rD, RS(SRR_REGNUM)); return 0;
+		case 27: LET(rD, RS(SRR_REGNUM + 1)); return 0;
 		}
 		break;
 	case 1:
 		switch(spr1) {
 			case 16:
+				printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 				current_core->gpr[rD] = current_core->mmu.pid[0];
-                                //printf("read pid0 0x%x,pc=0x%x\n", current_core->gpr[rD],current_core->pc);
-                                return 0;
-			case 29: current_core->gpr[rD] = current_core->dear;return 0;
-			case 30: current_core->gpr[rD] = current_core->esr; return 0;
+				return 0;
+			case 29: LET(rD, RS(DEAR_REGNUM)); return 0;
+			case 30: LET(rD, RS(ESR_REGNUM)); return 0;
 			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
-
 		}
 		break;
 	case 8:
 		switch (spr1) {
-		case 12: {
-			/*
-			current_core->tb = current_core->ptb / TB_TO_PTB_FACTOR;
-			current_core->gpr[rD] = current_core->tb;
-			*/
-			current_core->gpr[rD] = current_core->tbl;
-			return 0;
-		}
-		case 13: {
-			/*
-			current_core->tb = current_core->ptb / TB_TO_PTB_FACTOR;
-			current_core->gpr[rD] = current_core->tb >> 32;
-			*/
-			current_core->gpr[rD] = current_core->tbu;
-			return 0;
-		}
-		case 0: current_core->gpr[rD] = current_core->vrsave; return 0;
-		case 16: current_core->gpr[rD] = current_core->sprg[0]; return 0;
+		case 12: LET(rD, RS(TBL_REGNUM)); return 0;
+		case 13: LET(rD, RS(TBU_REGNUM)); return 0;
+		case 0: LET(rD, RS(VRSAVE_REGNUM)); return 0;
+		case 16: LET(rD, RS(SPRG_REGNUM)); return 0;
 		case 1:
-		case 17: current_core->gpr[rD] = current_core->sprg[1]; return 0;
+		case 17: LET(rD, RS(SPRG_REGNUM + 1)); return 0;
 		case 2:
-		case 18: current_core->gpr[rD] = current_core->sprg[2]; return 0;
+		case 18: LET(rD, RS(SPRG_REGNUM + 2)); return 0;
 		case 3:
-		case 19: current_core->gpr[rD] = current_core->sprg[3]; return 0;
+		case 19: LET(rD, RS(SPRG_REGNUM + 3)); return 0;
 		case 4:
-		case 20: current_core->gpr[rD] = current_core->sprg[4]; return 0;
+		case 20: LET(rD, RS(SPRG_REGNUM + 4)); return 0;
 		case 5:
-                case 21: current_core->gpr[rD] = current_core->sprg[5]; return 0;
+		case 21: LET(rD, RS(SPRG_REGNUM + 5)); return 0;
 		case 6:
-                case 22: current_core->gpr[rD] = current_core->sprg[6]; return 0;
-                case 23:
-		case 7: 
-			current_core->gpr[rD] = current_core->sprg[7]; return 0;
-
-		case 26: 
-			current_core->gpr[rD] = current_core->ear; return 0;
-		case 30:
-			//printf("In %s, read pir=0x%x,pc=0x%x\n", __FUNCTION__, current_core->pir, current_core->pc);
-			current_core->gpr[rD] = current_core->pir; 
-			return 0;
+		case 22: LET(rD, RS(SPRG_REGNUM + 6)); return 0;
+		case 7:
+		case 23: LET(rD, RS(SPRG_REGNUM + 7)); return 0;
+		case 26: LET(rD, RS(EAR_REGNUM)); return 0;
+		case 30: LET(rD, RS(PIR_REGNUM)); return 0;
 		case 31: LET(rD, RS(PVR_REGNUM)); return 0;
 		default:
-			fprintf(stderr, "unknown mfspr: %i:%i\n", spr1, spr2);
-		        fprintf(stderr, "pc=0x%x\n", current_core->pc);
-        		skyeye_exit(-1);
-
+			fprintf(stderr, "[warning:mfspr]line = %d, pc=0x%x, instr = 0x%x, spr1:spr2 = %i:%i\n",
+					__LINE__, current_core->pc, instr, spr1, spr2);
 		}
 		break;
 	case 9:
@@ -672,65 +590,62 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		switch (spr1) {
 		case 16:
 //			PPC_OPC_WARN("read from spr %d:%d (HID0) not supported!\n", spr1, spr2);
-			current_core->gpr[rD] = current_core->hid[0];
+			LET(rD, RS(HID_REGNUM));
 			return 0;
 		case 17:
 			PPC_OPC_WARN("read from spr %d:%d (HID1) not supported!\n", spr1, spr2);
-			current_core->gpr[rD] = current_core->hid[1];
+			LET(rD, RS(HID_REGNUM + 1));
 			return 0;
 		case 18:
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 19:
-			current_core->gpr[rD] = current_core->e600_ictrl;
+			LET(rD, RS(E600_ICTRL_REGNUM));
 			return 0;
 		case 20:
-			current_core->gpr[rD] = current_core->e600_ldstdb;
+			LET(rD, RS(E600_LDSTDB_REGNUM));
 			return 0;
 		case 21:
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 22:
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 23:
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 24:
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 25:
 			PPC_OPC_WARN("read from spr %d:%d (L2CR) not supported! (from %08x)\n", spr1, spr2, current_core->pc);
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 27:
 			PPC_OPC_WARN("read from spr %d:%d (ICTC) not supported!\n", spr1, spr2);
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 28:
 //			PPC_OPC_WARN("read from spr %d:%d (THRM1) not supported!\n", spr1, spr2);
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 29:
 //			PPC_OPC_WARN("read from spr %d:%d (THRM2) not supported!\n", spr1, spr2);
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 30:
 //			PPC_OPC_WARN("read from spr %d:%d (THRM3) not supported!\n", spr1, spr2);
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		case 31:
 //			PPC_OPC_WARN("read from spr %d:%d (???) not supported!\n", spr1, spr2);
-			current_core->gpr[rD] = 0;
+			LET(rD, CONST(0));
 			return 0;
 		}
 		break;
 	}
-	fprintf(stderr, "unknown mfspr: %i:%i\n", spr1, spr2);
-	fprintf(stderr, "pc=0x%x\n", current_core->pc);
-	skyeye_exit(-1);
-	//SINGLESTEP("invalid mfspr\n");
-	return -1;
+	fprintf(stderr, "[warning:mfspr]line = %d, pc=0x%x, instr = 0x%x, spr1:spr2 = %i:%i\n",
+			__LINE__, current_core->pc, instr, spr1, spr2);
 }
 /*
  *	cntlzwx		Count Leading Zeros Word
@@ -742,16 +657,10 @@ static int opc_cntlzwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rS, rA, rB;
 	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
 	PPC_OPC_ASSERT(rB==0);
-	int i;
-	Value * n_value = CONST(0);
-	Value * old_n_value = CONST(0);
-	Value * v_value = R(rS);
-	for(i = 0; i < 32; i++){
-		n_value = SELECT(ICMP_EQ(AND(LSHR(v_value, CONST(i)), CONST(1)), CONST(1)), CONST(i), old_n_value);
-		old_n_value = n_value;
-	}
-	old_n_value = SELECT(ICMP_EQ(old_n_value, CONST(0)), CONST(-1), old_n_value);
-	LET(rA, SUB(CONST(31), old_n_value));
+	Type const *ty = getIntegerType(32);
+	Value* intrinsic_ctlz = (Value*)Intrinsic::getDeclaration(cpu->dyncom_engine->mod, Intrinsic::ctlz, &ty, 1);
+	Value* result = CallInst::Create(intrinsic_ctlz, R(rS), "", bb);
+	LET(rA, result);
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
 		ppc_dyncom_update_cr0(cpu, bb, rA);
@@ -925,8 +834,8 @@ static int opc_extshx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rS, rA, rB;
 	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
 	PPC_OPC_ASSERT(rB==0);
-	LET(rA, R(rS));
-	SELECT(ICMP_NE(AND(R(rA), CONST(0x8000)), CONST(0)), OR(R(rA), CONST(0xffff0000)), AND(R(rA), CONST(~0xffff0000)));
+	Value *v_rs = R(rS);
+	LET(rA, SELECT(ICMP_NE(AND(v_rs, CONST(0x8000)), CONST(0)), OR(v_rs, CONST(0xffff0000)), AND(v_rs, CONST(~0xffff0000))));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
 		ppc_dyncom_update_cr0(cpu, bb, rA);
@@ -1052,8 +961,8 @@ static int opc_srawix_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	uint32 SH;
 	PPC_OPC_TEMPL_X(instr, rS, rA, SH);
 	Value* ca = CONST(0);
-	Value* shift = SHL(CONST(1), UREM(CONST(SH),CONST(32)));
-	LETS(XER_REGNUM, SELECT(ICMP_NE(AND(R(rA), shift), CONST(0)), OR(RS(XER_REGNUM), CONST(XER_CA)), RS(XER_REGNUM)));
+	Value* mask = LSHR(CONST(0xffffffff), CONST((32 - SH) & 0x1f));
+	LETS(XER_REGNUM, SELECT(ICMP_NE(AND(R(rA), mask), CONST(0)), OR(RS(XER_REGNUM), CONST(XER_CA)), RS(XER_REGNUM)));
 	LET(rA, OR(LSHR(R(rA), UREM(CONST(SH),CONST(32))), SHL(CONST(0xffffffff), UREM(SUB(CONST(32), CONST(SH)), CONST(32)))));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
@@ -1334,14 +1243,15 @@ static int opc_subfcx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rD, rA, rB;
 	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
-	LET(rD, ADD(XOR(R(rA), CONST(-1)), ADD(R(rB), CONST(1))));
-	Value* cond = ppc_dyncom_carry_3(cpu, bb, XOR(R(rA), CONST(-1)), R(rB), CONST(1));
+	Value* a = R(rA);
+	Value* b = R(rB);
+	LET(rD, ADD(XOR(a, CONST(-1)), ADD(b, CONST(1))));
+	Value* cond = ppc_dyncom_carry_3(cpu, bb, XOR(a, CONST(-1)), b, CONST(1));
 	LETS(XER_REGNUM, SELECT(cond, OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~XER_CA))));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
 		ppc_dyncom_update_cr0(cpu, bb, rD);
 	}
-	NOT_TESTED();
 	return 0;
 }
 /*
@@ -1385,8 +1295,10 @@ static int opc_addex_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rD, rA, rB;
 	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
 	Value* ca = SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_CA)), CONST(0)), CONST(1), CONST(0));
-	LET(rD, ADD(R(rA), ADD(R(rB), ca)));
-	Value* cond = ppc_dyncom_carry_3(cpu, bb, R(rA), R(rB), ca);
+	Value* ra = R(rA);
+	Value* rb = R(rB);
+	LET(rD, ADD(ra, ADD(rb, ca)));
+	Value* cond = ppc_dyncom_carry_3(cpu, bb, ra, rb, ca);
 	LETS(XER_REGNUM, SELECT(cond, OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~XER_CA))));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
@@ -1419,8 +1331,9 @@ static int opc_addcx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rD, rA, rB;
 	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
-	LET(rD, ADD(R(rA), R(rB)));
-	Value* cond = ICMP_ULT(R(rD), R(rA));
+	Value* ra = R(rA);
+	LET(rD, ADD(ra, R(rB)));
+	Value* cond = ICMP_ULT(R(rD), ra);
 	LETS(XER_REGNUM, SELECT(cond, OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~XER_CA))));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
@@ -1466,6 +1379,152 @@ static int opc_srawx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	if (instr & PPC_OPC_Rc) {
 		ppc_dyncom_update_cr0(cpu, bb, rA);
 	}
+}
+/*
+ *	dcbst		Data Cache Block Store
+ *	.461
+ */
+static int opc_dcbst_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	// NO-OP
+}
+/*
+ *	icbi		Instruction Cache Block Invalidate
+ *	.519
+ */
+static int opc_icbi_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	// NO-OP
+}
+/*
+ *	mfmsr		Move from Machine State Register
+ *	.566
+ */
+int opc_mfmsr_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_EXCEPTION;
+	return PPC_INSN_SIZE;
+}
+static int opc_mfmsr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	Value *cond = ICMP_NE(AND(RS(MSR_REGNUM), CONST(MSR_PR)), CONST(0));
+	arch_ppc_dyncom_exception(cpu, bb, cond, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	PPC_OPC_ASSERT((rA == 0) && (rB == 0));
+	Value *rd = R(rD);
+	LET(rD, SELECT(cond, rd, RS(MSR_REGNUM)));
+}
+/*
+ *	tlbie		Translation Lookaside Buffer Invalidate All
+ *	.676
+ */
+int opc_tlbie_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_EXCEPTION;
+	return PPC_INSN_SIZE;
+}
+static int opc_tlbie_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
+	Value *cond = ICMP_NE(AND(RS(MSR_REGNUM), CONST(MSR_PR)), CONST(0));
+	arch_ppc_dyncom_exception(cpu, bb, cond, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
+	LETS(EFFECTIVE_CODE_PAGE_REGNUM, SELECT(cond, RS(EFFECTIVE_CODE_PAGE_REGNUM), CONST(0xffffffff)));
+}
+/*
+ *	mtmsr		Move to Machine State Register
+ *	.581
+ */
+int opc_mtmsr_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_EXCEPTION;
+	return PPC_INSN_SIZE;
+}
+static int opc_mtmsr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rS, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	Value *cond = ICMP_NE(AND(RS(MSR_REGNUM), CONST(MSR_PR)), CONST(0));
+	arch_ppc_dyncom_exception(cpu, bb, cond, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
+	ppc_dyncom_set_msr(cpu, bb, R(rS), cond);
+}
+/*
+ *	tlbsync		Translation Lookaside Buffer Syncronize
+ *	.677
+ */
+int opc_tlbsync_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_EXCEPTION;
+	return PPC_INSN_SIZE;
+}
+static int opc_tlbsync_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *cond = ICMP_NE(AND(RS(MSR_REGNUM), CONST(MSR_PR)), CONST(0));
+	arch_ppc_dyncom_exception(cpu, bb, cond, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
+	int rS, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	// FIXME: check rS.. for 0     
+	LETS(EFFECTIVE_CODE_PAGE_REGNUM, SELECT(cond, RS(EFFECTIVE_CODE_PAGE_REGNUM), CONST(0xffffffff)));
+}
+/*
+ *	mtsrin		Move to Segment Register Indirect
+ *	.591
+ */
+int opc_mtsrin_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_EXCEPTION;
+	return PPC_INSN_SIZE;
+}
+static int opc_mtsrin_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *cond = ICMP_NE(AND(RS(MSR_REGNUM), CONST(MSR_PR)), CONST(0));
+	arch_ppc_dyncom_exception(cpu, bb, cond, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
+	int rS, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	// FIXME: check insn
+	Value *index = LSHR(R(rB), CONST(28));
+	Value *base = cpu->ptr_spr[SR_REGNUM];
+	Value *pointer = GetElementPtrInst::Create(base, index, "", bb);
+	Value *sr_v_orig = new LoadInst(pointer, "", false, bb);
+	new StoreInst(SELECT(cond, sr_v_orig, R(rS)), pointer, bb);
+}
+/*
+ *	mfsrin		Move from Segment Register Indirect
+ *	.572
+ */
+int opc_mfsrin_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_EXCEPTION;
+	return PPC_INSN_SIZE;
+}
+static int opc_mfsrin_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	Value *cond = ICMP_NE(AND(RS(MSR_REGNUM), CONST(MSR_PR)), CONST(0));
+	arch_ppc_dyncom_exception(cpu, bb, cond, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	// FIXME: check insn
+	Value *index = LSHR(R(rB), CONST(28));
+	Value *base = cpu->ptr_spr[SR_REGNUM];
+	Value *pointer = GetElementPtrInst::Create(base, index, "", bb);
+	Value *sr_v = new LoadInst(pointer, "", false, bb);
+	LET(rD, SELECT(cond, R(rD), sr_v));
+}
+/*
+ *	sthbrx		Store Half Word Byte-Reverse Indexed
+ *	.652
+ */
+static int opc_sthbrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rS, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	Value *addr = rA ? ADD(R(rA), R(rB)) : R(rB);
+	Value *data = AND(OR(SHL(R(rS), CONST(8)), LSHR(R(rS), CONST(8))), CONST(0x0000ffff));
+	arch_write_memory(cpu, bb, addr, data, 16);
+}
+/*
+ *	lhbrx		Load Half Word Byte-Reverse Indexed
+ *	.542
+ */
+static int opc_lhbrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rD, rB;
+	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	Value *addr = rA ? ADD(R(rA), R(rB)) : R(rB);
+	Value* result = arch_read_memory(cpu, bb, addr, 0, 16);
+	result = AND(OR(SHL(result, CONST(8)), LSHR(result, CONST(8))), CONST(0x0000ffff));
+	LET(rD, result);
 }
 /* Interfaces */
 ppc_opc_func_t ppc_opc_cmp_func = {
@@ -1531,7 +1590,12 @@ ppc_opc_func_t ppc_opc_subfx_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_iselgt_func;
-ppc_opc_func_t ppc_opc_dcbst_func;
+ppc_opc_func_t ppc_opc_dcbst_func = {
+	opc_default_tag,
+	opc_dcbst_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_lwzux_func;
 ppc_opc_func_t ppc_opc_andcx_func = {
 	opc_default_tag,
@@ -1544,7 +1608,12 @@ ppc_opc_func_t ppc_opc_mulhwx_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_iseleq_func;
-ppc_opc_func_t ppc_opc_mfmsr_func;
+ppc_opc_func_t ppc_opc_mfmsr_func = {
+	opc_mfmsr_tag,
+	opc_mfmsr_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_dcbf_func;
 ppc_opc_func_t ppc_opc_lbzx_func = {
 	opc_default_tag,
@@ -1584,7 +1653,11 @@ ppc_opc_func_t ppc_opc_mtcrf_func = {
 	opc_mtcrf_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_mtmsr_func;
+ppc_opc_func_t ppc_opc_mtmsr_func = {
+	opc_mtmsr_tag,
+	opc_mtmsr_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_stwcx__func = {
 	opc_stwcx__tag,
 	opc_stwcx__translate,
@@ -1632,7 +1705,11 @@ ppc_opc_func_t ppc_opc_mullwx_func = {
 	opc_mullwx_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_mtsrin_func;
+ppc_opc_func_t ppc_opc_mtsrin_func = {
+	opc_mtsrin_tag,
+	opc_mtsrin_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_dcbtst_func = {
 	opc_default_tag,
 	opc_default_translate,
@@ -1656,7 +1733,12 @@ ppc_opc_func_t ppc_opc_lhzx_func = {
 };
 
 ppc_opc_func_t ppc_opc_eqvx_func;
-ppc_opc_func_t ppc_opc_tlbie_func;
+ppc_opc_func_t ppc_opc_tlbie_func = {
+	opc_tlbie_tag,
+	opc_tlbie_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_eciwx_func;
 ppc_opc_func_t ppc_opc_lhzux_func;
 ppc_opc_func_t ppc_opc_xorx_func = {
@@ -1724,7 +1806,11 @@ ppc_opc_func_t ppc_opc_srwx_func = {
 	opc_srwx_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_tlbsync_func;
+ppc_opc_func_t ppc_opc_tlbsync_func = {
+	opc_tlbsync_tag,
+	opc_tlbsync_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_lfsux_func;
 ppc_opc_func_t ppc_opc_mfsr_func;
 ppc_opc_func_t ppc_opc_lswi_func;
@@ -1736,7 +1822,11 @@ ppc_opc_func_t ppc_opc_sync_func = {
 
 ppc_opc_func_t ppc_opc_lfdx_func;
 ppc_opc_func_t ppc_opc_lfdux_func;
-ppc_opc_func_t ppc_opc_mfsrin_func;
+ppc_opc_func_t ppc_opc_mfsrin_func = {
+	opc_mfsrin_tag,
+	opc_mfsrin_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_stswx_func;
 ppc_opc_func_t ppc_opc_stwbrx_func;
 ppc_opc_func_t ppc_opc_stfsx_func;
@@ -1746,7 +1836,11 @@ ppc_opc_func_t ppc_opc_stfdx_func;
 ppc_opc_func_t ppc_opc_dcba_func;
 ppc_opc_func_t ppc_opc_stfdux_func;
 ppc_opc_func_t ppc_opc_tlbivax_func; /* TLB invalidated virtual address indexed */
-ppc_opc_func_t ppc_opc_lhbrx_func;
+ppc_opc_func_t ppc_opc_lhbrx_func = {
+	opc_default_tag,
+	opc_lhbrx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_srawx_func = {
 	opc_default_tag,
 	opc_srawx_translate,
@@ -1763,7 +1857,11 @@ ppc_opc_func_t ppc_opc_eieio_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_tlbsx_func;
-ppc_opc_func_t ppc_opc_sthbrx_func;
+ppc_opc_func_t ppc_opc_sthbrx_func = {
+	opc_default_tag,
+	opc_sthbrx_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_extshx_func = {
 	opc_default_tag,
 	opc_extshx_translate,
@@ -1777,7 +1875,12 @@ ppc_opc_func_t ppc_opc_extsbx_func = {
 };
 
 ppc_opc_func_t ppc_opc_tlbwe_func; /* TLB write entry */
-ppc_opc_func_t ppc_opc_icbi_func;
+ppc_opc_func_t ppc_opc_icbi_func = {
+	opc_default_tag,
+	opc_icbi_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_stfiwx_func;
 ppc_opc_func_t ppc_opc_dcbz_func = {
 	opc_default_tag,

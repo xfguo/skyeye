@@ -9,6 +9,7 @@
 #include "ppc_tools.h"
 #include "ppc_syscall.h"
 #include "ppc_mmu.h"
+#include "ppc_e500_exc.h"
 
 #include "llvm/Module.h"
 #include "llvm/Function.h"
@@ -24,7 +25,6 @@
 #include <dyncom/frontend.h>
 #include "dyncom/basicblock.h"
 #include "skyeye.h"
-#include "skyeye_pref.h"
 #include "dyncom/defines.h"
 #include "dyncom/tag.h"
 
@@ -110,7 +110,7 @@ static int opc_rlwinmx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rS, rA, SH, MB, ME;
 	PPC_OPC_TEMPL_M(instr, rS, rA, SH, MB, ME);
 	Value* v = ROTL(R(rS), CONST(SH));
-	uint32 mask = ppc_mask(MB, ME);
+	uint32 mask = ppc_dyncom_mask(MB, ME);
 	debug(DEBUG_TRANSLATE, "In %s,rS=%d,rA=%d,SH=%d,MB=%d,ME=%d,mask=0x%x\n",__func__,rS,rA,SH,MB,ME,mask);
 	LET(rA, AND(v, CONST(mask)));
 	if (instr & PPC_OPC_Rc) {
@@ -130,22 +130,40 @@ ppc_opc_func_t ppc_opc_rlwinmx_func = {
  *	lwz		Load Word and Zero
  *	.557
  */
+int opc_lwz_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_lwz_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
 	Value* addr;
+	Value* old_rd = R(rD);
 	if(rA)
 		addr = ADD(R(rA), CONST(imm));
 	else
 		addr = CONST(imm);
 	Value* result = arch_read_memory(cpu, bb, addr, 0, 32);
-	LET(rD, result);
+	/**
+	 * If occur exception, rD should not to be written.
+	 **/
+	if(is_user_mode(cpu)){
+		LET(rD, result);
+	}else{
+		Value *current_pc = RS(PHYS_PC_REGNUM);
+		Value *exc_occur = ICMP_EQ(current_pc, CONST(PPC_EXC_DSI_ADDR));
+		LET(rD, SELECT(exc_occur, old_rd, result));
+	}
 	return 0;
 }
 ppc_opc_func_t ppc_opc_lwz_func = {
-	opc_default_tag,
+//	opc_default_tag,
+	opc_lwz_tag,
 	opc_lwz_translate,
 	opc_invalid_translate_cond,
 };
@@ -156,6 +174,7 @@ ppc_opc_func_t ppc_opc_lwz_func = {
  */
 static int opc_lwzu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	e500_core_t* current_core = get_current_core();
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
@@ -177,6 +196,13 @@ ppc_opc_func_t ppc_opc_lwzu_func = {
  *	stw		Store Word
  *	.659
  */
+int opc_stw_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_stw_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rA, rS;
@@ -186,7 +212,8 @@ static int opc_stw_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	return 0;
 }
 ppc_opc_func_t ppc_opc_stw_func = {
-	opc_default_tag,
+//	opc_default_tag,
+	opc_stw_tag,
 	opc_stw_translate,
 	opc_invalid_translate_cond,
 };
@@ -222,10 +249,14 @@ ppc_opc_func_t ppc_opc_stwu_func = {
 int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	uint32 li;
 	PPC_OPC_TEMPL_I(instr, li);
-	if (instr & PPC_OPC_LK)
-		*tag = TAG_CALL;
-	else
+	if(is_user_mode(cpu)) {
+		if (instr & PPC_OPC_LK)
+			*tag = TAG_CALL;
+		else
+			*tag = TAG_BRANCH;
+	}else{
 		*tag = TAG_BRANCH;
+	}
 /*
 	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	debug(DEBUG_TAG, "pc=0x%x,page_begin=0x%x,page_end=0x%x\n",
@@ -234,12 +265,15 @@ int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *n
 //	if(li < get_begin_of_page(current_core->pc) && li > get_end_of_page(current_core->pc)){
 //		*tag |= TAG_STOP;
 //	}
-	//*new_pc = NEW_PC_NONE;
-	if (!(instr & PPC_OPC_AA)){
-		*new_pc = phys_pc + li;
-	}
-	else{
-		*new_pc = li;
+	if(is_user_mode(cpu)) {
+		if (!(instr & PPC_OPC_AA)){
+			*new_pc = phys_pc + li;
+		}
+		else{
+			*new_pc = li;
+		}
+	}else{
+		*new_pc = NEW_PC_NONE;
 	}
 	*next_pc = phys_pc + PPC_INSN_SIZE;
 	debug(DEBUG_TAG, "In %s, new_pc=0x%x\n", __FUNCTION__, *new_pc);
@@ -247,18 +281,23 @@ int opc_bx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *n
 }
 static int opc_bx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
-	e500_core_t* current_core = get_core_from_dyncom_cpu(cpu);
 	uint32 li;
 	PPC_OPC_TEMPL_I(instr, li);
 	if (instr & PPC_OPC_LK) {
-		LETS(LR_REGNUM, ADD(CONST(4), RS(PHYS_PC_REGNUM)));
+		if(is_user_mode(cpu))
+			LETS(LR_REGNUM, ADD(CONST(4), RS(PHYS_PC_REGNUM)));
+		else
+			LETS(LR_REGNUM, ADD(CONST(4), RS(PC_REGNUM)));
 	}
 	if (!(instr & PPC_OPC_AA)) {
-	//	arch_store(ADD(CONST(li), RS(PHYS_PC_REGNUM)), cpu->ptr_PHYS_PC, bb);
 		LETS(PHYS_PC_REGNUM, ADD(CONST(li), RS(PHYS_PC_REGNUM)));
+		if(!is_user_mode(cpu))
+			LETS(PC_REGNUM, ADD(CONST(li), RS(PC_REGNUM)));
 		debug(DEBUG_TRANSLATE, "In %s, li=0x%x\n",__FUNCTION__, li);
 	}else{
 		LETS(PHYS_PC_REGNUM, CONST(li));
+		if(!is_user_mode(cpu))
+			LETS(PC_REGNUM, CONST(li));
 		debug(DEBUG_TRANSLATE, "In %s, li=0x%x, br 0x%x\n", __FUNCTION__, li, li);
 	}
 	return PPC_INSN_SIZE;
@@ -278,10 +317,15 @@ int opc_bcx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *
 	uint32 BO, BI, BD;
 	PPC_OPC_TEMPL_B(instr, BO, BI, BD);
 	uint32_t AA = instr & PPC_OPC_AA;
-	if(AA)
-		*new_pc = BD;
-	else
-		*new_pc = BD + phys_pc;
+	if(is_user_mode(cpu)){
+		if(AA)
+			*new_pc = BD;
+		else
+			*new_pc = BD + phys_pc;
+	}else{
+		*new_pc = NEW_PC_NONE;
+	}
+
 #if 0
 	if(*new_pc > get_end_of_page(phys_pc) || *new_pc < get_begin_of_page(phys_pc)){
 		*new_pc = NEW_PC_NONE;
@@ -317,12 +361,19 @@ static int opc_bcx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	uint32 BO, BI, BD;
 	PPC_OPC_TEMPL_B(instr, BO, BI, BD);
 	if (instr & PPC_OPC_LK) {
-		LETS(LR_REGNUM, ADD(RS(PHYS_PC_REGNUM), CONST(4)));
+		if(is_user_mode(cpu))
+			LETS(LR_REGNUM, ADD(RS(PHYS_PC_REGNUM), CONST(4)));
+		else
+			LETS(LR_REGNUM, ADD(RS(PC_REGNUM), CONST(4)));
 	}
 	if (!(instr & PPC_OPC_AA)) {
 		arch_store(ADD(CONST(BD), RS(PHYS_PC_REGNUM)), cpu->ptr_PHYS_PC, bb);
+		if(!is_user_mode(cpu))
+			arch_store(ADD(CONST(BD), RS(PC_REGNUM)), cpu->ptr_PC, bb);
 	}else{
 		arch_store(CONST(BD), cpu->ptr_PHYS_PC, bb);
+		if(!is_user_mode(cpu))
+			arch_store(CONST(BD), cpu->ptr_PC, bb);
 	}
 	return 0;
 }
@@ -331,14 +382,30 @@ ppc_opc_func_t ppc_opc_bcx_func = {
 	opc_bcx_translate,
 	opc_bcx_translate_cond,
 };
-static int opc_twi_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
-{
-	TODO;
-	return 0;
+/*
+ *	twi		Trap Word Immediate
+ *	.679
+ */
+int opc_twi_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
 }
-/* Interfaces */
+static int opc_twi_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb){
+	int TO, rA;
+	uint32 imm;
+	PPC_OPC_TEMPL_D_SImm(instr, TO, rA, imm);
+	Value *reg_a = R(rA);
+	Value *cond = OR(OR(OR(OR(AND(ICMP_EQ(CONST(TO & 16), CONST(0)), ICMP_SLT(reg_a, CONST(imm))),
+		AND(ICMP_EQ(CONST(TO & 8), CONST(0)), ICMP_SGT(reg_a, CONST(imm)))),
+			AND(ICMP_EQ(CONST(TO & 4), CONST(0)), ICMP_EQ(reg_a, CONST(imm)))),
+				AND(ICMP_EQ(CONST(TO & 2), CONST(0)), ICMP_ULT(reg_a, CONST(imm)))),
+					AND(ICMP_EQ(CONST(TO & 1), CONST(0)), ICMP_UGT(reg_a, CONST(imm))));
+	arch_ppc_dyncom_exception(cpu, bb, cond, PROG, PPC_EXC_PROGRAM_TRAP, 0);
+}
 ppc_opc_func_t ppc_opc_twi_func = {
-        opc_default_tag,
+        opc_twi_tag,
         opc_twi_translate,
         opc_invalid_translate_cond,
 };
@@ -372,11 +439,12 @@ static int opc_subfic_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	int rD, rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
-	LET(rD, ADD(XOR(R(rA), CONST(-1)), CONST(imm + 1)));
+	Value *v_ra = R(rA);
+	LET(rD, ADD(XOR(v_ra, CONST(-1)), CONST(imm + 1)));
 	// update XER
-	Value* cond = ppc_dyncom_carry_3(cpu, bb, XOR(R(rA), CONST(-1)), CONST(imm), CONST(1));
-	LETS(XER_REGNUM, SELECT(cond, 
-			OR(R(XER_REGNUM), CONST(XER_CA)), 
+	Value* cond = ppc_dyncom_carry_3(cpu, bb, XOR(v_ra, CONST(-1)), CONST(imm), CONST(1));
+	LETS(XER_REGNUM, SELECT(cond,
+			OR(RS(XER_REGNUM), CONST(XER_CA)),
 			AND(RS(XER_REGNUM), CONST(~XER_CA)))
 	);
 }
@@ -420,9 +488,10 @@ static int opc_addic_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	int rD, rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
-	LET(rD, ADD(R(rA), CONST(imm)));
+	Value *v_ra = R(rA);
+	LET(rD, ADD(v_ra, CONST(imm)));
 	// update XER
-	LETS(XER_REGNUM, SELECT(ICMP_ULT(R(rD), R(rA)), 
+	LETS(XER_REGNUM, SELECT(ICMP_ULT(R(rD), v_ra), 
 		OR(RS(XER_REGNUM), CONST(XER_CA)), 
 		AND(RS(XER_REGNUM), CONST(~XER_CA)))
 	);
@@ -443,9 +512,13 @@ static int opc_addic__translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	int rD, rA;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
-	LET(rD, ADD(R(rA), CONST(imm)));
+	Value *v_ra = R(rA);
+	LET(rD, ADD(v_ra, CONST(imm)));
 	// update XER
-	LETS(XER_REGNUM, SELECT(ICMP_ULT(R(rD), R(rA)), OR(RS(XER_REGNUM), CONST(XER_CA)), AND(RS(XER_REGNUM), CONST(~~XER_CA))));
+	LETS(XER_REGNUM, SELECT(ICMP_ULT(R(rD), v_ra), 
+		OR(RS(XER_REGNUM), CONST(XER_CA)), 
+		AND(RS(XER_REGNUM), CONST(~XER_CA)))
+	);
 	// update cr0 flags
 	ppc_dyncom_update_cr0(cpu, bb, rD);
 }
@@ -456,21 +529,29 @@ ppc_opc_func_t ppc_opc_addic__func = {
         opc_invalid_translate_cond,
 };
 int opc_sc_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	if(is_user_mode(cpu)) {
 #ifdef OPT_LOCAL_REGISTERS
-	*tag = TAG_SYSCALL | TAG_CONTINUE;
-	*next_pc = phys_addr + PPC_INSN_SIZE;
+		*tag = TAG_SYSCALL | TAG_CONTINUE;
+		*next_pc = phys_addr + PPC_INSN_SIZE;
 #else
-	*tag = TAG_CONTINUE;
-	*next_pc = phys_addr + PPC_INSN_SIZE;
+		*tag = TAG_CONTINUE;
+		*next_pc = phys_addr + PPC_INSN_SIZE;
 #endif
+	}else{
+		*tag = TAG_EXCEPTION;
+	}
 	return PPC_INSN_SIZE;
 }
 static int opc_sc_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
+	if(is_user_mode(cpu)) {
 #ifdef OPT_LOCAL_REGISTERS
 #else
-	arch_syscall(cpu, bb, 0);
+		arch_syscall(cpu, bb, 0);
 #endif
+	}else{
+		arch_ppc_dyncom_exception(cpu, bb, CONST1(1), ((uint32_t *)cpu->rf.srf)[SYSCALL_NUMBER_REGNUM], 0, 0);
+	}
 	return 0;
 }
 
@@ -488,10 +569,9 @@ static int opc_rlwimix_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	int rS, rA, SH, MB, ME;
 	PPC_OPC_TEMPL_M(instr, rS, rA, SH, MB, ME);
 	Value* v = ROTL(R(rS), CONST(SH));
-	uint32 mask = ppc_mask(MB, ME);
+	uint32 mask = ppc_dyncom_mask(MB, ME);
 	//current_core->gpr[rA] = (v & mask) | (current_core->gpr[rA] & ~mask);
 	LET(rA, OR(AND(v, CONST(mask)), AND(R(rA), CONST(~mask))));
-	NOT_TEST;
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
 		ppc_dyncom_update_cr0(cpu, bb, rA);
@@ -512,13 +592,12 @@ static int opc_rlwnmx_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	int rS, rA, rB, MB, ME;
 	PPC_OPC_TEMPL_M(instr, rS, rA, rB, MB, ME);
 	
-	uint32 mask = ppc_mask(MB, ME);
-	LET(rA, OR(ROTL(R(rS), R(rB)), CONST(mask)));
+	uint32 mask = ppc_dyncom_mask(MB, ME);
+	LET(rA, AND(ROTL(R(rS), R(rB)), CONST(mask)));
 	if (instr & PPC_OPC_Rc) {
 		// update cr0 flags
 		ppc_dyncom_update_cr0(cpu, bb, rA);
 	}
-	NOT_TEST;
 }
 ppc_opc_func_t ppc_opc_rlwnmx_func = {
         opc_default_tag,
@@ -639,29 +718,39 @@ ppc_opc_func_t ppc_opc_andis__func = {
  *	lbz		Load Byte and Zero
  *	.521
  */
+int opc_lbz_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_lbz_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
-	uint8 r;
-	/*
-	int ret = ppc_read_effective_byte((rA?current_core->gpr[rA]:0)+imm, &r);
-	if (ret == PPC_MMU_OK) {
-		current_core->gpr[rD] = r;
-	}
-	*/
 	Value* ret;
+	Value* rd_old = R(rD);
 	if(rA)
 		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,8);
 	else
 		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,8);
-	LET(rD, ret);
+	/**
+	 * If occur exception, rD should not to be written.
+	 **/
+	if(is_user_mode(cpu)){
+		LET(rD, ret);
+	}else{
+		Value *current_pc = RS(PHYS_PC_REGNUM);
+		Value *exc_occur = ICMP_EQ(current_pc, CONST(PPC_EXC_DSI_ADDR));
+		LET(rD, SELECT(exc_occur, rd_old, ret));
+	}
 	return 0;
 }
 
 ppc_opc_func_t ppc_opc_lbz_func = {
-        opc_default_tag,
+        opc_lbz_tag,
         opc_lbz_translate,
         opc_invalid_translate_cond,
 };

@@ -48,7 +48,7 @@ static inline void ppc_dyncom_update_cr0(cpu_t* cpu, BasicBlock *bb, uint32 r)
 	LETS(CR_REGNUM, SELECT(ICMP_NE(AND(RS(XER_REGNUM), CONST(XER_SO)), CONST(0)), 
 		OR(RS(CR_REGNUM), CONST(CR_CR0_SO)), RS(CR_REGNUM)));
 }
-static int inline ppc_mask(int MB, int ME){
+static int inline ppc_dyncom_mask(int MB, int ME){
 	uint32 mask;
 	if (MB <= ME) {
 		if (ME-MB == 31) {
@@ -64,8 +64,14 @@ static int inline ppc_mask(int MB, int ME){
 
 static inline Value* ppc_dyncom_carry_3(cpu_t* cpu, BasicBlock *bb, Value* a, Value* b, Value* c)
 {
-	Value* tmp1 = ICMP_SLT(b, CONST(0));
-	Value* tmp2 = ICMP_SLT(ADD(a, b), CONST(0));
+	Value* tmp1 = ICMP_ULT(ADD(a, b), a);
+	Value* tmp2 = ICMP_ULT(ADD(ADD(a, b), c), c);
 	return SELECT(OR(tmp1, tmp2), TRUE, FALSE);
+}
+static void ppc_dyncom_set_msr(cpu_t *cpu, BasicBlock *bb, Value *newmsr, Value *cond)
+{
+	LETS(EFFECTIVE_CODE_PAGE_REGNUM, SELECT(cond, RS(EFFECTIVE_CODE_PAGE_REGNUM), CONST(0xffffffff)));
+	newmsr = SELECT(ICMP_NE(AND(newmsr, CONST(MSR_POW)), CONST(0)), AND(newmsr,CONST(~MSR_POW)), newmsr);
+	LETS(MSR_REGNUM, SELECT(cond, RS(MSR_REGNUM), newmsr));
 }
 #endif
