@@ -171,13 +171,6 @@ typedef struct e500_core_s{
  	uint32 e600_mmcr2; 		// spr 944 
  	uint32 e600_bamr; 		// spr 951 
  
- 	/* end e600 specific register */
-
-	// for altivec
-	uint32 vscr;
-	uint32 vrsave;	// spr 256
-	Vector_t vr[36];		// <--- this MUST be 16-byte alligned
-	uint32 vtemp;
 	/* e500 specific register */
 	uint32 l1csr[2]; /* L1 cache constrol and status */
 	uint32 csrr[2]; /* Critical save/restore register */
@@ -196,20 +189,29 @@ typedef struct e500_core_s{
 
 	uint32 tbl;
 	uint32 tbu;
+	uint32 syscall_number;
 
 	uint32 spefscr;
+
+	// for altivec
+	uint32 vscr;
+	uint32 vrsave;	// spr 256
+	Vector_t vr[36];		// <--- this MUST be 16-byte alligned
+	uint32 vtemp;
+
 	e500_mmu_t mmu;
 
 	uint32 ipr;
 	uint32 iack;
 
 	uint32 ipi_flag;
+	uint32 interrupt_flag;
+	uint32 interrupt_type;
 	uint32 step;
 	int (*effective_to_physical)(struct e500_core_s * core, uint32 addr, int flags, uint32 *result);
 	bool_t (*ppc_exception)(struct e500_core_s *core, uint32 type, uint32 flags, uint32 a);
 	uint32 (*get_ccsr_base)(uint32 ccsr_reg);
 	uint32 ccsr_size;
-	uint32 syscall_number;
 	void (*dec_io_do_cycle)(struct e500_core_s *core);
 	conf_object_t* dyncom_cpu;
 }e500_core_t;
