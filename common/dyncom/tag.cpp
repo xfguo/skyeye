@@ -172,6 +172,18 @@ is_inside_code_area(cpu_t *cpu, addr_t a)
 {
 	return a >= cpu->dyncom_engine->code_start && a < cpu->dyncom_engine->code_end;
 }
+bool
+is_inside_page(cpu_t *cpu, addr_t a){
+	return (a & 0xfffff000) == cpu->current_page_phys;
+}
+bool
+is_start_page(addr_t a){
+	return (a & 0x00000fff) == 0x0;
+}
+bool
+is_end_page(addr_t a){
+	return (a & 0x00000fff) == 0xffc;
+}
 /**
  * @brief Give a tag to an address
  *
@@ -300,20 +312,17 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 		cpu->dyncom_engine->tag_start = pc;
 	}
 	for(;;) {
-		if (!is_inside_code_area(cpu, pc))
-		{
-				
-			LOG("In %s pc = %x start = %x end = %x\n", __FUNCTION__, pc, cpu->dyncom_engine->code_start, cpu->dyncom_engine->code_end);
+		if(!is_inside_page(cpu, pc) && !is_user_mode(cpu))
+			return;
+		if (!is_inside_code_area(cpu, pc)){
+			LOG("In %s pc = %x start = %x end = %x\n",
+					__FUNCTION__, pc, cpu->dyncom_engine->code_start, cpu->dyncom_engine->code_end);
 			return;
 		}
-//		if (is_code(cpu, pc))	/* we have already been here, ignore */
-//			return;
-
 		if (LOGGING) {
 			LOG("%*s", level, "");
 //			disasm_instr(cpu, pc);
 		}
-
 
 		bytes = cpu->f.tag_instr(cpu, pc, &tag, &new_pc, &next_pc);
 
@@ -378,6 +387,18 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 			or_tag(cpu, pc, tag | TAG_STOP | TAG_LAST_INST);
 			//return;
 		}
+		if(is_start_page(pc) && !is_user_mode(cpu))
+			or_tag(cpu, pc, tag | TAG_START_PAGE);
+		if(is_end_page(pc) && !is_user_mode(cpu)){
+			or_tag(cpu, pc, tag | TAG_STOP | TAG_END_PAGE);
+			xor_tag(cpu, pc, TAG_CONTINUE);
+			break;
+		}
+		if ((tag & TAG_EXCEPTION) && !is_user_mode(cpu)) {
+			or_tag(cpu, next_pc, TAG_AFTER_EXCEPTION);
+			xor_tag(cpu, pc, TAG_CONTINUE);
+			break;
+		}
 
 		if (tag & (TAG_RET | TAG_STOP))	/* execution ends here, the follwing location is not reached */
 			//return;
@@ -394,7 +415,7 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
  * @brief Start tag from current pc.
  *
  * @param cpu CPU core structure
- * @param pc current address start tagging
+ * @param pc current address start tagging(physics pc)
  */
 void
 tag_start(cpu_t *cpu, addr_t pc)

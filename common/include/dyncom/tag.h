@@ -19,6 +19,10 @@
 #define TAG_BEFORE_SYSCALL (1 << 22)
 #define TAG_AFTER_SYSCALL (1 << 23)
 #define TAG_COND_BRANCH (TAG_BRANCH|TAG_CONDITIONAL)
+#define TAG_START_PAGE (1 << 24)	/* The first instruction of a page */
+#define TAG_END_PAGE (1 << 25)	/* The last instruction of a page */
+#define TAG_EXCEPTION (1 << 26)	/* instruction may occur exception(next instruction is exception handler) */
+#define TAG_AFTER_EXCEPTION (1 << 27)
 
 /* flags internal to libcpu */
 #define TAG_CODE		(1<<7)	/* there is a reachable executable instruction here */
@@ -60,6 +64,9 @@ void xor_tag(cpu_t *cpu, addr_t a, tag_t t);
 bool is_inside_code_area(cpu_t *cpu, addr_t a);
 bool is_code(cpu_t *cpu, addr_t a);
 void tag_start(cpu_t *cpu, addr_t pc);
+bool is_inside_page(cpu_t *cpu, addr_t a);
+bool is_start_page(addr_t a);
+bool is_end_page(addr_t a);
 
 /*
  * NEW_PC_NONE states that the destination of a call is unknown.
