@@ -15,6 +15,7 @@
 #include <dyncom/dyncom_llvm.h>
 #include <dyncom/basicblock.h>
 #include <dyncom/tag.h>
+#include <dyncom/frontend.h>
 
 /**
  * @brief Determine an address is the start of a basicblock or not.
@@ -49,8 +50,17 @@ is_start_of_basicblock(cpu_t *cpu, addr_t a)
 void
 emit_store_pc(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc)
 {
-	Value *v_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
-	new StoreInst(v_pc, cpu->ptr_PHYS_PC, bb_branch);
+	if(is_user_mode(cpu)){
+		Value *v_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+		new StoreInst(v_pc, cpu->ptr_PHYS_PC, bb_branch);
+	}else{
+		Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+		Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb_branch);
+		Value *v_page_effec = new LoadInst(cpu->ptr_CURRENT_PAGE_EFFEC, "", false, bb_branch);
+		Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, v_page_effec, "", bb_branch); 
+		new StoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb_branch);
+		new StoreInst(v_effec_pc, cpu->ptr_PC, bb_branch);
+	}
 }
 /**
  * @brief Store PC to cpu structure,then jump to the ret basicblock
@@ -65,6 +75,43 @@ emit_store_pc_return(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc, BasicBloc
 {
 	emit_store_pc(cpu, bb_branch, new_pc);
 	BranchInst::Create(bb_ret, bb_branch);
+}
+/**
+ * @brief store the next pc when current pc is end of a page. used in kernel simulation.
+ *
+ * @param cpu
+ * @param bb
+ * @param new_pc
+ */
+void
+emit_store_pc_end_page(cpu_t *cpu, tag_t tag, BasicBlock *bb, addr_t new_pc)
+{
+	/* if branch instruction at the end of a page, current pc is used to
+	 * count the new pc in the translation of the instruction.
+	 */
+	if(!(tag & TAG_BRANCH)){
+		Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+		Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb);
+		Value *v_page_effec = new LoadInst(cpu->ptr_CURRENT_PAGE_EFFEC, "", false, bb);
+		Value *next_page_effec = BinaryOperator::Create(Instruction::Add, CONST(0x1000), v_page_effec, "", bb);
+		Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, next_page_effec, "", bb); 
+		new StoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb);
+		new StoreInst(v_effec_pc, cpu->ptr_PC, bb);
+	}
+}
+void
+emit_store_pc_cond(cpu_t *cpu, Value *cond, BasicBlock *bb, addr_t new_pc)
+{
+	/* if cond is true, do not save pc */
+	Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+	Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb);
+	Value *v_page_effec = new LoadInst(cpu->ptr_CURRENT_PAGE_EFFEC, "", false, bb);
+	Value *next_page_effec = BinaryOperator::Create(Instruction::Add, CONST(0x1000), v_page_effec, "", bb);
+	Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, next_page_effec, "", bb); 
+	Value *orig_phys_pc = new LoadInst(cpu->ptr_PHYS_PC, "", false, bb);
+	Value *orig_pc = new LoadInst(cpu->ptr_PC, "", false, bb);
+	new StoreInst(SELECT(cond, orig_phys_pc, v_phys_pc), cpu->ptr_PHYS_PC, bb);
+	new StoreInst(SELECT(cond, orig_pc, v_effec_pc), cpu->ptr_PC, bb);
 }
 /**
  * @brief Create a basicblock and put it to the current JIT Function.Add it to func_bb map.
