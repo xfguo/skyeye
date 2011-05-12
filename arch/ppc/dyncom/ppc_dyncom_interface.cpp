@@ -20,7 +20,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "ppc_cpu.h"
 #include "ppc_mmu.h"
 #include "ppc_dec.h"
-#include "ppc_exc.h"
 #include "ppc_e500_exc.h"
 #include "ppc_e500_core.h"
 #include "ppc_memory.h"
@@ -48,8 +47,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifdef __CYGWIN__
 #include <sys/time.h>
 #endif
+extern "C"{
+#include "ppc_exc.h"
+};
+#include <pthread.h>
+#include <unistd.h>
+#include "dyncom/defines.h"
 
-//PPC_CPU_State gCPU;
 static void per_cpu_step(conf_object_t * core);
 static void per_cpu_stop(conf_object_t * core);
 
@@ -59,6 +63,124 @@ ppc_reset_state ()
 	//skyeye_config_t* config = get_current_config();
 	//config->mach->mach_io_reset(&gCPU);
 	//skyeye_config.mach->mach_io_reset(&gCPU);/* set all the default value for register */	
+}
+static void set_exception_stage2(e500_core_t *core, const uint32 type){
+	core->interrupt_flag += 1;
+	core->interrupt_type = type;
+}
+void e600_dyncom_dec_io_do_cycles(e500_core_t * core){
+	cpu_t* cpu = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
+	uint32_t cycles = cpu->icounter - cpu->old_icounter;
+	uint32_t old_tbl = core->tbl;
+	uint32_t old_dec = core->dec;
+	core->tbl += cycles;
+	/* if tbl overflow, we increase tbh */
+	if(core->tbl < old_tbl)
+		core->tbu++;
+	/* if decrementer eqauls zero */
+	if(cycles >= old_dec){
+		if(core->msr & MSR_EE){
+			/* trigger timer interrupt */
+			printf("pir = %d, icount = %d, MSR_EE is set, DEC exception happen.\n", core->pir, core->icount);
+			ppc_exception(core, PPC_EXC_DEC, 0, core->pc);
+			core->dec -= (cycles - old_dec);
+		}
+	}else{
+		core->dec -= cycles;
+	}
+	return;
+}
+static bool_t e600_dyncom_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
+{
+//	printf("****START In %s, phys_pc = %x, pc = 0x%x, type = 0x%x\n", __func__, core->phys_pc, core->pc, type);
+	core->pc -= 4;
+	core->phys_pc -= 4;
+	switch (type) {
+	case PPC_EXC_DSI: { // .271
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		core->dar = a;
+		core->dsisr = flags;
+		printf("In %s, addr=0x%x, pc=0x%x DSI exception.\n", __FUNCTION__, a, core->pc);
+		break;
+	}
+	case PPC_EXC_ISI: { // .274
+		core->srr[0] = core->pc;
+		core->srr[1] = (core->msr & 0x87c0ffff) | flags;
+		break;
+	}
+	case PPC_EXC_EXT_INT: {
+		set_exception_stage2(core, PPC_EXC_EXT_INT);
+		core->pc += 4;
+		core->phys_pc += 4;
+		return True;
+	}
+	case PPC_EXC_SC: {  // .285
+		core->srr[0] = core->pc + 4;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		break;
+	}
+	case PPC_EXC_NO_FPU: { // .284
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		break;
+	}
+	case PPC_EXC_NO_VEC: {	// v.41
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		break;
+	}
+	case PPC_EXC_PROGRAM: { // .283
+		core->srr[0] = core->pc;
+		core->srr[1] = (core->msr & 0x87c0ffff) | flags;
+		break;
+	}
+	case PPC_EXC_FLOAT_ASSIST: { // .288
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		break;
+	}
+	case PPC_EXC_MACHINE_CHECK: { // .270
+		if (!(core->msr & MSR_ME)) {
+			PPC_EXC_ERR("machine check exception and MSR[ME]=0.\n");
+		}
+		core->srr[0] = core->pc;
+		core->srr[1] = (core->msr & 0x87c0ffff) | MSR_RI;
+		break;
+	}
+	case PPC_EXC_TRACE2: { // .286
+		core->srr[0] = core->pc;
+		core->srr[1] = core->msr & 0x87c0ffff;
+		break;
+	}
+	case PPC_EXC_DEC: { // .284
+		set_exception_stage2(core, PPC_EXC_DEC);
+		core->pc += 4;
+		core->phys_pc += 4;
+		return True;
+	}
+	default:
+		PPC_EXC_ERR("unknown\n");
+		core->pc += 4;
+		core->phys_pc += 4;
+		return False;
+	}
+	ppc_mmu_tlb_invalidate(core);
+	core->msr = 0;
+	core->pc = type;
+	core->phys_pc = type;
+	return True;
+}
+/* init thread clock for profile */
+static void ppc_dyncom_thread_clock_init()
+{
+	extern void *clock_thread(void*);
+	pthread_t thread;
+	int ret = pthread_create(&thread, NULL, clock_thread, NULL);
+	if(ret){
+		fprintf(stderr, "failed create timing thread\n");
+		exit(0);
+	}
 }
 
 static bool ppc_cpu_init()
@@ -102,6 +224,11 @@ static bool ppc_cpu_init()
 	for(i = 0; i < cpu->core_num; i++){
 		e500_core_t* core = &cpu->core[i];
 		ppc_core_init(core, i);
+		/* set exception funcion for dyncom */
+		core->ppc_exception = e600_dyncom_ppc_exception;
+		/* set dec_io_do_cycle funcion for dyncom */
+		core->dec_io_do_cycle = e600_dyncom_dec_io_do_cycles;
+
 		ppc_dyncom_init(core);
 
 		skyeye_exec_t* exec = create_exec();
@@ -112,6 +239,10 @@ static bool ppc_cpu_init()
 	}
 
 	cpu->boot_core_id = 0;
+#if THREAD_CLOCK
+	if(get_user_mode())
+		ppc_dyncom_thread_clock_init();
+#endif
 	/* initialize decoder */
 	ppc_dyncom_dec_init();
 	/* initialize decoder */
@@ -145,8 +276,8 @@ static void per_cpu_step(conf_object_t * running_core){
 			return;
 	}
 	debug(DEBUG_INTERFACE, "In %s, core[%d].pc=0x%x\n", __FUNCTION__, core->pir, core->pc);
-	//ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
-	launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->pc);	
+	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
+//	launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->pc);	
 }
 
 static void per_cpu_stop(conf_object_t * core){
@@ -347,7 +478,7 @@ init_ppc_dyncom ()
 	ppc_arch->ICE_read_byte = ppc_ICE_read_byte;
 	ppc_arch->parse_cpu = ppc_parse_cpu;
 	ppc_arch->get_regval_by_id = ppc_get_regval_by_id;
-        ppc_arch->get_regname_by_id = ppc_get_regname_by_id;
+	ppc_arch->get_regname_by_id = ppc_get_regname_by_id;
 	ppc_arch->get_regnum = ppc_get_regnum;
 	ppc_arch->mmu_read = ppc_mmu_read;
 	ppc_arch->mmu_write = ppc_mmu_write;
