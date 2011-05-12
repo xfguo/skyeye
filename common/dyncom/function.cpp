@@ -238,7 +238,15 @@ emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 	Constant *v_phys_pc = ConstantInt::get(intptr_type, (uintptr_t)cpu->rf.phys_pc);
 	cpu->ptr_PHYS_PC = ConstantExpr::getIntToPtr(v_phys_pc, PointerType::getUnqual(getIntegerType(cpu->info.address_size)));
 	cpu->ptr_PHYS_PC->setName("phys_pc");
+	/* Physical page base */
+	Constant *v_page_phys = ConstantInt::get(intptr_type, (uintptr_t)&cpu->current_page_phys);
+	cpu->ptr_CURRENT_PAGE_PHYS = ConstantExpr::getIntToPtr(v_page_phys, PointerType::getUnqual(getIntegerType(cpu->info.address_size)));
+	cpu->ptr_CURRENT_PAGE_PHYS->setName("current_page_phys");
 
+	/* Effective page base */
+	Constant *v_page_effec = ConstantInt::get(intptr_type, (uintptr_t)&cpu->current_page_effec);
+	cpu->ptr_CURRENT_PAGE_EFFEC = ConstantExpr::getIntToPtr(v_page_effec, PointerType::getUnqual(getIntegerType(cpu->info.address_size)));
+	cpu->ptr_CURRENT_PAGE_EFFEC->setName("current_page_effec");
 	// flags
 	if (cpu->info.psr_size != 0) {
 		// declare flags
