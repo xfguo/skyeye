@@ -74,6 +74,7 @@ typedef uint64_t    (*fp_get_psr)(struct cpu *cpu, void *regs);
 typedef int         (*fp_get_reg)(struct cpu *cpu, void *regs, unsigned reg_no, uint64_t *value);
 typedef int         (*fp_get_fp_reg)(struct cpu *cpu, void *regs, unsigned reg_no, void *value);
 // @@@END_DEPRECATION
+typedef int 		(*fp_effective_to_physical)(struct cpu *cpu, uint32_t addr, uint32_t *result);
 
 typedef struct {
 	fp_init init;
@@ -87,13 +88,14 @@ typedef struct {
 	fp_disasm_instr disasm_instr;
 	fp_translate_cond translate_cond;
 	fp_translate_instr translate_instr;
-        fp_translate_loop_helper translate_loop_helper;
+	fp_translate_loop_helper translate_loop_helper;
 // @@@BEGIN_DEPRECATION
 	// idbg support
 	fp_get_psr get_psr;
 	fp_get_reg get_reg;
 	fp_get_fp_reg get_fp_reg;
 // @@@END_DEPRECATION
+	fp_effective_to_physical effective_to_physical;
 } arch_func_t;
 
 enum {
@@ -235,10 +237,19 @@ typedef void (*debug_function_t)(cpu_t*);
  * pointer to CPU specific register struct
  */
 typedef void (*syscall_function_t)(cpu_t*, uint32_t);
+/*
+ * Callout function types
+ */
+typedef void (*callout)(cpu_t *);
+typedef void (*callout1)(cpu_t *, uint32_t);
+typedef void (*callout2)(cpu_t *, uint32_t, uint32_t);
+typedef void (*callout3)(cpu_t *, uint32_t, uint32_t, uint32_t);
+typedef void (*callout4)(cpu_t *, uint32_t, uint32_t, uint32_t, uint32_t);
 
 
 #define HASH_FAST_MAP
-#define HASH_FAST_MAP_SIZE 0x100000
+#define HASH_FAST_MAP_SIZE 0x1000000
+#define HASH_INDEX(phys_pc) (phys_pc & 0xffffff)
 typedef std::map<addr_t, BasicBlock *> bbaddr_map;
 typedef std::map<Function *, bbaddr_map> funcbb_map;
 #ifdef HASH_FAST_MAP
@@ -255,11 +266,12 @@ typedef struct compiled_func{
 	/* The bb set by tagging procedure */
 	vector<addr_t> startbb;
 }compiled_func_t;
+#define JIT_NUM 10240
 typedef struct dyncom_engine{
 	funcbb_map func_bb; // faster bb lookup
 
 	/* for every JIT, we will save its startbb */
-	vector<addr_t> startbb[1024];
+	vector<addr_t> startbb[JIT_NUM];
 	int cur_tagging_pos;
 	/* the lock for the compiled thread and running thread */
 	pthread_rwlock_t rwlock;
@@ -280,8 +292,8 @@ typedef struct dyncom_engine{
 	tag_t *tag;
 	bool tags_dirty;
 	Module *mod;
-	void *fp[1024];
-	Function *func[1024];
+	void *fp[JIT_NUM];
+	Function *func[JIT_NUM];
 	Function *cur_func;
 	fast_map fmap;
 	uint32_t functions;
@@ -309,9 +321,13 @@ typedef struct dyncom_engine{
 	/* arch functions are for each architecture to declare it's own functions
 	   which can be invoked in llvm IR.Usually,the functions to be invoked are
 	   C functions which are complex to be implemented by llvm IR.
-	   DEFAULT:ptr_arch_func[0] is debug function.*/
+	   DEFAULT:
+	   ptr_arch_func[0] is debug function.
+	   ptr_arch_func[1] is syscall function for user mode simulation.
+	   SO in your architecture, you can use callout function from 2 */
 	#define MAX_ARCH_FUNC_NUM 5
 	Value *ptr_arch_func[MAX_ARCH_FUNC_NUM];
+	void *arch_func[MAX_ARCH_FUNC_NUM];
 }dyncom_engine_t;
 
 typedef struct cpu {
@@ -322,7 +338,21 @@ typedef struct cpu {
 
 	uint16_t pc_offset;
 
+	/* icounter and old_icounter are used in kernel simulation, for
+	 * we should use them to count the cycles to reponse the interrupt
+	 * and exception. ANY more efficacious way? */
+#define TIMEOUT_THRESHOLD 10000
 	uint64_t icounter;/* instruction counter */
+	uint64_t old_icounter;/* old instruction counter */
+	uint32_t is_user_mode;
+	/**
+	 * current_page: for translation use. Translate the instructions
+	 * within the page, for we cannot determine instructions out of the
+	 * page is valid or not. It is flushed return from JIT Function. */
+	addr_t current_page_phys;
+	addr_t current_page_effec;
+	Value *ptr_CURRENT_PAGE_PHYS;
+	Value *ptr_CURRENT_PAGE_EFFEC;
 
 	bool redirection;
 
@@ -360,7 +390,8 @@ enum {
 	JIT_RETURN_NOERR = 0,
 	JIT_RETURN_FUNCNOTFOUND,
 	JIT_RETURN_SINGLESTEP,
-	JIT_RETURN_TRAP
+	JIT_RETURN_TRAP,
+	JIT_RETURN_TIMEOUT
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -429,4 +460,8 @@ API_FUNC void cpu_print_statistics(cpu_t *cpu);
 /* runs the interactive debugger */
 API_FUNC int cpu_debugger(cpu_t *cpu, debug_function_t debug_function);
 
+static inline int is_user_mode(cpu_t *cpu)
+{
+	return cpu->is_user_mode;
+}
 #endif
