@@ -39,9 +39,11 @@
 // DFS limit when CPU_CODEGEN_TAG_LIMIT is set by the client.
 // '6' is the optimum for OpenBSD's 'date' on M88K.
 #define LIMIT_TAGGING_DFS 2
+/* FAST_MEMORY is only used in user mode simulation */
 #define FAST_MEMORY
 
 #define ENABLE_DEBUG_ME 0
+/* Running kernel should set ENABLE_ICOUNTER */
 #define ENABLE_ICOUNTER 0
 
 /* Micros of time prifile */
