@@ -32,7 +32,6 @@
 #include "ppc_cpu.h"
 #include "ppc_dyncom.h"
 #include "ppc_dyncom_run.h"
-#include "dyncom/memory.h"
 #include "bank_defs.h"
 #include "skyeye_ram.h"
 #include "ppc_dyncom_debug.h"
@@ -57,7 +56,18 @@ e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 	return core;
 }
-
+static bool_t is_inside_page(cpu_t *cpu, addr_t a)
+{
+	return ((a & 0xfffff000) == cpu->current_page_phys) ? True : False;
+}
+static bool_t is_page_start(addr_t a)
+{
+	return ((a & 0x00000fff) == 0x0) ? True : False;
+}
+static bool_t is_page_end(addr_t a)
+{
+	return ((a & 0x00000fff) == 0xffc) ? True : False;
+}
 static uint32_t ppc_read_memory(cpu_t *cpu, addr_t addr, uint32_t size){
 	uint32_t result, ret;
 	uint8_t result_8;
@@ -191,6 +201,13 @@ static arch_func_t powerpc_arch_func = {
 	arch_powerpc_get_psr,
 	arch_powerpc_get_reg,
 	NULL,
+};
+static arch_mem_ops_t ppc_dyncom_mem_ops = {
+	is_inside_page,
+	is_page_start,
+	is_page_end,
+	ppc_read_memory,
+	ppc_write_memory,
 	arch_powerpc_effective_to_physical
 };
 
@@ -372,6 +389,7 @@ void ppc_dyncom_init(e500_core_t* core){
 		cpu->dyncom_engine->code_entry = 0x00000000;
 		cpu->dyncom_engine->code_end = 0x11000000;
 	}
+	cpu->mem_ops = ppc_dyncom_mem_ops;
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
 	/* Initilize different register set for different core */
 	cpu->rf.pc = &core->pc;
@@ -405,8 +423,6 @@ void ppc_dyncom_init(e500_core_t* core){
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 #ifdef FAST_MEMORY
 	cpu->dyncom_engine->RAM = (uint8_t*)get_dma_addr(0);
-#else
-	set_memory_operator(ppc_read_memory, ppc_write_memory);
 #endif
 	init_compiled_queue(cpu);
 	return;
