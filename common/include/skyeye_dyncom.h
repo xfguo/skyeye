@@ -74,7 +74,6 @@ typedef uint64_t    (*fp_get_psr)(struct cpu *cpu, void *regs);
 typedef int         (*fp_get_reg)(struct cpu *cpu, void *regs, unsigned reg_no, uint64_t *value);
 typedef int         (*fp_get_fp_reg)(struct cpu *cpu, void *regs, unsigned reg_no, void *value);
 // @@@END_DEPRECATION
-typedef int 		(*fp_effective_to_physical)(struct cpu *cpu, uint32_t addr, uint32_t *result);
 
 typedef struct {
 	fp_init init;
@@ -95,8 +94,22 @@ typedef struct {
 	fp_get_reg get_reg;
 	fp_get_fp_reg get_fp_reg;
 // @@@END_DEPRECATION
-	fp_effective_to_physical effective_to_physical;
 } arch_func_t;
+
+typedef bool_t			(*fp_is_inside_page)(cpu_t *cpu, addr_t addr);
+typedef bool_t			(*fp_is_page_start)(addr_t addr);
+typedef bool_t			(*fp_is_page_end)(addr_t addr);
+typedef uint32_t 		(*fp_read_memory_t)(cpu_t *cpu, addr_t addr, uint32_t size);
+typedef void 			(*fp_write_memory_t)(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size);
+typedef int				(*fp_effective_to_physical)(struct cpu *cpu, uint32_t addr, uint32_t *result);
+typedef struct {
+	fp_is_inside_page is_inside_page;
+	fp_is_page_start is_page_start;
+	fp_is_page_end is_page_end;
+	fp_read_memory_t read_memory;
+	fp_write_memory_t write_memory;
+	fp_effective_to_physical effective_to_physical;
+} arch_mem_ops_t;
 
 enum {
 	CPU_FLAG_ENDIAN_MASK   = (3 << 1),
@@ -335,6 +348,7 @@ typedef struct cpu {
 	cpu_archrf_t rf;
 	conf_object_t* cpu_data;
 	arch_func_t f;
+	arch_mem_ops_t mem_ops;
 
 	uint16_t pc_offset;
 

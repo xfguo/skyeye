@@ -64,10 +64,6 @@ void xor_tag(cpu_t *cpu, addr_t a, tag_t t);
 bool is_inside_code_area(cpu_t *cpu, addr_t a);
 bool is_code(cpu_t *cpu, addr_t a);
 void tag_start(cpu_t *cpu, addr_t pc);
-bool is_inside_page(cpu_t *cpu, addr_t a);
-bool is_start_page(addr_t a);
-bool is_end_page(addr_t a);
-
 /*
  * NEW_PC_NONE states that the destination of a call is unknown.
  * If the bitness of the guest is less than that of the host, this

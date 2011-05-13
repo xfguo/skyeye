@@ -29,7 +29,6 @@
 #include "optimize.h"
 #include "stat.h"
 
-#include "dyncom/memory.h"
 #include "skyeye_log.h"
 #include "skyeye.h"
 
@@ -409,7 +408,7 @@ cpu_translate(cpu_t *cpu, addr_t addr)
 }
 
 //typedef int (*fp_t)(uint8_t *RAM, void *grf, void *frf, read_memory_t readfp, write_memory_t writefp);
-typedef int (*fp_t)(uint8_t *RAM, void *grf, void *srf, void *frf, read_memory_t readfp, write_memory_t writefp);
+typedef int (*fp_t)(uint8_t *RAM, void *grf, void *srf, void *frf, fp_read_memory_t readfp, fp_write_memory_t writefp);
 
 #ifdef __GNUC__
 void __attribute__((noinline))
@@ -444,7 +443,7 @@ cpu_run(cpu_t *cpu)
 	/* try to find the entry in all functions */
 	while(true) {
 		pc = cpu->f.get_pc(cpu, cpu->rf.grf);
-		cpu->f.effective_to_physical(cpu, pc, &phys_pc);
+		cpu->mem_ops.effective_to_physical(cpu, pc, &phys_pc);
 		*(addr_t*)cpu->rf.phys_pc = phys_pc;
 		if(!is_user_mode(cpu)){
 			cpu->current_page_phys = phys_pc & 0xfffff000;
@@ -471,7 +470,7 @@ cpu_run(cpu_t *cpu)
 		}
 #endif
 		UPDATE_TIMING(cpu, TIMER_RUN, true);
-		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, read_memory, write_memory);
+		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, cpu->mem_ops.read_memory, cpu->mem_ops.write_memory);
 		UPDATE_TIMING(cpu, TIMER_RUN, false);
 		if (ret != JIT_RETURN_FUNCNOTFOUND)
 			return ret;

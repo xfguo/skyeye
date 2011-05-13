@@ -172,18 +172,6 @@ is_inside_code_area(cpu_t *cpu, addr_t a)
 {
 	return a >= cpu->dyncom_engine->code_start && a < cpu->dyncom_engine->code_end;
 }
-bool
-is_inside_page(cpu_t *cpu, addr_t a){
-	return (a & 0xfffff000) == cpu->current_page_phys;
-}
-bool
-is_start_page(addr_t a){
-	return (a & 0x00000fff) == 0x0;
-}
-bool
-is_end_page(addr_t a){
-	return (a & 0x00000fff) == 0xffc;
-}
 /**
  * @brief Give a tag to an address
  *
@@ -312,7 +300,7 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 		cpu->dyncom_engine->tag_start = pc;
 	}
 	for(;;) {
-		if(!is_inside_page(cpu, pc) && !is_user_mode(cpu))
+		if(!cpu->mem_ops.is_inside_page(cpu, pc) && !is_user_mode(cpu))
 			return;
 		if (!is_inside_code_area(cpu, pc)){
 			LOG("In %s pc = %x start = %x end = %x\n",
@@ -387,9 +375,9 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 			or_tag(cpu, pc, tag | TAG_STOP | TAG_LAST_INST);
 			//return;
 		}
-		if(is_start_page(pc) && !is_user_mode(cpu))
+		if(cpu->mem_ops.is_page_start(pc) && !is_user_mode(cpu))
 			or_tag(cpu, pc, tag | TAG_START_PAGE);
-		if(is_end_page(pc) && !is_user_mode(cpu)){
+		if(cpu->mem_ops.is_page_end(pc) && !is_user_mode(cpu)){
 			or_tag(cpu, pc, tag | TAG_STOP | TAG_END_PAGE);
 			xor_tag(cpu, pc, TAG_CONTINUE);
 			break;
