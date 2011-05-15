@@ -26,17 +26,19 @@
 
 static inline uint32 ppc_bswap_word(uint32 data)
 {
-	return (data>>24)|((data>>8)&0xff00)|((data<<8)&0xff0000)|(data<<24);
+	return (data >> 24) | ((data >> 8) & 0xff00) | ((data << 8) & 0xff0000)
+	    | (data << 24);
 }
 
 static inline uint64 ppc_bswap_dword(uint64 data)
 {
-	return (((uint64)ppc_bswap_word(data)) << 32) | (uint64)ppc_bswap_word(data >> 32);
+	return (((uint64) ppc_bswap_word(data)) << 32) | (uint64)
+	    ppc_bswap_word(data >> 32);
 }
 
 static inline uint16 ppc_bswap_half(uint16 data)
 {
-	return (data<<8)|(data>>8);
+	return (data << 8) | (data >> 8);
 }
 
 #if HOST_ENDIANESS == HOST_ENDIANESS_LE

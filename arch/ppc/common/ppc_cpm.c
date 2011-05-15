@@ -28,5 +28,3 @@
 #include "ppc_e500_exc.h"
 #include "types.h"
 #include "sysendian.h"
-
-

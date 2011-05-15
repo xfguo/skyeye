@@ -25,10 +25,10 @@
 #include "ppc_fpu.h"
 static inline bool_t ppc_carry_3(uint32 a, uint32 b, uint32 c)
 {
-	if ((a+b) < a) {
+	if ((a + b) < a) {
 		return True;
 	}
-	if ((a+b+c) < c) {
+	if ((a + b + c) < c) {
 		return True;
 	}
 	return False;
@@ -37,17 +37,17 @@ static inline bool_t ppc_carry_3(uint32 a, uint32 b, uint32 c)
 static inline uint32 ppc_word_rotl(uint32 data, int n)
 {
 	n &= 0x1f;
-	return (data << n) | (data >> (32-n));
+	return (data << n) | (data >> (32 - n));
 }
 
-void ppc_fpu_single_to_double(ppc_single *s, ppc_double *d); 
-uint32 ppc_fpu_pack_single(ppc_double *d, uint32 *res);
-void ppc_fpu_unpack_single(ppc_single *res, uint32 d);
-uint32 ppc_fpu_pack_double(ppc_double *d, uint64 *res);
-uint32 ppc_fpu_unpack_double(ppc_double *d, uint64 *res);
-int ppc_fpu_normalize(ppc_double *d);
-int ppc_fpu_normalize_single(ppc_single *s);
-int ppc_fpu_normalize_quadro(ppc_quadro *d);
-uint32 ppc_fpu_pack_double_as_single(ppc_double *d, uint64 *res);
-uint32 ppc_fpu_double_to_int(ppc_double *d);
+void ppc_fpu_single_to_double(ppc_single * s, ppc_double * d);
+uint32 ppc_fpu_pack_single(ppc_double * d, uint32 * res);
+void ppc_fpu_unpack_single(ppc_single * res, uint32 d);
+uint32 ppc_fpu_pack_double(ppc_double * d, uint64 * res);
+uint32 ppc_fpu_unpack_double(ppc_double * d, uint64 * res);
+int ppc_fpu_normalize(ppc_double * d);
+int ppc_fpu_normalize_single(ppc_single * s);
+int ppc_fpu_normalize_quadro(ppc_quadro * d);
+uint32 ppc_fpu_pack_double_as_single(ppc_double * d, uint64 * res);
+uint32 ppc_fpu_double_to_int(ppc_double * d);
 #endif

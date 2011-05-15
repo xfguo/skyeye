@@ -102,4 +102,3 @@ void ppc_opc_iselgt();
 void ppc_opc_isel();
 void ppc_opc_tlbsx();
 #endif
- 

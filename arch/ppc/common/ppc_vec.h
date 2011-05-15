@@ -17,7 +17,7 @@
  *	along with this program; if not, write to the Free Software
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #ifndef __PPC_VEC_H__
 #define __PPC_VEC_H__
 
@@ -63,10 +63,10 @@
 #error Endianess not supported!
 #endif
 
-//#define VECTOR_DEBUG	fprintf(stderr, "[PPC/VEC] %s\n", __FUNCTION__)
+//#define VECTOR_DEBUG  fprintf(stderr, "[PPC/VEC] %s\n", __FUNCTION__)
 #define VECTOR_DEBUG
 
-//#define VECTOR_DEBUG_COMMON	fprintf(stderr, "[PPC/VEC] %s\n", __FUNCTION__)
+//#define VECTOR_DEBUG_COMMON   fprintf(stderr, "[PPC/VEC] %s\n", __FUNCTION__)
 #define VECTOR_DEBUG_COMMON
 
 /* Undefine this to turn of the MSR_VEC check for vector instructions. */

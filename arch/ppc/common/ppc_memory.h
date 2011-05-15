@@ -22,8 +22,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 //byte boot_rom[8 * 1024 * 1024];/* default 8M boot rom for e500 core */
 #define INIT_RAM_SIZE 0x4000
-extern uint8 * init_ram; /* 16k init ram for 8560 */
-extern uint8 * boot_rom; /* default 8M bootrom for 8560 */
+extern uint8 *init_ram;		/* 16k init ram for 8560 */
+extern uint8 *boot_rom;		/* default 8M bootrom for 8560 */
 extern unsigned long init_ram_start_addr, init_ram_size;
 extern uint32 boot_romSize;
 extern uint32 boot_rom_start_addr;

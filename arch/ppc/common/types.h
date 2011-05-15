@@ -5,10 +5,10 @@
 #include <stdint.h>
 
 #ifndef __BEOS__
-typedef enum{
+typedef enum {
 	false = 0,
 	true = 1
-}bool;
+} bool;
 
 #define uint64 uint64_t
 #define uint32 uint32_t
@@ -28,15 +28,15 @@ typedef enum{
 #define uint uint32_t
 
 typedef struct uint128 {
-        uint64 l;
-        uint64 h;
+	uint64 l;
+	uint64 h;
 } uint128;
 typedef struct sint128 {
-        sint64 l;
-        sint64 h;
+	sint64 l;
+	sint64 h;
 } sint128;
 
-#define FASTCALL 
+#define FASTCALL
 
 #define IO_MEM_ACCESS_OK        0
 #define IO_MEM_ACCESS_EXC       1

@@ -27,39 +27,39 @@
 #if 0
 /* 0x91a00-0x91a9f: SCC1-SCC4 */
 typedef struct cpm_scc_s {
-        uint32    gsmrl;
-        uint32    gsmrh;
-        uint16  psmr;
-        char    res1[2];
-        uint16  todr;
-        uint16  dsr;
-        uint16  scce;
-        char    res2[2];
-        uint16  sccm;
-        char    res3;
-        uint8  sccs;
-        char    res4[8];
+	uint32 gsmrl;
+	uint32 gsmrh;
+	uint16 psmr;
+	char res1[2];
+	uint16 todr;
+	uint16 dsr;
+	uint16 scce;
+	char res2[2];
+	uint16 sccm;
+	char res3;
+	uint8 sccs;
+	char res4[8];
 } cpm_scc_t;
 
-typedef struct cpm_mux_s{
+typedef struct cpm_mux_s {
 	uint32_t cmxfcr;
 	uint32_t cmxscr;
 } cpm_mux_t;
-typedef struct cpm_ioport_s{
+typedef struct cpm_ioport_s {
 	uint32_t pdira;
 	uint32_t ppara;
 	uint32_t psora;
 	uint32_t podra;
 	uint32_t pdata;
 	uint32_t pdirb;
-        uint32_t pparb;
-        uint32_t psorb;
-        uint32_t podrb;
+	uint32_t pparb;
+	uint32_t psorb;
+	uint32_t podrb;
 	uint32_t pdatb;
 	uint32_t pdirc;
-        uint32_t pparc;
-        uint32_t psorc;
-        uint32_t podrc;
+	uint32_t pparc;
+	uint32_t psorc;
+	uint32_t podrc;
 	uint32_t pdatc;
 	uint32_t pdird;
 	uint32_t ppard;
@@ -68,7 +68,7 @@ typedef struct cpm_ioport_s{
 	uint32_t pdatd;
 } cpm_ioport_t;
 
-typedef struct cpm_int_ctrl_s{
+typedef struct cpm_int_ctrl_s {
 	uint32 sicr;
 	uint32 sipnr_h;
 	uint32 sipnr_l;
@@ -76,18 +76,18 @@ typedef struct cpm_int_ctrl_s{
 	uint32 scprr_l;
 	uint32 simr_h;
 	uint32 simr_l;
-}cpm_int_ctrl_t;
+} cpm_int_ctrl_t;
 
-typedef struct ppc_cpm_s{
+typedef struct ppc_cpm_s {
 	uint32_t cpcr;
 	uint32_t rccr;
 	uint32_t rter;
 	uint32_t rtmr;
 	uint32_t rtscr;
 	uint32_t rtsr;
-	
+
 	byte *dpram;
-	byte *iram; /* instruction RAM */
+	byte *iram;		/* instruction RAM */
 	cpm_scc_t scc[4];
 	cpm_mux_t mux;
 	cpm_int_ctrl_t int_ctrl;

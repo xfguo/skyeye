@@ -26,7 +26,8 @@
 /*
  *	Debugger Interface
  */
-void ppc_set_singlestep_v(bool_t v, const char *file, int line, const char *infoformat, ...);
+void ppc_set_singlestep_v(bool_t v, const char *file, int line,
+			  const char *infoformat, ...);
 void ppc_set_singlestep_nonverbose(bool_t v);
 
 #define SINGLESTEP(info...)	ppc_set_singlestep_v(true, __FILE__, __LINE__, info)

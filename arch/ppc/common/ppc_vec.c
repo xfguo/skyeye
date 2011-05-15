@@ -17,7 +17,7 @@
  *	along with this program; if not, write to the Free Software
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 /*	Pages marked: v.???
  *	From: IBM PowerPC MicroProcessor Family: Altivec(tm) Technology...
  *		Programming Environments Manual
@@ -30,7 +30,7 @@
  */
 #ifndef HAS_LOG2
 #define log2(x) log(x)/log(2)
-#endif /* HAS_LOG2 */ 
+#endif /* HAS_LOG2 */
 
 #ifndef HAS_EXP2
 #define exp2(x)	pow(2, x)
@@ -49,9 +49,8 @@
  */
 static inline uint16 PACK_PIXEL(uint32 clr)
 {
-	return	(((clr & 0x000000f8) >> 3) | \
-		 ((clr & 0x0000f800) >> 6) | \
-		 ((clr & 0x01f80000) >> 9));
+	return (((clr & 0x000000f8) >> 3) |
+		((clr & 0x0000f800) >> 6) | ((clr & 0x01f80000) >> 9));
 }
 
 /*	UNPACK_PIXEL	Unpacks a uint16 pixel to uint32 pixel
@@ -59,24 +58,25 @@ static inline uint16 PACK_PIXEL(uint32 clr)
  */
 static inline uint32 UNPACK_PIXEL(uint16 clr)
 {
-	return	(((uint32)(clr & 0x001f)) | \
-		 ((uint32)(clr & 0x03E0) << 3) | \
-		 ((uint32)(clr & 0x7c00) << 6) | \
-		 (((clr) & 0x8000) ? 0xff000000 : 0));
+	return (((uint32) (clr & 0x001f)) |
+		((uint32) (clr & 0x03E0) << 3) |
+		((uint32) (clr & 0x7c00) << 6) |
+		(((clr) & 0x8000) ? 0xff000000 : 0));
 }
 
 static inline uint8 SATURATE_UB(uint16 val)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	if (val & 0xff00) {
 		current_core->vscr |= VSCR_SAT;
 		return 0xff;
 	}
 	return val;
 }
+
 static inline uint8 SATURATE_0B(uint16 val)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	if (val & 0xff00) {
 		current_core->vscr |= VSCR_SAT;
 		return 0;
@@ -86,7 +86,7 @@ static inline uint8 SATURATE_0B(uint16 val)
 
 static inline uint16 SATURATE_UH(uint32 val)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	if (val & 0xffff0000) {
 		current_core->vscr |= VSCR_SAT;
 		return 0xffff;
@@ -96,7 +96,7 @@ static inline uint16 SATURATE_UH(uint32 val)
 
 static inline uint16 SATURATE_0H(uint32 val)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	if (val & 0xffff0000) {
 		current_core->vscr |= VSCR_SAT;
 		return 0;
@@ -106,11 +106,11 @@ static inline uint16 SATURATE_0H(uint32 val)
 
 static inline sint8 SATURATE_SB(sint16 val)
 {
-	e500_core_t* current_core = get_current_core();
-	if (val > 127) {			// 0x7F
+	e500_core_t *current_core = get_current_core();
+	if (val > 127) {	// 0x7F
 		current_core->vscr |= VSCR_SAT;
 		return 127;
-	} else if (val < -128) {		// 0x80
+	} else if (val < -128) {	// 0x80
 		current_core->vscr |= VSCR_SAT;
 		return -128;
 	}
@@ -119,7 +119,7 @@ static inline sint8 SATURATE_SB(sint16 val)
 
 static inline uint8 SATURATE_USB(sint16 val)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	if (val > 0xff) {
 		current_core->vscr |= VSCR_SAT;
 		return 0xff;
@@ -127,16 +127,16 @@ static inline uint8 SATURATE_USB(sint16 val)
 		current_core->vscr |= VSCR_SAT;
 		return 0;
 	}
-	return (uint8)val;
+	return (uint8) val;
 }
 
 static inline sint16 SATURATE_SH(sint32 val)
 {
-	e500_core_t* current_core = get_current_core();
-	if (val > 32767) {			// 0x7fff
+	e500_core_t *current_core = get_current_core();
+	if (val > 32767) {	// 0x7fff
 		current_core->vscr |= VSCR_SAT;
 		return 32767;
-	} else if (val < -32768) {		// 0x8000
+	} else if (val < -32768) {	// 0x8000
 		current_core->vscr |= VSCR_SAT;
 		return -32768;
 	}
@@ -145,7 +145,7 @@ static inline sint16 SATURATE_SH(sint32 val)
 
 static inline uint16 SATURATE_USH(sint32 val)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	if (val > 0xffff) {
 		current_core->vscr |= VSCR_SAT;
 		return 0xffff;
@@ -153,12 +153,12 @@ static inline uint16 SATURATE_USH(sint32 val)
 		current_core->vscr |= VSCR_SAT;
 		return 0;
 	}
-	return (uint16)val;
+	return (uint16) val;
 }
 
 static inline sint32 SATURATE_UW(sint64 val)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	if (val > 0xffffffffLL) {
 		current_core->vscr |= VSCR_SAT;
 		return 0xffffffffLL;
@@ -168,11 +168,11 @@ static inline sint32 SATURATE_UW(sint64 val)
 
 static inline sint32 SATURATE_SW(sint64 val)
 {
-	e500_core_t* current_core = get_current_core();
-	if (val > 2147483647LL) {			// 0x7fffffff
+	e500_core_t *current_core = get_current_core();
+	if (val > 2147483647LL) {	// 0x7fffffff
 		current_core->vscr |= VSCR_SAT;
 		return 2147483647LL;
-	} else if (val < -2147483648LL) {		// 0x80000000
+	} else if (val < -2147483648LL) {	// 0x80000000
 		current_core->vscr |= VSCR_SAT;
 		return -2147483648LL;
 	}
@@ -184,14 +184,14 @@ static inline sint32 SATURATE_SW(sint64 val)
  */
 void ppc_opc_vperm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrA, vrB, vrC;
 	int sel;
 	Vector_t r;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		sel = current_core->vr[vrC].b[i];
 		if (sel & 0x10)
 			r.b[i] = VECT_B(current_core->vr[vrB], sel & 0xf);
@@ -207,7 +207,7 @@ void ppc_opc_vperm()
  */
 void ppc_opc_vsel()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	uint64 mask, val;
@@ -229,13 +229,15 @@ void ppc_opc_vsel()
  */
 void ppc_opc_vsrb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for ( i=0; i<16; i++) {
-		current_core->vr[vrD].b[i] = current_core->vr[vrA].b[i] >> (current_core->vr[vrB].b[i] & 0x7);
+	for (i = 0; i < 16; i++) {
+		current_core->vr[vrD].b[i] =
+		    current_core->vr[vrA].b[i] >> (current_core->vr[vrB].
+						   b[i] & 0x7);
 	}
 }
 
@@ -244,13 +246,15 @@ void ppc_opc_vsrb()
  */
 void ppc_opc_vsrh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		current_core->vr[vrD].h[i] = current_core->vr[vrA].h[i] >> (current_core->vr[vrB].h[i] & 0xf);
+	for (i = 0; i < 8; i++) {
+		current_core->vr[vrD].h[i] =
+		    current_core->vr[vrA].h[i] >> (current_core->vr[vrB].
+						   h[i] & 0xf);
 	}
 }
 
@@ -259,13 +263,15 @@ void ppc_opc_vsrh()
  */
 void ppc_opc_vsrw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		current_core->vr[vrD].w[i] = current_core->vr[vrA].w[i] >> (current_core->vr[vrB].w[i] & 0x1f);
+	for (i = 0; i < 4; i++) {
+		current_core->vr[vrD].w[i] =
+		    current_core->vr[vrA].w[i] >> (current_core->vr[vrB].
+						   w[i] & 0x1f);
 	}
 }
 
@@ -274,13 +280,15 @@ void ppc_opc_vsrw()
  */
 void ppc_opc_vsrab()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
-		current_core->vr[vrD].sb[i] = current_core->vr[vrA].sb[i] >> (current_core->vr[vrB].b[i] & 0x7);
+	for (i = 0; i < 16; i++) {
+		current_core->vr[vrD].sb[i] =
+		    current_core->vr[vrA].sb[i] >> (current_core->vr[vrB].
+						    b[i] & 0x7);
 	}
 }
 
@@ -289,13 +297,15 @@ void ppc_opc_vsrab()
  */
 void ppc_opc_vsrah()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		current_core->vr[vrD].sh[i] = current_core->vr[vrA].sh[i] >> (current_core->vr[vrB].h[i] & 0xf);
+	for (i = 0; i < 8; i++) {
+		current_core->vr[vrD].sh[i] =
+		    current_core->vr[vrA].sh[i] >> (current_core->vr[vrB].
+						    h[i] & 0xf);
 	}
 }
 
@@ -304,13 +314,15 @@ void ppc_opc_vsrah()
  */
 void ppc_opc_vsraw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		current_core->vr[vrD].sw[i] = current_core->vr[vrA].sw[i] >> (current_core->vr[vrB].w[i] & 0x1f);
+	for (i = 0; i < 4; i++) {
+		current_core->vr[vrD].sw[i] =
+		    current_core->vr[vrA].sw[i] >> (current_core->vr[vrB].
+						    w[i] & 0x1f);
 	}
 }
 
@@ -319,13 +331,15 @@ void ppc_opc_vsraw()
  */
 void ppc_opc_vslb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
-		current_core->vr[vrD].b[i] = current_core->vr[vrA].b[i] << (current_core->vr[vrB].b[i] & 0x7);
+	for (i = 0; i < 16; i++) {
+		current_core->vr[vrD].b[i] =
+		    current_core->vr[vrA].b[i] << (current_core->vr[vrB].
+						   b[i] & 0x7);
 	}
 }
 
@@ -334,13 +348,15 @@ void ppc_opc_vslb()
  */
 void ppc_opc_vslh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		current_core->vr[vrD].h[i] = current_core->vr[vrA].h[i] << (current_core->vr[vrB].h[i] & 0xf);
+	for (i = 0; i < 8; i++) {
+		current_core->vr[vrD].h[i] =
+		    current_core->vr[vrA].h[i] << (current_core->vr[vrB].
+						   h[i] & 0xf);
 	}
 }
 
@@ -349,13 +365,15 @@ void ppc_opc_vslh()
  */
 void ppc_opc_vslw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		current_core->vr[vrD].w[i] = current_core->vr[vrA].w[i] << (current_core->vr[vrB].w[i] & 0x1f);
+	for (i = 0; i < 4; i++) {
+		current_core->vr[vrD].w[i] =
+		    current_core->vr[vrA].w[i] << (current_core->vr[vrB].
+						   w[i] & 0x1f);
 	}
 }
 
@@ -364,7 +382,7 @@ void ppc_opc_vslw()
  */
 void ppc_opc_vsr()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -390,7 +408,7 @@ void ppc_opc_vsr()
  */
 void ppc_opc_vsro()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -399,20 +417,20 @@ void ppc_opc_vsro()
 
 	shift = (current_core->vr[vrB].w[0] >> 3) & 0xf;
 #if HOST_ENDIANESS == HOST_ENDIANESS_LE
-	for (i=0; i<(16-shift); i++) {
-		r.b[i] = current_core->vr[vrA].b[i+shift];
+	for (i = 0; i < (16 - shift); i++) {
+		r.b[i] = current_core->vr[vrA].b[i + shift];
 	}
 
-	for (; i<16; i++) {
+	for (; i < 16; i++) {
 		r.b[i] = 0;
 	}
 #elif HOST_ENDIANESS == HOST_ENDIANESS_BE
-	for (i=0; i<shift; i++) {
+	for (i = 0; i < shift; i++) {
 		r.b[i] = 0;
 	}
 
-	for (; i<16; i++) {
-		r.b[i] = current_core->vr[vrA].b[i-shift];
+	for (; i < 16; i++) {
+		r.b[i] = current_core->vr[vrA].b[i - shift];
 	}
 #else
 #error Endianess not supported!
@@ -426,7 +444,7 @@ void ppc_opc_vsro()
  */
 void ppc_opc_vsl()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -452,7 +470,7 @@ void ppc_opc_vsl()
  */
 void ppc_opc_vslo()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -461,19 +479,19 @@ void ppc_opc_vslo()
 
 	shift = (current_core->vr[vrB].w[0] >> 3) & 0xf;
 #if HOST_ENDIANESS == HOST_ENDIANESS_LE
-	for (i=0; i<shift; i++) {
+	for (i = 0; i < shift; i++) {
 		r.b[i] = 0;
 	}
 
-	for (; i<16; i++) {
-		r.b[i] = current_core->vr[vrA].b[i-shift];
+	for (; i < 16; i++) {
+		r.b[i] = current_core->vr[vrA].b[i - shift];
 	}
 #elif HOST_ENDIANESS == HOST_ENDIANESS_BE
-	for (i=0; i<(16-shift); i++) {
-		r.b[i] = current_core->vr[vrA].b[i+shift];
+	for (i = 0; i < (16 - shift); i++) {
+		r.b[i] = current_core->vr[vrA].b[i + shift];
 	}
 
-	for (; i<16; i++) {
+	for (; i < 16; i++) {
 		r.b[i] = 0;
 	}
 #else
@@ -488,7 +506,7 @@ void ppc_opc_vslo()
  */
 void ppc_opc_vsldoi()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrA, vrB, shift, ashift;
 	int i;
@@ -499,20 +517,20 @@ void ppc_opc_vsldoi()
 	ashift = 16 - shift;
 
 #if HOST_ENDIANESS == HOST_ENDIANESS_LE
-	for (i=0; i<shift; i++) {
-		r.b[i] = current_core->vr[vrB].b[i+ashift];
+	for (i = 0; i < shift; i++) {
+		r.b[i] = current_core->vr[vrB].b[i + ashift];
 	}
 
-	for (; i<16; i++) {
-		r.b[i] = current_core->vr[vrA].b[i-shift];
+	for (; i < 16; i++) {
+		r.b[i] = current_core->vr[vrA].b[i - shift];
 	}
 #elif HOST_ENDIANESS == HOST_ENDIANESS_BE
-	for (i=0; i<ashift; i++) {
-		r.b[i] = current_core->vr[vrA].b[i+shift];
+	for (i = 0; i < ashift; i++) {
+		r.b[i] = current_core->vr[vrA].b[i + shift];
 	}
 
-	for (; i<16; i++) {
-		r.b[i] = current_core->vr[vrB].b[i-ashift];
+	for (; i < 16; i++) {
+		r.b[i] = current_core->vr[vrB].b[i - ashift];
 	}
 #else
 #error Endianess not supported!
@@ -526,13 +544,13 @@ void ppc_opc_vsldoi()
  */
 void ppc_opc_vrlb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, shift;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		shift = (current_core->vr[vrB].b[i] & 0x7);
 
 		r.b[i] = current_core->vr[vrA].b[i] << shift;
@@ -547,13 +565,13 @@ void ppc_opc_vrlb()
  */
 void ppc_opc_vrlh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, shift;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		shift = (current_core->vr[vrB].h[i] & 0xf);
 
 		r.h[i] = current_core->vr[vrA].h[i] << shift;
@@ -568,13 +586,13 @@ void ppc_opc_vrlh()
  */
 void ppc_opc_vrlw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, shift;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		shift = (current_core->vr[vrB].w[i] & 0x1F);
 
 		r.w[i] = current_core->vr[vrA].w[i] << shift;
@@ -594,7 +612,7 @@ void ppc_opc_vrlw()
  */
 void ppc_opc_vmrghb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -610,12 +628,12 @@ void ppc_opc_vmrghb()
 	VECT_B(r, 7) = VECT_B(current_core->vr[vrB], 3);
 	VECT_B(r, 8) = VECT_B(current_core->vr[vrA], 4);
 	VECT_B(r, 9) = VECT_B(current_core->vr[vrB], 4);
-	VECT_B(r,10) = VECT_B(current_core->vr[vrA], 5);
-	VECT_B(r,11) = VECT_B(current_core->vr[vrB], 5);
-	VECT_B(r,12) = VECT_B(current_core->vr[vrA], 6);
-	VECT_B(r,13) = VECT_B(current_core->vr[vrB], 6);
-	VECT_B(r,14) = VECT_B(current_core->vr[vrA], 7);
-	VECT_B(r,15) = VECT_B(current_core->vr[vrB], 7);
+	VECT_B(r, 10) = VECT_B(current_core->vr[vrA], 5);
+	VECT_B(r, 11) = VECT_B(current_core->vr[vrB], 5);
+	VECT_B(r, 12) = VECT_B(current_core->vr[vrA], 6);
+	VECT_B(r, 13) = VECT_B(current_core->vr[vrB], 6);
+	VECT_B(r, 14) = VECT_B(current_core->vr[vrA], 7);
+	VECT_B(r, 15) = VECT_B(current_core->vr[vrB], 7);
 
 	current_core->vr[vrD] = r;
 }
@@ -625,7 +643,7 @@ void ppc_opc_vmrghb()
  */
 void ppc_opc_vmrghh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -648,7 +666,7 @@ void ppc_opc_vmrghh()
  */
 void ppc_opc_vmrghw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -667,7 +685,7 @@ void ppc_opc_vmrghw()
  */
 void ppc_opc_vmrglb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -677,18 +695,18 @@ void ppc_opc_vmrglb()
 	VECT_B(r, 1) = VECT_B(current_core->vr[vrB], 8);
 	VECT_B(r, 2) = VECT_B(current_core->vr[vrA], 9);
 	VECT_B(r, 3) = VECT_B(current_core->vr[vrB], 9);
-	VECT_B(r, 4) = VECT_B(current_core->vr[vrA],10);
-	VECT_B(r, 5) = VECT_B(current_core->vr[vrB],10);
-	VECT_B(r, 6) = VECT_B(current_core->vr[vrA],11);
-	VECT_B(r, 7) = VECT_B(current_core->vr[vrB],11);
-	VECT_B(r, 8) = VECT_B(current_core->vr[vrA],12);
-	VECT_B(r, 9) = VECT_B(current_core->vr[vrB],12);
-	VECT_B(r,10) = VECT_B(current_core->vr[vrA],13);
-	VECT_B(r,11) = VECT_B(current_core->vr[vrB],13);
-	VECT_B(r,12) = VECT_B(current_core->vr[vrA],14);
-	VECT_B(r,13) = VECT_B(current_core->vr[vrB],14);
-	VECT_B(r,14) = VECT_B(current_core->vr[vrA],15);
-	VECT_B(r,15) = VECT_B(current_core->vr[vrB],15);
+	VECT_B(r, 4) = VECT_B(current_core->vr[vrA], 10);
+	VECT_B(r, 5) = VECT_B(current_core->vr[vrB], 10);
+	VECT_B(r, 6) = VECT_B(current_core->vr[vrA], 11);
+	VECT_B(r, 7) = VECT_B(current_core->vr[vrB], 11);
+	VECT_B(r, 8) = VECT_B(current_core->vr[vrA], 12);
+	VECT_B(r, 9) = VECT_B(current_core->vr[vrB], 12);
+	VECT_B(r, 10) = VECT_B(current_core->vr[vrA], 13);
+	VECT_B(r, 11) = VECT_B(current_core->vr[vrB], 13);
+	VECT_B(r, 12) = VECT_B(current_core->vr[vrA], 14);
+	VECT_B(r, 13) = VECT_B(current_core->vr[vrB], 14);
+	VECT_B(r, 14) = VECT_B(current_core->vr[vrA], 15);
+	VECT_B(r, 15) = VECT_B(current_core->vr[vrB], 15);
 
 	current_core->vr[vrD] = r;
 }
@@ -698,7 +716,7 @@ void ppc_opc_vmrglb()
  */
 void ppc_opc_vmrglh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -721,7 +739,7 @@ void ppc_opc_vmrglh()
  */
 void ppc_opc_vmrglw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -740,7 +758,7 @@ void ppc_opc_vmrglw()
  */
 void ppc_opc_vspltb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrB;
 	uint32 uimm;
@@ -765,7 +783,7 @@ void ppc_opc_vspltb()
  */
 void ppc_opc_vsplth()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrB;
 	uint32 uimm;
@@ -789,7 +807,7 @@ void ppc_opc_vsplth()
  */
 void ppc_opc_vspltw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrB;
 	uint32 uimm;
@@ -812,13 +830,13 @@ void ppc_opc_vspltw()
  */
 void ppc_opc_vspltisb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrB;
 	uint32 simm;
 	uint64 val;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, simm, vrB);
-	PPC_OPC_ASSERT(vrB==0);
+	PPC_OPC_ASSERT(vrB == 0);
 
 	val = (simm & 0x10) ? (simm | 0xE0) : simm;
 	val |= (val << 8);
@@ -834,13 +852,13 @@ void ppc_opc_vspltisb()
  */
 void ppc_opc_vspltish()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrB;
 	uint32 simm;
 	uint64 val;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, simm, vrB);
-	PPC_OPC_ASSERT(vrB==0);
+	PPC_OPC_ASSERT(vrB == 0);
 
 	val = (simm & 0x10) ? (simm | 0xFFE0) : simm;
 	val |= (val << 16);
@@ -855,13 +873,13 @@ void ppc_opc_vspltish()
  */
 void ppc_opc_vspltisw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrB;
 	uint32 simm;
 	uint64 val;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, simm, vrB);
-	PPC_OPC_ASSERT(vrB==0);
+	PPC_OPC_ASSERT(vrB == 0);
 
 	val = (simm & 0x10) ? (simm | 0xFFFFFFE0) : simm;
 	val |= (val << 32);
@@ -875,12 +893,12 @@ void ppc_opc_vspltisw()
  */
 void ppc_opc_mfvscr()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
-	PPC_OPC_ASSERT(vrB==0);
+	PPC_OPC_ASSERT(vrA == 0);
+	PPC_OPC_ASSERT(vrB == 0);
 
 	VECT_W(current_core->vr[vrD], 3) = current_core->vscr;
 	VECT_W(current_core->vr[vrD], 2) = 0;
@@ -892,12 +910,12 @@ void ppc_opc_mfvscr()
  */
 void ppc_opc_mtvscr()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
-	PPC_OPC_ASSERT(vrD==0);
+	PPC_OPC_ASSERT(vrA == 0);
+	PPC_OPC_ASSERT(vrD == 0);
 
 	current_core->vscr = VECT_W(current_core->vr[vrB], 3);
 }
@@ -907,7 +925,7 @@ void ppc_opc_mtvscr()
  */
 void ppc_opc_vpkuhum()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -918,18 +936,18 @@ void ppc_opc_vpkuhum()
 	VECT_B(r, 2) = VECT_B(current_core->vr[vrA], 5);
 	VECT_B(r, 3) = VECT_B(current_core->vr[vrA], 7);
 	VECT_B(r, 4) = VECT_B(current_core->vr[vrA], 9);
-	VECT_B(r, 5) = VECT_B(current_core->vr[vrA],11);
-	VECT_B(r, 6) = VECT_B(current_core->vr[vrA],13);
-	VECT_B(r, 7) = VECT_B(current_core->vr[vrA],15);
+	VECT_B(r, 5) = VECT_B(current_core->vr[vrA], 11);
+	VECT_B(r, 6) = VECT_B(current_core->vr[vrA], 13);
+	VECT_B(r, 7) = VECT_B(current_core->vr[vrA], 15);
 
 	VECT_B(r, 8) = VECT_B(current_core->vr[vrB], 1);
 	VECT_B(r, 9) = VECT_B(current_core->vr[vrB], 3);
-	VECT_B(r,10) = VECT_B(current_core->vr[vrB], 5);
-	VECT_B(r,11) = VECT_B(current_core->vr[vrB], 7);
-	VECT_B(r,12) = VECT_B(current_core->vr[vrB], 9);
-	VECT_B(r,13) = VECT_B(current_core->vr[vrB],11);
-	VECT_B(r,14) = VECT_B(current_core->vr[vrB],13);
-	VECT_B(r,15) = VECT_B(current_core->vr[vrB],15);
+	VECT_B(r, 10) = VECT_B(current_core->vr[vrB], 5);
+	VECT_B(r, 11) = VECT_B(current_core->vr[vrB], 7);
+	VECT_B(r, 12) = VECT_B(current_core->vr[vrB], 9);
+	VECT_B(r, 13) = VECT_B(current_core->vr[vrB], 11);
+	VECT_B(r, 14) = VECT_B(current_core->vr[vrB], 13);
+	VECT_B(r, 15) = VECT_B(current_core->vr[vrB], 15);
 
 	current_core->vr[vrD] = r;
 }
@@ -939,7 +957,7 @@ void ppc_opc_vpkuhum()
  */
 void ppc_opc_vpkuwum()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -963,7 +981,7 @@ void ppc_opc_vpkuwum()
  */
 void ppc_opc_vpkpx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -982,13 +1000,12 @@ void ppc_opc_vpkpx()
 	current_core->vr[vrD] = r;
 }
 
-
 /*	vpkuhus		Vector Pack Unsigned Half Word Unsigned Saturate
  *	v.225
  */
 void ppc_opc_vpkuhus()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -1005,12 +1022,12 @@ void ppc_opc_vpkuhus()
 
 	VECT_B(r, 8) = SATURATE_UB(VECT_H(current_core->vr[vrB], 0));
 	VECT_B(r, 9) = SATURATE_UB(VECT_H(current_core->vr[vrB], 1));
-	VECT_B(r,10) = SATURATE_UB(VECT_H(current_core->vr[vrB], 2));
-	VECT_B(r,11) = SATURATE_UB(VECT_H(current_core->vr[vrB], 3));
-	VECT_B(r,12) = SATURATE_UB(VECT_H(current_core->vr[vrB], 4));
-	VECT_B(r,13) = SATURATE_UB(VECT_H(current_core->vr[vrB], 5));
-	VECT_B(r,14) = SATURATE_UB(VECT_H(current_core->vr[vrB], 6));
-	VECT_B(r,15) = SATURATE_UB(VECT_H(current_core->vr[vrB], 7));
+	VECT_B(r, 10) = SATURATE_UB(VECT_H(current_core->vr[vrB], 2));
+	VECT_B(r, 11) = SATURATE_UB(VECT_H(current_core->vr[vrB], 3));
+	VECT_B(r, 12) = SATURATE_UB(VECT_H(current_core->vr[vrB], 4));
+	VECT_B(r, 13) = SATURATE_UB(VECT_H(current_core->vr[vrB], 5));
+	VECT_B(r, 14) = SATURATE_UB(VECT_H(current_core->vr[vrB], 6));
+	VECT_B(r, 15) = SATURATE_UB(VECT_H(current_core->vr[vrB], 7));
 
 	current_core->vr[vrD] = r;
 }
@@ -1020,7 +1037,7 @@ void ppc_opc_vpkuhus()
  */
 void ppc_opc_vpkshss()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -1037,12 +1054,12 @@ void ppc_opc_vpkshss()
 
 	VECT_B(r, 8) = SATURATE_SB(VECT_H(current_core->vr[vrB], 0));
 	VECT_B(r, 9) = SATURATE_SB(VECT_H(current_core->vr[vrB], 1));
-	VECT_B(r,10) = SATURATE_SB(VECT_H(current_core->vr[vrB], 2));
-	VECT_B(r,11) = SATURATE_SB(VECT_H(current_core->vr[vrB], 3));
-	VECT_B(r,12) = SATURATE_SB(VECT_H(current_core->vr[vrB], 4));
-	VECT_B(r,13) = SATURATE_SB(VECT_H(current_core->vr[vrB], 5));
-	VECT_B(r,14) = SATURATE_SB(VECT_H(current_core->vr[vrB], 6));
-	VECT_B(r,15) = SATURATE_SB(VECT_H(current_core->vr[vrB], 7));
+	VECT_B(r, 10) = SATURATE_SB(VECT_H(current_core->vr[vrB], 2));
+	VECT_B(r, 11) = SATURATE_SB(VECT_H(current_core->vr[vrB], 3));
+	VECT_B(r, 12) = SATURATE_SB(VECT_H(current_core->vr[vrB], 4));
+	VECT_B(r, 13) = SATURATE_SB(VECT_H(current_core->vr[vrB], 5));
+	VECT_B(r, 14) = SATURATE_SB(VECT_H(current_core->vr[vrB], 6));
+	VECT_B(r, 15) = SATURATE_SB(VECT_H(current_core->vr[vrB], 7));
 
 	current_core->vr[vrD] = r;
 }
@@ -1052,7 +1069,7 @@ void ppc_opc_vpkshss()
  */
 void ppc_opc_vpkuwus()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -1076,7 +1093,7 @@ void ppc_opc_vpkuwus()
  */
 void ppc_opc_vpkswss()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -1100,7 +1117,7 @@ void ppc_opc_vpkswss()
  */
 void ppc_opc_vpkshus()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -1117,12 +1134,12 @@ void ppc_opc_vpkshus()
 
 	VECT_B(r, 8) = SATURATE_USB(VECT_H(current_core->vr[vrB], 0));
 	VECT_B(r, 9) = SATURATE_USB(VECT_H(current_core->vr[vrB], 1));
-	VECT_B(r,10) = SATURATE_USB(VECT_H(current_core->vr[vrB], 2));
-	VECT_B(r,11) = SATURATE_USB(VECT_H(current_core->vr[vrB], 3));
-	VECT_B(r,12) = SATURATE_USB(VECT_H(current_core->vr[vrB], 4));
-	VECT_B(r,13) = SATURATE_USB(VECT_H(current_core->vr[vrB], 5));
-	VECT_B(r,14) = SATURATE_USB(VECT_H(current_core->vr[vrB], 6));
-	VECT_B(r,15) = SATURATE_USB(VECT_H(current_core->vr[vrB], 7));
+	VECT_B(r, 10) = SATURATE_USB(VECT_H(current_core->vr[vrB], 2));
+	VECT_B(r, 11) = SATURATE_USB(VECT_H(current_core->vr[vrB], 3));
+	VECT_B(r, 12) = SATURATE_USB(VECT_H(current_core->vr[vrB], 4));
+	VECT_B(r, 13) = SATURATE_USB(VECT_H(current_core->vr[vrB], 5));
+	VECT_B(r, 14) = SATURATE_USB(VECT_H(current_core->vr[vrB], 6));
+	VECT_B(r, 15) = SATURATE_USB(VECT_H(current_core->vr[vrB], 7));
 
 	current_core->vr[vrD] = r;
 }
@@ -1132,7 +1149,7 @@ void ppc_opc_vpkshus()
  */
 void ppc_opc_vpkswus()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
@@ -1156,12 +1173,12 @@ void ppc_opc_vpkswus()
  */
 void ppc_opc_vupkhsb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	VECT_SH(r, 0) = VECT_SB(current_core->vr[vrB], 0);
 	VECT_SH(r, 1) = VECT_SB(current_core->vr[vrB], 1);
@@ -1180,18 +1197,18 @@ void ppc_opc_vupkhsb()
  */
 void ppc_opc_vupkhpx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	VECT_W(r, 0) = UNPACK_PIXEL(VECT_H(current_core->vr[vrB], 0));
 	VECT_W(r, 1) = UNPACK_PIXEL(VECT_H(current_core->vr[vrB], 1));
 	VECT_W(r, 2) = UNPACK_PIXEL(VECT_H(current_core->vr[vrB], 2));
 	VECT_W(r, 3) = UNPACK_PIXEL(VECT_H(current_core->vr[vrB], 3));
-	
+
 	current_core->vr[vrD] = r;
 }
 
@@ -1200,12 +1217,12 @@ void ppc_opc_vupkhpx()
  */
 void ppc_opc_vupkhsh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	VECT_SW(r, 0) = VECT_SH(current_core->vr[vrB], 0);
 	VECT_SW(r, 1) = VECT_SH(current_core->vr[vrB], 1);
@@ -1220,21 +1237,21 @@ void ppc_opc_vupkhsh()
  */
 void ppc_opc_vupklsb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	VECT_SH(r, 0) = VECT_SB(current_core->vr[vrB], 8);
 	VECT_SH(r, 1) = VECT_SB(current_core->vr[vrB], 9);
-	VECT_SH(r, 2) = VECT_SB(current_core->vr[vrB],10);
-	VECT_SH(r, 3) = VECT_SB(current_core->vr[vrB],11);
-	VECT_SH(r, 4) = VECT_SB(current_core->vr[vrB],12);
-	VECT_SH(r, 5) = VECT_SB(current_core->vr[vrB],13);
-	VECT_SH(r, 6) = VECT_SB(current_core->vr[vrB],14);
-	VECT_SH(r, 7) = VECT_SB(current_core->vr[vrB],15);
+	VECT_SH(r, 2) = VECT_SB(current_core->vr[vrB], 10);
+	VECT_SH(r, 3) = VECT_SB(current_core->vr[vrB], 11);
+	VECT_SH(r, 4) = VECT_SB(current_core->vr[vrB], 12);
+	VECT_SH(r, 5) = VECT_SB(current_core->vr[vrB], 13);
+	VECT_SH(r, 6) = VECT_SB(current_core->vr[vrB], 14);
+	VECT_SH(r, 7) = VECT_SB(current_core->vr[vrB], 15);
 
 	current_core->vr[vrD] = r;
 }
@@ -1244,12 +1261,12 @@ void ppc_opc_vupklsb()
  */
 void ppc_opc_vupklpx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	VECT_W(r, 0) = UNPACK_PIXEL(VECT_H(current_core->vr[vrB], 4));
 	VECT_W(r, 1) = UNPACK_PIXEL(VECT_H(current_core->vr[vrB], 5));
@@ -1264,12 +1281,12 @@ void ppc_opc_vupklpx()
  */
 void ppc_opc_vupklsh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	Vector_t r;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	VECT_SW(r, 0) = VECT_SH(current_core->vr[vrB], 4);
 	VECT_SW(r, 1) = VECT_SH(current_core->vr[vrB], 5);
@@ -1284,13 +1301,13 @@ void ppc_opc_vupklsh()
  */
 void ppc_opc_vaddubm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint8 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		res = current_core->vr[vrA].b[i] + current_core->vr[vrB].b[i];
 		current_core->vr[vrD].b[i] = res;
 	}
@@ -1301,13 +1318,13 @@ void ppc_opc_vaddubm()
  */
 void ppc_opc_vadduhm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		res = current_core->vr[vrA].h[i] + current_core->vr[vrB].h[i];
 		current_core->vr[vrD].h[i] = res;
 	}
@@ -1318,13 +1335,13 @@ void ppc_opc_vadduhm()
  */
 void ppc_opc_vadduwm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i] + current_core->vr[vrB].w[i];
 		current_core->vr[vrD].w[i] = res;
 	}
@@ -1335,13 +1352,13 @@ void ppc_opc_vadduwm()
  */
 void ppc_opc_vaddfp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	float res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		res = current_core->vr[vrA].f[i] + current_core->vr[vrB].f[i];
 		current_core->vr[vrD].f[i] = res;
 	}
@@ -1352,15 +1369,16 @@ void ppc_opc_vaddfp()
  */
 void ppc_opc_vaddcuw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i] + current_core->vr[vrB].w[i];
-		current_core->vr[vrD].w[i] = (res < current_core->vr[vrA].w[i]) ? 1 : 0;
+		current_core->vr[vrD].w[i] =
+		    (res < current_core->vr[vrA].w[i]) ? 1 : 0;
 	}
 }
 
@@ -1369,14 +1387,16 @@ void ppc_opc_vaddcuw()
  */
 void ppc_opc_vaddubs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
-		res = (uint16)current_core->vr[vrA].b[i] + (uint16)current_core->vr[vrB].b[i];
+	for (i = 0; i < 16; i++) {
+		res =
+		    (uint16) current_core->vr[vrA].b[i] +
+		    (uint16) current_core->vr[vrB].b[i];
 		current_core->vr[vrD].b[i] = SATURATE_UB(res);
 	}
 }
@@ -1386,14 +1406,16 @@ void ppc_opc_vaddubs()
  */
 void ppc_opc_vaddsbs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
-		res = (sint16)current_core->vr[vrA].sb[i] + (sint16)current_core->vr[vrB].sb[i];
+	for (i = 0; i < 16; i++) {
+		res =
+		    (sint16) current_core->vr[vrA].sb[i] +
+		    (sint16) current_core->vr[vrB].sb[i];
 		current_core->vr[vrD].b[i] = SATURATE_SB(res);
 	}
 }
@@ -1403,14 +1425,16 @@ void ppc_opc_vaddsbs()
  */
 void ppc_opc_vadduhs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (uint32)current_core->vr[vrA].h[i] + (uint32)current_core->vr[vrB].h[i];
+	for (i = 0; i < 8; i++) {
+		res =
+		    (uint32) current_core->vr[vrA].h[i] +
+		    (uint32) current_core->vr[vrB].h[i];
 		current_core->vr[vrD].h[i] = SATURATE_UH(res);
 	}
 }
@@ -1420,14 +1444,16 @@ void ppc_opc_vadduhs()
  */
 void ppc_opc_vaddshs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (sint32)current_core->vr[vrA].sh[i] + (sint32)current_core->vr[vrB].sh[i];
+	for (i = 0; i < 8; i++) {
+		res =
+		    (sint32) current_core->vr[vrA].sh[i] +
+		    (sint32) current_core->vr[vrB].sh[i];
 		current_core->vr[vrD].h[i] = SATURATE_SH(res);
 	}
 }
@@ -1437,13 +1463,13 @@ void ppc_opc_vaddshs()
  */
 void ppc_opc_vadduws()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i] + current_core->vr[vrB].w[i];
 
 		// We do this to prevent us from having to do 64-bit math
@@ -1452,11 +1478,11 @@ void ppc_opc_vadduws()
 			current_core->vscr |= VSCR_SAT;
 		}
 
-	/*	64-bit math		|	32-bit hack
-	 *	------------------------+-------------------------------------
-	 *	add, addc	(a+b)	|	add		(a+b)
-	 *	sub, subb 	(r>ub)	|	sub		(r<a)
-	 */
+		/*      64-bit math             |       32-bit hack
+		 *      ------------------------+-------------------------------------
+		 *      add, addc       (a+b)   |       add             (a+b)
+		 *      sub, subb       (r>ub)  |       sub             (r<a)
+		 */
 
 		current_core->vr[vrD].w[i] = res;
 	}
@@ -1467,17 +1493,18 @@ void ppc_opc_vadduws()
  */
 void ppc_opc_vaddsws()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i] + current_core->vr[vrB].w[i];
 
 		// We do this to prevent us from having to do 64-bit math
-		if (((current_core->vr[vrA].w[i] ^ current_core->vr[vrB].w[i]) & SIGN32) == 0) {
+		if (((current_core->vr[vrA].w[i] ^ current_core->vr[vrB].
+		      w[i]) & SIGN32) == 0) {
 			// the signs of both operands are the same
 
 			if (((res ^ current_core->vr[vrA].w[i]) & SIGN32) != 0) {
@@ -1489,13 +1516,13 @@ void ppc_opc_vaddsws()
 			}
 		}
 
-	/*	64-bit math		|	32-bit hack
-	 *	------------------------+-------------------------------------
-	 *	add, addc	(a+b)	|	add		(a+b)
-	 *	sub, subb 	(r>ub)	|	xor, and	(sign == sign)
-	 *	sub, subb	(r<lb)	|	xor, and	(sign != sign)
-	 *				|	and		(which)
-	 */
+		/*      64-bit math             |       32-bit hack
+		 *      ------------------------+-------------------------------------
+		 *      add, addc       (a+b)   |       add             (a+b)
+		 *      sub, subb       (r>ub)  |       xor, and        (sign == sign)
+		 *      sub, subb       (r<lb)  |       xor, and        (sign != sign)
+		 *                              |       and             (which)
+		 */
 
 		current_core->vr[vrD].w[i] = res;
 	}
@@ -1506,13 +1533,13 @@ void ppc_opc_vaddsws()
  */
 void ppc_opc_vsububm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint8 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		res = current_core->vr[vrA].b[i] - current_core->vr[vrB].b[i];
 		current_core->vr[vrD].b[i] = res;
 	}
@@ -1523,13 +1550,13 @@ void ppc_opc_vsububm()
  */
 void ppc_opc_vsubuhm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		res = current_core->vr[vrA].h[i] - current_core->vr[vrB].h[i];
 		current_core->vr[vrD].h[i] = res;
 	}
@@ -1540,13 +1567,13 @@ void ppc_opc_vsubuhm()
  */
 void ppc_opc_vsubuwm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i] - current_core->vr[vrB].w[i];
 		current_core->vr[vrD].w[i] = res;
 	}
@@ -1557,13 +1584,13 @@ void ppc_opc_vsubuwm()
  */
 void ppc_opc_vsubfp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	float res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		res = current_core->vr[vrA].f[i] - current_core->vr[vrB].f[i];
 		current_core->vr[vrD].f[i] = res;
 	}
@@ -1574,15 +1601,16 @@ void ppc_opc_vsubfp()
  */
 void ppc_opc_vsubcuw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i] - current_core->vr[vrB].w[i];
-		current_core->vr[vrD].w[i] = (res <= current_core->vr[vrA].w[i]) ? 1 : 0;
+		current_core->vr[vrD].w[i] =
+		    (res <= current_core->vr[vrA].w[i]) ? 1 : 0;
 	}
 }
 
@@ -1591,14 +1619,16 @@ void ppc_opc_vsubcuw()
  */
 void ppc_opc_vsububs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
-		res = (uint16)current_core->vr[vrA].b[i] - (uint16)current_core->vr[vrB].b[i];
+	for (i = 0; i < 16; i++) {
+		res =
+		    (uint16) current_core->vr[vrA].b[i] -
+		    (uint16) current_core->vr[vrB].b[i];
 
 		current_core->vr[vrD].b[i] = SATURATE_0B(res);
 	}
@@ -1609,14 +1639,16 @@ void ppc_opc_vsububs()
  */
 void ppc_opc_vsubsbs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
-		res = (sint16)current_core->vr[vrA].sb[i] - (sint16)current_core->vr[vrB].sb[i];
+	for (i = 0; i < 16; i++) {
+		res =
+		    (sint16) current_core->vr[vrA].sb[i] -
+		    (sint16) current_core->vr[vrB].sb[i];
 
 		current_core->vr[vrD].sb[i] = SATURATE_SB(res);
 	}
@@ -1627,14 +1659,16 @@ void ppc_opc_vsubsbs()
  */
 void ppc_opc_vsubuhs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (uint32)current_core->vr[vrA].h[i] - (uint32)current_core->vr[vrB].h[i];
+	for (i = 0; i < 8; i++) {
+		res =
+		    (uint32) current_core->vr[vrA].h[i] -
+		    (uint32) current_core->vr[vrB].h[i];
 
 		current_core->vr[vrD].h[i] = SATURATE_0H(res);
 	}
@@ -1645,14 +1679,16 @@ void ppc_opc_vsubuhs()
  */
 void ppc_opc_vsubshs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (sint32)current_core->vr[vrA].sh[i] - (sint32)current_core->vr[vrB].sh[i];
+	for (i = 0; i < 8; i++) {
+		res =
+		    (sint32) current_core->vr[vrA].sh[i] -
+		    (sint32) current_core->vr[vrB].sh[i];
 
 		current_core->vr[vrD].sh[i] = SATURATE_SH(res);
 	}
@@ -1663,13 +1699,13 @@ void ppc_opc_vsubshs()
  */
 void ppc_opc_vsubuws()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i] - current_core->vr[vrB].w[i];
 
 		// We do this to prevent us from having to do 64-bit math
@@ -1678,11 +1714,11 @@ void ppc_opc_vsubuws()
 			current_core->vscr |= VSCR_SAT;
 		}
 
-	/*	64-bit math		|	32-bit hack
-	 *	------------------------+-------------------------------------
-	 *	sub, subb	(a+b)	|	sub		(a+b)
-	 *	sub, subb 	(r>ub)	|	sub		(r<a)
-	 */
+		/*      64-bit math             |       32-bit hack
+		 *      ------------------------+-------------------------------------
+		 *      sub, subb       (a+b)   |       sub             (a+b)
+		 *      sub, subb       (r>ub)  |       sub             (r<a)
+		 */
 
 		current_core->vr[vrD].w[i] = res;
 	}
@@ -1693,13 +1729,13 @@ void ppc_opc_vsubuws()
  */
 void ppc_opc_vsubsws()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res, tmp;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		tmp = -current_core->vr[vrB].w[i];
 		res = current_core->vr[vrA].w[i] + tmp;
 
@@ -1716,13 +1752,13 @@ void ppc_opc_vsubsws()
 			}
 		}
 
-	/*	64-bit math		|	32-bit hack
-	 *	------------------------+-------------------------------------
-	 *	sub, subc	(a+b)	|	neg, add	(a-b)
-	 *	sub, subb 	(r>ub)	|	xor, and	(sign == sign)
-	 *	sub, subb	(r<lb)	|	xor, and	(sign != sign)
-	 *				|	and		(which)
-	 */
+		/*      64-bit math             |       32-bit hack
+		 *      ------------------------+-------------------------------------
+		 *      sub, subc       (a+b)   |       neg, add        (a-b)
+		 *      sub, subb       (r>ub)  |       xor, and        (sign == sign)
+		 *      sub, subb       (r<lb)  |       xor, and        (sign != sign)
+		 *                              |       and             (which)
+		 */
 
 		current_core->vr[vrD].w[i] = res;
 	}
@@ -1733,15 +1769,15 @@ void ppc_opc_vsubsws()
  */
 void ppc_opc_vmuleub()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (uint16)current_core->vr[vrA].b[VECT_EVEN(i)] *
-			 (uint16)current_core->vr[vrB].b[VECT_EVEN(i)];
+	for (i = 0; i < 8; i++) {
+		res = (uint16) current_core->vr[vrA].b[VECT_EVEN(i)] *
+		    (uint16) current_core->vr[vrB].b[VECT_EVEN(i)];
 
 		current_core->vr[vrD].h[i] = res;
 	}
@@ -1752,15 +1788,15 @@ void ppc_opc_vmuleub()
  */
 void ppc_opc_vmulesb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for ( i=0; i<8; i++) {
-		res = (sint16)current_core->vr[vrA].sb[VECT_EVEN(i)] *
-			 (sint16)current_core->vr[vrB].sb[VECT_EVEN(i)];
+	for (i = 0; i < 8; i++) {
+		res = (sint16) current_core->vr[vrA].sb[VECT_EVEN(i)] *
+		    (sint16) current_core->vr[vrB].sb[VECT_EVEN(i)];
 
 		current_core->vr[vrD].sh[i] = res;
 	}
@@ -1771,15 +1807,15 @@ void ppc_opc_vmulesb()
  */
 void ppc_opc_vmuleuh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		res = (uint32)current_core->vr[vrA].h[VECT_EVEN(i)] *
-			 (uint32)current_core->vr[vrB].h[VECT_EVEN(i)];
+	for (i = 0; i < 4; i++) {
+		res = (uint32) current_core->vr[vrA].h[VECT_EVEN(i)] *
+		    (uint32) current_core->vr[vrB].h[VECT_EVEN(i)];
 
 		current_core->vr[vrD].w[i] = res;
 	}
@@ -1790,15 +1826,15 @@ void ppc_opc_vmuleuh()
  */
 void ppc_opc_vmulesh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		res = (sint32)current_core->vr[vrA].sh[VECT_EVEN(i)] *
-			 (sint32)current_core->vr[vrB].sh[VECT_EVEN(i)];
+	for (i = 0; i < 4; i++) {
+		res = (sint32) current_core->vr[vrA].sh[VECT_EVEN(i)] *
+		    (sint32) current_core->vr[vrB].sh[VECT_EVEN(i)];
 
 		current_core->vr[vrD].sw[i] = res;
 	}
@@ -1809,15 +1845,15 @@ void ppc_opc_vmulesh()
  */
 void ppc_opc_vmuloub()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (uint16)current_core->vr[vrA].b[VECT_ODD(i)] *
-			 (uint16)current_core->vr[vrB].b[VECT_ODD(i)];
+	for (i = 0; i < 8; i++) {
+		res = (uint16) current_core->vr[vrA].b[VECT_ODD(i)] *
+		    (uint16) current_core->vr[vrB].b[VECT_ODD(i)];
 
 		current_core->vr[vrD].h[i] = res;
 	}
@@ -1828,15 +1864,15 @@ void ppc_opc_vmuloub()
  */
 void ppc_opc_vmulosb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (sint16)current_core->vr[vrA].sb[VECT_ODD(i)] *
-			 (sint16)current_core->vr[vrB].sb[VECT_ODD(i)];
+	for (i = 0; i < 8; i++) {
+		res = (sint16) current_core->vr[vrA].sb[VECT_ODD(i)] *
+		    (sint16) current_core->vr[vrB].sb[VECT_ODD(i)];
 
 		current_core->vr[vrD].sh[i] = res;
 	}
@@ -1847,15 +1883,15 @@ void ppc_opc_vmulosb()
  */
 void ppc_opc_vmulouh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		res = (uint32)current_core->vr[vrA].h[VECT_ODD(i)] *
-			 (uint32)current_core->vr[vrB].h[VECT_ODD(i)];
+	for (i = 0; i < 4; i++) {
+		res = (uint32) current_core->vr[vrA].h[VECT_ODD(i)] *
+		    (uint32) current_core->vr[vrB].h[VECT_ODD(i)];
 
 		current_core->vr[vrD].w[i] = res;
 	}
@@ -1866,15 +1902,15 @@ void ppc_opc_vmulouh()
  */
 void ppc_opc_vmulosh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		res = (sint32)current_core->vr[vrA].sh[VECT_ODD(i)] *
-			 (sint32)current_core->vr[vrB].sh[VECT_ODD(i)];
+	for (i = 0; i < 4; i++) {
+		res = (sint32) current_core->vr[vrA].sh[VECT_ODD(i)] *
+		    (sint32) current_core->vr[vrB].sh[VECT_ODD(i)];
 
 		current_core->vr[vrD].sw[i] = res;
 	}
@@ -1885,14 +1921,16 @@ void ppc_opc_vmulosh()
  */
 void ppc_opc_vmaddfp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	double res;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
-		res = (double)current_core->vr[vrA].f[i] * (double)current_core->vr[vrC].f[i];
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
+		res =
+		    (double)current_core->vr[vrA].f[i] *
+		    (double)current_core->vr[vrC].f[i];
 
 		res = (double)current_core->vr[vrB].f[i] + res;
 
@@ -1905,16 +1943,18 @@ void ppc_opc_vmaddfp()
  */
 void ppc_opc_vmhaddshs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	sint32 prod;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<8; i++) {
-		prod = (sint32)current_core->vr[vrA].sh[i] * (sint32)current_core->vr[vrB].sh[i];
+	for (i = 0; i < 8; i++) {
+		prod =
+		    (sint32) current_core->vr[vrA].sh[i] *
+		    (sint32) current_core->vr[vrB].sh[i];
 
-		prod = (prod >> 15) + (sint32)current_core->vr[vrC].sh[i];
+		prod = (prod >> 15) + (sint32) current_core->vr[vrC].sh[i];
 
 		current_core->vr[vrD].sh[i] = SATURATE_SH(prod);
 	}
@@ -1925,16 +1965,18 @@ void ppc_opc_vmhaddshs()
  */
 void ppc_opc_vmladduhm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	uint32 prod;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for ( i=0; i<8; i++) {
-		prod = (uint32)current_core->vr[vrA].h[i] * (uint32)current_core->vr[vrB].h[i];
+	for (i = 0; i < 8; i++) {
+		prod =
+		    (uint32) current_core->vr[vrA].h[i] *
+		    (uint32) current_core->vr[vrB].h[i];
 
-		prod = prod + (uint32)current_core->vr[vrC].h[i];
+		prod = prod + (uint32) current_core->vr[vrC].h[i];
 
 		current_core->vr[vrD].h[i] = prod;
 	}
@@ -1945,17 +1987,19 @@ void ppc_opc_vmladduhm()
  */
 void ppc_opc_vmhraddshs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	sint32 prod;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<8; i++) {
-		prod = (sint32)current_core->vr[vrA].sh[i] * (sint32)current_core->vr[vrB].sh[i];
+	for (i = 0; i < 8; i++) {
+		prod =
+		    (sint32) current_core->vr[vrA].sh[i] *
+		    (sint32) current_core->vr[vrB].sh[i];
 
 		prod += 0x4000;
-		prod = (prod >> 15) + (sint32)current_core->vr[vrC].sh[i];
+		prod = (prod >> 15) + (sint32) current_core->vr[vrC].sh[i];
 
 		current_core->vr[vrD].sh[i] = SATURATE_SH(prod);
 	}
@@ -1966,26 +2010,26 @@ void ppc_opc_vmhraddshs()
  */
 void ppc_opc_vmsumubm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	uint32 temp;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		temp = current_core->vr[vrC].w[i];
 
-		temp += (uint16)current_core->vr[vrA].b[i<<2] *
-			(uint16)current_core->vr[vrB].b[i<<2];
+		temp += (uint16) current_core->vr[vrA].b[i << 2] *
+		    (uint16) current_core->vr[vrB].b[i << 2];
 
-		temp += (uint16)current_core->vr[vrA].b[(i<<2)+1] *
-			(uint16)current_core->vr[vrB].b[(i<<2)+1];
+		temp += (uint16) current_core->vr[vrA].b[(i << 2) + 1] *
+		    (uint16) current_core->vr[vrB].b[(i << 2) + 1];
 
-		temp += (uint16)current_core->vr[vrA].b[(i<<2)+2] *
-			(uint16)current_core->vr[vrB].b[(i<<2)+2];
+		temp += (uint16) current_core->vr[vrA].b[(i << 2) + 2] *
+		    (uint16) current_core->vr[vrB].b[(i << 2) + 2];
 
-		temp += (uint16)current_core->vr[vrA].b[(i<<2)+3] *
-			(uint16)current_core->vr[vrB].b[(i<<2)+3];
+		temp += (uint16) current_core->vr[vrA].b[(i << 2) + 3] *
+		    (uint16) current_core->vr[vrB].b[(i << 2) + 3];
 
 		current_core->vr[vrD].w[i] = temp;
 	}
@@ -1996,19 +2040,19 @@ void ppc_opc_vmsumubm()
  */
 void ppc_opc_vmsumuhm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	uint32 temp;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		temp = current_core->vr[vrC].w[i];
 
-		temp += (uint32)current_core->vr[vrA].h[i<<1] *
-			(uint32)current_core->vr[vrB].h[i<<1];
-		temp += (uint32)current_core->vr[vrA].h[(i<<1)+1] *
-			(uint32)current_core->vr[vrB].h[(i<<1)+1];
+		temp += (uint32) current_core->vr[vrA].h[i << 1] *
+		    (uint32) current_core->vr[vrB].h[i << 1];
+		temp += (uint32) current_core->vr[vrA].h[(i << 1) + 1] *
+		    (uint32) current_core->vr[vrB].h[(i << 1) + 1];
 
 		current_core->vr[vrD].w[i] = temp;
 	}
@@ -2019,23 +2063,23 @@ void ppc_opc_vmsumuhm()
  */
 void ppc_opc_vmsummbm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	sint32 temp;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		temp = current_core->vr[vrC].sw[i];
 
-		temp += (sint16)current_core->vr[vrA].sb[i<<2] *
-			(uint16)current_core->vr[vrB].b[i<<2];
-		temp += (sint16)current_core->vr[vrA].sb[(i<<2)+1] *
-			(uint16)current_core->vr[vrB].b[(i<<2)+1];
-		temp += (sint16)current_core->vr[vrA].sb[(i<<2)+2] *
-			(uint16)current_core->vr[vrB].b[(i<<2)+2];
-		temp += (sint16)current_core->vr[vrA].sb[(i<<2)+3] *
-			(uint16)current_core->vr[vrB].b[(i<<2)+3];
+		temp += (sint16) current_core->vr[vrA].sb[i << 2] *
+		    (uint16) current_core->vr[vrB].b[i << 2];
+		temp += (sint16) current_core->vr[vrA].sb[(i << 2) + 1] *
+		    (uint16) current_core->vr[vrB].b[(i << 2) + 1];
+		temp += (sint16) current_core->vr[vrA].sb[(i << 2) + 2] *
+		    (uint16) current_core->vr[vrB].b[(i << 2) + 2];
+		temp += (sint16) current_core->vr[vrA].sb[(i << 2) + 3] *
+		    (uint16) current_core->vr[vrB].b[(i << 2) + 3];
 
 		current_core->vr[vrD].sw[i] = temp;
 	}
@@ -2046,19 +2090,19 @@ void ppc_opc_vmsummbm()
  */
 void ppc_opc_vmsumshm()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	sint32 temp;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		temp = current_core->vr[vrC].sw[i];
 
-		temp += (sint32)current_core->vr[vrA].sh[i<<1] *
-			(sint32)current_core->vr[vrB].sh[i<<1];
-		temp += (sint32)current_core->vr[vrA].sh[(i<<1)+1] *
-			(sint32)current_core->vr[vrB].sh[(i<<1)+1];
+		temp += (sint32) current_core->vr[vrA].sh[i << 1] *
+		    (sint32) current_core->vr[vrB].sh[i << 1];
+		temp += (sint32) current_core->vr[vrA].sh[(i << 1) + 1] *
+		    (sint32) current_core->vr[vrB].sh[(i << 1) + 1];
 
 		current_core->vr[vrD].sw[i] = temp;
 	}
@@ -2069,7 +2113,7 @@ void ppc_opc_vmsumshm()
  */
 void ppc_opc_vmsumuhs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	uint64 temp;
@@ -2080,14 +2124,14 @@ void ppc_opc_vmsumuhs()
 	 *   we'll outpace the 64-bit math in execution time.
 	 */
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		temp = current_core->vr[vrC].w[i];
 
-		temp += (uint32)current_core->vr[vrA].h[i<<1] *
-			(uint32)current_core->vr[vrB].h[i<<1];
+		temp += (uint32) current_core->vr[vrA].h[i << 1] *
+		    (uint32) current_core->vr[vrB].h[i << 1];
 
-		temp += (uint32)current_core->vr[vrA].h[(i<<1)+1] *
-			(uint32)current_core->vr[vrB].h[(i<<1)+1];
+		temp += (uint32) current_core->vr[vrA].h[(i << 1) + 1] *
+		    (uint32) current_core->vr[vrB].h[(i << 1) + 1];
 
 		current_core->vr[vrD].w[i] = SATURATE_UW(temp);
 	}
@@ -2098,7 +2142,7 @@ void ppc_opc_vmsumuhs()
  */
 void ppc_opc_vmsumshs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	sint64 temp;
@@ -2109,13 +2153,13 @@ void ppc_opc_vmsumshs()
 	 *   we'll outpace the 64-bit math in execution time.
 	 */
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		temp = current_core->vr[vrC].sw[i];
 
-		temp += (sint32)current_core->vr[vrA].sh[i<<1] *
-			(sint32)current_core->vr[vrB].sh[i<<1];
-		temp += (sint32)current_core->vr[vrA].sh[(i<<1)+1] *
-			(sint32)current_core->vr[vrB].sh[(i<<1)+1];
+		temp += (sint32) current_core->vr[vrA].sh[i << 1] *
+		    (sint32) current_core->vr[vrB].sh[i << 1];
+		temp += (sint32) current_core->vr[vrA].sh[(i << 1) + 1] *
+		    (sint32) current_core->vr[vrB].sh[(i << 1) + 1];
 
 		current_core->vr[vrD].sw[i] = SATURATE_SW(temp);
 	}
@@ -2126,7 +2170,7 @@ void ppc_opc_vmsumshs()
  */
 void ppc_opc_vsum4ubs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint64 res;
@@ -2137,13 +2181,13 @@ void ppc_opc_vsum4ubs()
 	 *   we'll outpace the 64-bit math in execution time.
 	 */
 	int i;
-	for (i=0; i<4; i++) {
-		res = (uint64)current_core->vr[vrB].w[i];
+	for (i = 0; i < 4; i++) {
+		res = (uint64) current_core->vr[vrB].w[i];
 
-		res += (uint64)current_core->vr[vrA].b[(i<<2)];
-		res += (uint64)current_core->vr[vrA].b[(i<<2)+1];
-		res += (uint64)current_core->vr[vrA].b[(i<<2)+2];
-		res += (uint64)current_core->vr[vrA].b[(i<<2)+3];
+		res += (uint64) current_core->vr[vrA].b[(i << 2)];
+		res += (uint64) current_core->vr[vrA].b[(i << 2) + 1];
+		res += (uint64) current_core->vr[vrA].b[(i << 2) + 2];
+		res += (uint64) current_core->vr[vrA].b[(i << 2) + 3];
 
 		current_core->vr[vrD].w[i] = SATURATE_UW(res);
 	}
@@ -2154,19 +2198,19 @@ void ppc_opc_vsum4ubs()
  */
 void ppc_opc_vsum4sbs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint64 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		res = (sint64)current_core->vr[vrB].sw[i];
+	for (i = 0; i < 4; i++) {
+		res = (sint64) current_core->vr[vrB].sw[i];
 
-		res += (sint64)current_core->vr[vrA].sb[(i<<2)];
-		res += (sint64)current_core->vr[vrA].sb[(i<<2)+1];
-		res += (sint64)current_core->vr[vrA].sb[(i<<2)+2];
-		res += (sint64)current_core->vr[vrA].sb[(i<<2)+3];
+		res += (sint64) current_core->vr[vrA].sb[(i << 2)];
+		res += (sint64) current_core->vr[vrA].sb[(i << 2) + 1];
+		res += (sint64) current_core->vr[vrA].sb[(i << 2) + 2];
+		res += (sint64) current_core->vr[vrA].sb[(i << 2) + 3];
 
 		current_core->vr[vrD].sw[i] = SATURATE_SW(res);
 	}
@@ -2177,17 +2221,17 @@ void ppc_opc_vsum4sbs()
  */
 void ppc_opc_vsum4shs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint64 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		res = (sint64)current_core->vr[vrB].sw[i];
+	for (i = 0; i < 4; i++) {
+		res = (sint64) current_core->vr[vrB].sw[i];
 
-		res += (sint64)current_core->vr[vrA].sh[(i<<1)];
-		res += (sint64)current_core->vr[vrA].sh[(i<<1)+1];
+		res += (sint64) current_core->vr[vrA].sh[(i << 1)];
+		res += (sint64) current_core->vr[vrA].sh[(i << 1) + 1];
 
 		current_core->vr[vrD].sw[i] = SATURATE_SW(res);
 	}
@@ -2198,20 +2242,24 @@ void ppc_opc_vsum4shs()
  */
 void ppc_opc_vsum2sws()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint64 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 
-	res = (sint64)current_core->vr[vrA].sw[0] + (sint64)current_core->vr[vrA].sw[1];
-	res += (sint64)current_core->vr[vrB].sw[VECT_ODD(0)];
+	res =
+	    (sint64) current_core->vr[vrA].sw[0] +
+	    (sint64) current_core->vr[vrA].sw[1];
+	res += (sint64) current_core->vr[vrB].sw[VECT_ODD(0)];
 
 	current_core->vr[vrD].w[VECT_ODD(0)] = SATURATE_SW(res);
 	current_core->vr[vrD].w[VECT_EVEN(0)] = 0;
 
-	res = (sint64)current_core->vr[vrA].sw[2] + (sint64)current_core->vr[vrA].sw[3];
-	res += (sint64)current_core->vr[vrB].sw[VECT_ODD(1)];
+	res =
+	    (sint64) current_core->vr[vrA].sw[2] +
+	    (sint64) current_core->vr[vrA].sw[3];
+	res += (sint64) current_core->vr[vrB].sw[VECT_ODD(1)];
 
 	current_core->vr[vrD].w[VECT_ODD(1)] = SATURATE_SW(res);
 	current_core->vr[vrD].w[VECT_EVEN(1)] = 0;
@@ -2222,16 +2270,20 @@ void ppc_opc_vsum2sws()
  */
 void ppc_opc_vsumsws()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint64 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 
-	res = (sint64)current_core->vr[vrA].sw[0] + (sint64)current_core->vr[vrA].sw[1];
-	res += (sint64)current_core->vr[vrA].sw[2] + (sint64)current_core->vr[vrA].sw[3];
+	res =
+	    (sint64) current_core->vr[vrA].sw[0] +
+	    (sint64) current_core->vr[vrA].sw[1];
+	res +=
+	    (sint64) current_core->vr[vrA].sw[2] +
+	    (sint64) current_core->vr[vrA].sw[3];
 
-	res += (sint64)VECT_W(current_core->vr[vrB], 3);
+	res += (sint64) VECT_W(current_core->vr[vrB], 3);
 
 	VECT_W(current_core->vr[vrD], 3) = SATURATE_SW(res);
 	VECT_W(current_core->vr[vrD], 2) = 0;
@@ -2244,14 +2296,16 @@ void ppc_opc_vsumsws()
  */
 void ppc_opc_vnmsubfp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB, vrC;
 	double res;
 	PPC_OPC_TEMPL_A(current_core->current_opc, vrD, vrA, vrB, vrC);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
-		res = (double)current_core->vr[vrA].f[i] * (double)current_core->vr[vrC].f[i];
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
+		res =
+		    (double)current_core->vr[vrA].f[i] *
+		    (double)current_core->vr[vrC].f[i];
 
 		res = (double)current_core->vr[vrB].f[i] - res;
 
@@ -2264,15 +2318,15 @@ void ppc_opc_vnmsubfp()
  */
 void ppc_opc_vavgub()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
-		res = (uint16)current_core->vr[vrA].b[i] +
-			(uint16)current_core->vr[vrB].b[i] + 1;
+	for (i = 0; i < 16; i++) {
+		res = (uint16) current_core->vr[vrA].b[i] +
+		    (uint16) current_core->vr[vrB].b[i] + 1;
 
 		current_core->vr[vrD].b[i] = (res >> 1);
 	}
@@ -2283,15 +2337,15 @@ void ppc_opc_vavgub()
  */
 void ppc_opc_vavguh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (uint32)current_core->vr[vrA].h[i] +
-			(uint32)current_core->vr[vrB].h[i] + 1;
+	for (i = 0; i < 8; i++) {
+		res = (uint32) current_core->vr[vrA].h[i] +
+		    (uint32) current_core->vr[vrB].h[i] + 1;
 
 		current_core->vr[vrD].h[i] = (res >> 1);
 	}
@@ -2302,15 +2356,15 @@ void ppc_opc_vavguh()
  */
 void ppc_opc_vavguw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint64 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		res = (uint64)current_core->vr[vrA].w[i] +
-			(uint64)current_core->vr[vrB].w[i] + 1;
+	for (i = 0; i < 4; i++) {
+		res = (uint64) current_core->vr[vrA].w[i] +
+		    (uint64) current_core->vr[vrB].w[i] + 1;
 
 		current_core->vr[vrD].w[i] = (res >> 1);
 	}
@@ -2321,15 +2375,15 @@ void ppc_opc_vavguw()
  */
 void ppc_opc_vavgsb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
-		res = (sint16)current_core->vr[vrA].sb[i] +
-			(sint16)current_core->vr[vrB].sb[i] + 1;
+	for (i = 0; i < 16; i++) {
+		res = (sint16) current_core->vr[vrA].sb[i] +
+		    (sint16) current_core->vr[vrB].sb[i] + 1;
 
 		current_core->vr[vrD].sb[i] = (res >> 1);
 	}
@@ -2340,15 +2394,15 @@ void ppc_opc_vavgsb()
  */
 void ppc_opc_vavgsh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
-		res = (sint32)current_core->vr[vrA].sh[i] +
-			(sint32)current_core->vr[vrB].sh[i] + 1;
+	for (i = 0; i < 8; i++) {
+		res = (sint32) current_core->vr[vrA].sh[i] +
+		    (sint32) current_core->vr[vrB].sh[i] + 1;
 
 		current_core->vr[vrD].sh[i] = (res >> 1);
 	}
@@ -2359,15 +2413,15 @@ void ppc_opc_vavgsh()
  */
 void ppc_opc_vavgsw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint64 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
-		res = (sint64)current_core->vr[vrA].sw[i] +
-			(sint64)current_core->vr[vrB].sw[i] + 1;
+	for (i = 0; i < 4; i++) {
+		res = (sint64) current_core->vr[vrA].sw[i] +
+		    (sint64) current_core->vr[vrB].sw[i] + 1;
 
 		current_core->vr[vrD].sw[i] = (res >> 1);
 	}
@@ -2378,13 +2432,13 @@ void ppc_opc_vavgsw()
  */
 void ppc_opc_vmaxub()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint8 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		res = current_core->vr[vrA].b[i];
 
 		if (res < current_core->vr[vrB].b[i])
@@ -2399,13 +2453,13 @@ void ppc_opc_vmaxub()
  */
 void ppc_opc_vmaxuh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		res = current_core->vr[vrA].h[i];
 
 		if (res < current_core->vr[vrB].h[i])
@@ -2420,13 +2474,13 @@ void ppc_opc_vmaxuh()
  */
 void ppc_opc_vmaxuw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i];
 
 		if (res < current_core->vr[vrB].w[i])
@@ -2441,13 +2495,13 @@ void ppc_opc_vmaxuw()
  */
 void ppc_opc_vmaxsb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint8 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		res = current_core->vr[vrA].sb[i];
 
 		if (res < current_core->vr[vrB].sb[i])
@@ -2462,13 +2516,13 @@ void ppc_opc_vmaxsb()
  */
 void ppc_opc_vmaxsh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		res = current_core->vr[vrA].sh[i];
 
 		if (res < current_core->vr[vrB].sh[i])
@@ -2483,13 +2537,13 @@ void ppc_opc_vmaxsh()
  */
 void ppc_opc_vmaxsw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].sw[i];
 
 		if (res < current_core->vr[vrB].sw[i])
@@ -2504,13 +2558,13 @@ void ppc_opc_vmaxsw()
  */
 void ppc_opc_vmaxfp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	float res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		res = current_core->vr[vrA].f[i];
 
 		if (res < current_core->vr[vrB].f[i])
@@ -2525,13 +2579,13 @@ void ppc_opc_vmaxfp()
  */
 void ppc_opc_vminub()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint8 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		res = current_core->vr[vrA].b[i];
 
 		if (res > current_core->vr[vrB].b[i])
@@ -2546,13 +2600,13 @@ void ppc_opc_vminub()
  */
 void ppc_opc_vminuh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		res = current_core->vr[vrA].h[i];
 
 		if (res > current_core->vr[vrB].h[i])
@@ -2567,13 +2621,13 @@ void ppc_opc_vminuh()
  */
 void ppc_opc_vminuw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	uint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].w[i];
 
 		if (res > current_core->vr[vrB].w[i])
@@ -2588,13 +2642,13 @@ void ppc_opc_vminuw()
  */
 void ppc_opc_vminsb()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint8 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		res = current_core->vr[vrA].sb[i];
 
 		if (res > current_core->vr[vrB].sb[i])
@@ -2609,13 +2663,13 @@ void ppc_opc_vminsb()
  */
 void ppc_opc_vminsh()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint16 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		res = current_core->vr[vrA].sh[i];
 
 		if (res > current_core->vr[vrB].sh[i])
@@ -2630,13 +2684,13 @@ void ppc_opc_vminsh()
  */
 void ppc_opc_vminsw()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	sint32 res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		res = current_core->vr[vrA].sw[i];
 
 		if (res > current_core->vr[vrB].sw[i])
@@ -2651,13 +2705,13 @@ void ppc_opc_vminsw()
  */
 void ppc_opc_vminfp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	float res;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		res = current_core->vr[vrA].f[i];
 
 		if (res > current_core->vr[vrB].f[i])
@@ -2672,11 +2726,11 @@ void ppc_opc_vminfp()
  */
 void ppc_opc_vrfin()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	/* Documentation doesn't dictate how this instruction should
 	 *   round from a middle point.  With a test on a real G4, it was
@@ -2685,7 +2739,7 @@ void ppc_opc_vrfin()
 	 * This is covered by the function rint()
 	 */
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		current_core->vr[vrD].f[i] = rintf(current_core->vr[vrB].f[i]);
 	}
 }
@@ -2695,13 +2749,13 @@ void ppc_opc_vrfin()
  */
 void ppc_opc_vrfip()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		current_core->vr[vrD].f[i] = ceilf(current_core->vr[vrB].f[i]);
 	}
 }
@@ -2711,13 +2765,13 @@ void ppc_opc_vrfip()
  */
 void ppc_opc_vrfim()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		current_core->vr[vrD].f[i] = floorf(current_core->vr[vrB].f[i]);
 	}
 }
@@ -2727,13 +2781,13 @@ void ppc_opc_vrfim()
  */
 void ppc_opc_vrfiz()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		current_core->vr[vrD].f[i] = truncf(current_core->vr[vrD].f[i]);
 	}
 }
@@ -2743,11 +2797,11 @@ void ppc_opc_vrfiz()
  */
 void ppc_opc_vrefp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	/* This emulation generates an exact value, instead of an estimate.
 	 *   This is technically within specs, but some test-suites expect the
@@ -2755,7 +2809,7 @@ void ppc_opc_vrefp()
 	 *   should be ignored.
 	 */
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		current_core->vr[vrD].f[i] = 1 / current_core->vr[vrB].f[i];
 	}
 }
@@ -2765,11 +2819,11 @@ void ppc_opc_vrefp()
  */
 void ppc_opc_vrsqrtefp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	/* This emulation generates an exact value, instead of an estimate.
 	 *   This is technically within specs, but some test-suites expect the
@@ -2777,8 +2831,9 @@ void ppc_opc_vrsqrtefp()
 	 *   should be ignored.
 	 */
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
-		current_core->vr[vrD].f[i] = 1 / sqrt(current_core->vr[vrB].f[i]);
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
+		current_core->vr[vrD].f[i] =
+		    1 / sqrt(current_core->vr[vrB].f[i]);
 	}
 }
 
@@ -2787,11 +2842,11 @@ void ppc_opc_vrsqrtefp()
  */
 void ppc_opc_vlogefp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	/* This emulation generates an exact value, instead of an estimate.
 	 *   This is technically within specs, but some test-suites expect the
@@ -2799,7 +2854,7 @@ void ppc_opc_vlogefp()
 	 *   should be ignored.
 	 */
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		current_core->vr[vrD].f[i] = log2(current_core->vr[vrB].f[i]);
 	}
 }
@@ -2809,11 +2864,11 @@ void ppc_opc_vlogefp()
  */
 void ppc_opc_vexptefp()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
-	PPC_OPC_ASSERT(vrA==0);
+	PPC_OPC_ASSERT(vrA == 0);
 
 	/* This emulation generates an exact value, instead of an estimate.
 	 *   This is technically within specs, but some test-suites expect the
@@ -2821,7 +2876,7 @@ void ppc_opc_vexptefp()
 	 *   should be ignored.
 	 */
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		current_core->vr[vrD].f[i] = exp2(current_core->vr[vrB].f[i]);
 	}
 }
@@ -2831,15 +2886,16 @@ void ppc_opc_vexptefp()
  */
 void ppc_opc_vcfux()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrB;
 	uint32 uimm;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, uimm, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
-		current_core->vr[vrD].f[i] = ((float)current_core->vr[vrB].w[i]) / (1 << uimm);
- 	}
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
+		current_core->vr[vrD].f[i] =
+		    ((float)current_core->vr[vrB].w[i]) / (1 << uimm);
+	}
 }
 
 /*	vcfsx		Vector Convert from Signed Fixed-Point Word
@@ -2847,15 +2903,16 @@ void ppc_opc_vcfux()
  */
 void ppc_opc_vcfsx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrB;
 	uint32 uimm;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, uimm, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
-		current_core->vr[vrD].f[i] = ((float)current_core->vr[vrB].sw[i]) / (1 << uimm);
- 	}
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
+		current_core->vr[vrD].f[i] =
+		    ((float)current_core->vr[vrB].sw[i]) / (1 << uimm);
+	}
 }
 
 /*	vctsxs		Vector Convert To Signed Fixed-Point Word Saturate
@@ -2863,7 +2920,7 @@ void ppc_opc_vcfsx()
  */
 void ppc_opc_vctsxs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrB;
 	uint32 uimm;
@@ -2871,22 +2928,22 @@ void ppc_opc_vctsxs()
 	sint32 tmp;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, uimm, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		ftmp = current_core->vr[vrB].f[i] * (float)(1 << uimm);
 		ftmp = truncf(ftmp);
 
-		tmp = (sint32)ftmp;
+		tmp = (sint32) ftmp;
 
 		if (ftmp > 2147483647.0) {
-			tmp = 2147483647;		// 0x7fffffff
+			tmp = 2147483647;	// 0x7fffffff
 			current_core->vscr |= VSCR_SAT;
 		} else if (ftmp < -2147483648.0) {
-			tmp = -2147483648LL;		// 0x80000000
+			tmp = -2147483648LL;	// 0x80000000
 			current_core->vscr |= VSCR_SAT;
 		}
 
 		current_core->vr[vrD].sw[i] = tmp;
- 	}
+	}
 }
 
 /*	vctuxs		Vector Convert to Unsigned Fixed-Point Word Saturate
@@ -2894,18 +2951,18 @@ void ppc_opc_vctsxs()
  */
 void ppc_opc_vctuxs()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrB;
 	uint32 tmp, uimm;
 	float ftmp;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, uimm, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		ftmp = current_core->vr[vrB].f[i] * (float)(1 << uimm);
 		ftmp = truncf(ftmp);
 
-		tmp = (uint32)ftmp;
+		tmp = (uint32) ftmp;
 
 		if (ftmp > 4294967295.0) {
 			tmp = 0xffffffff;
@@ -2916,7 +2973,7 @@ void ppc_opc_vctuxs()
 		}
 
 		current_core->vr[vrD].w[i] = tmp;
- 	}
+	}
 }
 
 /*	vand		Vector Logical AND
@@ -2924,13 +2981,15 @@ void ppc_opc_vctuxs()
  */
 void ppc_opc_vand()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 
-	current_core->vr[vrD].d[0] = current_core->vr[vrA].d[0] & current_core->vr[vrB].d[0];
-	current_core->vr[vrD].d[1] = current_core->vr[vrA].d[1] & current_core->vr[vrB].d[1];
+	current_core->vr[vrD].d[0] =
+	    current_core->vr[vrA].d[0] & current_core->vr[vrB].d[0];
+	current_core->vr[vrD].d[1] =
+	    current_core->vr[vrA].d[1] & current_core->vr[vrB].d[1];
 }
 
 /*	vandc		Vector Logical AND with Complement
@@ -2938,13 +2997,15 @@ void ppc_opc_vand()
  */
 void ppc_opc_vandc()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 
-	current_core->vr[vrD].d[0] = current_core->vr[vrA].d[0] & ~current_core->vr[vrB].d[0];
-	current_core->vr[vrD].d[1] = current_core->vr[vrA].d[1] & ~current_core->vr[vrB].d[1];
+	current_core->vr[vrD].d[0] =
+	    current_core->vr[vrA].d[0] & ~current_core->vr[vrB].d[0];
+	current_core->vr[vrD].d[1] =
+	    current_core->vr[vrA].d[1] & ~current_core->vr[vrB].d[1];
 }
 
 /*	vor		Vector Logical OR
@@ -2952,13 +3013,15 @@ void ppc_opc_vandc()
  */
 void ppc_opc_vor()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 
-	current_core->vr[vrD].d[0] = current_core->vr[vrA].d[0] | current_core->vr[vrB].d[0];
-	current_core->vr[vrD].d[1] = current_core->vr[vrA].d[1] | current_core->vr[vrB].d[1];
+	current_core->vr[vrD].d[0] =
+	    current_core->vr[vrA].d[0] | current_core->vr[vrB].d[0];
+	current_core->vr[vrD].d[1] =
+	    current_core->vr[vrA].d[1] | current_core->vr[vrB].d[1];
 }
 
 /*	vnor		Vector Logical NOR
@@ -2966,13 +3029,15 @@ void ppc_opc_vor()
  */
 void ppc_opc_vnor()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 
-	current_core->vr[vrD].d[0] = ~(current_core->vr[vrA].d[0] | current_core->vr[vrB].d[0]);
-	current_core->vr[vrD].d[1] = ~(current_core->vr[vrA].d[1] | current_core->vr[vrB].d[1]);
+	current_core->vr[vrD].d[0] =
+	    ~(current_core->vr[vrA].d[0] | current_core->vr[vrB].d[0]);
+	current_core->vr[vrD].d[1] =
+	    ~(current_core->vr[vrA].d[1] | current_core->vr[vrB].d[1]);
 }
 
 /*	vxor		Vector Logical XOR
@@ -2980,13 +3045,15 @@ void ppc_opc_vnor()
  */
 void ppc_opc_vxor()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG_COMMON;
 	int vrD, vrA, vrB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 
-	current_core->vr[vrD].d[0] = current_core->vr[vrA].d[0] ^ current_core->vr[vrB].d[0];
-	current_core->vr[vrD].d[1] = current_core->vr[vrA].d[1] ^ current_core->vr[vrB].d[1];
+	current_core->vr[vrD].d[0] =
+	    current_core->vr[vrA].d[0] ^ current_core->vr[vrB].d[0];
+	current_core->vr[vrD].d[1] =
+	    current_core->vr[vrA].d[1] ^ current_core->vr[vrB].d[1];
 }
 
 #define CR_CR6		(0x00f0)
@@ -2998,13 +3065,13 @@ void ppc_opc_vxor()
  */
 void ppc_opc_vcmpequbx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		if (current_core->vr[vrA].b[i] == current_core->vr[vrB].b[i]) {
 			current_core->vr[vrD].b[i] = 0xff;
 			tf &= ~CR_CR6_NE;
@@ -3025,13 +3092,13 @@ void ppc_opc_vcmpequbx()
  */
 void ppc_opc_vcmpequhx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		if (current_core->vr[vrA].h[i] == current_core->vr[vrB].h[i]) {
 			current_core->vr[vrD].h[i] = 0xffff;
 			tf &= ~CR_CR6_NE;
@@ -3052,13 +3119,13 @@ void ppc_opc_vcmpequhx()
  */
 void ppc_opc_vcmpequwx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		if (current_core->vr[vrA].w[i] == current_core->vr[vrB].w[i]) {
 			current_core->vr[vrD].w[i] = 0xffffffff;
 			tf &= ~CR_CR6_NE;
@@ -3079,13 +3146,13 @@ void ppc_opc_vcmpequwx()
  */
 void ppc_opc_vcmpeqfpx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		if (current_core->vr[vrA].f[i] == current_core->vr[vrB].f[i]) {
 			current_core->vr[vrD].w[i] = 0xffffffff;
 			tf &= ~CR_CR6_NE;
@@ -3106,13 +3173,13 @@ void ppc_opc_vcmpeqfpx()
  */
 void ppc_opc_vcmpgtubx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		if (current_core->vr[vrA].b[i] > current_core->vr[vrB].b[i]) {
 			current_core->vr[vrD].b[i] = 0xff;
 			tf &= ~CR_CR6_NE;
@@ -3133,13 +3200,13 @@ void ppc_opc_vcmpgtubx()
  */
 void ppc_opc_vcmpgtsbx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		if (current_core->vr[vrA].sb[i] > current_core->vr[vrB].sb[i]) {
 			current_core->vr[vrD].b[i] = 0xff;
 			tf &= ~CR_CR6_NE;
@@ -3160,13 +3227,13 @@ void ppc_opc_vcmpgtsbx()
  */
 void ppc_opc_vcmpgtuhx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		if (current_core->vr[vrA].h[i] > current_core->vr[vrB].h[i]) {
 			current_core->vr[vrD].h[i] = 0xffff;
 			tf &= ~CR_CR6_NE;
@@ -3187,13 +3254,13 @@ void ppc_opc_vcmpgtuhx()
  */
 void ppc_opc_vcmpgtshx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<8; i++) {
+	for (i = 0; i < 8; i++) {
 		if (current_core->vr[vrA].sh[i] > current_core->vr[vrB].sh[i]) {
 			current_core->vr[vrD].h[i] = 0xffff;
 			tf &= ~CR_CR6_NE;
@@ -3214,13 +3281,13 @@ void ppc_opc_vcmpgtshx()
  */
 void ppc_opc_vcmpgtuwx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		if (current_core->vr[vrA].w[i] > current_core->vr[vrB].w[i]) {
 			current_core->vr[vrD].w[i] = 0xffffffff;
 			tf &= ~CR_CR6_NE;
@@ -3241,13 +3308,13 @@ void ppc_opc_vcmpgtuwx()
  */
 void ppc_opc_vcmpgtswx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		if (current_core->vr[vrA].sw[i] > current_core->vr[vrB].sw[i]) {
 			current_core->vr[vrD].w[i] = 0xffffffff;
 			tf &= ~CR_CR6_NE;
@@ -3268,13 +3335,13 @@ void ppc_opc_vcmpgtswx()
  */
 void ppc_opc_vcmpgtfpx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		if (current_core->vr[vrA].f[i] > current_core->vr[vrB].f[i]) {
 			current_core->vr[vrD].w[i] = 0xffffffff;
 			tf &= ~CR_CR6_NE;
@@ -3295,13 +3362,13 @@ void ppc_opc_vcmpgtfpx()
  */
 void ppc_opc_vcmpgefpx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
-	int tf=CR_CR6_EQ | CR_CR6_NE;
+	int tf = CR_CR6_EQ | CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
 		if (current_core->vr[vrA].f[i] >= current_core->vr[vrB].f[i]) {
 			current_core->vr[vrD].w[i] = 0xffffffff;
 			tf &= ~CR_CR6_NE;
@@ -3322,21 +3389,23 @@ void ppc_opc_vcmpgefpx()
  */
 void ppc_opc_vcmpbfpx()
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	VECTOR_DEBUG;
 	int vrD, vrA, vrB;
 	int le, ge;
-	int ib=CR_CR6_NE;
+	int ib = CR_CR6_NE;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, vrA, vrB);
 	int i;
-	for (i=0; i<4; i++) { //FIXME: This might not comply with Java FP
-		le = (current_core->vr[vrA].f[i] <= current_core->vr[vrB].f[i]) ? 0 : 0x80000000;
-		ge = (current_core->vr[vrA].f[i] >= -current_core->vr[vrB].f[i]) ? 0 : 0x40000000;
+	for (i = 0; i < 4; i++) {	//FIXME: This might not comply with Java FP
+		le = (current_core->vr[vrA].f[i] <=
+		      current_core->vr[vrB].f[i]) ? 0 : 0x80000000;
+		ge = (current_core->vr[vrA].f[i] >=
+		      -current_core->vr[vrB].f[i]) ? 0 : 0x40000000;
 
 		current_core->vr[vrD].w[i] = le | ge;
 		if (le | ge) {
 			ib = 0;
- 		}
+		}
 	}
 
 	if (PPC_OPC_VRc & current_core->current_opc) {

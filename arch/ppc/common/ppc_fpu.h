@@ -17,7 +17,7 @@
  *	along with this program; if not, write to the Free Software
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 #ifndef __PPC_FPU_H__
 #define __PPC_FPU_H__
 
@@ -42,7 +42,6 @@
 
 #define FPD_UNPACK(freg, fvar) FPD_UNPACK(freg, fvar.s, fvar.e, fvar.m)
 
-
 void ppc_fpu_test();
 
 typedef enum {
@@ -50,33 +49,32 @@ typedef enum {
 	ppc_fpr_zero,
 	ppc_fpr_NaN,
 	ppc_fpr_Inf,
-}ppc_fpr_type;
+} ppc_fpr_type;
 
 typedef struct ppc_quadro_s {
 	ppc_fpr_type type;
 	int s;
 	int e;
-	uint64 m0;	// most  significant
-	uint64 m1;	// least significant
-}ppc_quadro;
+	uint64 m0;		// most  significant
+	uint64 m1;		// least significant
+} ppc_quadro;
 
 typedef struct ppc_double_s {
 	ppc_fpr_type type;
 	int s;
 	int e;
 	uint64 m;
-}ppc_double;
+} ppc_double;
 
 typedef struct ppc_single_s {
 	ppc_fpr_type type;
 	int s;
 	int e;
 	uint32 m;
-}ppc_single;
-
+} ppc_single;
 
 double ppc_fpu_get_uint64(uint64 d);
-double ppc_fpu_get_double(ppc_double *d);
+double ppc_fpu_get_double(ppc_double * d);
 
 void ppc_opc_fabsx();
 void ppc_opc_faddx();

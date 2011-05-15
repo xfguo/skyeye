@@ -43,16 +43,19 @@
 
 static inline int io_mem_write(uint32 addr, uint32 data, int size)
 {
-	IO_CORE_WARN("no one is responsible for address %08x (write: %08x from %08x)\n", addr, data, ppc_cpu_get_pc(0));
+	IO_CORE_WARN
+	    ("no one is responsible for address %08x (write: %08x from %08x)\n",
+	     addr, data, ppc_cpu_get_pc(0));
 	SINGLESTEP("");
-	ppc_machine_check_exception();	
+	ppc_machine_check_exception();
 	return IO_MEM_ACCESS_EXC;
 }
 
-static inline int io_mem_read(uint32 addr, uint32 *data, int size)
+static inline int io_mem_read(uint32 addr, uint32 * data, int size)
 {
-	#if 0
-	if (addr >= IO_GCARD_FRAMEBUFFER_PA_START && addr < IO_GCARD_FRAMEBUFFER_PA_END) {
+#if 0
+	if (addr >= IO_GCARD_FRAMEBUFFER_PA_START
+	    && addr < IO_GCARD_FRAMEBUFFER_PA_END) {
 		gcard_read(addr, data, size);
 		return IO_MEM_ACCESS_OK;
 	}
@@ -70,7 +73,7 @@ static inline int io_mem_read(uint32 addr, uint32 *data, int size)
 	}
 	if (addr >= IO_NVRAM_PA_START && addr < IO_NVRAM_PA_END) {
 		nvram_read(addr, data, size);
-		return IO_MEM_ACCESS_OK;		
+		return IO_MEM_ACCESS_OK;
 	}
 	if (addr == 0xff000004) {
 		// wtf?
@@ -82,7 +85,7 @@ static inline int io_mem_read(uint32 addr, uint32 *data, int size)
 		pci_read_device(addr, data, size);
 		return IO_MEM_ACCESS_OK;
 	}
-	if (addr >= IO_ISA_PA_START && addr < IO_ISA_PA_END) {		
+	if (addr >= IO_ISA_PA_START && addr < IO_ISA_PA_END) {
 		/*
 		 * should raise exception here...
 		 * but linux dont like this
@@ -90,88 +93,108 @@ static inline int io_mem_read(uint32 addr, uint32 *data, int size)
 		isa_read(addr, data, size);
 		return IO_MEM_ACCESS_OK;
 		/*if (isa_read(addr, data, size)) {
-			return IO_MEM_ACCESS_OK;
-		} else {
-			ppc_exception(PPC_EXC_MACHINE_CHECK);
-			return IO_MEM_ACCESS_EXC;
-		}*/
+		   return IO_MEM_ACCESS_OK;
+		   } else {
+		   ppc_exception(PPC_EXC_MACHINE_CHECK);
+		   return IO_MEM_ACCESS_EXC;
+		   } */
 	}
-	IO_CORE_WARN("no one is responsible for address %08x (read from %08x)\n", addr, ppc_cpu_get_pc(0));
+	IO_CORE_WARN
+	    ("no one is responsible for address %08x (read from %08x)\n", addr,
+	     ppc_cpu_get_pc(0));
 	SINGLESTEP("");
 	ppc_machine_check_exception();
-	#endif
+#endif
 	return IO_MEM_ACCESS_EXC;
 }
 
 static inline int io_mem_write64(uint32 addr, uint64 data)
 {
-	#if 0
-	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START) && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
+#if 0
+	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START)
+	    && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
 		gcard_write64(addr, data);
 		return IO_MEM_ACCESS_OK;
 	}
-	IO_CORE_ERR("no one is responsible for address %08x (write64: %016q from %08x)\n", addr, &data, ppc_cpu_get_pc(0));
-	#endif
+	IO_CORE_ERR
+	    ("no one is responsible for address %08x (write64: %016q from %08x)\n",
+	     addr, &data, ppc_cpu_get_pc(0));
+#endif
 	return IO_MEM_ACCESS_FATAL;
 }
 
-static inline int io_mem_read64(uint32 addr, uint64 *data)
+static inline int io_mem_read64(uint32 addr, uint64 * data)
 {
-	#if 0
-	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START) && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
+#if 0
+	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START)
+	    && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
 		gcard_read64(addr, data);
 		return IO_MEM_ACCESS_OK;
 	}
-	#endif
-	IO_CORE_ERR("no one is responsible for address %08x (read64 from %08x)\n", addr, ppc_cpu_get_pc(0));
+#endif
+	IO_CORE_ERR
+	    ("no one is responsible for address %08x (read64 from %08x)\n",
+	     addr, ppc_cpu_get_pc(0));
 	return IO_MEM_ACCESS_FATAL;
 }
 
-static inline int io_mem_write128(uint32 addr, uint128 *data)
+static inline int io_mem_write128(uint32 addr, uint128 * data)
 {
-	#if 0
-	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START) && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
+#if 0
+	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START)
+	    && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
 		gcard_write128(addr, data);
 		return IO_MEM_ACCESS_OK;
 	}
-	#endif
-	IO_CORE_ERR("no one is responsible for address %08x (write128: %016q%016q from %08x)\n", addr, data->h, data->l, ppc_cpu_get_pc(0));
+#endif
+	IO_CORE_ERR
+	    ("no one is responsible for address %08x (write128: %016q%016q from %08x)\n",
+	     addr, data->h, data->l, ppc_cpu_get_pc(0));
 	return IO_MEM_ACCESS_FATAL;
 }
 
-static inline int io_mem_write128_native(uint32 addr, uint128 *data)
+static inline int io_mem_write128_native(uint32 addr, uint128 * data)
 {
-	#if 0
-	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START) && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
+#if 0
+	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START)
+	    && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
 		gcard_write128_native(addr, data);
 		return IO_MEM_ACCESS_OK;
 	}
-	#endif
-	IO_CORE_ERR("no one is responsible for address %08x (write128: %016q%016q from %08x)\n", addr, data->h, data->l, ppc_cpu_get_pc(0));
+#endif
+	IO_CORE_ERR
+	    ("no one is responsible for address %08x (write128: %016q%016q from %08x)\n",
+	     addr, data->h, data->l, ppc_cpu_get_pc(0));
 	return IO_MEM_ACCESS_FATAL;
 }
 
-static inline int io_mem_read128(uint32 addr, uint128 *data)
+static inline int io_mem_read128(uint32 addr, uint128 * data)
 {
-	#if 0
-	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START) && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
+#if 0
+	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START)
+	    && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
 		gcard_read128(addr, data);
 		return IO_MEM_ACCESS_OK;
 	}
-	#endif
-	IO_CORE_ERR("no one is responsible for address %08x (read128 from %08x)\n", addr, ppc_cpu_get_pc(0));
+#endif
+	IO_CORE_ERR
+	    ("no one is responsible for address %08x (read128 from %08x)\n",
+	     addr, ppc_cpu_get_pc(0));
 	return IO_MEM_ACCESS_FATAL;
 }
 
-static inline int io_mem_read128_native(uint32 addr, uint128 *data)
+static inline int io_mem_read128_native(uint32 addr, uint128 * data)
 {
-	#if 0
-	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START) && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
+#if 0
+	if ((addr >= IO_GCARD_FRAMEBUFFER_PA_START)
+	    && (addr < (IO_GCARD_FRAMEBUFFER_PA_END))) {
 		gcard_read128_native(addr, data);
 		return IO_MEM_ACCESS_OK;
 	}
-	#endif
-	IO_CORE_ERR("no one is responsible for address %08x (read128 from %08x)\n", addr, ppc_cpu_get_pc(0));
+#endif
+	IO_CORE_ERR
+	    ("no one is responsible for address %08x (read128 from %08x)\n",
+	     addr, ppc_cpu_get_pc(0));
 	return IO_MEM_ACCESS_FATAL;
 }
 

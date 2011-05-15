@@ -1,7 +1,7 @@
 #ifndef __PPC_REGFORMAT_H__
 #define __PPC_REGFORMAT_H__
 
-enum ppc_regno{
+enum ppc_regno {
 	R0 = 0,
 	R1,
 	R2,
@@ -34,7 +34,7 @@ enum ppc_regno{
 	R29,
 	R30,
 	R31,
-	PC_REG, //PC,
+	PC_REG,			//PC,
 	MSR = 65,
 	CR_REG,
 	LR_REG,

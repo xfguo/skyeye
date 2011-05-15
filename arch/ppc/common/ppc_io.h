@@ -25,12 +25,12 @@
 #ifndef __PPC_IO_H__
 #define __PPC_IO_H__
 
-uint32_t ppc_read_byte(void * state, uint32_t addr);
-uint32_t ppc_read_halfword(void * state,uint32_t addr);
+uint32_t ppc_read_byte(void *state, uint32_t addr);
+uint32_t ppc_read_halfword(void *state, uint32_t addr);
 
-uint32_t ppc_read_word(void * state, uint32_t addr);
-void ppc_write_byte(void * state, uint32_t addr, uint32_t data);
-void ppc_write_halfword(void * state, uint32_t addr,uint32_t data);
-void ppc_write_word(void * state,uint32_t addr,uint32_t data);
+uint32_t ppc_read_word(void *state, uint32_t addr);
+void ppc_write_byte(void *state, uint32_t addr, uint32_t data);
+void ppc_write_halfword(void *state, uint32_t addr, uint32_t data);
+void ppc_write_word(void *state, uint32_t addr, uint32_t data);
 
 #endif

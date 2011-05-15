@@ -25,7 +25,7 @@
 
 static inline void ppc_update_cr0(uint32 r)
 {
-	e500_core_t* current_core = get_current_core();
+	e500_core_t *current_core = get_current_core();
 	current_core->cr &= 0x0fffffff;
 	if (!r) {
 		current_core->cr |= CR_CR0_EQ;
@@ -34,7 +34,8 @@ static inline void ppc_update_cr0(uint32 r)
 	} else {
 		current_core->cr |= CR_CR0_GT;
 	}
-	if (current_core->xer & XER_SO) current_core->cr |= CR_CR0_SO;
+	if (current_core->xer & XER_SO)
+		current_core->cr |= CR_CR0_SO;
 }
 
 void ppc_opc_bx();
@@ -85,6 +86,4 @@ void ppc_opc_tlbsync();
 void ppc_opc_tw();
 void ppc_opc_twi();
 
-
 #endif
-

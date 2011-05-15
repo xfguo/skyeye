@@ -29,7 +29,6 @@
 #define ht_vfprintf(...)
 //#define SINGLESTEP
 
-
 //#define PPC_CPU_TRACE(msg...) ht_printf("[CPU/CPU] "msg)
 #define PPC_CPU_TRACE(msg...)
 #define PPC_ALU_TRACE(msg...) ht_printf("[CPU/ALU] "msg)
@@ -61,7 +60,7 @@
 #define PPC_DEC_WARN(msg...) ht_printf("[CPU/DEC] <Warning> "msg)
 #define PPC_ESC_WARN(msg...) ht_printf("[CPU/ESC] <Warning> "msg)
 //#define PPC_EXC_WARN(msg...) ht_printf("[CPU/EXC] <Warning> "msg)
-#define PPC_EXC_WARN 
+#define PPC_EXC_WARN
 #define PPC_MMU_WARN(msg...) ht_printf("[CPU/MMU] <Warning> "msg)
 //#define PPC_OPC_WARN(msg...) ht_printf("[CPU/OPC] <Warning> "msg)
 #define PPC_OPC_WARN(msg...)
@@ -203,4 +202,3 @@
 #endif
 
 #endif
-

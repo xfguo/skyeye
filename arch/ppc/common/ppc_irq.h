@@ -8,7 +8,6 @@
  * 2 of the License, or (at your option) any later version.
  */
 
-
 /*
  * These constants are used for passing information about interrupt
  * signal polarity and level/edge sensing to the low-level PIC chip
@@ -21,8 +20,6 @@
 #define IRQ_POLARITY_MASK	0x2
 #define IRQ_POLARITY_POSITIVE	0x2	/* high level or low->high edge */
 #define IRQ_POLARITY_NEGATIVE	0x0	/* low level or high->low edge */
-
-
 
 /* These values must be zero-based and map 1:1 with the SIU configuration.
  * They are used throughout the 8xx I/O subsystem to generate
@@ -56,7 +53,6 @@
 #define MPC8xx_INT_SCC4		(CPM_IRQ_OFFSET + CPMVEC_SCC4)
 #define MPC8xx_INT_SMC1		(CPM_IRQ_OFFSET + CPMVEC_SMC1)
 #define MPC8xx_INT_SMC2		(CPM_IRQ_OFFSET + CPMVEC_SMC2)
-
 
 /* Internal IRQs on MPC85xx OpenPIC */
 

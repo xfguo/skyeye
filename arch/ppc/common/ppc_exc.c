@@ -37,10 +37,10 @@
 #include "ppc_mmu.h"
 #include "tracers.h"
 
-bool_t ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a){
+bool_t ppc_exception(e500_core_t * core, uint32 type, uint32 flags, uint32 a)
+{
 	return core->ppc_exception(core, type, flags, a);
 }
-
 
 /*
 IVOR0  Critical Input
@@ -65,81 +65,87 @@ IVOR15 Debug
  */
 #define ST (1 << 24)
 
-
 #if 1
-bool_t e600_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
+bool_t e600_ppc_exception(e500_core_t * core, uint32 type, uint32 flags,
+			  uint32 a)
 {
-	if (type != PPC_EXC_DEC) PPC_EXC_TRACE("@%08x: type = %08x (%08x, %08x)\n", core->pc, type, flags, a);
+	if (type != PPC_EXC_DEC)
+		PPC_EXC_TRACE("@%08x: type = %08x (%08x, %08x)\n", core->pc,
+			      type, flags, a);
 	switch (type) {
-	case PPC_EXC_DSI: { // .271
-		core->srr[0] = core->pc;
-                core->srr[1] = core->msr & 0x87c0ffff;
-                core->dar = a;
-                core->dsisr = flags;
-		printf("In %s, addr=0x%x, pc=0x%x DSI exception.\n", __FUNCTION__, a, core->pc);
-                break;
-	}
-	case PPC_EXC_ISI: { // .274
-		if (core->pc == 0) {
-			PPC_EXC_WARN("pc == 0 in ISI\n");
-			//SINGLESTEP("");
-		}
-		core->srr[0] = core->pc;
-		core->srr[1] = (core->msr & 0x87c0ffff) | flags;
-		break;
-	}
-	case PPC_EXC_DEC: { // .284
-		core->srr[0] = core->npc;
-		core->srr[1] = core->msr & 0x87c0ffff;
-		break;
-	}
-	case PPC_EXC_EXT_INT: {
-		core->srr[0] = core->pc;
-		core->srr[1] = core->msr & 0x87c0ffff;
-		break;
-	}
-	case PPC_EXC_SC: {  // .285
-		core->srr[0] = core->npc;
-		core->srr[1] = core->msr & 0x87c0ffff;
-		break;
-	}
-	case PPC_EXC_NO_FPU: { // .284
-		core->srr[0] = core->pc;
-		core->srr[1] = core->msr & 0x87c0ffff;
-		break;
-	}
-	case PPC_EXC_NO_VEC: {	// v.41
-		core->srr[0] = core->pc;
-		core->srr[1] = core->msr & 0x87c0ffff;
-		break;
-	}
-	case PPC_EXC_PROGRAM: { // .283
-		if (flags & PPC_EXC_PROGRAM_NEXT) {
-			core->srr[0] = core->npc;
-		} else {
+	case PPC_EXC_DSI:{	// .271
 			core->srr[0] = core->pc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+			core->dar = a;
+			core->dsisr = flags;
+			printf("In %s, addr=0x%x, pc=0x%x DSI exception.\n",
+			       __FUNCTION__, a, core->pc);
+			break;
 		}
-		core->srr[1] = (core->msr & 0x87c0ffff) | flags;
-		break;
-	}
-	case PPC_EXC_FLOAT_ASSIST: { // .288
-		core->srr[0] = core->pc;
-		core->srr[1] = core->msr & 0x87c0ffff;
-		break;
-	}
-	case PPC_EXC_MACHINE_CHECK: { // .270
-		if (!(core->msr & MSR_ME)) {
-			PPC_EXC_ERR("machine check exception and MSR[ME]=0.\n");
+	case PPC_EXC_ISI:{	// .274
+			if (core->pc == 0) {
+				PPC_EXC_WARN("pc == 0 in ISI\n");
+				//SINGLESTEP("");
+			}
+			core->srr[0] = core->pc;
+			core->srr[1] = (core->msr & 0x87c0ffff) | flags;
+			break;
 		}
-		core->srr[0] = core->pc;
-		core->srr[1] = (core->msr & 0x87c0ffff) | MSR_RI;
-		break;
-	}
-	case PPC_EXC_TRACE2: { // .286
-		core->srr[0] = core->pc;
-		core->srr[1] = core->msr & 0x87c0ffff;
-		break;
-	}
+	case PPC_EXC_DEC:{	// .284
+			core->srr[0] = core->npc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+			break;
+		}
+	case PPC_EXC_EXT_INT:{
+			core->srr[0] = core->pc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+			break;
+		}
+	case PPC_EXC_SC:{	// .285
+			core->srr[0] = core->npc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+			break;
+		}
+	case PPC_EXC_NO_FPU:{	// .284
+			core->srr[0] = core->pc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+			break;
+		}
+	case PPC_EXC_NO_VEC:{	// v.41
+			core->srr[0] = core->pc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+			break;
+		}
+	case PPC_EXC_PROGRAM:{	// .283
+			if (flags & PPC_EXC_PROGRAM_NEXT) {
+				core->srr[0] = core->npc;
+			} else {
+				core->srr[0] = core->pc;
+			}
+			core->srr[1] = (core->msr & 0x87c0ffff) | flags;
+			break;
+		}
+	case PPC_EXC_FLOAT_ASSIST:{
+				// .288
+			core->srr[0] = core->pc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+			break;
+		}
+	case PPC_EXC_MACHINE_CHECK:{
+				// .270
+			if (!(core->msr & MSR_ME)) {
+				PPC_EXC_ERR
+				    ("machine check exception and MSR[ME]=0.\n");
+			}
+			core->srr[0] = core->pc;
+			core->srr[1] = (core->msr & 0x87c0ffff) | MSR_RI;
+			break;
+		}
+	case PPC_EXC_TRACE2:{	// .286
+			core->srr[0] = core->pc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+			break;
+		}
 	default:
 		PPC_EXC_ERR("unknown\n");
 		return False;

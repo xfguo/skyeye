@@ -42,9 +42,8 @@
 #define PPC_BUS_FREQUENCY PPC_MHz(10)
 #define PPC_TIMEBASE_FREQUENCY (PPC_CLOCK_FREQUENCY / TB_TO_PTB_FACTOR)
 
-
-typedef struct PPC_CPU_State_s {	
-	e500_core_t * core;	
+typedef struct PPC_CPU_State_s {
+	e500_core_t *core;
 	uint32_t bptr;
 	uint32_t eebpcr;
 	uint32_t ccsr;
@@ -52,12 +51,15 @@ typedef struct PPC_CPU_State_s {
 	/* The core id that boot from  
 	 */
 	uint32_t boot_core_id;
-}PPC_CPU_State;
+} PPC_CPU_State;
 
-static inline PPC_CPU_State* get_current_cpu(){
-	machine_config_t* mach = get_current_mach();
+static inline PPC_CPU_State *get_current_cpu()
+{
+	machine_config_t *mach = get_current_mach();
 	/* Casting a conf_obj_t to PPC_CPU_State type */
-	PPC_CPU_State* cpu = (PPC_CPU_State*)get_cast_conf_obj(mach->cpu_data, "PPC_CPU_State");
+	PPC_CPU_State *cpu =
+	    (PPC_CPU_State *) get_cast_conf_obj(mach->cpu_data,
+						"PPC_CPU_State");
 
 	return cpu;
 }
@@ -67,38 +69,42 @@ static inline PPC_CPU_State* get_current_cpu(){
 *
 * @return 
 */
-static inline e500_core_t* get_boot_core(){
-	PPC_CPU_State* cpu = get_current_cpu();
+static inline e500_core_t *get_boot_core()
+{
+	PPC_CPU_State *cpu = get_current_cpu();
 	return &cpu->core[cpu->boot_core_id];
 }
+
 /**
 * @brief Get the instance of running core
 *
 * @return the core instance
 */
-static inline e500_core_t* get_current_core(){
+static inline e500_core_t *get_current_core()
+{
 	/*
-	machine_config_t* mach = get_current_mach();
-	*/
+	   machine_config_t* mach = get_current_mach();
+	 */
 	/* Casting a conf_obj_t to PPC_CPU_State type */
 	//PPC_CPU_State* cpu = (PPC_CPU_State*)get_cast_conf_obj(mach->cpu_data, "PPC_CPU_State");
 	pthread_t id = pthread_self();
 	/* If thread is not in running mode, we should give the boot core */
-	if(get_thread_state(id) != Running_state){
+	if (get_thread_state(id) != Running_state) {
 		return get_boot_core();
 	}
 	/* Judge if we are running in paralell or sequenial */
-	if(thread_exist(id)){
-		conf_object_t* conf_obj = get_current_exec_priv(id);
-		return (e500_core_t*)get_cast_conf_obj(conf_obj, "e500_core_t");
+	if (thread_exist(id)) {
+		conf_object_t *conf_obj = get_current_exec_priv(id);
+		return (e500_core_t *) get_cast_conf_obj(conf_obj,
+							 "e500_core_t");
 	}
 	/* If we are in sequential mode, we have to depend on 
 	 * running_core_id to tell who am I
 	 */
-	#if 0
+#if 0
 	else
 		return &cpu->core[cpu->running_core_id];
-	#endif
+#endif
 	return NULL;
 }
 
@@ -127,7 +133,6 @@ gt
 eq
 so
 */
-
 #define CR_CR0_LT (1<<31)
 #define CR_CR0_GT (1<<30)
 #define CR_CR0_EQ (1<<29)
@@ -141,7 +146,6 @@ cr1 bits: .68
 6 Floating-point invalid exception (VX)
 7 Floating-point overflow exception (OX)
 */
-
 #define CR_CR1_FX (1<<27)
 #define CR_CR1_FEX (1<<26)
 #define CR_CR1_VX (1<<25)
@@ -151,7 +155,6 @@ cr1 bits: .68
 FPSCR bits: .70
 
 */
- 
 #define FPSCR_FX (1<<31)
 #define FPSCR_FEX (1<<30)
 #define FPSCR_VX (1<<29)
@@ -185,7 +188,7 @@ FPSCR bits: .70
 #define FPSCR_RN_NEAR 0
 #define FPSCR_RN_ZERO 1
 #define FPSCR_RN_PINF 2
-#define FPSCR_RN_MINF 3 
+#define FPSCR_RN_MINF 3
 
 /*
 VSCR bits:
@@ -203,7 +206,6 @@ xer bits:
 3-24 res
 25-31 number of bytes for lswx/stswx
 */
-
 #define XER_SO (1<<31)
 #define XER_OV (1<<30)
 #define XER_CA (1<<29)
@@ -232,13 +234,12 @@ msr: .83
 31	LE   little endian mode
 
 */
-
 #define MSR_SF		(1<<31)
 #define MSR_UNKNOWN	(1<<30)
 #define MSR_UNKNOWN2	(1<<27)
 #define MSR_VEC		(1<<25)
 #define MSR_POW		(1<<18)
-#define MSR_TGPR	(1<<15)		// 603(e)
+#define MSR_TGPR	(1<<15)	// 603(e)
 #define MSR_ILE		(1<<16)
 #define MSR_EE		(1<<15)
 #define MSR_PR		(1<<14)
@@ -369,26 +370,26 @@ PTE: .364
 /*
  *	special registers
  */
-#define HID0	1008	/* Checkstop and misc enables */
-#define HID1	1009	/* Clock configuration */
-#define iabr	1010	/* Instruction address breakpoint register */
-#define ictrl	1011	/* Instruction Cache Control */
-#define ldstdb	1012	/* Load/Store Debug */
-#define dabr	1013	/* Data address breakpoint register */
-#define msscr0	1014	/* Memory subsystem control */
-#define msscr1	1015	/* Memory subsystem debug */
-#define msssr0	1015	/* Memory Subsystem Status */
-#define ldstcr	1016	/* Load/Store Status/Control */
-#define l2cr2	1016	/* L2 Cache control 2 */
-#define l2cr	1017	/* L2 Cache control */
-#define l3cr	1018	/* L3 Cache control */
-#define ictc	1019	/* I-cache throttling control */
-#define thrm1	1020	/* Thermal management 1 */
-#define thrm2	1021	/* Thermal management 2 */
-#define thrm3	1022	/* Thermal management 3 */
-//#define pir	1023	/* Processor ID Register */
+#define HID0	1008		/* Checkstop and misc enables */
+#define HID1	1009		/* Clock configuration */
+#define iabr	1010		/* Instruction address breakpoint register */
+#define ictrl	1011		/* Instruction Cache Control */
+#define ldstdb	1012		/* Load/Store Debug */
+#define dabr	1013		/* Data address breakpoint register */
+#define msscr0	1014		/* Memory subsystem control */
+#define msscr1	1015		/* Memory subsystem debug */
+#define msssr0	1015		/* Memory Subsystem Status */
+#define ldstcr	1016		/* Load/Store Status/Control */
+#define l2cr2	1016		/* L2 Cache control 2 */
+#define l2cr	1017		/* L2 Cache control */
+#define l3cr	1018		/* L3 Cache control */
+#define ictc	1019		/* I-cache throttling control */
+#define thrm1	1020		/* Thermal management 1 */
+#define thrm2	1021		/* Thermal management 2 */
+#define thrm3	1022		/* Thermal management 3 */
+//#define pir   1023    /* Processor ID Register */
 
-//;	hid0 bits
+//;     hid0 bits
 #define HID0_emcp	0
 #define HID0_emcpm	0x80000000
 #define HID0_dbp	1
@@ -456,16 +457,12 @@ PTE: .364
 
 void ppc_cpu_atomic_raise_ext_exception();
 void ppc_cpu_atomic_cancel_ext_exception();
-
 extern uint32 gBreakpoint;
 extern uint32 gBreakpoint2;
-
-extern FILE * prof_file;
-
-void ppc_set_singlestep_v(bool_t v, const char *file, int line, const char *format, ...);
+extern FILE *prof_file;
+void ppc_set_singlestep_v(bool_t v, const char *file, int line,
+			  const char *format, ...);
 void ppc_set_singlestep_nonverbose(bool_t v);
-
 void ppc_machine_check_exception();
-uint32	ppc_cpu_get_pvr(e500_core_t* core);
+uint32 ppc_cpu_get_pvr(e500_core_t * core);
 #endif
- 

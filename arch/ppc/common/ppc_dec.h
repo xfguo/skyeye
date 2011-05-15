@@ -25,16 +25,15 @@
 #include "ppc_e500_core.h"
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-void ppc_exec_opc(e500_core_t* core);
-void ppc_dec_init(e500_core_t* core);
+	void ppc_exec_opc(e500_core_t * core);
+	void ppc_dec_init(e500_core_t * core);
 #ifdef __cplusplus
 }
 #endif
-
-typedef void (*ppc_opc_function)();
+typedef void (*ppc_opc_function) ();
 
 #define PPC_OPC_ASSERT(v)
 
