@@ -115,6 +115,13 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 #endif
 
 			bb_cont = translate_instr(cpu, pc, tag, bb_target, bb_trap, bb_next, bb_ret, cur_bb);
+			if((tag & TAG_EXCEPTION) && !is_user_mode(cpu))
+				emit_store_pc(cpu, cur_bb, next_pc);
+			if((tag & TAG_END_PAGE) && !is_user_mode(cpu))
+				emit_store_pc_end_page(cpu, tag, cur_bb, next_pc);
+
+			bb_cont = translate_instr(cpu, pc, next_pc, tag, bb_target, bb_trap, bb_next, bb_ret, cur_bb);
+
 			pc = next_pc;
 		} while (
 					/* new basic block starts here (and we haven't translated it yet)*/
