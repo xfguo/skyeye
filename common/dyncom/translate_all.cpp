@@ -114,7 +114,6 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 			arch_debug_me(cpu, cur_bb);
 #endif
 
-			bb_cont = translate_instr(cpu, pc, tag, bb_target, bb_trap, bb_next, bb_ret, cur_bb);
 			if((tag & TAG_EXCEPTION) && !is_user_mode(cpu))
 				emit_store_pc(cpu, cur_bb, next_pc);
 			if((tag & TAG_END_PAGE) && !is_user_mode(cpu))

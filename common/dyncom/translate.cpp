@@ -92,7 +92,7 @@ translate_instr(cpu_t *cpu, addr_t pc, addr_t next_pc, tag_t tag,
 	cpu->f.translate_instr(cpu, pc, cur_bb);
 
 	if ((tag & (TAG_END_PAGE | TAG_EXCEPTION)) && !is_user_mode(cpu))
-		BranchInst::Create(bb_ret, cur_bb)
+		BranchInst::Create(bb_ret, cur_bb);
 	else if (tag & (TAG_BRANCH | TAG_CALL | TAG_RET))
 		BranchInst::Create(bb_target, cur_bb);
 	else if (tag & TAG_TRAP)
