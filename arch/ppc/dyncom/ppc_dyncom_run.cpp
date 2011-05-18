@@ -463,6 +463,7 @@ void ppc_dyncom_run(cpu_t* cpu){
 			if(!is_user_mode(cpu))
 				flush_current_page(cpu);
 			cpu_tag(cpu, core->phys_pc);
+			cpu->dyncom_engine->cur_tagging_pos ++;
 			cpu_translate(cpu, core->phys_pc);
 			/*
 			**If singlestep,we run it here,otherwise,break.
