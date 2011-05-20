@@ -85,11 +85,20 @@ translate_instr(cpu_t *cpu, addr_t pc, addr_t next_pc, tag_t tag,
 	if (tag & TAG_CONDITIONAL) {
 		// cur_bb:  if (cond) goto b_cond; else goto bb_next;
 		Value *c = cpu->f.translate_cond(cpu, pc, cur_bb);
-		BranchInst::Create(bb_cond, bb_next, c, cur_bb);
+		if(tag & TAG_END_PAGE){
+                        emit_store_pc_cond(cpu, c, cur_bb, next_pc);
+                        BranchInst::Create(bb_cond, bb_ret, c, cur_bb);
+		}
+		else
+			BranchInst::Create(bb_cond, bb_next, c, cur_bb);
 		cur_bb = bb_cond;
 	}
 
 	cpu->f.translate_instr(cpu, pc, cur_bb);
+	if (tag & TAG_POSTCOND) {
+		Value *c = cpu->f.translate_cond(cpu, pc, cur_bb);
+		BranchInst::Create(bb_target, bb_next, c, cur_bb);
+	}
 
 	if ((tag & (TAG_END_PAGE | TAG_EXCEPTION)) && !is_user_mode(cpu))
 		BranchInst::Create(bb_ret, cur_bb);
