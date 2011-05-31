@@ -51,7 +51,7 @@ int arch_powerpc_tag_instr(cpu_t *cpu, addr_t phys_pc, tag_t *tag, addr_t *new_p
 		BAD_INSTR;
 	//assert(opc_func->tag != NULL);
 	if(opc_func->tag == NULL){
-		printf("Some NULL tag functions at 0x%x\n", phys_pc);	
+		printf("Some NULL tag functions at 0x%x, instr = 0x%x\n", phys_pc, instr);
 		opc_default_tag(cpu, instr, phys_pc,tag, new_pc, next_pc);
 	}
 	else
@@ -69,6 +69,12 @@ int arch_powerpc_translate_instr(cpu_t *cpu, addr_t real_addr, BasicBlock *bb){
 	if(bus_read(32, real_addr, &instr) != 0){
 		/* some error handler */
 	}
+	/* trap */
+	if(instr == 0x7fe00008)
+		return instr_size;
+	/* dssall */
+	if(instr == 0x7e00066c)
+		return instr_size;
 	debug(DEBUG_TRANSLATE, "In %s, pc=0x%x, instr=0x%x\n", __FUNCTION__, real_addr, instr);
 	ppc_opc_func_t* opc_func = ppc_get_opc_func(instr);
 	if(!opc_func)

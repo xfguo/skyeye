@@ -84,13 +84,29 @@ int opc_addx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  *	lwzx		Load Word and Zero Indexed
  *	.560
  */
+int opc_lwzx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_lwzx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
 	Value* addr = rA ? ADD(R(rB), R(rA)) : R(rB);
 	Value* result = arch_read_memory(cpu, bb, addr, 0, 32);
-	LET(rD, result);
+	/**
+	 * If occur exception, rD should not to be written.
+	 **/
+	if(is_user_mode(cpu)){
+		LET(rD, result);
+	}else{
+		Value *current_pc = RS(PHYS_PC_REGNUM);
+		Value *exc_occur = ICMP_EQ(current_pc, CONST(PPC_EXC_DSI_ADDR));
+		LET(rD, SELECT(exc_occur, R(rD), result));
+	}
 	return 0;
 }
 /*
@@ -123,8 +139,8 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		}
 		break;
 	case 1:
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch (spr1) {//TODO...
-			printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 			case 16:current_core->mmu.pid[0] = current_core->gpr[rS];return 0;
 			case 26:current_core->csrr[0] = current_core->gpr[rS];return 0;
 			case 27:current_core->csrr[1] = current_core->gpr[rS];return 0;
@@ -464,42 +480,43 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		break;
 	case 9:
 		switch(spr1) {
-			case 16:current_core->gpr[rD] = current_core->dbsr; return 0;
-			case 20:current_core->gpr[rD] = current_core->dbcr[0]; return 0;
-                        case 21:current_core->gpr[rD] = current_core->dbcr[1]; return 0;
-                        case 22:current_core->gpr[rD] = current_core->dbcr[2]; return 0;
-                        case 28:current_core->gpr[rD] = current_core->dac[0]; return 0;
-                        case 29:current_core->gpr[rD] = current_core->dac[1]; return 0;
+			case 16:LET(rD, RS(DBSR_REGNUM)); return 0;
+			case 20:LET(rD, RS(DBCR_REGNUM)); return 0;
+			case 21:LET(rD, RS(DBCR_REGNUM + 1)); return 0;
+			case 22:LET(rD, RS(DBCR_REGNUM + 2)); return 0;
+			case 28:LET(rD, RS(DAC_REGNUM)); return 0;
+			case 29:LET(rD, RS(DAC_REGNUM + 1)); return 0;
 		}
 		break;
 	case 10:
 		switch(spr1){
-			case 20:current_core->gpr[rD] = current_core->tcr; return 0;
+			case 20:LET(rD, RS(TCR_REGNUM)); return 0;
 			default:break;
 		}
 		break;
 	case 16:
 		switch (spr1) {
-		case 0: current_core->gpr[rD] = current_core->spefscr; return 0;
-		case 16: current_core->gpr[rD] = current_core->ibatu[0]; return 0;
-		case 17: current_core->gpr[rD] = current_core->ibatl[0]; return 0;
-		case 18: current_core->gpr[rD] = current_core->ibatu[1]; return 0;
-		case 19: current_core->gpr[rD] = current_core->ibatl[1]; return 0;
-		case 20: current_core->gpr[rD] = current_core->ibatu[2]; return 0;
-		case 21: current_core->gpr[rD] = current_core->ibatl[2]; return 0;
-		case 22: current_core->gpr[rD] = current_core->ibatu[3]; return 0;
-		case 23: current_core->gpr[rD] = current_core->ibatl[3]; return 0;
-		case 24: current_core->gpr[rD] = current_core->dbatu[0]; return 0;
-		case 25: current_core->gpr[rD] = current_core->dbatl[0]; return 0;
-		case 26: current_core->gpr[rD] = current_core->dbatu[1]; return 0;
-		case 27: current_core->gpr[rD] = current_core->dbatl[1]; return 0;
-		case 28: current_core->gpr[rD] = current_core->dbatu[2]; return 0;
-		case 29: current_core->gpr[rD] = current_core->dbatl[2]; return 0;
-		case 30: current_core->gpr[rD] = current_core->dbatu[3]; return 0;
-		case 31: current_core->gpr[rD] = current_core->dbatl[3]; return 0;
+		case 0: LET(rD, RS(SPEFSCR_REGNUM)); return 0;
+		case 16: LET(rD, RS(IBATU_REGNUM)); return 0;
+		case 17: LET(rD, RS(IBATL_REGNUM)); return 0;
+		case 18: LET(rD, RS(IBATU_REGNUM + 1)); return 0;
+		case 19: LET(rD, RS(IBATL_REGNUM + 1)); return 0;
+		case 20: LET(rD, RS(IBATU_REGNUM + 2)); return 0;
+		case 21: LET(rD, RS(IBATL_REGNUM + 2)); return 0;
+		case 22: LET(rD, RS(IBATU_REGNUM + 3)); return 0;
+		case 23: LET(rD, RS(IBATL_REGNUM + 3)); return 0;
+		case 24: LET(rD, RS(DBATU_REGNUM)); return 0;
+		case 25: LET(rD, RS(DBATL_REGNUM)); return 0;
+		case 26: LET(rD, RS(DBATU_REGNUM + 1)); return 0;
+		case 27: LET(rD, RS(DBATL_REGNUM + 1)); return 0;
+		case 28: LET(rD, RS(DBATU_REGNUM + 2)); return 0;
+		case 29: LET(rD, RS(DBATL_REGNUM + 2)); return 0;
+		case 30: LET(rD, RS(DBATU_REGNUM + 3)); return 0;
+		case 31: LET(rD, RS(DBATL_REGNUM + 3)); return 0;
 		}
 		break;
 	case 17://LCH
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch (spr1) {
 		case 16: current_core->gpr[rD] = current_core->e600_ibatu[0]; return 0;
 		case 17: current_core->gpr[rD] = current_core->e600_ibatl[0]; return 0;
@@ -520,6 +537,7 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		}
 		break;
 	case 19:
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
                 switch(spr1) {
 			case 16:
                                 current_core->gpr[rD] = current_core->mmu.mas[0];
@@ -551,11 +569,13 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
                 }
                 break;
 	case 21:
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
                 switch(spr1) {
                         case 17:current_core->gpr[rD] = current_core->mmu.tlbcfg[1]; return 0;
                 }
                 break;
 	case 29:
+		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch (spr1) {
 		case 16:
 			current_core->gpr[rD] = 0;
@@ -698,6 +718,13 @@ static int opc_cmpl_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  *	dcbz		Data Cache Clear to Zero
  *	.464
  */
+int opc_dcbz_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_dcbz_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
         int rA, rD, rB;
         PPC_OPC_TEMPL_X(instr, rD, rA, rB);
@@ -873,6 +900,13 @@ static int opc_mfcr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  *	lwarx		Load Word and Reserve Indexed
  *	.553
  */
+int opc_lwarx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_lwarx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rA, rD, rB;
@@ -880,9 +914,20 @@ static int opc_lwarx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	uint32 r;
 	Value* addr = rA? ADD(R(rA), R(rB)): R(rB);
 	Value* result = arch_read_memory(cpu, bb, addr, 0, 32);
-	LET(rD, result);
-	LETS(RESERVE_REGNUM, result);
-	LETS(HAVE_RESERVATION_REGNUM, CONST(1));
+	/**
+	 * If occur exception, rD should not to be written.
+	 **/
+	if(is_user_mode(cpu)){
+		LET(rD, result);
+		LETS(RESERVE_REGNUM, result);
+		LETS(HAVE_RESERVATION_REGNUM, CONST(1));
+	}else{
+		Value *current_pc = RS(PHYS_PC_REGNUM);
+		Value *exc_occur = ICMP_EQ(current_pc, CONST(PPC_EXC_DSI_ADDR));
+		LET(rD, SELECT(exc_occur, R(rD), result));
+		LETS(RESERVE_REGNUM, SELECT(exc_occur, RS(RESERVE_REGNUM), result));
+		LETS(HAVE_RESERVATION_REGNUM, SELECT(exc_occur, RS(HAVE_RESERVATION_REGNUM), CONST(1)));
+	}
 	return 0;
 }
 /*
@@ -1032,7 +1077,11 @@ static int opc_stwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
-	Value* addr = ADD(SELECT(ICMP_NE(CONST(rA), CONST(0)), R(rA), CONST(0)), R(rB));
+	Value *addr;
+	if(rA)
+		addr = ADD(R(rA), R(rB));
+	else
+		addr = R(rB);
 	arch_write_memory(cpu, bb, addr, R(rS), 32);
 	return 0;
 }
@@ -1132,6 +1181,13 @@ static int opc_lbzx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  *	stbx		Store Byte Indexed
  *	.635
  */
+int opc_stbx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_stbx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rA, rS, rB;
@@ -1198,6 +1254,13 @@ static int opc_mulhwx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  *	sthx		Store Half Word Indexed
  *	.655
  */
+int opc_sthx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_sthx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rA, rS, rB;
@@ -1526,6 +1589,75 @@ static int opc_lhbrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	result = AND(OR(SHL(result, CONST(8)), LSHR(result, CONST(8))), CONST(0x0000ffff));
 	LET(rD, result);
 }
+/*
+ *	stwbrx		Store Word Byte-Reverse Indexed
+ *	.660
+ */
+int opc_stwbrx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
+static int opc_stwbrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rS, rB;
+	PPC_OPC_TEMPL_X(instr, rS, rA, rB);
+	Value *addr = rA ? ADD(R(rA), R(rB)) : R(rB);
+	Value *rs = R(rS);
+	rs = OR(OR(LSHR(rs, CONST(24)), AND(LSHR(rs, CONST(8)), CONST(0xff00))),
+			OR(SHL(rs, CONST(24)), AND(SHL(rs, CONST(8)), CONST(0xff0000)))
+			);
+	// FIXME: doppelt gemoppelt
+	arch_write_memory(cpu, bb, addr, rs, 32);
+}
+/*
+ *	lwzux		Load Word and Zero with Update Indexed
+ *	.559
+ */
+int opc_lwzux_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
+static int opc_lwzux_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rA, rD, rB;
+	PPC_OPC_TEMPL_X(instr, rD, rA, rB);
+	// FIXME: check rA!=0 && rA!=rD
+	Value *addr = ADD(R(rA), R(rB));
+	Value* result = arch_read_memory(cpu, bb, addr, 0, 32);
+	/**
+	 * If occur exception, rD should not to be written.
+	 **/
+	if(is_user_mode(cpu)){
+		LET(rA, addr);
+		LET(rD, result);
+	}else{
+		Value *current_pc = RS(PHYS_PC_REGNUM);
+		Value *exc_occur = ICMP_EQ(current_pc, CONST(PPC_EXC_DSI_ADDR));
+		LET(rA, SELECT(exc_occur, R(rA), addr));
+		LET(rD, SELECT(exc_occur, R(rD), result));
+	}
+}
+static int opc_isel_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	int crb = (instr >> 6) & 0x1f;
+	Value *cond = ICMP_NE(AND(RS(CR_REGNUM), CONST(1 << (31 - crb))), CONST(0));
+	LET(rD, SELECT(cond, R(rA), R(rB)));
+}
+static int opc_iseleq_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int rD, rA, rB;
+	PPC_OPC_TEMPL_XO(instr, rD, rA, rB);
+	Value *cond = ICMP_NE(AND(RS(CR_REGNUM), CONST(CR_CR0_EQ)), CONST(0));
+	LET(rD, SELECT(cond, R(rA), R(rB)));
+}
 /* Interfaces */
 ppc_opc_func_t ppc_opc_cmp_func = {
 	opc_default_tag,
@@ -1555,12 +1687,12 @@ ppc_opc_func_t ppc_opc_mfcr_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_lwarx_func = {
-	opc_default_tag,
+	opc_lwarx_tag,
 	opc_lwarx_translate,
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_lwzx_func = {
-	opc_default_tag,
+	opc_lwzx_tag,
 	opc_lwzx_translate,
 	opc_invalid_translate_cond,
 };
@@ -1595,8 +1727,11 @@ ppc_opc_func_t ppc_opc_dcbst_func = {
 	opc_dcbst_translate,
 	opc_invalid_translate_cond,
 };
-
-ppc_opc_func_t ppc_opc_lwzux_func;
+ppc_opc_func_t ppc_opc_lwzux_func = {
+	opc_lwzux_tag,
+	opc_lwzux_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_andcx_func = {
 	opc_default_tag,
 	opc_andcx_translate,
@@ -1607,7 +1742,11 @@ ppc_opc_func_t ppc_opc_mulhwx_func = {
 	opc_mulhwx_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_iseleq_func;
+ppc_opc_func_t ppc_opc_iseleq_func = {
+	opc_default_tag,
+	opc_iseleq_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_mfmsr_func = {
 	opc_mfmsr_tag,
 	opc_mfmsr_translate,
@@ -1689,7 +1828,7 @@ ppc_opc_func_t ppc_opc_addzex_func = {
 };
 ppc_opc_func_t ppc_opc_mtsr_func;
 ppc_opc_func_t ppc_opc_stbx_func = {
-	opc_default_tag,
+	opc_stbx_tag,
 	opc_stbx_translate,
 	opc_invalid_translate_cond,
 };
@@ -1761,11 +1900,15 @@ ppc_opc_func_t ppc_opc_lhax_func = {
 	opc_lhax_translate,
 	opc_invalid_translate_cond,
 };
-ppc_opc_func_t ppc_opc_isel_func;
+ppc_opc_func_t ppc_opc_isel_func = {
+	opc_default_tag,
+	opc_isel_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_tlbia_func;
 ppc_opc_func_t ppc_opc_lhaux_func;
 ppc_opc_func_t ppc_opc_sthx_func = {
-	opc_default_tag,
+	opc_sthx_tag,
 	opc_sthx_translate,
 	opc_invalid_translate_cond,
 };
@@ -1828,7 +1971,12 @@ ppc_opc_func_t ppc_opc_mfsrin_func = {
 	opc_invalid_translate_cond,
 };
 ppc_opc_func_t ppc_opc_stswx_func;
-ppc_opc_func_t ppc_opc_stwbrx_func;
+ppc_opc_func_t ppc_opc_stwbrx_func = {
+	opc_stwbrx_tag,
+	opc_stwbrx_translate,
+	opc_invalid_translate_cond,
+};
+
 ppc_opc_func_t ppc_opc_stfsx_func;
 ppc_opc_func_t ppc_opc_stfsux_func;
 ppc_opc_func_t ppc_opc_stswi_func;
@@ -1883,7 +2031,7 @@ ppc_opc_func_t ppc_opc_icbi_func = {
 
 ppc_opc_func_t ppc_opc_stfiwx_func;
 ppc_opc_func_t ppc_opc_dcbz_func = {
-	opc_default_tag,
+	opc_dcbz_tag,
 	opc_dcbz_translate,
 	opc_invalid_translate_cond,
 };

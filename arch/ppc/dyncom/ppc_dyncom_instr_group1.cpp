@@ -62,9 +62,9 @@ static int opc_bcctrx_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
  */
 int opc_bclrx_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	uint32 BO, BI, BD;
-        PPC_OPC_TEMPL_XL(instr, BO, BI, BD);
+	PPC_OPC_TEMPL_XL(instr, BO, BI, BD);
 	/* if BO is 1z1zz, then branch always */
-	if((BO & 0x14) == 0x14)
+	if((BO & 0x14) == 0x14 & is_user_mode(cpu))
 		*tag = TAG_RET;
 	else{
 		*tag = TAG_COND_BRANCH;
@@ -159,10 +159,52 @@ static int opc_cror_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb){
 				AND(RS(CR_REGNUM), CONST(~(1<<(31-crD))))
 				));
 }
+/*
+ *	crnor		Condition Register NOR
+ *	.452
+ */
+static int opc_crnor_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int crD, crA, crB;
+	PPC_OPC_TEMPL_X(instr, crD, crA, crB);
+	uint32 t = (1<<(31-crA)) | (1<<(31-crB));
+	Value *cond = ICMP_NE(AND(RS(CR_REGNUM), CONST(t)), CONST(0));
+	LETS(CR_REGNUM,SELECT(cond,
+				AND(RS(CR_REGNUM), CONST(~(1<<(31-crD)))),
+				OR(RS(CR_REGNUM), CONST(1<<(31-crD)))
+				));
+}
+/*
+ *	crxor		Condition Register XOR
+ *	.448
+ */
+static int opc_crxor_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	int crD, crA, crB;
+	PPC_OPC_TEMPL_X(instr, crD, crA, crB);
+	Value *cr_v = RS(CR_REGNUM);
+	Value *tmp_a = CONST(1<<(31-crA));
+	Value *tmp_b = CONST(1<<(31-crB));
+	Value *tmp_c = CONST(1<<(31-crD));
+	Value *tmp_not_c = CONST(~(1<<(31-crD)));
+	Value *cond = OR(
+			AND(ICMP_EQ(AND(cr_v, tmp_a), CONST(0)), ICMP_NE(AND(cr_v, tmp_b), CONST(0))),
+			AND(ICMP_NE(AND(cr_v, tmp_a), CONST(0)), ICMP_EQ(AND(cr_v, tmp_b), CONST(0)))
+			);
+	LETS(CR_REGNUM, SELECT(cond, OR(cr_v, tmp_c), AND(cr_v, tmp_not_c)));
+}
 /* Interfaces */
-ppc_opc_func_t ppc_opc_crnor_func;
+ppc_opc_func_t ppc_opc_crnor_func = {
+	opc_default_tag,
+	opc_crnor_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_crandc_func;
-ppc_opc_func_t ppc_opc_crxor_func;
+ppc_opc_func_t ppc_opc_crxor_func = {
+	opc_default_tag,
+	opc_crxor_translate,
+	opc_invalid_translate_cond,
+};
 ppc_opc_func_t ppc_opc_crnand_func;
 ppc_opc_func_t ppc_opc_crand_func;
 ppc_opc_func_t ppc_opc_creqv_func;

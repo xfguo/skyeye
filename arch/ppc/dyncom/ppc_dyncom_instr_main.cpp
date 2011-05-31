@@ -162,7 +162,6 @@ static int opc_lwz_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	return 0;
 }
 ppc_opc_func_t ppc_opc_lwz_func = {
-//	opc_default_tag,
 	opc_lwz_tag,
 	opc_lwz_translate,
 	opc_invalid_translate_cond,
@@ -172,6 +171,13 @@ ppc_opc_func_t ppc_opc_lwz_func = {
  *	lwzu		Load Word and Zero with Update
  *	.558
  */
+int opc_lwzu_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_lwzu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	e500_core_t* current_core = get_current_core();
@@ -181,13 +187,22 @@ static int opc_lwzu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	// FIXME: check rA!=0 && rA!=rD
 	Value * addr = ADD(R(rA), CONST(imm));
 	Value * result = arch_read_memory(cpu, bb, addr, 0, 32);
-	LET(rD, result);
-	/* FIXME:update rA */
-	LET(rA, addr);
+	/**
+	 * If occur exception, rD should not to be written.
+	 **/
+	if(is_user_mode(cpu)){
+		LET(rA, addr);
+		LET(rD, result);
+	}else{
+		Value *current_pc = RS(PHYS_PC_REGNUM);
+		Value *exc_occur = ICMP_EQ(current_pc, CONST(PPC_EXC_DSI_ADDR));
+		LET(rA, SELECT(exc_occur, R(rA), addr));
+		LET(rD, SELECT(exc_occur, R(rD), result));
+	}
 	return 0;
 }
 ppc_opc_func_t ppc_opc_lwzu_func = {
-	opc_default_tag,
+	opc_lwzu_tag,
 	opc_lwzu_translate,
 	opc_invalid_translate_cond,
 };
@@ -208,11 +223,15 @@ static int opc_stw_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);
-	arch_write_memory(cpu, bb, ADD(R(rA), CONST(imm)), R(rS), 32);
+	Value *addr;
+	if (rA)
+		addr = ADD(R(rA), CONST(imm));
+	else
+		addr = CONST(imm);
+	arch_write_memory(cpu, bb, addr, R(rS), 32);
 	return 0;
 }
 ppc_opc_func_t ppc_opc_stw_func = {
-//	opc_default_tag,
 	opc_stw_tag,
 	opc_stw_translate,
 	opc_invalid_translate_cond,
@@ -222,6 +241,13 @@ ppc_opc_func_t ppc_opc_stw_func = {
  *	stwu		Store Word with Update
  *	.663
  */
+int opc_stwu_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_stwu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	debug(DEBUG_TRANSLATE, "In %s\n", __func__);
@@ -233,12 +259,20 @@ static int opc_stwu_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* FIXME: no MMU now */
 	Value *addr = ADD(R(rA), CONST(imm));
 	arch_write_memory(cpu, bb, addr, R(rS), 32);
-	/* updata rS */
-	LET(rA, addr);
+	/**
+	 * If occur exception, rD should not to be written.
+	 **/
+	if(is_user_mode(cpu)){
+		LET(rA, addr);
+	}else{
+		Value *current_pc = RS(PHYS_PC_REGNUM);
+		Value *exc_occur = ICMP_EQ(current_pc, CONST(PPC_EXC_DSI_ADDR));
+		LET(rA, SELECT(exc_occur, R(rA), addr));
+	}
 	return 0;
 }
 ppc_opc_func_t ppc_opc_stwu_func = {
-	opc_default_tag,
+	opc_stwu_tag,
 	opc_stwu_translate,
 	opc_invalid_translate_cond,
 };
@@ -766,13 +800,10 @@ static int opc_lbzu_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	// FIXME: check rA!=0 && rA!=rD
 	uint8 r;
 	Value* ret;
-	if(rA)
-		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,8);
-	else
-		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,8);
-
+	Value *addr = ADD(R(rA), CONST(imm));
+	ret = arch_read_memory(cpu, bb, addr, 0 ,8);
 	LET(rD, ret);
-	LET(rA, ADD(R(rA), CONST(imm)));
+	LET(rA, addr);
 	NOT_TEST;
 }
 
@@ -785,6 +816,13 @@ ppc_opc_func_t ppc_opc_lbzu_func = {
  *	stb		Store Byte
  *	.632
  */
+int opc_stb_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_stb_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
 	int rA, rS;
@@ -798,7 +836,7 @@ static int opc_stb_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 }
 
 ppc_opc_func_t ppc_opc_stb_func = {
-        opc_default_tag,
+        opc_stb_tag,
         opc_stb_translate,
         opc_invalid_translate_cond,
 };
@@ -824,6 +862,13 @@ ppc_opc_func_t ppc_opc_stbu_func = {
  *	lhz		Load Half Word and Zero
  *	.543
  */
+int opc_lhz_tag(cpu_t *cpu, uint32_t instr, addr_t phys_pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_EXCEPTION;
+	*next_pc = phys_pc + PPC_INSN_SIZE;
+	*new_pc = NEW_PC_NONE;
+	return PPC_INSN_SIZE;
+}
 static int opc_lhz_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 {
 	int rA, rD;
@@ -835,11 +880,20 @@ static int opc_lhz_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,16);
 	else
 		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,16);
-	LET(rD, ret);
+	/**
+	 * If occur exception, rD should not to be written.
+	 **/
+	if(is_user_mode(cpu)){
+		LET(rD, ret);
+	}else{
+		Value *current_pc = RS(PHYS_PC_REGNUM);
+		Value *exc_occur = ICMP_EQ(current_pc, CONST(PPC_EXC_DSI_ADDR));
+		LET(rD, SELECT(exc_occur, R(rD), ret));
+	}
 }
 
 ppc_opc_func_t ppc_opc_lhz_func = {
-        opc_default_tag,
+        opc_lhz_tag,
         opc_lhz_translate,
         opc_invalid_translate_cond,
 };
@@ -854,12 +908,10 @@ static int opc_lhzu_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
 	uint16 r;
 	Value* ret;
-	if(rA)
-		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,16);
-	else
-		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,16);
+	Value* addr = ADD(R(rA), CONST(imm));
+	ret = arch_read_memory(cpu, bb, addr, 0 ,16);
 	LET(rD, ret);
-	LET(rA, ADD(R(rA), CONST(imm)));
+	LET(rA, addr);
 	NOT_TEST;
 }
 
@@ -901,12 +953,10 @@ static int opc_lhau_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rD, rA, imm);
 	Value* ret;
-	if(rA)
-		ret = arch_read_memory(cpu, bb, ADD(R(rA), CONST(imm)), 0 ,16);
-	else
-		ret = arch_read_memory(cpu, bb,  CONST(imm), 0 ,16);
+	Value* addr = ADD(R(rA), CONST(imm));
+	ret = arch_read_memory(cpu, bb, addr, 0 ,16);
 	LET(rD, SELECT(ICMP_NE(AND(ret, CONST(0x8000)), CONST(0)), OR(ret, CONST(0xFFFF0000)), ret));
-	LET(rA, ADD(R(rA), CONST(imm)));	
+	LET(rA, addr);
 	NOT_TEST;
 }
 
@@ -945,11 +995,9 @@ static int opc_sthu_translate(cpu_t* cpu, uint32_t instr, BasicBlock* bb)
 	int rA, rS;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(instr, rS, rA, imm);
-	if(rA)
-		arch_write_memory(cpu, bb, ADD(R(rA), CONST(imm)), R(rS), 16);
-	else
-		arch_write_memory(cpu, bb, CONST(imm), R(rS), 16);
-	LET(rA, ADD(R(rA), CONST(imm)));
+	Value *addr = ADD(R(rA), CONST(imm));
+	arch_write_memory(cpu, bb, addr, R(rS), 16);
+	LET(rA, addr);
 }
 
 ppc_opc_func_t ppc_opc_sthu_func = {
