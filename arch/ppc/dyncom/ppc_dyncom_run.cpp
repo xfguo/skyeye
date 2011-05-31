@@ -48,8 +48,11 @@ using namespace std;
  * 0 --debug function
  * 1 --syscall for user mode simulation
  * */
-#define PPC_DYNCOM_CALLOUT_EXC 2
-#define PPC_DYNCOM_CALLOUT_MMU_SET_SDR1 3
+enum{
+	PPC_DYNCOM_CALLOUT_EXC = 2,
+	PPC_DYNCOM_CALLOUT_MMU_SET_SDR1,
+	PPC_DYNCOM_MAX_CALLOUT
+};
 
 e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	//e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
@@ -183,7 +186,11 @@ static int arch_powerpc_effective_to_physical(struct cpu *cpu, uint32_t addr, ui
 		return 0;
 	} else {
 		/* only support PPC_MMU_CODE */
-		return core->effective_to_physical(core, addr, PPC_MMU_CODE, result);
+		int ret;
+		ret = core->effective_to_physical(core, addr, PPC_MMU_CODE, result);
+		if(core->pc == PPC_EXC_ISI)
+			*result = PPC_EXC_ISI;
+		return ret;
 	}
 }
 static arch_func_t powerpc_arch_func = {
@@ -219,7 +226,10 @@ int ppc_dyncom_start_debug_flag = 0;
 */
 static void ppc_debug_func(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
-	if(ppc_dyncom_start_debug_flag){
+	if(ppc_dyncom_start_debug_flag
+			&& core->pir == DEBUG_CORE
+			){
+#if 1
 		printf("In %s, phys_pc=0x%x\n", __FUNCTION__, *(addr_t*)cpu->rf.phys_pc);
 		printf("gprs:\n ");
 #define PRINT_COLUMN 8
@@ -244,13 +254,23 @@ static void ppc_debug_func(cpu_t* cpu){
 		printf("SRR[0] = %x\n ", core->srr[0]);
 		printf("TBL = %x\n ", core->tbl);
 		printf("TBU = %x\n ", core->tbu);
+#else
+		printf("Core %d, pc = 0x%x, icount = %d\n", core->pir, core->pc, core->icount);
+#endif
 	}
-	if(core->icount == START_DEBUG_ICOUNT || core->phys_pc == START_DEBUG_PC){
+	if((core->icount == START_DEBUG_ICOUNT || core->phys_pc == START_DEBUG_PC)
+			&& core->pir == DEBUG_CORE
+			){
 		ppc_dyncom_start_debug_flag = 1;
 		cpu_set_flags_debug(cpu, CPU_DEBUG_LOG
-			| CPU_DEBUG_PRINT_IR
+//			| CPU_DEBUG_PRINT_IR
 			);
-
+	}
+	if((core->icount == STOP_DEBUG_ICOUNT || core->phys_pc == STOP_DEBUG_PC)
+			&& core->pir == DEBUG_CORE
+			){
+		ppc_dyncom_start_debug_flag = 0;
+		cpu->dyncom_engine->flags_debug &= ~CPU_DEBUG_LOG;
 	}
 #if 0
 #define START_DIFF 0 
@@ -387,7 +407,9 @@ void ppc_dyncom_init(e500_core_t* core){
 	}else{
 		cpu->dyncom_engine->code_start = 0x00000000;
 		cpu->dyncom_engine->code_entry = 0x00000000;
-		cpu->dyncom_engine->code_end = 0x11000000;
+		/* should set code_end to the end of physical
+		 * memory skyeye simulated */
+		cpu->dyncom_engine->code_end = 0x20000000;
 	}
 	cpu->mem_ops = ppc_dyncom_mem_ops;
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
@@ -431,39 +453,14 @@ static void flush_current_page(cpu_t *cpu){
 	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 	addr_t effec_pc = *(addr_t*)cpu->rf.pc;
 	ppc_effective_to_physical(core, effec_pc, PPC_MMU_CODE, (uint32_t*)cpu->rf.phys_pc);
-	cpu->current_page_phys = *(addr_t*)cpu->rf.phys_pc & 0xfffff000;
-	cpu->current_page_effec = effec_pc & 0xfffff000; 
+	cpu->current_page_phys = core->phys_pc & 0xfffff000;
+	cpu->current_page_effec = core->pc & 0xfffff000;
 }
-static int dectec_exception(cpu_t *cpu, e500_core_t *core)
-{
-	core->dec_io_do_cycle(core);
-	if(core->interrupt_flag){
-		switch (core->interrupt_type){
-			case PPC_EXC_DEC:
-				core->srr[0] = core->pc;
-				core->srr[1] = core->msr & 0x87c0ffff;
-				break;
-			case PPC_EXC_EXT_INT:
-				core->srr[0] = core->pc;
-				core->srr[1] = core->msr & 0x87c0ffff;
-				break;
-		}
-		ppc_mmu_tlb_invalidate(core);
-		core->msr = 0;
-		core->pc = core->interrupt_type;
-		core->phys_pc = core->interrupt_type;
-		core->interrupt_flag -= 1;
-		core->interrupt_type = 0;
-		return 1;
-	}
-	return 0;
-}
+
 void ppc_dyncom_run(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 	debug(DEBUG_RUN, "In %s,pc=0x%x,phys_pc=0x%x\n", __FUNCTION__, core->pc, core->phys_pc);
 	int rc = cpu_run(cpu);
-	if(!is_user_mode(cpu))
-		dectec_exception(cpu, core);
 	switch (rc) {   
 		case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
 		case JIT_RETURN_TIMEOUT:

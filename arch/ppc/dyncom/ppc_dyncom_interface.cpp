@@ -60,13 +60,19 @@ static void per_cpu_stop(conf_object_t * core);
 static void
 ppc_reset_state ()
 {
-	//skyeye_config_t* config = get_current_config();
-	//config->mach->mach_io_reset(&gCPU);
-	//skyeye_config.mach->mach_io_reset(&gCPU);/* set all the default value for register */	
 }
+
 static void set_exception_stage2(e500_core_t *core, const uint32 type){
-	core->interrupt_flag += 1;
-	core->interrupt_type = type;
+	switch(type){
+		case PPC_EXC_DEC:
+			core->asyn_exc_flag |= DYNCOM_ASYN_EXC_DEC;
+			break;
+		case PPC_EXC_EXT_INT:
+			core->asyn_exc_flag |= DYNCOM_ASYN_EXC_EXT_INT;
+			break;
+		default:
+			fprintf(stderr, "Core %d, EXC %x not support.\n", core->pir, type);
+	}
 }
 void e600_dyncom_dec_io_do_cycles(e500_core_t * core){
 	cpu_t* cpu = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
@@ -81,9 +87,8 @@ void e600_dyncom_dec_io_do_cycles(e500_core_t * core){
 	if(cycles >= old_dec){
 		if(core->msr & MSR_EE){
 			/* trigger timer interrupt */
-			printf("pir = %d, icount = %d, MSR_EE is set, DEC exception happen.\n", core->pir, core->icount);
 			ppc_exception(core, PPC_EXC_DEC, 0, core->pc);
-			core->dec -= (cycles - old_dec);
+			core->dec = 0;
 		}
 	}else{
 		core->dec -= cycles;
@@ -92,21 +97,21 @@ void e600_dyncom_dec_io_do_cycles(e500_core_t * core){
 }
 static bool_t e600_dyncom_ppc_exception(e500_core_t *core, uint32 type, uint32 flags, uint32 a)
 {
-//	printf("****START In %s, phys_pc = %x, pc = 0x%x, type = 0x%x\n", __func__, core->phys_pc, core->pc, type);
 	core->pc -= 4;
 	core->phys_pc -= 4;
 	switch (type) {
-	case PPC_EXC_DSI: { // .271
+	case PPC_EXC_DSI: {	// .271
 		core->srr[0] = core->pc;
 		core->srr[1] = core->msr & 0x87c0ffff;
 		core->dar = a;
 		core->dsisr = flags;
-		printf("In %s, addr=0x%x, pc=0x%x DSI exception.\n", __FUNCTION__, a, core->pc);
+		//printf("In %s, addr=0x%x, pc=0x%x, icount = %d DSI exception.\n", __FUNCTION__, a, core->pc, core->icount);
 		break;
 	}
 	case PPC_EXC_ISI: { // .274
-		core->srr[0] = core->pc;
+		core->srr[0] = core->pc + 4;
 		core->srr[1] = (core->msr & 0x87c0ffff) | flags;
+		//printf("In %s, addr=0x%x, pc=0x%x, icount = %d ISI exception.\n", __FUNCTION__, a, core->pc, core->icount);
 		break;
 	}
 	case PPC_EXC_EXT_INT: {
@@ -115,7 +120,7 @@ static bool_t e600_dyncom_ppc_exception(e500_core_t *core, uint32 type, uint32 f
 		core->phys_pc += 4;
 		return True;
 	}
-	case PPC_EXC_SC: {  // .285
+	case PPC_EXC_SC: {	// .285
 		core->srr[0] = core->pc + 4;
 		core->srr[1] = core->msr & 0x87c0ffff;
 		break;
@@ -170,6 +175,40 @@ static bool_t e600_dyncom_ppc_exception(e500_core_t *core, uint32 type, uint32 f
 	core->pc = type;
 	core->phys_pc = type;
 	return True;
+}
+static int detect_exception(cpu_t *cpu, e500_core_t *core)
+{
+	if(core->asyn_exc_flag & DYNCOM_ASYN_EXC_DEC){
+		if(core->msr & MSR_EE){
+			core->srr[0] = core->pc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+
+			ppc_mmu_tlb_invalidate(core);
+			core->msr = 0;
+			core->pc = PPC_EXC_DEC;
+			core->phys_pc = PPC_EXC_DEC;
+			core->asyn_exc_flag &= ~DYNCOM_ASYN_EXC_DEC;
+//			skyeye_log(Debug_log, __func__, "core %d PPC_EXC_DEC happened. icount = %d\n", core->pir, core->icount);
+		}else{
+			return 0;
+		}
+	}
+	if(core->asyn_exc_flag & DYNCOM_ASYN_EXC_EXT_INT){
+		if(core->msr & MSR_EE){
+			core->srr[0] = core->pc;
+			core->srr[1] = core->msr & 0x87c0ffff;
+
+			ppc_mmu_tlb_invalidate(core);
+			core->msr = 0;
+			core->pc = PPC_EXC_EXT_INT;
+			core->phys_pc = PPC_EXC_EXT_INT;
+			core->asyn_exc_flag &= ~DYNCOM_ASYN_EXC_EXT_INT;
+//			skyeye_log(Debug_log, __func__, "core %d PPC_EXC_EXT_INT happened.icount = %d\n", core->pir, core->icount);
+		}else{
+			return 0;
+		}
+	}
+	return 0;
 }
 /* init thread clock for profile */
 static void ppc_dyncom_thread_clock_init()
@@ -267,7 +306,6 @@ ppc_init_state ()
 
 static void per_cpu_step(conf_object_t * running_core){
 	/* Use typecast directly for performance issue */
-	//e500_core_t *core = (e500_core_t *)get_cast_conf_obj(running_core, "e500_core_t");
 	e500_core_t *core = (e500_core_t *)running_core->obj;
 	PPC_CPU_State* cpu = get_current_cpu();
 	/* Check the second core and boot flags */
@@ -278,39 +316,27 @@ static void per_cpu_step(conf_object_t * running_core){
 	debug(DEBUG_INTERFACE, "In %s, core[%d].pc=0x%x\n", __FUNCTION__, core->pir, core->pc);
 	ppc_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 //	launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->pc);	
+
+	if(!is_user_mode((cpu_t*)(core->dyncom_cpu->obj))){
+		core->dec_io_do_cycle(core);
+		detect_exception((cpu_t*)(core->dyncom_cpu->obj), core);
+	}
 }
 
 static void per_cpu_stop(conf_object_t * core){
 }
 
-/* Fixme later */
-//e500_core_t * current_core;
-static void
-ppc_step_once ()
+static void ppc_step_once ()
 {
-	int i;
-	machine_config_t* mach = get_current_mach();
-	PPC_CPU_State* cpu = get_current_cpu();
-	/* workaround boot sequence for dual core, we need the first core initialize some variable for second core. */
-	e500_core_t* core;
-#if 0
-	for(i = 0; i < cpu->core_num; i++ ){
-		core = &cpu->core[i];
-		/* if CPU1_EN is set? */
-		if(!i || cpu->eebpcr & 0x2000000)
-			per_cpu_step(core);
-	}
-	/* for peripheral */
-	mach->mach_io_do_cycle(cpu);
-#endif
+	/* FIXME: not used in dyncom */
+	return;
 }
 
 static void ppc_stop(uint32_t id){
 	return;
 }
 
-static void
-ppc_set_pc (generic_address_t pc)
+static void ppc_set_pc (generic_address_t pc)
 {
 	int i;
 	PPC_CPU_State* cpu = get_current_cpu();
@@ -318,8 +344,8 @@ ppc_set_pc (generic_address_t pc)
 	/* Fixme, for e500 core, the first instruction should be executed at 0xFFFFFFFC */
 	//gCPU.pc = 0xFFFFFFFC;
 }
-static uint32_t
-ppc_get_pc(){
+static uint32_t ppc_get_pc()
+{
 	PPC_CPU_State* cpu = get_current_cpu();
 	return cpu->core[0].pc;
 }

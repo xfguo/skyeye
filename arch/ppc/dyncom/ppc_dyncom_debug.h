@@ -3,11 +3,15 @@
 
 #include <math.h>
 
+#define DEBUG_CORE 0
 #define START_DEBUG_ICOUNT -1 
-//#define START_DEBUG_ICOUNT 8399750 
+//#define START_DEBUG_ICOUNT 219010000
 #define START_DEBUG_PC 0xffffffff
 //#define START_DEBUG_PC -1
 
+#define STOP_DEBUG_ICOUNT -1
+//#define STOP_DEBUG_ICOUNT 219010395
+#define STOP_DEBUG_PC 0xffffffff
 extern int ppc_dyncom_start_debug_flag;
 
 #define DEBUG_TAG					1
