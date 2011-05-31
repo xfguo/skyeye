@@ -141,9 +141,6 @@ extern "C" {
 		uint32 pagetable_base;
 		int pagetable_hashmask;
 
-		// for generic cpu core
-		uint32 effective_code_page;
-		uint8 *physical_code_page;
 		uint64 pdec;					// more precise version of dec
 		uint64 ptb;						// more precise version of tb
 
@@ -188,6 +185,7 @@ extern "C" {
 
 		uint32 tbl;
 		uint32 tbu;
+		uint32 effective_code_page;
 		uint32 syscall_number;
 
 		uint32 spefscr;
@@ -197,6 +195,8 @@ extern "C" {
 		uint32 vrsave;					// spr 256
 		Vector_t vr[36];				// <--- this MUST be 16-byte alligned
 		uint32 vtemp;
+		// for generic cpu core
+		uint8 *physical_code_page;
 
 		e500_mmu_t mmu;
 
@@ -204,8 +204,14 @@ extern "C" {
 		uint32 iack;
 
 		uint32 ipi_flag;
-		uint32 interrupt_flag;
-		uint32 interrupt_type;
+/* @ asyn_exc_flag is used for ppc_dyncom.
+ * To record the exceptions or interrupts which are asynchronous.
+ * They are detected in per_cpu_step.*/
+#define DYNCOM_ASYN_EXC_DEC		(1 << 0)
+#define DYNCOM_ASYN_EXC_EXT_INT	(1 << 1)
+		uint32 asyn_exc_flag;
+		uint32 interrupt_dec_flag;
+		uint32 interrupt_ext_int_flag;
 		uint32 step;
 		int (*effective_to_physical) (struct e500_core_s * core,
 					      uint32 addr, int flags,
