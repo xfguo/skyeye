@@ -37,6 +37,9 @@
 #include <map>
 #include <vector>
 
+#include <skyeye_log.h>
+#include <skyeye_mm.h>
+
 namespace llvm {
 	class BasicBlock;
 	class ExecutionEngine;
@@ -261,16 +264,67 @@ typedef void (*callout4)(cpu_t *, uint32_t, uint32_t, uint32_t, uint32_t);
 
 
 #define HASH_FAST_MAP
-#define HASH_FAST_MAP_SIZE 0x1000000
-#define HASH_INDEX(phys_pc) (phys_pc & 0xffffff)
 typedef std::map<addr_t, BasicBlock *> bbaddr_map;
 typedef std::map<Function *, bbaddr_map> funcbb_map;
 #ifdef HASH_FAST_MAP
-typedef void** fast_map;
+#define HASH_MAP_SIZE_L1 1024
+#define HASH_MAP_SIZE_L2 1024
+#define HASH_MAP_SIZE_L3 4096
+
+#define HASH_MAP_MASK_L1 0xffc00000
+#define HASH_MAP_MASK_L2 0x003ff000
+#define HASH_MAP_MASK_L3 0x00000fff
+
+#define HASH_MAP_INDEX_L1(phys_pc) ((phys_pc & HASH_MAP_MASK_L1) >> 22)
+#define HASH_MAP_INDEX_L2(phys_pc) ((phys_pc & HASH_MAP_MASK_L2) >> 12)
+#define HASH_MAP_INDEX_L3(phys_pc) (phys_pc & HASH_MAP_MASK_L3)
+
+typedef void**** fast_map;
+
+static inline int init_fmap_l3(fast_map fmap, addr_t phys_pc)
+{
+	if(fmap[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)] != NULL)
+		return 1;
+	fmap[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)] =
+		(void **)skyeye_mm_zero(sizeof(void **) * HASH_MAP_SIZE_L3);
+	if(fmap[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)] == NULL){
+		skyeye_log(Error_log, __func__, "malloc error\n", __func__);
+		exit(0);
+	}
+	return 1;
+}
+static inline int init_fmap_l2(fast_map fmap, addr_t phys_pc)
+{
+	if(fmap[HASH_MAP_INDEX_L1(phys_pc)] != NULL)
+		return 1;
+	fmap[HASH_MAP_INDEX_L1(phys_pc)] = (void ***)skyeye_mm_zero(sizeof(void ***) * HASH_MAP_SIZE_L2);
+	if(fmap[HASH_MAP_INDEX_L1(phys_pc)] == NULL){
+		skyeye_log(Error_log, __func__, "malloc error\n", __func__);
+		exit(0);
+	}
+	return 1;
+}
+static inline void clear_fmap(fast_map fmap)
+{
+	int i, j, k;
+	for(i = 0; i < HASH_MAP_SIZE_L1; i++){
+		if(fmap[i] == NULL) continue;
+		for(j = 0; j < HASH_MAP_SIZE_L2; j++){
+			if(fmap[i][j] == NULL) continue;
+			for(k = 0; k < HASH_MAP_SIZE_L3; k++)
+				if(fmap[i][j][k] == NULL) continue;
+				else fmap[i][j][k] == NULL;
+		}
+	}
+}
 #else
 /* This map save <address, native code function pointer> */
 typedef std::map<addr_t, void *> fast_map;
+static inline int init_fmap_l3(fast_map fmap, addr_t phys_pc){}
+static inline int init_fmap_l2(fast_map fmap, addr_t phys_pc){}
+static inline void clear_fmap(fast_map fmap){}
 #endif
+
 typedef struct compiled_func{
 	/* The compiled native code section */
 	void* fp;
@@ -279,7 +333,7 @@ typedef struct compiled_func{
 	/* The bb set by tagging procedure */
 	vector<addr_t> startbb;
 }compiled_func_t;
-#define JIT_NUM 10240
+#define JIT_NUM 102400
 typedef struct dyncom_engine{
 	funcbb_map func_bb; // faster bb lookup
 
@@ -355,9 +409,12 @@ typedef struct cpu {
 	/* icounter and old_icounter are used in kernel simulation, for
 	 * we should use them to count the cycles to reponse the interrupt
 	 * and exception. ANY more efficacious way? */
-#define TIMEOUT_THRESHOLD 10000
+#define TIMEOUT_THRESHOLD 30
 	uint64_t icounter;/* instruction counter */
 	uint64_t old_icounter;/* old instruction counter */
+	Value *ptr_ICOUNTER;
+	Value *ptr_OLD_ICOUNTER;
+
 	uint32_t is_user_mode;
 	/**
 	 * current_page: for translation use. Translate the instructions

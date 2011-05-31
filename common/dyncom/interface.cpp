@@ -108,8 +108,8 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 
 	/* init hash fast map */
 #ifdef HASH_FAST_MAP
-	cpu->dyncom_engine->fmap = (fast_map)skyeye_mm_zero(sizeof(void*) * HASH_FAST_MAP_SIZE);
-	memset(cpu->dyncom_engine->fmap, NULL, sizeof(addr_t) * HASH_FAST_MAP_SIZE);
+	cpu->dyncom_engine->fmap = (fast_map)malloc(sizeof(void***) * HASH_MAP_SIZE_L1);
+	memset(cpu->dyncom_engine->fmap, NULL, sizeof(addr_t) * HASH_MAP_SIZE_L1);
 #endif
 	uint32_t i;
 	for (i = 0; i < 4; i++) {
@@ -323,8 +323,14 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
 	pthread_rwlock_wrlock(&(cpu->dyncom_engine->rwlock));
-	for (; i != bb_addr.end(); i++)
-		cpu->dyncom_engine->fmap[HASH_INDEX(i->first)] = native_code_func;
+	for (; i != bb_addr.end(); i++){
+		if(cpu->dyncom_engine->fmap[HASH_MAP_INDEX_L1(i->first)] == NULL)
+			init_fmap_l2(cpu->dyncom_engine->fmap, i->first);
+		if(cpu->dyncom_engine->fmap[HASH_MAP_INDEX_L1(i->first)][HASH_MAP_INDEX_L2(i->first)] == NULL)
+			init_fmap_l3(cpu->dyncom_engine->fmap, i->first);
+		cpu->dyncom_engine->fmap[HASH_MAP_INDEX_L1(i->first)][HASH_MAP_INDEX_L2(i->first)][HASH_MAP_INDEX_L3(i->first)] =
+			native_code_func;
+	}
 	if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
 		fprintf(stderr, "unlock error\n");
 	}
@@ -394,6 +400,10 @@ cpu_translate_function(cpu_t *cpu, addr_t addr)
 	LOG("done.\n");
 
 	cpu->dyncom_engine->functions++;/* Bug."functions" member could not be reset. */
+	if(cpu->dyncom_engine->functions == JIT_NUM){
+		printf("JIT function number is %d, Please set your cache bigger.\n", cpu->dyncom_engine->functions);
+		skyeye_exit(0);
+	}
 }
 
 /**
@@ -443,7 +453,11 @@ cpu_run(cpu_t *cpu)
 	/* try to find the entry in all functions */
 	while(true) {
 		pc = cpu->f.get_pc(cpu, cpu->rf.grf);
-		cpu->mem_ops.effective_to_physical(cpu, pc, &phys_pc);
+		int ret = cpu->mem_ops.effective_to_physical(cpu, pc, &phys_pc);
+		/* if ISI exception happened here, we mush set pc to phys_pc which is
+		 * the exception handler address.*/
+		if(ret)
+			pc = phys_pc;
 		*(addr_t*)cpu->rf.phys_pc = phys_pc;
 		if(!is_user_mode(cpu)){
 			cpu->current_page_phys = phys_pc & 0xfffff000;
@@ -451,13 +465,13 @@ cpu_run(cpu_t *cpu)
 		}
 #ifdef HASH_FAST_MAP
 		fast_map hash_map = cpu->dyncom_engine->fmap;
-		pfunc = (fp_t)hash_map[HASH_INDEX(phys_pc)];
-		if(pfunc){
-			do_translate = false;
-		}
-		else{
+		if(hash_map[HASH_MAP_INDEX_L1(phys_pc)] == NULL)
 			return JIT_RETURN_FUNCNOTFOUND;
-		}
+		else if(hash_map[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)] == NULL)
+			return JIT_RETURN_FUNCNOTFOUND;
+		else if(hash_map[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)][HASH_MAP_INDEX_L3(phys_pc)] == NULL)
+			return JIT_RETURN_FUNCNOTFOUND;
+		pfunc = (fp_t)hash_map[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)][HASH_MAP_INDEX_L3(phys_pc)];
 #else
 		fast_map &func_addr = cpu->dyncom_engine->fmap;
 		fast_map::const_iterator it = func_addr.find(pc);
@@ -470,12 +484,13 @@ cpu_run(cpu_t *cpu)
 		}
 #endif
 		UPDATE_TIMING(cpu, TIMER_RUN, true);
+		LOG("******Run jit 0x%x\n", pc);
 		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, cpu->mem_ops.read_memory, cpu->mem_ops.write_memory);
 		UPDATE_TIMING(cpu, TIMER_RUN, false);
 		if (ret != JIT_RETURN_FUNCNOTFOUND)
 			return ret;
 		if(!is_user_mode(cpu)){
-			if(cpu->icounter - cpu->old_icounter >= TIMEOUT_THRESHOLD)
+			if((cpu->icounter - cpu->old_icounter) >= (TIMEOUT_THRESHOLD * 10))
 				return JIT_RETURN_TIMEOUT;
 		}
 	}
