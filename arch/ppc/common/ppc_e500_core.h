@@ -26,6 +26,7 @@
 #define __PPC_E500_CORE_H__
 #include "skyeye_types.h"
 #include "ppc_e500_core.h"
+#include "skyeye_thread.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -204,6 +205,7 @@ extern "C" {
 		uint32 iack;
 
 		uint32 ipi_flag;
+		pthread_spinlock_t ipr_spinlock;
 /* @ asyn_exc_flag is used for ppc_dyncom.
  * To record the exceptions or interrupts which are asynchronous.
  * They are detected in per_cpu_step.*/
@@ -226,6 +228,7 @@ extern "C" {
 
 #define E500
 #define IPI0 (1 >> 0)
+#define UART0 (2 >> 0)
 	void ppc_core_init(e500_core_t * core, int core_id);
 #ifdef __cplusplus
 }

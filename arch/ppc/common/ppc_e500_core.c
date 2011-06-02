@@ -122,6 +122,7 @@ void ppc_core_init(e500_core_t * core, int core_id)
 		core->dec_io_do_cycle = e500_dec_io_do_cycle;
 		core->get_ccsr_base = e500_get_ccsr_base;
 		core->ccsr_size = 0x100000;
+		core->pc = 0xFFFFFFFC;
 	} else if (!strcmp(mach->machine_name, "mpc8572")) {
 		core->pvr = 0x80210030;	/* PVR for mpc8572 */
 		/* E500 core initialization */
@@ -132,6 +133,7 @@ void ppc_core_init(e500_core_t * core, int core_id)
 		core->dec_io_do_cycle = e500_dec_io_do_cycle;
 		core->get_ccsr_base = e500_get_ccsr_base;
 		core->ccsr_size = 0x100000;
+		core->pc = 0xFFFFFFFC;
 	} else if (!strcmp(mach->machine_name, "mpc8641d")) {
 		core->pvr = 0x80040010;	/* PVR for mpc8641D */
 		/* E600 core initialization */
@@ -148,5 +150,6 @@ void ppc_core_init(e500_core_t * core, int core_id)
 	}
 
 	core->pir = core_id;
-
+	pthread_spin_init(&(core->ipr_spinlock), PTHREAD_PROCESS_SHARED);
+	core->ipi_flag = 0;
 }

@@ -136,7 +136,10 @@ static bool ppc_cpu_init()
 		exec->priv_data = get_conf_obj_by_cast(core, "e500_core_t");
 		exec->run = per_cpu_step;
 		exec->stop = per_cpu_stop;
-		add_to_default_cell(exec);
+		skyeye_cell_t* cell = create_cell();
+		add_to_cell(exec, cell);
+
+		//add_to_default_cell(exec);
 	}
 
 	cpu->boot_core_id = 0;
@@ -191,8 +194,25 @@ static void per_cpu_step(conf_object_t * running_core)
 	}
 	/* sometimes, core->npc will be changed by another core */
 	if (core->ipi_flag) {
-		core->pc = core->npc;
-		core->ipi_flag = 0;
+		if(core->ipr & IPI0){
+			//printf("In %s, ipi exception\n", __FUNCTION__);
+			pthread_spin_lock(&(core->ipr_spinlock));
+ 			core->ipi_flag = 0;
+			core->ipr &= ~IPI0;
+			pthread_spin_unlock(&(core->ipr_spinlock));
+
+ 			ppc_exception (core, EXT_INT, 0, 0);
+		}
+		else if(core->ipr & UART0){
+			//printf("In %s, uart exception\n", __FUNCTION__);
+			pthread_spin_lock(&(core->ipr_spinlock));
+ 			core->ipi_flag = 0;
+			core->ipr &= ~UART0;
+			pthread_spin_unlock(&(core->ipr_spinlock));
+
+			ppc_exception (core, EXT_INT, 0, 0);
+		}
+ 		core->pc = core->npc;
 	}
 	/* check if we need to run some callback functions at this time */
 	if (!core->pir) {
@@ -261,8 +281,8 @@ static void ppc_set_pc(generic_address_t pc)
 {
 	PPC_CPU_State *cpu = get_current_cpu();
 	int i;
-	for (i = 0; i < cpu->core_num; i++)
-		cpu->core[i].pc = pc;
+	
+	cpu->core[cpu->boot_core_id].pc = pc;
 	/* Fixme, for e500 core, the first instruction should be executed at 0xFFFFFFFC */
 	//gCPU.pc = 0xFFFFFFFC;
 }

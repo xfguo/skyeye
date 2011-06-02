@@ -253,8 +253,12 @@ std8250_io_do_cycle (void * state)
 								0xFFFF);
 			io->pic_percpu.iack[core_id] = 0x2a;
 			//printf("In %s, ack=0x%x\n", __FUNCTION__, io->pic_percpu.iack[core_id]);
-			core->ipi_flag = 1;	/* we need to inform the core that npc is changed to exception vector */
-			ppc_exception (core, EXT_INT, 0, 0);
+			pthread_spin_lock(&(core->ipr_spinlock));
+			core->ipi_flag = 1;     /* we need to inform the core that npc is changed to exception vector */
+			core->ipr |= UART0;
+			pthread_spin_unlock(&(core->ipr_spinlock));
+
+			//ppc_exception (core, EXT_INT, 0, 0);
 		}
 	}
 }
@@ -1022,13 +1026,15 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 				if(data & 0x3){	
 					/* trigger an interrupt to dedicated core */
 					e500_core_t* core = &cpu->core[core_id];
-				        core->ipr |= IPI0;
 				        io->mpic.ipivpr[0] |= 0x40000000; /* set activity bit in vpr */
 			        	//core->iack = (core->iack & 0xFFFF0000) | (gCPU.mpic.ipivpr[ipi_id] & 0xFFFF);
 			        	io->pic_percpu.iack[core_id] = (io->pic_percpu.iack[core_id] & 0xFFFF0000) | (io->mpic.ipivpr[0] & 0xFFFF);
         //printf("In %s,iack=0x%x, pc=0x%x", __FUNCTION__, gCPU.pic_percpu.iack[core_id], core->pc);
-			        	ppc_exception(core, EXT_INT, 0, 0);
+			        	//ppc_exception(core, EXT_INT, 0, 0);
+					pthread_spin_lock(&(core->ipr_spinlock));
 			        	core->ipi_flag = 1; /* we need to inform the core that npc is changed to exception vector */
+				        core->ipr |= IPI0;
+					pthread_spin_unlock(&(core->ipr_spinlock));
         //printf("In %s, npc=0x%x, pir=0x%x\n", __FUNCTION__, core->npc, core->pir);
 				}
 				return;
@@ -1207,14 +1213,10 @@ mpc8572_io_write_word (void *state, uint32_t offset, uint32_t data)
 	case 0x20:
 		//io->ccsr.bptr = data;
 		cpu->bptr = data;
-		printf("In %s, write bptr=0x%x\n", __FUNCTION__, data);
 		break;
 	case 0x1010:
 		//io->ecm.eebpcr = data;
 		cpu->eebpcr = data;
-		printf("In %s, write eebpcr=0x%x\n", __FUNCTION__, data);
-		if (data & 0x2000000)	/* enable CPU1 */
-			cpu->core[1].pc = 0xFFFFF000;
 		break;
 	case 0x90C80:
 		io->sccr = data;
