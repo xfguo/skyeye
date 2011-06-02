@@ -24,7 +24,7 @@ void add_to_default_cell(skyeye_exec_t* exec);
 void del_from_cell(skyeye_exec_t* exec, skyeye_cell_t* cell);
 void move_to_cell(skyeye_exec_t* exec, skyeye_cell_t* src, skyeye_cell_t* dst);
 */
-
+skyeye_cell_t* create_cell();
 #ifdef __cplusplus
 }
 #endif
