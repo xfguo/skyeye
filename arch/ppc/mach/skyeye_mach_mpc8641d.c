@@ -644,8 +644,7 @@ mpc8641d_io_read_word (void *state, uint32_t offset)
 				if(core->ipr == 0)
 					return io->pic_global.svr;
 				else
-					//printf("In %s, ack=0x%x\n", __FUNCTION__, *result);
-					printf("In %s, ack=0x%x\n", __FUNCTION__, io->pic_percpu.iack[1] );
+					//printf("In %s, ack=0x%x\n", __FUNCTION__, io->pic_percpu.iack[1] );
 					return io->pic_percpu.iack[1];
 			default:
 				break;
