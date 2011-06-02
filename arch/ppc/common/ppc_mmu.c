@@ -41,6 +41,7 @@
 
 #include "bank_defs.h"
 #include "skyeye.h"
+#include "skyeye_types.h"
 /*
 ea = effective address
 if translation is an instruction address then
@@ -2632,12 +2633,21 @@ void ppc_opc_stwbrx()
 	    PPC_MMU_FATAL;
 }
 
+static pthread_mutex_t mutex;
+
 /*
  *	stwcx.		Store Word Conditional Indexed
  *	.661
  */
 void ppc_opc_stwcx_()
 {
+	static bool_t init_mutex = False;
+	if(init_mutex == False){
+		pthread_mutex_init (&mutex,NULL);
+		init_mutex = True;
+	}
+	pthread_mutex_lock (&mutex);
+
 	e500_core_t *current_core = get_current_core();
 	int rA, rS, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rS, rA, rB);
@@ -2662,6 +2672,7 @@ void ppc_opc_stwcx_()
 			current_core->cr |= CR_CR0_SO;
 		}
 	}
+	pthread_mutex_unlock(&mutex);
 }
 
 /*
