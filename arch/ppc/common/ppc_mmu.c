@@ -1044,7 +1044,7 @@ void ppc_opc_lbz()
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	uint8 r;
+	uint32 r;
 	int ret =
 	    ppc_read_effective_byte((rA ? current_core->gpr[rA] : 0) + imm, &r);
 	if (ret == PPC_MMU_OK) {
@@ -1063,7 +1063,7 @@ void ppc_opc_lbzu()
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
 	// FIXME: check rA!=0 && rA!=rD
-	uint8 r;
+	uint32 r;
 	int ret = ppc_read_effective_byte(current_core->gpr[rA] + imm, &r);
 	if (ret == PPC_MMU_OK) {
 		current_core->gpr[rA] += imm;
@@ -1081,7 +1081,7 @@ void ppc_opc_lbzux()
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
 	// FIXME: check rA!=0 && rA!=rD
-	uint8 r;
+	uint32 r;
 	int ret =
 	    ppc_read_effective_byte(current_core->gpr[rA] +
 				    current_core->gpr[rB], &r);
@@ -1100,7 +1100,7 @@ void ppc_opc_lbzx()
 	e500_core_t *current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
-	uint8 r;
+	uint32 r;
 	int ret =
 	    ppc_read_effective_byte((rA ? current_core->gpr[rA] : 0) +
 				    current_core->gpr[rB], &r);
@@ -1318,7 +1318,7 @@ void ppc_opc_lha()
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	uint16 r;
+	uint32 r;
 	int ret =
 	    ppc_read_effective_half((rA ? current_core->gpr[rA] : 0) + imm, &r);
 	if (ret == PPC_MMU_OK) {
@@ -1336,7 +1336,7 @@ void ppc_opc_lhau()
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	uint16 r;
+	uint32 r;
 	// FIXME: rA != 0
 	int ret = ppc_read_effective_half(current_core->gpr[rA] + imm, &r);
 	if (ret == PPC_MMU_OK) {
@@ -1354,7 +1354,7 @@ void ppc_opc_lhaux()
 	e500_core_t *current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
-	uint16 r;
+	uint32 r;
 	// FIXME: rA != 0
 	int ret =
 	    ppc_read_effective_half(current_core->gpr[rA] +
@@ -1374,7 +1374,7 @@ void ppc_opc_lhax()
 	e500_core_t *current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
-	uint16 r;
+	uint32 r;
 	// FIXME: rA != 0
 	int ret =
 	    ppc_read_effective_half((rA ? current_core->gpr[rA] : 0) +
@@ -1393,7 +1393,7 @@ void ppc_opc_lhbrx()
 	e500_core_t *current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
-	uint16 r;
+	uint32 r;
 	int ret =
 	    ppc_read_effective_half((rA ? current_core->gpr[rA] : 0) +
 				    current_core->gpr[rB], &r);
@@ -1412,7 +1412,7 @@ void ppc_opc_lhz()
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	uint16 r;
+	uint32 r;
 	int ret =
 	    ppc_read_effective_half((rA ? current_core->gpr[rA] : 0) + imm, &r);
 	if (ret == PPC_MMU_OK) {
@@ -1430,7 +1430,7 @@ void ppc_opc_lhzu()
 	int rA, rD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(current_core->current_opc, rD, rA, imm);
-	uint16 r;
+	uint32 r;
 	// FIXME: rA!=0
 	int ret = ppc_read_effective_half(current_core->gpr[rA] + imm, &r);
 	if (ret == PPC_MMU_OK) {
@@ -1448,7 +1448,7 @@ void ppc_opc_lhzux()
 	e500_core_t *current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
-	uint16 r;
+	uint32 r;
 	// FIXME: rA != 0
 	int ret =
 	    ppc_read_effective_half(current_core->gpr[rA] +
@@ -1468,7 +1468,7 @@ void ppc_opc_lhzx()
 	e500_core_t *current_core = get_current_core();
 	int rA, rD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, rD, rA, rB);
-	uint16 r;
+	uint32 r;
 	int ret =
 	    ppc_read_effective_half((rA ? current_core->gpr[rA] : 0) +
 				    current_core->gpr[rB], &r);
@@ -1511,7 +1511,7 @@ void ppc_opc_lswi()
 	uint32 ea = rA ? current_core->gpr[rA] : 0;
 	uint32 r = 0;
 	int i = 4;
-	uint8 v;
+	uint32 v;
 	while (NB > 0) {
 		if (!i) {
 			i = 4;
@@ -1550,7 +1550,7 @@ void ppc_opc_lswx()
 
 	uint32 r = 0;
 	int i = 4;
-	uint8 v;
+	uint32 v;
 	while (NB > 0) {
 		if (!i) {
 			i = 4;
@@ -1744,7 +1744,7 @@ void ppc_opc_lvebx()
 	int rA, vrD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, rA, rB);
 	uint32 ea;
-	uint8 r;
+	uint32 r;
 	ea = (rA ? current_core->gpr[rA] : 0) + current_core->gpr[rB];
 	int ret = ppc_read_effective_byte(ea, &r);
 	if (ret == PPC_MMU_OK) {
@@ -1768,7 +1768,7 @@ void ppc_opc_lvehx()
 	int rA, vrD, rB;
 	PPC_OPC_TEMPL_X(current_core->current_opc, vrD, rA, rB);
 	uint32 ea;
-	uint16 r;
+	uint32 r;
 	ea = ((rA ? current_core->gpr[rA] : 0) + current_core->gpr[rB]) & ~1;
 	int ret = ppc_read_effective_half(ea, &r);
 	if (ret == PPC_MMU_OK) {
