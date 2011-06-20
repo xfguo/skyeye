@@ -12,7 +12,7 @@
 #else
 #include <unistd.h> /* for sync() */
 #endif
-
+static int llbit = 0; /* used by LL SC instr */
 extern FILE *skyeye_logfd;
 /* This monster of a switch statement decodes all CPU instructions. I've
  * decided against an explicit jump table, as such implementation both
@@ -1026,7 +1026,97 @@ decode(MIPS_State* mstate, Instr instr)
 			}
                 }
 
-	
+		case SPECIAL3:
+		{
+			switch(function(instr))
+			{
+				case SPE3_EXT:
+				{
+					uint32_t pos = bits(instr,10,6);
+					uint32_t size = bits(instr,15,11)+1;
+					if(pos + size > 0 && pos + size <= 32 && size > 0 && pos >= 0)
+					{
+						mstate->gpr[rt(instr)] = (mstate->gpr[rs(instr)] << (32 - pos - size)) >> (32 - size);
+					}
+
+					return nothing_special;
+				}
+
+				case BSHFL:
+				{
+					switch(bits(instr, 10, 6))
+					{
+						case 002://WSBH
+						{
+							uint32_t tmp = 0;
+
+							tmp |= (mstate->gpr[rd(instr)] << 8) & 0xff00ff00;
+							tmp |= (mstate->gpr[rd(instr)] >> 8) & 0x00ff00ff;
+							mstate->gpr[rd(instr)] = tmp;
+							return nothing_special;
+						}
+
+						case 020://SEB
+						{
+							uint32_t tmp = mstate->gpr[rt(instr)] & 0xff;
+							if(tmp & 0x80)
+								tmp |= (-1) ^ 0xff;
+
+							mstate->gpr[rd(instr)] = tmp;
+							return nothing_special;
+						}
+						case 030://SEH
+						{
+							uint32_t tmp = mstate->gpr[rt(instr)] & 0xffff;
+							if(tmp & 0x80)
+								tmp |= (-1) ^ 0xffff;
+
+							mstate->gpr[rd(instr)] = tmp;
+							return nothing_special;
+						}
+						default:
+							printf("Undef instr:%x, in spec3 BSHFL\n", instr);
+							return nothing_special;
+
+					}
+				}
+
+				case INS:
+				{
+					uint32_t pos = bits(instr, 10, 6);
+					uint32_t size = bits(instr, 15, 11) + 1 - pos;
+					uint32_t msb = bits(instr, 15, 11);
+					uint32_t lsb = pos;
+					uint32_t midbits, highbits, lowbits;
+
+
+					if( pos >= 0 && size > 0 && pos + size <= 32){
+						if(lsb <= msb){
+							midbits = mstate->gpr[rs(instr)] >> lsb  << lsb << (32-(msb+1)) >> (32-(msb+1));
+							highbits = mstate->gpr[rt(instr)] >> msb + 1 << msb + 1;
+							lowbits = mstate->gpr[rt(instr)] << (32 -lsb) >> (32 - lsb);
+							mstate->gpr[rt(instr)] = highbits | midbits | lowbits;
+						}
+					}
+					return nothing_special;
+				}
+
+				case FORK:
+					process_reserved_instruction(mstate);
+					return nothing_special;
+
+				case YIELD:
+					process_reserved_instruction(mstate);
+					return nothing_special;
+
+				default:
+					printf("Undef instr:%x, in spec3\n", instr);
+					return nothing_special;
+
+			}
+
+		}
+
 		case LB:
     		{
 			// Load Byte
@@ -1105,10 +1195,12 @@ decode(MIPS_State* mstate, Instr instr)
 			if (va & 0x3) //Check alignment
 				process_address_error(mstate,data_load, va);
 			PA pa;
+
 			if(translate_vaddr(mstate, va, data_load, &pa) != TLB_SUCC)
 				return nothing_special; //Shi yang 2006-08-10
 			UInt32 x;
 			UInt32 y = 0;
+
 			load(mstate, va, pa, &y, 4);
 
 			mstate->gpr[rt(instr)] = y;
@@ -1121,14 +1213,14 @@ decode(MIPS_State* mstate, Instr instr)
 			    	sync();
 			VA va = sign_extend_UInt32(offset(instr), 16) + mstate->gpr[base(instr)];
 			PA pa;
-			if(translate_vaddr(mstate, va, data_load, &pa) != TLB_SUCC)
+			if(translate_vaddr(mstate, va, data_load, &pa) != TLB_SUCC){
 				return nothing_special; //Shi yang 2006-08-10
+			}
 			UInt32 y = 0;
 			UInt32 x;
 			load(mstate, va, pa, &y, 1);
 			x = y & 0xffL; //Shi yang 2006-08-25
 			mstate->gpr[rt(instr)] = x;
-
 			return nothing_special;
     		}
 		case LHU:
@@ -1288,6 +1380,9 @@ decode(MIPS_State* mstate, Instr instr)
 			// Load Linked
 			//int va = mstate->gpr[base(instr)] + offset(instr);
 			int va = mstate->gpr[base(instr)] + sign_extend_UInt32(offset(instr), 16);
+
+			if(va == 0)
+				return nothing_special;
 			PA pa;
 			if(translate_vaddr(mstate, va, data_load, &pa) != TLB_SUCC)
 				return nothing_special;
@@ -1295,6 +1390,7 @@ decode(MIPS_State* mstate, Instr instr)
 			mips_mem_read(pa, &data, 4);	
 			mstate->gpr[rt(instr)] = data;
 			//process_reserved_instruction(mstate);
+			llbit = 1;
 			return nothing_special;
     		}
 		case LWC1:
@@ -1337,23 +1433,22 @@ decode(MIPS_State* mstate, Instr instr)
 			// Store Conditional
                         //int va = mstate->gpr[base(instr)] + offset(instr);
 			int va = mstate->gpr[base(instr)] + sign_extend_UInt32(offset(instr), 16);
+			if(va == 0)
+				return nothing_special;
+
                         PA pa;
 			if(translate_vaddr(mstate, va, data_load, &pa) != TLB_SUCC)
 				return nothing_special;
                         int data;
-			data = mstate->gpr[rt(instr)];
-			
-			/*
-			if(mstate->pc == 0x8012a858){
-				fprintf(stderr, "In SC,data=0x%x,va=0x%x\n", data, va);
-				if(va == 0x81179a00){
-					fprintf(stderr, "Write to %d\n",va);
-					skyeye_exit(-1);
-				}
+
+			if(llbit){
+				data = mstate->gpr[rt(instr)];
+				mips_mem_write(pa, &data, 4);
+				mstate->gpr[rt(instr)] = 1;
+				llbit = 0;
+			}else{
+				mstate->gpr[rt(instr)] = 0;
 			}
-			*/
-                        mips_mem_write(pa, &data, 4);
-                        mstate->gpr[rt(instr)] = 1;
 
 			//process_reserved_instruction(mstate);
 			return nothing_special;
