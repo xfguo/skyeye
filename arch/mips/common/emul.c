@@ -1,5 +1,3 @@
-#include "emul.h"
-#include "mips_cpu.h"
 /*
         mips_regdefs.c - necessary mips definition for skyeye debugger
         Copyright (C) 2003 Skyeye Develop Group
@@ -23,10 +21,18 @@
 /*
  * 07/06/2007   Michael.Kang  <blackfin.kang@gmail.com>
  */
+#include "emul.h"
+#include "mips_cpu.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 extern MIPS_State* mstate;
+void process_address_error_mt(MIPS_State* mstate, int type, VA va);
+void process_tlb_refill_mt(MIPS_State* mstate, int type, VA va);
+void process_tlb_invalid_mt(MIPS_State* mstate, int type, VA va);
+void process_tlb_modified_mt(MIPS_State* mstate, VA va);
+
+
 /* Address decoder macros.
  * Bits 29, 30 and 31 of the virtual address select the user or kernel address spaces.
  */
@@ -124,48 +130,121 @@ branch_delay_slot(MIPS_State* mstate) //Shi yang 2006-08-10
 	return mstate->pipeline == branch_delay; 
 }
 
-void 
+void
 process_address_error(MIPS_State* mstate, int type, VA va)
 {
+	if(mstate->mt_flag)
+		process_address_error_mt(mstate, type, va);
+	else{
+		int exc = (type == data_store) ? EXC_AdES : EXC_AdEL;
+		if(exc == EXC_AdEL)
+			printf("In %s,va=0x%x,EXC_AdEL,pc=0x%x\n",__FUNCTION__, va, mstate->pc);
+		else
+			printf("In %s,va=0x%x,EXC_AdES, pc=0x%x\n", __FUNCTION__, va, mstate->pc);
+
+		mstate->cp0[BadVAddr] = va;
+		process_exception(mstate, exc, common_vector);
+	}
+}
+
+void
+process_address_error_mt(MIPS_State* mstate, int type, VA va)
+{
+	MIPS_CPU_State* cpu = get_current_cpu();
+	int TcBindVPE = mstate->cp0_TCBind & 0xf;			/* get current VPE num*/
+	MIPS_State* curVPE = &cpu->core[TcBindVPE+mstate->tc_num];
 	int exc = (type == data_store) ? EXC_AdES : EXC_AdEL;
 	if(exc == EXC_AdEL)
 		printf("In %s,va=0x%x,EXC_AdEL,pc=0x%x\n",__FUNCTION__, va, mstate->pc);
 	else
 		printf("In %s,va=0x%x,EXC_AdES, pc=0x%x\n", __FUNCTION__, va, mstate->pc);
 		
-	mstate->cp0[BadVAddr] = va;
+	curVPE->cp0[BadVAddr] = va;
 	process_exception(mstate, exc, common_vector);
 }
 
-void 
+void
 process_tlb_refill(MIPS_State* mstate, int type, VA va)
 {
+	if(mstate->mt_flag)
+		process_tlb_refill_mt(mstate, type, va);
+	else{
+		int exc = (type == data_store) ? EXC_TLBS : EXC_TLBL;
+		int vec = tlb_refill_vector;
+		mstate->cp0[BadVAddr] = va;
+		mstate->cp0[Context] = (va & 0xFFFFe000 >> 9) | (mstate->cp0[Context] & 0x7FFFF0);
+		mstate->cp0[EntryHi] = (va & 0xFFFFE000) | (mstate->cp0[EntryHi] & 0x1FFF);
+		process_exception(mstate, exc, vec);
+	}
+}
+
+void
+process_tlb_refill_mt(MIPS_State* mstate, int type, VA va)
+{
+	MIPS_CPU_State* cpu = get_current_cpu();
+	int TcBindVPE = mstate->cp0_TCBind & 0xf;			/* get current VPE num */
+	MIPS_State* curVPE = &cpu->core[TcBindVPE+mstate->tc_num];
 	int exc = (type == data_store) ? EXC_TLBS : EXC_TLBL;
 	int vec = tlb_refill_vector;
-	mstate->cp0[BadVAddr] = va;
-	mstate->cp0[Context] = (va & 0xFFFFe000 >> 9) | (mstate->cp0[Context] & 0x7FFFF0);
-	mstate->cp0[EntryHi] = (va & 0xFFFFE000) | (mstate->cp0[EntryHi] & 0x1FFF);
+	curVPE->cp0[BadVAddr] = va;
+	curVPE->cp0[Context] = (va & 0xFFFFe000 >> 9) | (curVPE->cp0[Context] & 0x7FFFF0);
+	curVPE->cp0[EntryHi] = (va & 0xFFFFE000) | (curVPE->cp0[EntryHi] & 0x1FFF);
 	process_exception(mstate, exc, vec);
 }
 
-void 
+void
 process_tlb_invalid(MIPS_State* mstate, int type, VA va)
 {
-	int exc = (type == data_store) ? EXC_TLBS : EXC_TLBL;
-	mstate->cp0[BadVAddr] = va;
-	mstate->cp0[Context] = (va & 0xFFFFe000 >> 9) | (mstate->cp0[Context] & 0x7FFFF0);
+	if(mstate->mt_flag)
+		process_tlb_invalid_mt(mstate, type, va);
+	else{
+		int exc = (type == data_store) ? EXC_TLBS : EXC_TLBL;
+		mstate->cp0[BadVAddr] = va;
+		mstate->cp0[Context] = (va & 0xFFFFe000 >> 9) | (mstate->cp0[Context] & 0x7FFFF0);
 
-	mstate->cp0[EntryHi] = (va & 0xFFFFE000) | (mstate->cp0[EntryHi] & 0x1FFF);
+		mstate->cp0[EntryHi] = (va & 0xFFFFE000) | (mstate->cp0[EntryHi] & 0x1FFF);
+		process_exception(mstate, exc, common_vector);
+	}
+}
+
+void
+process_tlb_invalid_mt(MIPS_State* mstate, int type, VA va)
+{
+	MIPS_CPU_State* cpu = get_current_cpu();
+	int TcBindVPE = mstate->cp0_TCBind & 0xf;			/* get current VPE num */
+	MIPS_State* curVPE = &cpu->core[TcBindVPE+mstate->tc_num];
+	int exc = (type == data_store) ? EXC_TLBS : EXC_TLBL;
+	curVPE->cp0[BadVAddr] = va;
+	curVPE->cp0[Context] = (va & 0xFFFFe000 >> 9) | (curVPE->cp0[Context] & 0x7FFFF0);
+
+	curVPE->cp0[EntryHi] = (va & 0xFFFFE000) | (curVPE->cp0[EntryHi] & 0x1FFF);
 	process_exception(mstate, exc, common_vector);
 }
 
-void 
+void
 process_tlb_modified(MIPS_State* mstate, VA va)
 {
+	if(mstate->mt_flag)
+		process_tlb_modified_mt(mstate, va);
+	else{
+		//printf("In %s, va=0x%x\n", __FUNCTION__, va);
+		mstate->cp0[BadVAddr] = va;
+		mstate->cp0[Context] = (va & 0xFFFFe000 >> 9) | (mstate->cp0[Context] & 0x7FFFF0);
+		mstate->cp0[EntryHi] = (va & 0xFFFFE000) | (mstate->cp0[EntryHi] & 0x1FFF);
+		process_exception(mstate, EXC_Mod, common_vector);
+	}
+}
+
+void
+process_tlb_modified_mt(MIPS_State* mstate, VA va)
+{
+	MIPS_CPU_State* cpu = get_current_cpu();
+	int TcBindVPE = mstate->cp0_TCBind & 0xf;			/* get current VPE num */
+	MIPS_State* curVPE = &cpu->core[TcBindVPE+mstate->tc_num];
 	//printf("In %s, va=0x%x\n", __FUNCTION__, va);
-	mstate->cp0[BadVAddr] = va;
-	mstate->cp0[Context] = (va & 0xFFFFe000 >> 9) | (mstate->cp0[Context] & 0x7FFFF0);
-	mstate->cp0[EntryHi] = (va & 0xFFFFE000) | (mstate->cp0[EntryHi] & 0x1FFF);
+	curVPE->cp0[BadVAddr] = va;
+	curVPE->cp0[Context] = (va & 0xFFFFe000 >> 9) | (curVPE->cp0[Context] & 0x7FFFF0);
+	curVPE->cp0[EntryHi] = (va & 0xFFFFE000) | (curVPE->cp0[EntryHi] & 0x1FFF);
 	process_exception(mstate, EXC_Mod, common_vector);
 }
 
