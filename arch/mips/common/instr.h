@@ -68,10 +68,11 @@
 #define        LDL			032
 #define        LDR			033
 #define		SPECIAL2		034
+// reserved	= 037, Jeff.Du add for EXT instr
+#define	SPECIAL3		037
 // reserved = 034,
 // reserved	= 035,
 // reserved = 036,
-// reserved	= 037,
 
 #define        LB			040
 #define        LH			041
@@ -238,6 +239,10 @@
 // reserved = 007,
 #define        BCz		 	010
 
+// COP0 for VPE instruction
+#define        MFMC0			013
+#define        MFTR			010
+#define        MTTR			014
 
 /* The (rt) field of COPz rt instructions */
 #define        BCzF		 	000
@@ -328,6 +333,13 @@
 #define        C_LE   	 		076
 #define        C_NGT  	 		077
 
+
+/* The SPECIAL3 (function) field */
+#define	SPE3_EXT	000
+#define	BSHFL		040
+#define	INS		004
+#define	YIELD		011
+#define	FORK		010
 
 /* The (mt) field */
 // 0-15	  // Reserved
