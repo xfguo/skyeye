@@ -309,7 +309,7 @@ void set_timer();
  * are computed on demand, and most registers have some read-only fields.
  */
 UInt32 read_cp0(MIPS_State* mstate, int n, int sel) ;
-void write_cp0(MIPS_State* mstate, int n, UInt32 x);
+void write_cp0(MIPS_State* mstate, int n, int sel, UInt32 x);
 
 /* The main instruction decoder with satelite functions for some of the
  * more elaborate instructions.
