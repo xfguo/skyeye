@@ -43,6 +43,45 @@
 #define ErrorEPC		30
 // reserved	= 31
 
+/* System Control Coprocessor (CP0) registers sel1 */
+#define MVPCtr		0
+#define VPECtr		1
+#define TCStatus	2
+#define SRSConf0	6
+#define IntCtl		12
+#define EBase		15
+
+/* System Control Coprocessor (CP0) registers sel2 */
+#define MVPConf0	0
+#define VPEConf0	1
+#define TCBind		2
+#define SRSConf1	6
+#define SRSCtl		12
+
+/* System Control Coprocessor (CP0) registers sel3 */
+#define MVPConf1	0
+#define VPEConf1	1
+#define TCRestart	2
+#define SRSConf2	6
+
+/* System Control Coprocessor (CP0) registers sel4 */
+#define YQMask		1
+#define TCHalt		2
+#define SRSConf3	6
+
+/* System Control Coprocessor (CP0) registers sel5 */
+#define VPESche		1
+#define TCContext	2
+#define SRSConf4	6
+
+/* System Control Coprocessor (CP0) registers sel6 */
+#define VPEScheFBack	1
+#define TCSche		2
+
+/* System Control Coprocessor (CP0) registers sel7 */
+#define VPEOpt		1
+#define TCScheFBack	2
+#define TCOpt		3
 
 /* CP0 register layout. For single-bit fields, only one constant is
  * defined. For multi-bit fields, two constants are defined: one for the
@@ -139,6 +178,8 @@
 #define Cause_IP_Last 			15
 #define Cause_CE_First 			28 
 #define Cause_CE_Last 			29
+/* for release 2 */
+#define Cause_TI			30
 #define Cause_BD 			31
 
 // Exception Program Counter (EPC) Register (14)
