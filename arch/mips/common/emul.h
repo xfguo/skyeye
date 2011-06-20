@@ -160,8 +160,42 @@ typedef struct MIPS_State_s{
 	UInt32 gpr[32];		// General Purpose Registers
 	UInt32 fpr[32];		// Floating-Point General Purpose Registers
 	UInt32 fir,fcsr;  	// Floating-point implementation register and control-status register
-	UInt32 cp0[32];		// CP0 Registers
+	UInt32 cp0[32];		// CP0 Registers0 array
+	int mt_flag;		// 1:use mt, 0:unused
+	int tc_num;		// mt tc number
+	int vpe_num;		// mt vpe_num
 	UInt32 cp0_config1;
+	UInt32 cp0_config2;
+	UInt32 cp0_config3;
+	UInt32 cp0_config4;
+	UInt32 cp0_MVPCR;	//cp0 sel1 reg0 MVP Control
+	UInt32 cp0_MVPConf0;	//cp0 sel2 reg0 MVP Conf0
+	UInt32 cp0_MVPConf1;	//cp0 sel3 reg0 MVP Conf1
+	UInt32 cp0_VPECR;	//cp0 sel1 reg1 VPE control Register
+	UInt32 cp0_VPEConf0;	//cp0 sel2 reg1 VPE Conf0
+	UInt32 cp0_VPEConf1;	//cp0 sel3 reg1 VPE Conf1
+	UInt32 cp0_YQMask;	//cp0 sel4 reg1 YQMask
+	UInt32 cp0_VPESche;	//cp0 sel5 reg1 VPESchedule
+	UInt32 cp0_VPEScheFBack;//cp0 sel6 reg1 VPEScheduleFBack
+	UInt32 cp0_VPEOpt;	//cp0 sel7 reg1 VPEOpt
+	UInt32 cp0_TCStatus;	//cp0 sel1 reg2 TCStatus
+	UInt32 cp0_TCBind;	//cp0 sel2 reg2 TCBind
+	UInt32 cp0_TCRestart;	//cp0 sel3 reg2 TCRestart
+	UInt32 cp0_TCHalt;	//cp0 sel4 reg2 TCHalt
+	UInt32 cp0_TCContext;	//cp0 sel5 reg2 TCHalt
+	UInt32 cp0_TCSche;	//cp0 sel6 reg2 TCSchedule
+	UInt32 cp0_TCScheFBack;	//cp0 sel7 reg2 TCScheFBack
+	UInt32 cp0_TCOpt;	//cp0 sel7 reg3 TCOpt
+	UInt32 cp0_SRSConf0;	//cp0 sel1 reg6 SRSConf0
+	UInt32 cp0_SRSConf1;	//cp0 sel2 reg6 SRSConf1
+	UInt32 cp0_SRSConf2;	//cp0 sel3 reg6 SRSConf2
+	UInt32 cp0_SRSConf3;	//cp0 sel4 reg6 SRSConf3
+	UInt32 cp0_SRSConf4;	//cp0 sel5 reg6 SRSConf4
+	UInt32 cp0_IntCtl;	//cp0 sel1 reg12 IntCtl
+	UInt32 cp0_EBase;	//cp0 sel1 reg15 EBase
+	UInt32 cp0_SRSCtl;	//cp0 sel2 reg12 SRSCTl
+	int int_flag;
+
 	UInt32 cp1[32];		// CP1 Registers
 	UInt32 hi, lo;		// Multiply and Divide Registers
 	int ll_bit;		// The Load-Linked Bit
@@ -224,6 +258,7 @@ typedef struct MIPS_State_s{
 	conf_object_t *dyncom_cpu;
 	uint32_t step;
 
+	uint32_t active;	//The core begin working when active is 1.
 }MIPS_State;
 
 typedef MIPS_State mips_core_t;
