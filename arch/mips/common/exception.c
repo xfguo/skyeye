@@ -29,8 +29,11 @@
 */
 
 #include "emul.h"
+#include "mips_cpu.h"
 #include <stdio.h>
 
+void process_reset_mt(MIPS_State* mstate);
+void process_exception_mt(MIPS_State* mstate, UInt32 cause, int vec);
 
 /**
 * @brief reset processor
@@ -40,6 +43,32 @@
 void 
 process_reset(MIPS_State* mstate)
 {
+	if(mstate->mt_flag)
+		process_reset_mt(mstate);
+	else{
+		mstate->now += 5;
+		if (mstate->events & cold_reset_event) {
+			mstate->cp0[Random] = tlb_size - 1;
+			mstate->random_seed  = mstate->now;
+			reset_icache(mstate);
+			reset_dcache(mstate);
+			reset_tlb(mstate);
+		}
+		mstate->cp0[SR] = set_bit(mstate->cp0[SR], SR_BEV);
+		mstate->pc = reset_vector_base + reset_vector;
+		mstate->pipeline = nothing_special;
+		enter_kernel_mode(mstate);
+		mstate->events = 0;
+	}
+}
+
+void
+process_reset_mt(MIPS_State* mstate)
+{
+	MIPS_CPU_State* cpu = get_current_cpu();
+	mips_core_t* cur_mstate = mstate;		/* save the cur tc mstate as current mstate */
+	int TcBindVPE = mstate->cp0_TCBind & 0xf;
+	mstate = &cpu->core[TcBindVPE+mstate->tc_num];  /* set the mstate as current VPE */
     	mstate->now += 5;
     	if (mstate->events & cold_reset_event) {
 		mstate->cp0[Random] = tlb_size - 1;
@@ -49,10 +78,10 @@ process_reset(MIPS_State* mstate)
 		reset_tlb(mstate);
     	}
 	mstate->cp0[SR] = set_bit(mstate->cp0[SR], SR_BEV);
-    	mstate->pc = reset_vector_base + reset_vector;
-    	mstate->pipeline = nothing_special;
-    	enter_kernel_mode(mstate);
-    	mstate->events = 0;
+	cur_mstate->pc = reset_vector_base + reset_vector;
+	cur_mstate->pipeline = nothing_special;
+	enter_kernel_mode(cur_mstate);
+	cur_mstate->events = 0;
 }
 
 
@@ -68,7 +97,6 @@ process_reset(MIPS_State* mstate)
  * simply by incrementing the clock by five.
  */
 
-
 /**
 * @brief processor exception interface
 *
@@ -79,39 +107,92 @@ process_reset(MIPS_State* mstate)
 void 
 process_exception(MIPS_State* mstate, UInt32 cause, int vec)
 {
+
+	if(mstate->mt_flag)
+		process_exception_mt(mstate, cause, vec);
+	else{
+		//fprintf(stderr, "KSDBG:in %s, vec=0x%x, cause=0x%x, ,v0=0x%x, pc=0x%x\n", __FUNCTION__, vec, cause, mstate->gpr[2], mstate->pc);
+		UInt32 exc_code = cause & 0x7f;
+		mstate->now += 5;
+		/* we need to modify pipeline according to different exception */
+
+		VA epc;
+		if (!branch_delay_slot(mstate))
+			epc = mstate->pc;
+		else {
+			epc = mstate->pc - 4;
+			cause = set_bit(cause, Cause_BD);
+		}
+
+		if((exc_code == EXC_Sys) || (exc_code == EXC_TLBL)
+			||(exc_code) ==	EXC_CpU	|| (exc_code == EXC_TLBS) || (exc_code == EXC_Mod)){
+			mstate->pipeline = branch_nodelay;
+			//fprintf(stderr, "KSDBG:1 in %s, vec=0x%x, cause=0x%x, ,v0=0x%x, pc=0x%x\n", __FUNCTION__, vec, exc_code, mstate->gpr[2], mstate->pc);
+		}
+		else{
+			mstate->pipeline = nothing_special;
+		}
+
+		/* Set ExcCode to zero in Cause register */
+		mstate->cp0[Cause] &= 0xFFFFFF83;
+		mstate->cp0[Cause] |= cause;
+			mstate->cp0[EPC] = epc;
+		mstate->pc = vec + (bit(mstate->cp0[SR], SR_BEV) ? general_vector_base : boot_vector_base);
+		/* set EXL to one */
+		mstate->cp0[SR] |= 0x2;
+		/* Set Exl bit to zero, disable interrupt */
+		mstate->cp0[SR] &= 0xFFFFFFFD;
+		enter_kernel_mode(mstate);
+		//fprintf(stderr, "End of %s,sr=0x%x,cause=0x%x\n", __FUNCTION__, mstate->cp0[SR], mstate->cp0[Cause]);
+		//skyeye_exit(-1);
+	}
+}
+
+void
+process_exception_mt(MIPS_State* mstate, UInt32 cause, int vec)
+{
+
+	MIPS_CPU_State* cpu = get_current_cpu();
+	mips_core_t* cur_mstate = mstate;			/* save the cur tc mstate as current mstate */
+	int TcBindVPE = mstate->cp0_TCBind & 0xf;
+	mstate = &cpu->core[TcBindVPE+mstate->tc_num];          /* set the mstate as current VPE */
 	//fprintf(stderr, "KSDBG:in %s, vec=0x%x, cause=0x%x, ,v0=0x%x, pc=0x%x\n", __FUNCTION__, vec, cause, mstate->gpr[2], mstate->pc);
 	UInt32 exc_code = cause & 0x7f;
     	mstate->now += 5;
 	/* we need to modify pipeline according to different exception */
-	
+
     	VA epc;
-    	if (!branch_delay_slot(mstate))
-		epc = mstate->pc;
+	if (!branch_delay_slot(cur_mstate))
+		epc = cur_mstate->pc;
     	else {
-		epc = mstate->pc - 4;
+		epc = cur_mstate->pc - 4;
 		cause = set_bit(cause, Cause_BD);
     	}
 
 	if((exc_code == EXC_Sys) || (exc_code == EXC_TLBL)
 		||(exc_code) ==	EXC_CpU	|| (exc_code == EXC_TLBS) || (exc_code == EXC_Mod)){
-		mstate->pipeline = branch_nodelay;
+		cur_mstate->pipeline = branch_nodelay;
 		//fprintf(stderr, "KSDBG:1 in %s, vec=0x%x, cause=0x%x, ,v0=0x%x, pc=0x%x\n", __FUNCTION__, vec, exc_code, mstate->gpr[2], mstate->pc);
 	}
 	else{
-    		mstate->pipeline = nothing_special;
+		cur_mstate->pipeline = nothing_special;
 	}
 
 	/* Set ExcCode to zero in Cause register */
 	mstate->cp0[Cause] &= 0xFFFFFF83;
     	mstate->cp0[Cause] |= cause;
-		mstate->cp0[EPC] = epc;
-    	mstate->pc = vec + (bit(mstate->cp0[SR], SR_BEV) ? general_vector_base : boot_vector_base);
+
+	cur_mstate->cp0[EPC] = epc;
+
+	cur_mstate->pc = vec + (bit(cur_mstate->cp0[SR], SR_BEV) ? general_vector_base : boot_vector_base);
 	/* set EXL to one */
-	mstate->cp0[SR] |= 0x2;	
+	cpu->core[4].cp0[SR] |= 0x2;
+	cpu->core[5].cp0[SR] |= 0x2;
 	/* Set Exl bit to zero, disable interrupt */
-	mstate->cp0[SR] &= 0xFFFFFFFD; 	
-    	enter_kernel_mode(mstate);
+	cpu->core[4].cp0[SR] &= 0xFFFFFFFD;
+	cpu->core[5].cp0[SR] &= 0xFFFFFFFD;
+
+	enter_kernel_mode(cur_mstate);
 	//fprintf(stderr, "End of %s,sr=0x%x,cause=0x%x\n", __FUNCTION__, mstate->cp0[SR], mstate->cp0[Cause]);
 	//skyeye_exit(-1);
 }
-
