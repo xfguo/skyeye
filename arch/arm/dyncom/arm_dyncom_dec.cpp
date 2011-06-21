@@ -6,7 +6,10 @@
 #include "arm_types.h"
 #include "dyncom/tag.h"
 
+#include "arm_dyncom_dec.h"
+
 using namespace llvm;
+#if 0
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 #define BIT(n) ((instr >> (n)) & 1)
 #define BAD	do{printf("meet BAD at %s, instr is %x\n", __FUNCTION__, instr ); /*exit(0);*/}while(0);
@@ -65,7 +68,7 @@ using namespace llvm;
 
 /* temp define the using the pc reg need implement a flow */
 #define STORE_CHECK_RD_PC	ADD(R(RD), CONST(8))
-
+#endif
 /*
 *		LoadStore operations funcs relationship
 * 			LoadStore
@@ -720,7 +723,7 @@ Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		return LSMGetAddr(cpu,instr,bb);
 	}
 
-	printf("Not a Load Store Addr operation \n");
+	printf("Not a Load Store Addr operation %x\n", instr);
 	return CONST(0);
 }
 
@@ -922,11 +925,12 @@ Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 
 		return CONST(rotate_imm);
 }
-
+#if 0
 #define OPERAND operand(cpu,instr,bb)
 #define BOPERAND boperand(cpu,instr,bb)
 
 #define CHECK_RN_PC  (RN==15? ADD(R(RN), CONST(8)):R(RN))
+#endif
 /* complete ADD logic use llvm asm */
 void Dec_ADD(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -3830,3 +3834,362 @@ int arm_opc_trans_ff(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	arm_opc_trans_f0(cpu, instr, bb);
 }
+
+
+
+
+const ISEITEM arm_instruction[] = {
+        {"adc",         2,      ARMALL,         26, 27, 0,      21, 24, 5},
+        {"add",         2,      ARMALL,         26, 27, 0,      21, 24, 4},
+        {"and",         2,      ARMALL,         26, 27, 0,      21, 24, 0},
+        {"b,bl",        1,      ARMALL,         25, 27, 5},
+        {"bic",         2,      ARMALL,         26, 27, 0,      21, 24, 14},
+        {"bkpt",        2,      ARMV5T,         20, 31, 0xe12,  4, 7, 7},
+        {"blx(1)",      1,      ARMV5T,         25, 31, 0x7d},
+        {"blx(2)",      2,      ARMV5T,         20, 27, 0x12,   4, 7, 3},
+        {"bx",          2,      ARMV4T,         20, 27, 0x12,   4, 7, 1},
+        {"bxj",         2,      ARMV5TEJ,       20, 27, 0x12,   4, 7, 2},
+        {"cdp",         2,      ARMALL,         24, 27, 0xe,    4, 4, 0},
+        {"clz",         2,      ARMV5T,         20, 27, 0x16,   4, 7, 1},
+        {"cmn",         2,      ARMALL,         26, 27, 0,      20, 24, 0x17},
+        {"cmp",         2,      ARMALL,         26, 27, 0,      20, 24, 0x15},
+        {"cps",         3,      ARMV6,          20, 31, 0xf10,  16, 16, 0,      5, 5, 0},
+//        {"cpy",         2,      ARMV6,          20, 27, 0x1a,   4, 11, 0},
+        {"eor",         2,      ARMALL,         26, 27, 0,      21, 24, 1},
+        {"ldc",         2,      ARMALL,         25, 27, 6,      20, 20, 1},
+        {"ldm(1)",      3,      ARMALL,         25, 27, 4,      22, 22, 0,      20, 20, 1},
+        {"ldm(2)",      3,      ARMALL,         25, 27, 4,      20, 22, 5,      15, 15, 0},
+        {"ldm(3)",      4,      ARMALL,         25, 27, 4,      22, 22, 1,      20 ,20, 1,      15, 15, 1},
+        {"ldr",         3,      ARMALL,         26, 27, 1,      22, 22, 0,      20, 20, 1},
+        {"ldrb",        3,      ARMALL,         26, 27, 1,      22, 22, 1,      20, 20, 1},
+        {"ldrbt",       3,      ARMALL,         26, 27, 1,      24, 24, 0,      20, 22, 7},
+        {"ldrd",        3,      ARMV5TE,        25, 27, 0,      20, 20, 0,      4, 7, 0xd},
+        {"ldrex",       2,      ARMALL,         20, 27, 0x19,   4, 7, 9},
+	{"ldrexb",	2,	ARM1176JZF_S,	20, 27, 0x1d,	4, 7, 9},
+        {"ldrh",        3,      ARMALL,         25, 27, 0,      20, 20, 0,      4, 7, 0xb},
+        {"ldrsb",       3,      ARMV4T,         25, 27, 0,      20, 20, 1,      4, 7, 0xd},
+        {"ldrsh",       3,      ARMV4T,         25, 27, 0,      20, 20, 1,      4, 7, 0xf},
+        {"ldrt",        3,      ARMALL,         26, 27, 1,      24, 24, 0,      20, 22, 3},
+        {"mcr",         3,      ARMALL,         24, 27, 0xe,    20, 20, 0,      4, 4, 1},
+        {"mcrr",        1,      ARMV6,          20, 27, 0xc4},
+        {"mla",         2,      ARMALL,         21, 27, 1,      4, 7, 9},
+        {"mov",         2,      ARMALL,         26, 27, 0,      21, 24, 0xd},
+        {"mrc",         3,      ARMV6,          24, 27, 0xe,    20, 20, 1,      4, 4, 1},
+        {"mrrc",        1,      ARMV6,          20, 27, 0xc5},
+        {"mrs",         2,      ARMALL,         23, 27, 2,      20, 21, 0},
+        {"msr",         2,      ARMALL,         23, 27, 6,      20, 21, 2},
+        {"msr",         3,      ARMALL,         23, 27, 2,      20, 21, 2,	4, 7, 0},
+        {"mul",         2,      ARMALL,         21, 27, 0,      4, 7, 9},
+        {"mvn",         2,      ARMALL,         26, 27, 0,      21, 24, 0xf},
+        {"orr",         2,      ARMALL,         26, 27, 0,      21, 24, 0xc},
+        {"pkhbt",       2,      ARMV6,          20, 27, 0x68,   4, 6, 1},
+        {"pkhtb",       2,      ARMV6,          20, 27, 0x68,   4, 6, 5},
+        {"pld",         4,      ARMV5TE,        26, 31, 0x3d,   24, 24, 1,      20, 22, 5,      12, 15, 0xf},
+        {"qadd",        2,      ARMV5TE,        20, 27, 0x10,   4, 7, 5},
+        {"qadd16",      2,      ARMV6,          20, 27, 0x62,   4, 7, 1},
+        {"qadd8",       2,      ARMV6,          20, 27, 0x62,   4, 7, 9},
+        {"qaddsubx",    2,      ARMV6,          20, 27, 0x62,   4, 7, 3},
+        {"qdadd",       2,      ARMV5TE,        20, 27, 0x14,   4, 7, 5},
+        {"qdsub",       2,      ARMV5TE,        20, 27, 0x16,   4, 7, 5},
+        {"qsub",        2,      ARMV5TE,        20, 27, 0x12,   4, 7, 5},
+        {"qsub16",      2,      ARMV6,          20, 27, 0x62,   4, 7, 7},
+        {"qsub8",       2,      ARMV6,          20, 27, 0x62,   4, 7, 0xf},
+        {"qsubaddx",    2,      ARMV6,          20, 27, 0x62,   4, 7, 5},
+        {"rev",         2,      ARMV6,          20, 27, 0x6b,   4, 7, 3},
+        {"revsh",       2,      ARMV6,          20, 27, 0x6f,   4, 7, 0xb},
+        {"rfe",         4,      ARMV6,          25, 31, 0x7c,   22, 22, 0,      20, 20, 1,      8, 11, 0xa},
+        {"rsb",         2,      ARMALL,         26, 27, 0,      21, 24, 3},
+        {"rsc",         2,      ARMALL,         26, 27, 0,      21, 24, 7},
+        {"sadd16",      2,      ARMV6,          20, 27, 0x61,   4, 7, 1},
+        {"sadd8",       2,      ARMV6,          20, 27, 0x61,   4, 7, 9},
+        {"saddsubx",    2,      ARMV6,          20, 27, 0x61,   4, 7, 3},
+        {"sbc",         2,      ARMALL,         26, 27, 0,      21, 24, 6},
+        {"sel",         2,      ARMV6,          20, 27, 0x68,   4, 7, 0xb},
+        {"setend",      2,      ARMV6,          16, 31, 0xf101, 4, 7, 0},
+        {"shadd16",     2,      ARMV6,          20, 27, 0x63,   4, 7, 1},
+        {"shadd8",      2,      ARMV6,          20, 27, 0x63,   4, 7, 9},
+        {"shaddsubx",   2,      ARMV6,          20, 27, 0x63,   4, 7, 3},
+        {"shsub16",     2,      ARMV6,          20, 27, 0x63,   4, 7, 7},
+        {"shsub8",      2,      ARMV6,          20, 27, 0x63,   4, 7, 0xf},
+        {"shsubaddx",   2,      ARMV6,          20, 27, 0x63,   4, 7, 5},
+        {"smla<x><y>",  3,      ARMV5TE,        20, 27, 0x10,   7, 7, 1,        4, 4, 0},
+        {"smlad",       3,      ARMV6,          20, 27, 0x70,   6, 7, 0,        4, 4, 0},
+        {"smlal",       2,      ARMALL,         21, 27, 0x7,    4, 7, 9},
+        {"smlal<x><y>", 3,      ARMV5TE,        20, 27, 0x14,   7, 7, 1,        4, 4, 0},
+        {"smlald",      3,      ARMV6,          20, 27, 0x74,   6, 7, 0,        4, 4, 1},
+        {"smlaw<y>",    3,      ARMV5TE,        20, 27, 0x12,   7, 7, 0,        4, 5, 0},
+        {"smlsd",       3,      ARMV6,          20, 27, 0x70,   6, 7, 1,        4, 4, 1},
+        {"smlsld",      3,      ARMV6,          20, 27, 0x74,   6, 7, 1,        4, 4, 1},
+        {"smmla",       3,      ARMV6,          20, 27, 0x75,   6, 7, 0,        4, 4, 1},
+        {"smmls",       3,      ARMV6,          20, 27, 0x75,   6, 7, 3,        4, 4, 1},
+        {"smmul",       4,      ARMV6,          20, 27, 0x75,   12, 15, 0xf,    6, 7, 0,        4, 4, 1},
+        {"smuad",       4,      ARMV6,          20, 27, 0x70,   12, 15, 0xf,    6, 7, 0,        4, 4, 1},
+        {"smul<x><y>",  3,      ARMV5TE,        20, 27, 0x16,   7, 7, 1,        4, 4, 0},
+        {"smull",       2,      ARMALL,         21, 27, 6,      4, 7, 9},
+        {"smulw<y>",    3,      ARMV5TE,        20, 27, 0x12,   7, 7, 1,        4, 5, 2},
+        {"smusd",       4,      ARMV6,          20, 27, 0x70,   12, 15, 0xf,    6, 7, 1,        4, 4, 1},
+        {"srs",         4,      ARMV6,          25, 31, 0x3c,   22, 22, 1,      16, 20, 0xd,    8, 11, 5},
+        {"ssat",        2,      ARMV6,          21, 27, 0x35,   4, 5, 1},
+        {"ssat16",      2,      ARMV6,          20, 27, 0x6a,   4, 7, 3},
+        {"ssub16",      2,      ARMV6,          20, 27, 0x61,   4, 7, 7},
+        {"ssub8",       2,      ARMV6,          20, 27, 0x61,   4, 7, 0xf},
+        {"ssubaddx",    2,      ARMV6,          20, 27, 0x61,   4, 7, 5},
+        {"stc",         2,      ARMALL,         25, 27, 6,      20, 20, 0},
+        {"stm(1)",      3,      ARMALL,         25, 27, 4,      22, 22, 0,      20, 20, 0},
+        {"stm(2)",      2,      ARMALL,         25, 27, 4,      20, 22, 4},
+        {"str",         3,      ARMALL,         26, 27, 1,      22, 22, 0,      20, 20, 0},
+        {"strb",        3,      ARMALL,         26, 27, 1,      22, 22, 1,      20, 20, 0},
+        {"strbt",       3,      ARMALL,         26, 27, 1,      24, 24, 0,      20, 22, 6},
+        {"strd",        3,      ARMV5TE,        25, 27, 0,      20, 20, 0,      4, 7, 0xf},//ARMv5TE and above, excluding ARMv5TExP
+        {"strex",       2,      ARMV6,          20, 27, 0x18,   4, 7, 9},
+	{"strexb",	2,	ARM1176JZF_S,	20, 27, 0x1c,	4, 7, 9},
+        {"strh",        3,      ARMALL,         25, 27, 0,      20, 20, 0,      4, 7, 0xb},
+        {"strt",        3,      ARMALL,         26, 27, 1,      24, 24, 0,      20, 22, 2},
+        {"sub",         2,      ARMALL,         26, 27, 0,      21, 24, 2},
+        {"swi",         1,      ARMALL,         24, 27, 0xf},
+        {"swp",         2,      ARMALL,         20, 27, 0x10,   4, 7, 9},
+        {"swpb",        2,      ARMALL,         20, 27, 0x14,   4, 7, 9},
+        {"sxtab",       2,      ARMV6,          20, 27, 0x6a,   4, 7, 7},
+        {"sxtab16",     2,      ARMV6,          20, 27, 0x68,   4, 7, 7},
+        {"sxtah",       2,      ARMV6,          20, 27, 0x6b,   4, 7, 7},
+        {"sxtb",        2,      ARMV6,          16, 27, 0x6af,  4, 7, 7},
+        {"sxtb16",      2,      ARMV6,          16, 27, 0x68f,  4, 7, 7},
+        {"sxth",        2,      ARMV6,          16, 27, 0x6bf,  4, 7, 7},
+        {"teq",         2,      ARMALL,         26, 27, 0,      20, 24, 0x13},
+        {"tst",         2,      ARMALL,         26, 27, 0,      20, 24, 0x11},
+        {"uadd16",      2,      ARMV6,          20, 27, 0x65,   4, 7, 1},
+        {"uadd8",       2,      ARMV6,          20, 27, 0x65,   4, 7, 9},
+        {"uaddsubx",    2,      ARMV6,          20, 27, 0x65,   4, 7, 3},
+        {"uhadd16",     2,      ARMV6,          20, 27, 0x67,   4, 7, 1},
+        {"uhadd8",      2,      ARMV6,          20, 27, 0x67,   4, 7, 9},
+        {"uhaddsubx",   2,      ARMV6,          20, 27, 0x67,   4, 7, 3},
+        {"uhsub16",     2,      ARMV6,          20, 27, 0x67,   4, 7, 7},
+        {"uhsub8",      2,      ARMV6,          20, 27, 0x67,   4, 7, 0xf},
+        {"uhsubaddx",   2,      ARMV6,          20, 27, 0x67,   4, 7, 5},
+        {"umaal",       2,      ARMV6,          20, 27, 4,      4, 7, 9},
+        {"umlal",       2,      ARMALL,         21, 27, 5,      4, 7, 9},
+        {"umull",       2,      ARMALL,         21, 27, 4,      4, 7, 9},
+        {"uqadd16",     2,      ARMV6,          20, 27, 0x66,   4, 7, 1},
+        {"uqadd8",      2,      ARMV6,          20, 27, 0x66,   4, 7, 9},
+        {"uqaddsubx",   2,      ARMV6,          20, 27, 0x66,   4, 7, 3},
+        {"uqsub16",     2,      ARMV6,          20, 27, 0x66,   4, 7, 7},
+        {"uqsub8",      2,      ARMV6,          20, 27, 0x66,   4, 7, 0xf},
+        {"uqsubaddx",   2,      ARMV6,          20, 27, 0x66,   4, 7, 5},
+        {"usad8",       3,      ARMV6,          20, 27, 0x78,   12, 15, 0xf,    4, 7, 1},
+        {"usada8",      2,      ARMV6,          20, 27, 0x78,   4, 7, 1},
+        {"usat",        2,      ARMV6,          21, 27, 0x37,   4, 5, 1},
+        {"usat16",      2,      ARMV6,          20, 27, 0x6e,   4, 7, 3},
+        {"usub16",      2,      ARMV6,          20, 27, 0x65,   4, 7, 7},
+        {"usub8",       2,      ARMV6,          20, 27, 0x65,   4, 7, 0xf},
+        {"usubaddx",    2,      ARMV6,          20, 27, 0x65,   4, 7, 5},
+        {"uxtab",       2,      ARMV6,          20, 27, 0x6e,   4, 7, 7},
+        {"uxtab16",     2,      ARMV6,          20, 27, 0x6c,   4, 7, 7},
+        {"uxtah",       2,      ARMV6,          20, 27, 0x6f,   4, 7, 7},
+        {"uxtb",        2,      ARMV6,          16, 27, 0x6ef,  4, 7, 7},
+        {"uxtb16",      2,      ARMV6,          16, 27, 0x6cf,  4, 7, 7},
+        {"uxth",        2,      ARMV6,          16, 27, 0x6ff,  4, 7, 7}
+};
+
+
+const ISEITEM arm_exclusion_code[] = {
+        {"adc",         3,      ARMALL,		4, 4, 1,	7, 7, 1,	25, 25, 0}, 
+        {"add",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0}, 
+        {"and",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"b,bl",        0,      ARMALL, 	0},        
+        {"bic",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"bkpt",        0,      ARMV5T, 0},        
+        {"blx(1)",      0,      ARMV5T, 0},        
+        {"blx(2)",      0,      ARMV5T, 0},        
+        {"bx",          0,      ARMV4T, 0},        
+        {"bxj",         0,      ARMV5TEJ, 0},      
+        {"cdp",         0,      ARMALL, 0},        
+        {"clz",         0,      ARMV5T, 0},        
+        {"cmn",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"cmp",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"cps",         0,      ARMV6, 0},         
+//        {"cpy",         0,      ARMV6, 0},         
+        {"eor",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"ldc",         0,      ARMALL, 0},        
+        {"ldm(1)",      0,      ARMALL, 0},        
+        {"ldm(2)",      0,      ARMALL, 0},        
+        {"ldm(3)",      0,      ARMALL, 0},        
+        {"ldr",         0,      ARMALL, 0},        
+        {"ldrb",        0,      ARMALL, 0},        
+        {"ldrbt",       0,      ARMALL, 0},        
+        {"ldrd",        0,      ARMV5TE, 0},       
+        {"ldrex",       0,      ARMALL, 0},        
+	{"ldrexb",	0,	ARM1176JZF_S, 0},	
+        {"ldrh",        0,      ARMALL, 0},        
+        {"ldrsb",       0,      ARMV4T, 0},        
+        {"ldrsh",       0,      ARMV4T, 0},        
+        {"ldrt",        0,      ARMALL, 0},        
+        {"mcr",         0,      ARMALL, 0},        
+        {"mcrr",        0,      ARMV6, 0},         
+        {"mla",         0,      ARMALL, 0},        
+        {"mov",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"mrc",         0,      ARMV6, 0},         
+        {"mrrc",        0,      ARMV6, 0},         
+        {"mrs",         0,      ARMALL, 0},        
+        {"msr",         0,      ARMALL, 0},        
+        {"msr",         0,      ARMALL, 0},        
+        {"mul",         0,      ARMALL, 0},        
+        {"mvn",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"orr",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"pkhbt",       0,      ARMV6, 0},         
+        {"pkhtb",       0,      ARMV6, 0},         
+        {"pld",         0,      ARMV5TE, 0},       
+        {"qadd",        0,      ARMV5TE, 0},       
+        {"qadd16",      0,      ARMV6, 0},         
+        {"qadd8",       0,      ARMV6, 0},         
+        {"qaddsubx",    0,      ARMV6, 0},         
+        {"qdadd",       0,      ARMV5TE, 0},       
+        {"qdsub",       0,      ARMV5TE, 0},       
+        {"qsub",        0,      ARMV5TE, 0},       
+        {"qsub16",      0,      ARMV6, 0},         
+        {"qsub8",       0,      ARMV6, 0},         
+        {"qsubaddx",    0,      ARMV6, 0},         
+        {"rev",         0,      ARMV6, 0},         
+        {"revsh",       0,      ARMV6, 0},         
+        {"rfe",         0,      ARMV6, 0},         
+        {"rsb",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"rsc",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"sadd16",      0,      ARMV6, 0},         
+        {"sadd8",       0,      ARMV6, 0},         
+        {"saddsubx",    0,      ARMV6, 0},         
+        {"sbc",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"sel",         0,      ARMV6, 0},         
+        {"setend",      0,      ARMV6, 0},         
+        {"shadd16",     0,      ARMV6, 0},         
+        {"shadd8",      0,      ARMV6, 0},         
+        {"shaddsubx",   0,      ARMV6, 0},         
+        {"shsub16",     0,      ARMV6, 0},         
+        {"shsub8",      0,      ARMV6, 0},         
+        {"shsubaddx",   0,      ARMV6, 0},         
+        {"smla<x><y>",  0,      ARMV5TE, 0},       
+        {"smlad",       0,      ARMV6, 0},         
+        {"smlal",       0,      ARMALL, 0},        
+        {"smlal<x><y>", 0,      ARMV5TE, 0},       
+        {"smlald",      0,      ARMV6, 0},         
+        {"smlaw<y>",    0,      ARMV5TE, 0},       
+        {"smlsd",       0,      ARMV6, 0},         
+        {"smlsld",      0,      ARMV6, 0},         
+        {"smmla",       0,      ARMV6, 0},         
+        {"smmls",       0,      ARMV6, 0},         
+        {"smmul",       0,      ARMV6, 0},         
+        {"smuad",       0,      ARMV6, 0},         
+        {"smul<x><y>",  0,      ARMV5TE, 0},       
+        {"smull",       0,      ARMALL, 0},        
+        {"smulw<y>",    0,      ARMV5TE, 0},       
+        {"smusd",       0,      ARMV6, 0},         
+        {"srs",         0,      ARMV6, 0},         
+        {"ssat",        0,      ARMV6, 0},         
+        {"ssat16",      0,      ARMV6, 0},         
+        {"ssub16",      0,      ARMV6, 0},         
+        {"ssub8",       0,      ARMV6, 0},         
+        {"ssubaddx",    0,      ARMV6, 0},         
+        {"stc",         0,      ARMALL, 0},        
+        {"stm(1)",      0,      ARMALL, 0},        
+        {"stm(2)",      0,      ARMALL, 0},        
+        {"str",         0,      ARMALL, 0},        
+        {"strb",        0,      ARMALL, 0},        
+        {"strbt",       0,      ARMALL, 0},        
+        {"strd",        0,      ARMV5TE, 0},       
+        {"strex",       0,      ARMV6, 0},         
+	{"strexb",	0,	ARM1176JZF_S, 0},	
+        {"strh",        0,      ARMALL, 0},        
+        {"strt",        0,      ARMALL, 0},        
+        {"sub",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"swi",         0,      ARMALL, 0},        
+        {"swp",         0,      ARMALL, 0},        
+        {"swpb",        0,      ARMALL, 0},        
+        {"sxtab",       0,      ARMV6, 0},         
+        {"sxtab16",     0,      ARMV6, 0},         
+        {"sxtah",       0,      ARMV6, 0},         
+        {"sxtb",        0,      ARMV6, 0},         
+        {"sxtb16",      0,      ARMV6, 0},         
+        {"sxth",        0,      ARMV6, 0},         
+        {"teq",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"tst",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
+        {"uadd16",      0,      ARMV6, 0},         
+        {"uadd8",       0,      ARMV6, 0},         
+        {"uaddsubx",    0,      ARMV6, 0},         
+        {"uhadd16",     0,      ARMV6, 0},         
+        {"uhadd8",      0,      ARMV6, 0},         
+        {"uhaddsubx",   0,      ARMV6, 0},         
+        {"uhsub16",     0,      ARMV6, 0},         
+        {"uhsub8",      0,      ARMV6, 0},         
+        {"uhsubaddx",   0,      ARMV6, 0},         
+        {"umaal",       0,      ARMV6, 0},         
+        {"umlal",       0,      ARMALL, 0},        
+        {"umull",       0,      ARMALL, 0},        
+        {"uqadd16",     0,      ARMV6, 0},         
+        {"uqadd8",      0,      ARMV6, 0},         
+        {"uqaddsubx",   0,      ARMV6, 0},         
+        {"uqsub16",     0,      ARMV6, 0},         
+        {"uqsub8",      0,      ARMV6, 0},         
+        {"uqsubaddx",   0,      ARMV6, 0},         
+        {"usad8",       0,      ARMV6, 0},         
+        {"usada8",      0,      ARMV6, 0},         
+        {"usat",        0,      ARMV6, 0},         
+        {"usat16",      0,      ARMV6, 0},         
+        {"usub16",      0,      ARMV6, 0},         
+        {"usub8",       0,      ARMV6, 0},         
+        {"usubaddx",    0,      ARMV6, 0},         
+        {"uxtab",       0,      ARMV6, 0},         
+        {"uxtab16",     0,      ARMV6, 0},         
+        {"uxtah",       0,      ARMV6, 0},         
+        {"uxtb",        0,      ARMV6, 0},         
+        {"uxtb16",      0,      ARMV6, 0},         
+        {"uxth",        0,      ARMV6, 0}
+};
+
+
+
+int decode_arm_instr(uint32_t instr, int32_t *idx)
+{
+	int n = 0;
+	int base = 0;
+	int ret = DECODE_FAILURE;
+	int i = 0;
+	int instr_slots = sizeof(arm_instruction)/sizeof(ISEITEM);
+	for (i = 0; i < instr_slots; i++)
+	{
+//		ret = DECODE_SUCCESS;
+		n = arm_instruction[i].attribute_value;
+		base = 0;
+		while (n) {
+			if (BITS(arm_instruction[i].content[base], arm_instruction[i].content[base + 1]) != arm_instruction[i].content[base + 2]) {
+				break;
+			}
+			base += 3;
+			n --;
+		}
+		//All conditions is satisfied.
+		if (n == 0)
+			ret = DECODE_SUCCESS;
+
+		if (ret == DECODE_SUCCESS) {
+			n = arm_exclusion_code[i].attribute_value;
+			if (n != 0) {
+				base = 0;
+				while (n) {
+					if (BITS(arm_exclusion_code[i].content[base], arm_exclusion_code[i].content[base + 1]) != arm_exclusion_code[i].content[base + 2]) {
+						break;
+					}
+					base += 3;
+					n --;
+				}
+				//All conditions is satisfied.
+				if (n == 0)
+					ret = DECODE_FAILURE;
+			}
+		}
+
+		if (ret == DECODE_SUCCESS) {
+			*idx = i;
+			return ret;
+		}
+	}
+	return ret;
+}
+

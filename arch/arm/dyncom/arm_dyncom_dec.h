@@ -1,5 +1,106 @@
 #ifndef __ARM_DYNCOM_DEC__
 #define __ARM_DYNCOM_DEC__
+
+#define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
+#define BIT(n) ((instr >> (n)) & 1)
+#define BAD	do{printf("meet BAD at %s, instr is %x\n", __FUNCTION__, instr ); /*exit(0);*/}while(0);
+#define ptr_N	cpu->ptr_N
+#define ptr_Z	cpu->ptr_Z
+#define ptr_C	cpu->ptr_C
+#define ptr_V	cpu->ptr_V
+#define ptr_I 	cpu->ptr_I
+#define	ptr_CPSR cpu->ptr_gpr[16]
+
+/* for MUL instructions */
+/*xxxx xxxx xxxx 1111 xxxx xxxx xxxx xxxx */
+#define RDHi ((instr >> 16) & 0xF)
+/*xxxx xxxx xxxx xxxx 1111 xxxx xxxx xxxx */
+#define RDLo ((instr >> 12) & 0xF)
+/*xxxx xxxx xxxx 1111 xxxx xxxx xxxx xxxx */
+#define MUL_RD ((instr >> 16) & 0xF)
+/*xxxx xxxx xxxx xxxx 1111 xxxx xxxx xxxx */
+#define MUL_RN ((instr >> 12) & 0xF)
+/*xxxx xxxx xxxx xxxx xxxx 1111 xxxx xxxx */
+#define RS ((instr >> 8) & 0xF)
+
+/*xxxx xxxx xxxx xxxx 1111 xxxx xxxx xxxx */
+#define RD ((instr >> 12) & 0xF)
+/*xxxx xxxx xxxx 1111 xxxx xxxx xxxx xxxx */
+#define RN ((instr >> 16) & 0xF)
+/*xxxx xxxx xxxx xxxx xxxx xxxx xxxx 1111 */
+#define RM (instr & 0xF)
+#define BIT(n) ((instr >> (n)) & 1)
+#define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
+/*xxxx xx1x xxxx xxxx xxxx xxxx xxxx xxxx */
+#define I BIT(25)
+/*xxxx xxxx xxx1 xxxx xxxx xxxx xxxx xxxx */
+#define S BIT(20)
+
+#define SHIFT BITS(5,6)
+#define SHIFT_IMM BITS(7,11)
+#define IMMH BITS(8,11)
+#define IMML BITS(0,3)
+
+#define LSPBIT  BIT(24)
+#define LSUBIT  BIT(23)
+#define LSBBIT  BIT(22)
+#define LSWBIT  BIT(21)
+#define LSLBIT  BIT(20)
+#define LSSHBITS BITS(5,6)
+#define OFFSET12 BITS(0,11)
+#define SBIT  BIT(20)
+#define DESTReg (BITS (12, 15))
+
+/* they are in unused state, give a corrent value when using */
+#define IS_V5E 0
+#define IS_V5  0
+#define IS_V6  0
+#define LHSReg 0
+
+/* temp define the using the pc reg need implement a flow */
+#define STORE_CHECK_RD_PC	ADD(R(RD), CONST(8))
+
+#define OPERAND operand(cpu,instr,bb)
+#define BOPERAND boperand(cpu,instr,bb)
+
+#define CHECK_RN_PC  (RN==15? ADD(R(RN), CONST(8)):R(RN))
+
+Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb);
+Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb);
+int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2);
+Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
+void LoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr);
+
+int decode_arm_instr(uint32_t instr, int32_t *idx);
+
+enum DECODE_STATUS {
+	DECODE_SUCCESS,
+	DECODE_FAILURE
+};
+
+struct instruction_set_encoding_item {
+        const char *name;
+        int attribute_value;
+        int version;
+        int content[12];//12 is the max number
+};
+
+typedef struct instruction_set_encoding_item ISEITEM;
+
+enum ARMVER {
+        ARMALL,
+        ARMV4,
+        ARMV4T,
+        ARMV5T,
+        ARMV5TE,
+        ARMV5TEJ,
+        ARMV6,
+	ARM1176JZF_S
+};
+
+//extern const INSTRACT arm_instruction_action[];
+extern const ISEITEM arm_instruction[];
+
 int arm_opc_trans_00(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 int arm_opc_trans_01(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 int arm_opc_trans_02(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
