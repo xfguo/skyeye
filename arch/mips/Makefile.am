@@ -1,4 +1,4 @@
-mips_mach = mach/skyeye_mach_au1100.c  mach/skyeye_mach_nedved.c mach/skyeye_mach_fulong.c mach/skyeye_mach_gs32eb1.c
+mips_mach = mach/skyeye_mach_au1100.c  mach/skyeye_mach_nedved.c mach/skyeye_mach_fulong.c mach/skyeye_mach_gs32eb1.c mach/skyeye_mach_malta.c
 mips_comm = common/cache.c   common/decoder.c    common/icache.c     common/tlb.c \
 common/cp0.c     common/emul.c       common/interrupt.c            \
 common/dcache.c  common/exception.c  common/mips_arch_interface.c  common/multiply.c common/mips_module.c common/mips_regformat.c

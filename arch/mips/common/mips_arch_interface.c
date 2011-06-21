@@ -476,6 +476,7 @@ extern void nedved_mach_init(void * state, machine_config_t * mach);
 extern void au1100_mach_init(void * state, machine_config_t * mach);
 extern void fulong_mach_init(void * state, machine_config_t * mach);
 extern void gs32eb1_mach_init(void * state, machine_config_t * mach);
+extern void malta_mach_init(void * state, machine_config_t * mach);
 
 /* machines register arrary */
 machine_config_t mips_machines[] = {
@@ -483,6 +484,7 @@ machine_config_t mips_machines[] = {
 	{"au1100", au1100_mach_init, NULL, NULL, NULL},
 	{"fulong", fulong_mach_init, NULL, NULL, NULL},
 	{"gs32eb1", gs32eb1_mach_init, NULL, NULL, NULL},
+	{"malta", malta_mach_init, NULL, NULL, NULL},
 	{NULL, NULL, NULL, NULL, NULL},
 };
 
