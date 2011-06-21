@@ -31,6 +31,7 @@
 #include "skyeye_options.h"
 #include "skyeye_pref.h"
 #include "skyeye_mm.h"
+#include "skyeye_callback.h"
 #include "bank_defs.h"
 
 #include "emul.h"
@@ -152,6 +153,9 @@ per_cpu_step(conf_object_t *running_core)
 	MIPS_CPU_State* cpu = get_current_cpu();
 	mstate->gpr[0] = 0;
 
+	/* if active is 0, the core is suspend */
+	if(!mstate->active)
+		return;
 	/* Check for interrupts. In real hardware, these have a priority lower
 	 * than all exceptions, but simulating this effect is too hard to be
 	 * worth the effort (interrupts and resets are not meant to be
@@ -177,6 +181,9 @@ per_cpu_step(conf_object_t *running_core)
 	va = mstate->pc;
 	mstate->cycle++;
 
+	generic_arch_t *arch_instance = get_arch_instance("");
+	exec_callback(Step_callback, arch_instance);
+
 	if(translate_vaddr(mstate, va, instr_fetch, &pa) == TLB_SUCC){
 		mips_mem_read(pa, &instr, 4);
 		next_state = decode(mstate, instr);
@@ -187,10 +194,7 @@ per_cpu_step(conf_object_t *running_core)
 	}
 
 	/* NOTE: mstate->pipeline is also possibely set in decode function */
-	static int flag = 0;
-	if(va == 0x40acb8)
-		flag = 0;
-	if(flag && skyeye_logfd)
+	if(skyeye_logfd)
 		//fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x, sp=0x%x, ra=0x%x,s1=0x%x, v0=0x%x\n", instr, pa, va, mstate->gpr[29], mstate->gpr[31],mstate->gpr[17], mstate->gpr[2]);
 		fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x, a0=0x%x, k1=0x%x, t0=0x%x, ra=0x%x, s4=0x%x, gp=0x%x\n", instr, pa, va, mstate->gpr[4], mstate->gpr[27], mstate->gpr[8], mstate->gpr[31], mstate->gpr[20], mstate->gpr[28]);
 		//fprintf(skyeye_logfd, "KSDBG:instr=0x%x,pa=0x%x, va=0x%x,v0=0x%x,t0=0x%x\n", instr, pa, va, mstate->gpr[2], mstate->gpr[8]);
@@ -221,11 +225,24 @@ per_cpu_step(conf_object_t *running_core)
 				//fprintf(stderr, "counter=0x%x,pc=0x%x\n", mstate->cp0[Count], mstate->pc);
 				/* Set counter interrupt bit in IP section of Cause register */
 				mstate->cp0[Cause] |= 1 << Cause_IP7;
+				mstate->cp0[Cause] |= 1 << Cause_TI;	/* for release 2 */
 			/* Set ExcCode to zero in Cause register */
 				process_exception(mstate, EXC_Int, common_vector);
 			}
 		}
 	}
+
+	if(mstate->mt_flag){
+		int TcBindVPE = mstate->cp0_TCBind & 0xf;			/* get current VPE */
+		mips_core_t* curVPE = &cpu->core[TcBindVPE + mstate->tc_num];
+		/* if has a interrupt */
+		if((curVPE->cp0[SR] & 0x1 ) && curVPE->int_flag){
+			curVPE->int_flag = 0;
+			//mstate->int_flag = 0;
+			process_exception(mstate, EXC_Int, common_vector);
+		}
+	}
+
 	//skyeye_config.mach->mach_io_do_cycle (mstate);
 	//exec_callback();
 }
@@ -322,7 +339,7 @@ mips_cpu_init()
 	if(!mach->cpu_data)
 		return false;
 
-	cpu->core_num = 1;
+	cpu->core_num = 6;	/* for mt tmep */
 	if(!cpu->core_num){
 		fprintf(stderr, "ERROR:you need to set numbers of core in mach_init.\n");
 		skyeye_exit(-1);
@@ -338,17 +355,19 @@ mips_cpu_init()
 		printf("%d core is initialized.\n", cpu->core_num);
 
 	int i;
+	cpu->boot_core_id = 0;
 	for(i = 0; i < cpu->core_num; i++){
 		mips_core_t* core = &cpu->core[i];
 		mips_core_init(core, i);
+		core->active = 0;	/* set cpu suspend */
 		skyeye_exec_t* exec = create_exec();
 		exec->priv_data = get_conf_obj_by_cast(core, "mips_core_t");
 		exec->run = per_cpu_step;
 		exec->stop = per_cpu_stop;
 		add_to_default_cell(exec);
 	}
+	cpu->core[cpu->boot_core_id].active = 1; /* set boot cpu working */
 
-	cpu->boot_core_id = 0;
 	return true;
 }
 
@@ -416,8 +435,11 @@ mips_set_pc(UInt32 addr)
 {
 	MIPS_CPU_State* cpu = get_current_cpu();
 	int i;
+#if 0
 	for( i = 0; i < cpu->core_num; i ++ )
 		cpu->core[i].pc = addr;
+#endif
+	cpu->core[0].pc = addr;
 }
 
 /**
