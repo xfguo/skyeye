@@ -27,17 +27,33 @@ void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
         cpu->dyncom_engine->flags_codegen = f;
 }
 
+static bool_t is_inside_page(cpu_t *cpu, addr_t a)
+{
+//	return ((a & 0xfffff000) == cpu->current_page_phys) ? True : False;
+	return True;
+}
+static bool_t is_page_start(addr_t a)
+{
+	return ((a & 0x00000fff) == 0x0) ? True : False;
+}
+static bool_t is_page_end(addr_t a)
+{
+	return ((a & 0x00000fff) == 0xffc) ? True : False;
+}
+
+
 static uint32_t arch_arm_read_memory(cpu_t *cpu, addr_t addr,uint32_t size)
 {
 	uint32_t value;
 
-	bus_read(size, (int)addr, &value);
+//	printf("read memory %x bytes %x from addr %x\n", addr, size, value);
+	bus_read(size, addr, &value);
 	return value;
 }
 
 static void arch_arm_write_memory(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size)
 {
-	bus_write(size, (int)addr, value);
+	bus_write(size, addr, value);
 }
 
 static cpu_flags_layout_t arm_flags_layout[4] ={{3,'N',"NFLAG"},{2,'Z',"ZFLAG"},{1,'C',"CFLAG"},{0,'V',"VFLAG"}} ;
@@ -118,6 +134,19 @@ static int arch_arm_disasm_instr(cpu_t *cpu, addr_t pc, char* line, unsigned int
 static int arch_arm_translate_loop_helper(cpu_t *cpu, addr_t pc, BasicBlock *bb_ret, BasicBlock *bb_next, BasicBlock *bb, BasicBlock *bb_zol_cond){
 	return 0;
 }
+
+static int arch_arm_effective_to_physical(struct cpu *cpu, uint32_t addr, uint32_t *result){
+        arm_core_t* core = (arm_core_t*)cpu->cpu_data;
+	if(is_user_mode(cpu)) {
+		*result = addr;
+		return 0;
+	} else {
+		/* only support PPC_MMU_CODE */
+//		return core->effective_to_physical(core, addr, PPC_MMU_CODE, result);
+		*result = addr;
+		return 0;
+	}
+}
 static arch_func_t arm_arch_func = {
 	arch_arm_init,
 	arch_arm_done,
@@ -135,8 +164,62 @@ static arch_func_t arm_arch_func = {
 	NULL
 };
 
+static arch_mem_ops_t arm_dyncom_mem_ops = {
+       is_inside_page,
+       is_page_start,
+       is_page_end,
+       arch_arm_read_memory,
+       arch_arm_write_memory,
+       arch_arm_effective_to_physical
+};
+
+
 static void arm_debug_func(cpu_t* cpu){
-	printf("In %s, phys_pc=0x%x, r1 is 0x%x, r3 is 0x%x\n", __FUNCTION__, *(addr_t*)cpu->rf.phys_pc,((unsigned int*)cpu->rf.grf)[1],((unsigned int*)cpu->rf.grf)[3]);
+	int idx = 0;
+	arm_core_t* core = (arm_core_t*)cpu->cpu_data;
+#if 0
+#if DIFF_LOG
+#if SAVE_LOG
+	fprintf(core->state_log, "PC:0x%x\n", cpu->f.get_pc(cpu, cpu->rf.grf));
+	for (idx = 0;idx < 16; idx ++) {
+		fprintf(core->state_log, "R%d:0x%x\n", idx, core->Reg[idx]);
+	}
+#else
+	uint32_t val;
+	fscanf(core->state_log, "PC:0x%x\n", &val);
+        uint32_t pc = cpu->f.get_pc(cpu, cpu->rf.grf);
+        if (val != pc) {
+                printf("pc is wrong.\n");
+                printf("dyncom mode pc is %x\n", pc);
+                printf("adu mode is %x\n", val);
+		printf("icounter is %x\n", cpu->icounter);
+                exit(-1);
+        }
+	uint32_t dummy;
+	bool flags = 0;
+	for (idx = 0; idx < 16; idx ++) {
+		fscanf(core->state_log, "R%d:0x%x\n", &dummy, &val);
+		//printf("R%d:0x%x\n", dummy, val);
+		if (dummy == idx) {
+			if (core->Reg[idx] != val) {
+				printf("dummy is %d R%d : \t[R]%x \t[W]%x\n", dummy, idx, val, core->Reg[idx]);
+				flags = 1;
+				//core->Reg[idx] = val;
+			}
+		} else {
+			printf("wrong dummy\n");
+			exit(-1);
+		}
+	}
+	if (flags) {
+		printf("pc is %x\n", pc);
+		printf("icounter is %x\n", cpu->icounter);
+		flags = 0;
+		exit(-1);
+	}
+#endif
+#endif
+#endif
 }
 
 extern "C" unsigned arm_dyncom_SWI (ARMul_State * state, ARMword number);
@@ -162,11 +245,23 @@ void arm_dyncom_init(arm_core_t* core){
 	cpu->rf.grf = core->Reg;
 	cpu->rf.srf = core->Spsr;
 
+	cpu->mem_ops = arm_dyncom_mem_ops;
 	cpu->cpu_data = (conf_object_t*)core;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	cpu->debug_func = arm_debug_func;
+#if 0
+        cpu->rf.pc = &core->pc;
+        //cpu->rf.pc = &core->phys_pc;
+        cpu->rf.phys_pc = &core->phys_pc;
+#endif
+
 
 	sky_pref_t *pref = get_skyeye_pref();
+        if(pref->user_mode_sim)
+                cpu->is_user_mode = 1;
+        else
+                cpu->is_user_mode = 0;
+
 	if(pref->user_mode_sim){
 		cpu->syscall_func = arm_dyncom_syscall;
 	}

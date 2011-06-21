@@ -116,6 +116,13 @@ ARMul_NewState (ARMul_State *state)
 	}
 	for (i = 0; i < EVENTLISTSIZE; i++)
 		*(state->EventPtr + i) = NULL;
+#if SAVE_LOG
+	state->state_log = fopen("/tmp/state.log", "w");
+	printf("create pc log file.\n");
+#else
+	state->state_log = fopen("/tmp/state.log", "r");
+	printf("loaded pc log file.\n");
+#endif
 
 #ifdef ARM61
 	state->prog32Sig = LOW;

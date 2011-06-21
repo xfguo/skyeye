@@ -386,6 +386,7 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 #ifdef DBCT_TEST_SPEED
 	uint64_t	instr_count;
 #endif	//DBCT_TEST_SPEED
+	FILE * state_log;
 //AJ2D--------------------------------------------------------------------------
 };
 
@@ -826,4 +827,8 @@ extern void ARMul_FixCPSR (ARMul_State *, ARMword, ARMword);
 extern void ARMul_FixSPSR (ARMul_State *, ARMword, ARMword);
 extern void ARMul_ConsolePrint (ARMul_State *, const char *, ...);
 extern void ARMul_SelectProcessor (ARMul_State *, unsigned);
+
+#define DIFF_LOG 0
+#define SAVE_LOG 0
+
 #endif /* _ARMDEFS_H_ */
