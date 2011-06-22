@@ -52,15 +52,21 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 	 * If up to some threshold value, force to return.
 	 * */
 	BasicBlock* bb_dispatch = BasicBlock::Create(_CTX(), "dispatch", cpu->dyncom_engine->cur_func, 0);
-	BasicBlock* bb_real_dispatch = BasicBlock::Create(_CTX(), "real_dispatch", cpu->dyncom_engine->cur_func, 0);
-	LoadInst* v_icount = new LoadInst(cpu->ptr_ICOUNTER, "", false, bb_dispatch);
-	LoadInst* v_old_icount = new LoadInst(cpu->ptr_OLD_ICOUNTER, "", false, bb_dispatch);
-	Value *cycles =	BinaryOperator::Create(Instruction::Sub, v_icount, v_old_icount, "", bb_dispatch);
-	Value *gout = new ICmpInst(*bb_dispatch, ICmpInst::ICMP_UGT, cycles, CONST(TIMEOUT_THRESHOLD), "");
-	BranchInst::Create(bb_trap, bb_real_dispatch, gout, bb_dispatch);
-	// create dispatch basicblock
-	Value *v_pc = new LoadInst(cpu->ptr_PHYS_PC, "", false, bb_real_dispatch);
-	SwitchInst* sw = SwitchInst::Create(v_pc, bb_ret, bbs, bb_real_dispatch);
+	SwitchInst* sw;
+	if(is_user_mode(cpu)){
+		Value *v_pc = new LoadInst(cpu->ptr_PHYS_PC, "", false, bb_dispatch);
+		sw = SwitchInst::Create(v_pc, bb_ret, bbs, bb_dispatch);
+	} else {
+		BasicBlock* bb_real_dispatch = BasicBlock::Create(_CTX(), "real_dispatch", cpu->dyncom_engine->cur_func, 0);
+		LoadInst* v_icount = new LoadInst(cpu->ptr_ICOUNTER, "", false, bb_dispatch);
+		LoadInst* v_old_icount = new LoadInst(cpu->ptr_OLD_ICOUNTER, "", false, bb_dispatch);
+		Value *cycles =	BinaryOperator::Create(Instruction::Sub, v_icount, v_old_icount, "", bb_dispatch);
+		Value *gout = new ICmpInst(*bb_dispatch, ICmpInst::ICMP_UGT, cycles, CONST(TIMEOUT_THRESHOLD), "");
+		BranchInst::Create(bb_trap, bb_real_dispatch, gout, bb_dispatch);
+		// create dispatch basicblock
+		Value *v_pc = new LoadInst(cpu->ptr_PHYS_PC, "", false, bb_real_dispatch);
+		sw = SwitchInst::Create(v_pc, bb_ret, bbs, bb_real_dispatch);
+	}
 
 	// translate basic blocks
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
