@@ -65,7 +65,7 @@ bank_ptr (uint32_t addr)
 *
 * @return 
 */
-int bus_read(short size, int addr, uint32_t * value){
+int bus_read(short size, generic_address_t addr, uint32_t * value){
 	mem_bank_t * bank;
 	generic_arch_t* arch_instance = get_arch_instance("");
 
@@ -94,7 +94,7 @@ int bus_read(short size, int addr, uint32_t * value){
 *
 * @return 
 */
-int bus_write(short size, int addr, uint32_t value){
+int bus_write(short size, generic_address_t addr, uint32_t value){
 	mem_bank_t * bank;
 	generic_arch_t* arch_instance = get_arch_instance("");
 

@@ -52,12 +52,12 @@ typedef struct
 /**
  *  The interface of read data from bus
  */
-int bus_read(short size, int addr, uint32_t * value);
+int bus_read(short size, generic_address_t addr, uint32_t * value);
 
 /**
  * The interface of write data from bus
  */
-int bus_write(short size, int addr, uint32_t value);
+int bus_write(short size, generic_address_t addr, uint32_t value);
 
 mem_bank_t * bank_ptr(uint32_t addr);
 
