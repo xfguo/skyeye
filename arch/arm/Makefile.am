@@ -14,6 +14,10 @@ if DBCT
 libarm_la_SOURCES += $(arm_dbct)
 endif
 libarm_la_LDFLAGS = -module
+if WIN32
+libarm_la_LDFLAGS += -no-undefined -shared -module  -Xlinker -L../../common/.libs/ -Xlinker -lcommon -Xlinker -lmsys-1.0 -Xlinker -lmsvcrt -Xlinker -lmsys-1.0 -Xlinker -lkernel32 -Xlinker -lole32 -Xlinker -lkernel32 -Xlinker -lgdi32 -Xlinker -luuid -Xlinker -luser32  -Xlinker -lshell32 -Xlinker --export-all-symbol
+endif
+
 pkglib_LTLIBRARIES = libarm.la
 #noinst_LIBRARIES =      libarm.a
 DEFS = -DMODET -g -O3 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DNO_LCD @COMMON_CFLAGS@
