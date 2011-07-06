@@ -40,6 +40,8 @@ typedef struct conf_object_s{
 typedef uint32_t physical_address_t;
 typedef uint32_t generic_address_t; 
 #ifndef __BEOS__
+/* To avoid the type conflict with the qemu */
+#ifndef QEMU
 typedef uint8_t uint8;
 typedef uint16_t uint16;
 typedef uint32_t uint32;
@@ -49,6 +51,7 @@ typedef int8_t sint8;
 typedef int16_t sint16;
 typedef int32_t sint32;
 typedef int64_t sint64;
+#endif
 
 typedef enum {
         False = 0,
