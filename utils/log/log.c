@@ -36,6 +36,8 @@
 /* flag to enable log function. */
 static bool_t enable_log_flag;
 
+#define DEBUG
+
 /* the log file for record. */
 //static const char* log_filename = "./pc.log";
 
@@ -133,7 +135,10 @@ static void log_pc_callback(generic_arch_t* arch_instance){
 					fprintf(log_fd, "%s:0x%x\n", symbol, pc);
 			}
 			if(log_level >= 2){
-				fprintf(log_fd, "pc=0x%x\n", arch_instance->get_pc());
+				if(strncmp("arm", arch_instance->arch_name, sizeof("arm")) == 0 )
+					fprintf(log_fd, "pc=0x%x\n", arch_instance->get_pc() - 8);
+				else
+					fprintf(log_fd, "pc=0x%x\n", arch_instance->get_pc());
 			}
 			if(log_level >= 3){
 				int i;
@@ -147,12 +152,14 @@ static void log_pc_callback(generic_arch_t* arch_instance){
 				 * when different value 
 				 */
 					reg_size_t regval = arch_instance->get_regval_by_id(i);
+					#if 0
 					if(reg_array[i] == regval){
 						continue;
 					}
 					else{
 						reg_array[i] = regval;
 					}
+					#endif
 					fprintf(log_fd,"%s=0x%x,", regname, regval);
 				}
 				fprintf(log_fd,"\n");
