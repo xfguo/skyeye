@@ -63,6 +63,15 @@ RWLOCK_T  thread_lock;
 static pthread_t pid;
 
 /**
+* @brief The wall clock
+*/
+static uint64_t now_us = 0;
+
+uint64_t get_clock_us(){
+	return now_us;
+}
+
+/**
 * @brief the scheduler of event thread
 */
 static void thread_scheduler(void){
@@ -76,13 +85,25 @@ static void thread_scheduler(void){
 		/* set a thread cancelation-point */
 		usleep(100);
 	}
-
+	struct timeval tv;
+	unsigned long long start_utime, current_utime, last_utime, passed_utime;
+	gettimeofday(&tv,NULL);
+	start_utime = tv.tv_sec * 1000000 + tv.tv_usec;
 	while(1)
 	{
-		usleep(1500);
+		usleep(10);
+		gettimeofday(&tv,NULL);
+		last_utime = current_utime;
+		current_utime = tv.tv_sec * 1000000 + tv.tv_usec;
+		/* Update the clock on the wall */
+		now_us = current_utime - start_utime;
+
+		/* Calculate how much microseconds passed comparing to last time */
+		passed_utime = current_utime - last_utime;
+
 		LIST_FOREACH(tmp, &thread_head,list_entry){
 			/* Decrease dleta */
-			tmp->delta -= 1;
+			tmp->delta -= passed_utime;
 			
 			if(tmp->delta == 0 || tmp->delta < 0){
 				/* wrong time value */

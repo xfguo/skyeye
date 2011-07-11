@@ -26,6 +26,7 @@
 #ifndef __SKYEYE_SCHED_H__
 #define __SKYEYE_SCHED_H__
 #include <sys/time.h>
+#include "skyeye_types.h"
 
 /* timer scheduler mode */
 typedef enum{
@@ -33,9 +34,19 @@ typedef enum{
 	Periodic_sched		/* scheduled once in a period */
 }sched_mode_t;
 
- 
 /* define scheduler callback function type */ 
 typedef	void(*sched_func_t)(void *arg);
+
+typedef	void(*event_func_t)(void *arg);
+
+typedef struct skyeye_event{
+#if 0
+	int (*post_event)(conf_obj_t* obj, unsigned int ms, sched_mode_t mode, sched_func_t func, void *arg, int *id);
+	int (*mod_event)(conf_obj_t* obj, unsigned int ms, sched_mode_t mode, int id);
+	int (*del_event)(conf_obj_t* obj, int id);
+#endif
+}skyeye_event_intf;
+ 
 
 /* 
  * create a  thread scheduler. 
@@ -97,4 +108,7 @@ int fini_timer_scheduler(void);
  *list the attributes of all timer scheduler
  */
 void list_timer_scheduler(void);
+
+uint64_t get_clock_us();
+
 #endif
