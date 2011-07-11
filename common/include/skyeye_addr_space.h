@@ -16,6 +16,7 @@ typedef struct map_info{
 	generic_address_t base_addr;
 	generic_address_t length;
 	generic_address_t start;
+	conf_object_t* target;
 	memory_space_intf* memory_space;
 	int priority;
 	int swap_endian;
@@ -30,6 +31,6 @@ typedef struct addr_space{
 addr_space_t* new_addr_space(char* obj_name);
 void free_addr_space(char* obj_name);
 
-exception_t add_map(addr_space_t* space, generic_address_t base_addr, generic_address_t length, generic_address_t start, memory_space_intf* memory_space, int priority, int swap_endian);
+exception_t add_map(addr_space_t* space, generic_address_t base_addr, generic_address_t length, generic_address_t start, conf_object_t* target, memory_space_intf* memory_space, int priority, int swap_endian);
 
 #endif
