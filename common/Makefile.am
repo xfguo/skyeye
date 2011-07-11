@@ -27,7 +27,7 @@ include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/skyeye_uart_ops.h  ./include/memory_space.h ./include/skyeye_uart.h \
 ./include/breakpoint.h ./include/skyeye_api.h ./include/skyeye_misc.h \
 ./include/arch_regdefs.h ./include/skyeye_config.h ./include/skyeye_device.h \
-./include/skyeye.h ./include/skyeye_mm.h \
+./include/skyeye.h ./include/skyeye_mm.h ./include/skyeye_obj.h\
 ./include/skyeye_options.h ./include/skyeye_mach.h ./include/skyeye_pref.h \
 ./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
 ./include/skyeye_queue.h ./include/skyeye_signal.h ./include/skyeye_lock.h\
