@@ -21,14 +21,17 @@
 /*
  * 05/16/2009   Michael.Kang  <blackfin.kang@gmail.com>
  */
-#ifndef __COMMON_MEMORY_SPACE_H__
-#define __COMMON_MEMORY_SPACE_H__
-class memory_space_intf{
-public:
-	virtual exception_type_t read(conf_object_t *obj, physical_address_t addr, int length, attr_value_t* result);
-	virtual exception_type_t write(conf_object_t *obj, physical_address_t addr, int length, attr_value_t data);
-}
+#ifndef __MEMORY_SPACE_H__
+#define __MEMORY_SPACE_H__
+#include "skyeye_types.h"
 
-device_remap(device_t* dev, uint32 start, uint32 end);
+typedef exception_t(*read_byte_t)(conf_object_t* target, generic_address_t addr, void *buf, size_t count);
+typedef exception_t(*write_byte_t)(conf_object_t* target, generic_address_t addr, const void *buf, size_t count);
+
+typedef struct memory_space{
+	read_byte_t read;
+	write_byte_t write;
+}memory_space_intf;
+
 #endif
 
