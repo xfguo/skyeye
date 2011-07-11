@@ -26,19 +26,12 @@
 #define __SKYEYE_TYPES_H
 
 #include <stdint.h>
+#include <unistd.h>
 
 /*default machine word length */
 
 #define WORD uint32_t
-typedef uint32_t address_t;
-typedef uint32_t uinteger_t;
-typedef int32_t integer_t;
-typedef struct conf_object_s{
-	char* objname;
-	void* obj;
-}conf_object_t;
-typedef uint32_t physical_address_t;
-typedef uint32_t generic_address_t; 
+
 #ifndef __BEOS__
 /* To avoid the type conflict with the qemu */
 #ifndef QEMU
@@ -52,6 +45,19 @@ typedef int16_t sint16;
 typedef int32_t sint32;
 typedef int64_t sint64;
 #endif
+
+typedef uint32_t address_t;
+typedef uint32_t uinteger_t;
+typedef int32_t integer_t;
+
+typedef uint32_t physical_address_t;
+typedef uint32_t generic_address_t; 
+
+typedef struct conf_object_s{
+	char* objname;
+	void* obj;
+	char* class_name;
+}conf_object_t;
 
 typedef enum {
         False = 0,
