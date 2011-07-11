@@ -54,11 +54,18 @@ typedef	struct{
 	signal_t core_reset;
 }powerpc_signal_t;
 
+
+
 typedef union interrupt_signal{
 	arm_signal_t arm_signal;
 	mips_signal_t mips_signal;
 	powerpc_signal_t powerpc_signal;
 }interrupt_signal_t;
+
+typedef struct signal_interface{
+	int (*raise_signal)(conf_object_t* target, int line);
+	int (*lower_signal)(conf_object_t* target, int line);
+}general_signal_intf;
 
 exception_t send_signal(interrupt_signal_t* signal);
 
