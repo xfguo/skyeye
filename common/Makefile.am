@@ -12,7 +12,7 @@ common_cli = cli/skyeye_command.c cli/skyeye_cli.c cli/default_command.c
 common_portable = portable/mman.c portable/usleep.c portable/gettimeofday.c
 common_preference = preference/skyeye_pref.c
 common_profile = profile/symbol.c profile/bfd_target.c
-common_memory = bus/bank_ops.c  bus/io.c  bus/ram.c bus/flash.c bus/skyeye_bus.c bus/bus_recoder.c
+common_memory = bus/bank_ops.c  bus/io.c  bus/ram.c bus/flash.c bus/skyeye_bus.c bus/bus_recoder.c bus/addr_space.c
 common_core = core/skyeye_arch.c
 common_device = device/skyeye_device.c device/pen_buffer.c device/skyeye_uart_ops.c device/skyeye_signal.c
 common_mach = mach/skyeye_mach.c
@@ -27,11 +27,11 @@ include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/skyeye_uart_ops.h  ./include/memory_space.h ./include/skyeye_uart.h \
 ./include/breakpoint.h ./include/skyeye_api.h ./include/skyeye_misc.h \
 ./include/arch_regdefs.h ./include/skyeye_config.h ./include/skyeye_device.h \
-./include/skyeye.h ./include/io_memory.h ./include/memory.h ./include/skyeye_mm.h \
+./include/skyeye.h ./include/skyeye_mm.h \
 ./include/skyeye_options.h ./include/skyeye_mach.h ./include/skyeye_pref.h \
 ./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
 ./include/skyeye_queue.h ./include/skyeye_signal.h ./include/skyeye_lock.h\
-./include/skyeye_sched.h
+./include/skyeye_sched.h ./include/skyeye_addr_space.h
 
 libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_profile) $(common_checkpoint)
 
