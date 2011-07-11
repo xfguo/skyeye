@@ -223,9 +223,9 @@ void SIM_start(void){
 		 */
 		if((((~pref->exec_load_mask) & pref->exec_load_base) == 0x0) &&
 			(arch_instance->mmu_write != NULL))
-			ret = load_elf(pref->exec_file, Virt_addr);
+			ret = SKY_load_elf(pref->exec_file, Virt_addr);
 		else
-			ret = load_elf(pref->exec_file, Phys_addr);
+			ret = SKY_load_elf(pref->exec_file, Phys_addr);
 	}
 	init_symbol_table(pref->exec_file, arch_instance->arch_name);
 

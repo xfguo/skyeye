@@ -49,6 +49,7 @@ static inline void
 write_phys (uint32 addr, uint8_t * buffer, int size)
 {
 	int i,fault;
+	mem_bank_t * bank;
 	sky_pref_t* pref = get_skyeye_pref();
 	unsigned long load_base = pref->exec_load_base;
 	unsigned long load_mask = pref->exec_load_mask;
@@ -62,11 +63,12 @@ write_phys (uint32 addr, uint8_t * buffer, int size)
 			fault = -1;
 		*/
 		/* byte write */
-		fault = mem_write (8, addr + i, buffer[i]);
-
-		if(fault) {
+		//fault = mem_write (8, addr + i, buffer[i]);
+		if(bank = bank_ptr(addr))
+	                bank->bank_write(8, addr + i, buffer[i]);
+		else{
 			printf("SKYEYE: write physical address 0x%x error!!!\n", addr + i);
-			//return -1;
+			return;
 		}
 	}
 }
@@ -430,6 +432,6 @@ endian_t get_elf_endian(const char* elf_filename){
 *
 * @return 
 */
-exception_t load_elf(const char* elf_filename, addr_type_t addr_type){
+exception_t SKY_load_elf(const char* elf_filename, addr_type_t addr_type){
 	return load_exec(elf_filename, addr_type);
 }
