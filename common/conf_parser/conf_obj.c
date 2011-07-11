@@ -32,7 +32,9 @@
 #define _GNU_HASH_LIST
 #endif
 #include <string.h>
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
 #include <search.h>
 #include "skyeye_mm.h"
 #include "skyeye_log.h"
@@ -132,6 +134,24 @@ conf_object_t* get_conf_obj_by_cast(void* obj, const char* type_string){
 	conf_obj->obj = obj;
 	//printf("In %s, type_string=%s\n", __FUNCTION__, type_string);
 	conf_obj->objname = skyeye_strdup(type_string);
+	//printf("In %s, conf_obj->objname=%s\n", __FUNCTION__, conf_obj->objname);
+	//printf("In %s, conf_obj=0x%x, conf_obj->objname=0x%x\n", __FUNCTION__, conf_obj, conf_obj->obj);
+	//put_conf_obj(obj, type_string);
+	return conf_obj;
+}
+
+conf_object_t* new_conf_object(const char* objname, void* obj){
+	conf_object_t* conf_obj = skyeye_mm(sizeof(struct conf_object_s));
+	/* Memory allocation failed. */
+	if(conf_obj == NULL)
+		return NULL;
+	conf_obj->obj = obj;
+	//printf("In %s, type_string=%s\n", __FUNCTION__, type_string);
+	conf_obj->objname = skyeye_strdup(objname);
+	if(put_conf_obj(objname, obj) != No_exp){
+		printf("Can not put the %s to the hash table\n", objname);
+	}
+
 	//printf("In %s, conf_obj->objname=%s\n", __FUNCTION__, conf_obj->objname);
 	//printf("In %s, conf_obj=0x%x, conf_obj->objname=0x%x\n", __FUNCTION__, conf_obj, conf_obj->obj);
 	//put_conf_obj(obj, type_string);
