@@ -6,11 +6,18 @@
 * @date 2011-07-11
 */
 
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#define DEBUG
+
 #include <skyeye_types.h>
 #include <memory_space.h>
 #include <skyeye_addr_space.h>
 #include <skyeye_mm.h>
+#include <skyeye_log.h>
 #include "skyeye_obj.h"
+
 
 exception_t add_map(addr_space_t* space, generic_address_t base_addr, generic_address_t length, generic_address_t start, conf_object_t* target, memory_space_intf* memory_space, int priority, int swap_endian){
 	map_info_t* map = skyeye_mm(sizeof(map_info_t));
@@ -26,6 +33,7 @@ exception_t add_map(addr_space_t* space, generic_address_t base_addr, generic_ad
 		map_info_t* iterator = space->map_array[i];
 		if(iterator == NULL){
 		 	space->map_array[i] = map;
+			DBG("In %s, map added successfully @%d\n", __FUNCTION__, i);
 			return No_exp;
 		}
 	}
@@ -39,6 +47,7 @@ static exception_t space_read(conf_object_t* addr_space, generic_address_t addr,
 	int i = 0;
 	for(; i < MAX_MAP; i++){
 		map_info_t* iterator = space->map_array[i];
+		DBG("In %s, i=%d, addr=0x%x, base_addr=0x%x, length=0x%x\n", __FUNCTION__, i, addr, iterator->base_addr, iterator->length);
 		if(iterator->base_addr <= addr && ((iterator->base_addr + iterator->length) > addr)){
 			return iterator->memory_space->read(iterator->target, addr, buf, count);
 		}
@@ -51,6 +60,9 @@ static exception_t space_write(conf_object_t* addr_space, generic_address_t addr
 	int i = 0;
 	for(; i < MAX_MAP; i++){
 		map_info_t* iterator = space->map_array[i];
+		if(iterator == NULL)
+			continue;
+		DBG("In %s, i=%d, addr=0x%x, base_addr=0x%x, length=0x%x\n", __FUNCTION__, i, addr, iterator->base_addr, iterator->length);
 		if(iterator->base_addr <= addr && ((iterator->base_addr + iterator->length) > addr)){
 			return iterator->memory_space->write(iterator->target, addr, buf, count);
 		}
@@ -66,9 +78,9 @@ static exception_t space_write(conf_object_t* addr_space, generic_address_t addr
 * @return  new instance
 */
 addr_space_t* new_addr_space(char* obj_name){
-	addr_space_t* space = skyeye_mm(sizeof(addr_space_t));
+	addr_space_t* space = skyeye_mm_zero(sizeof(addr_space_t));
 	space->obj = new_conf_object(obj_name, space);
-	space->memory_space = skyeye_mm(sizeof(memory_space_intf));
+	space->memory_space = skyeye_mm_zero(sizeof(memory_space_intf));
 	space->memory_space->read = space_read;
 	space->memory_space->write = space_write;
 	return space;
