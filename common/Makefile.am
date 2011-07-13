@@ -31,7 +31,7 @@ include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 ./include/skyeye_options.h ./include/skyeye_mach.h ./include/skyeye_pref.h \
 ./include/portable/mman.h ./include/portable/usleep.h ./include/skyeye_ram.h \
 ./include/skyeye_queue.h ./include/skyeye_signal.h ./include/skyeye_lock.h\
-./include/skyeye_sched.h ./include/skyeye_addr_space.h
+./include/skyeye_sched.h ./include/skyeye_addr_space.h ./include/bank_defs.h 
 
 libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_profile) $(common_checkpoint)
 
