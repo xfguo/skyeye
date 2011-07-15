@@ -36,6 +36,9 @@
 #include "skyeye_lock.h"
 #include "skyeye_mm.h"
 
+//#define DEBUG
+#include "skyeye_log.h"
+
 /**
 * @brief the event type
 */
@@ -91,7 +94,7 @@ static void thread_scheduler(void){
 	start_utime = tv.tv_sec * 1000000 + tv.tv_usec;
 	while(1)
 	{
-		usleep(10);
+		usleep(100);
 		gettimeofday(&tv,NULL);
 		last_utime = current_utime;
 		current_utime = tv.tv_sec * 1000000 + tv.tv_usec;
@@ -100,19 +103,19 @@ static void thread_scheduler(void){
 
 		/* Calculate how much microseconds passed comparing to last time */
 		passed_utime = current_utime - last_utime;
-
+		DBG("In %s, passed_utime=%d\n", __FUNCTION__, passed_utime);
 		LIST_FOREACH(tmp, &thread_head,list_entry){
 			/* Decrease dleta */
 			tmp->delta -= passed_utime;
+			DBG("In %s, tmp->delta=%d\n", __FUNCTION__, tmp->delta);
 			
 			if(tmp->delta == 0 || tmp->delta < 0){
-				/* wrong time value */
+				/* Sometimes, delta is missing */
 				if(tmp->delta < 0)
-					printf(" scheduler occur later \n");
-				else	
-					/* execute the scheduler callback */
-					if(tmp->func != NULL)
-						tmp->func((void*)tmp->func_arg);
+					DBG("scheduler occur later \n");
+				/* execute the scheduler callback */
+				if(tmp->func != NULL)
+					tmp->func((void*)tmp->func_arg);
 
 				if(tmp->mode  == Oneshot_sched){
 RW_WRLOCK(thread_lock);
@@ -313,7 +316,7 @@ static void timer_scheduler(int signo){
 		if(tmp->delta == 0 || tmp->delta < 0){
 			/* wrong time value */
 			if(tmp->delta < 0)
-				printf(" scheduler occur later \n");
+				printf("timer scheduler occur later \n");
 			else	
 				/* execute the scheduler callback */
 				if(tmp->func != NULL)
