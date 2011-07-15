@@ -2,6 +2,7 @@
 #define __SKYEYE_LOG_H__
 #include "skyeye_types.h"
 #include <stdio.h>
+#include <assert.h>
 #ifdef __cplusplus
  extern "C" {
 #endif
