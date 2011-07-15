@@ -109,7 +109,7 @@ void SIM_init(){
 	 * initialization the timer scheduler 
 	 */
 	init_thread_scheduler();
-	init_timer_scheduler();
+	//init_timer_scheduler();
 
 	
 	/*
