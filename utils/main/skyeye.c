@@ -521,6 +521,7 @@ main (int argc, char **argv)
 		SIM_init();
 	/* Do anything you want to do , or just deadloop here. */
 	while(1)
+		sleep(1);
 	;
 #if 0
 	if(ret < 0)
