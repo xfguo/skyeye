@@ -45,7 +45,7 @@ DIST_SUBDIRS = $(SUBDIRS)
 #AM_LDFLAGS = $(LIBLS) --start-group $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/device/libdev.a $(top_srcdir)/utils/libutils.a --end-group
 #AM_LDFLAGS = $(LIBLS) -L$(top_srcdir)/arch/arm/ -L$(top_srcdir)/arch/bfin/ -L$(top_srcdir)/arch/coldfire/ -L$(top_srcdir)/arch/mips/ -L$(top_srcdir)/device/ -L$(top_srcdir)/utils/ --start-group  -larm -lbfin -lcoldfire  -lmips -L$(top_srcdir)/arch/ppc/ -lppc -ldev -lutils --end-group
 
-#skyeye_LDADD =  -L$(top_srcdir)/common -lcommon -L$(top_srcdir)/third-party/bfd/.libs/ -lbfd
+skyeye_LDADD =  -L./common -lcommon
 #skyeye_LDADD =  
 #skyeye_LDADD =  $(top_srcdir)/arch/arm/libarm.a $(top_srcdir)/device/libdev.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/ppc/libppc.a $(top_srcdir)/arch/bfin/libbfin.a $(top_srcdir)/arch/mips/libmips.a $(top_srcdir)/arch/coldfire/libcoldfire.a $(top_srcdir)/arch/sparc/libsparc.a $(top_srcdir)/memory/libmemory.a $(top_srcdir)/third-party/bfd/libbfd.a $(top_srcdir)/third-party/libiberty/libiberty.a $(top_srcdir)/third-party/readline/libreadline.a
 
@@ -68,16 +68,16 @@ INCLUDES = @COMMON_INCLUDES@ -Ithird-party/bfd/
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@ 
 AM_CFLAGS = -W -Wall -Wstrict-prototypes -Wmissing-prototypes 
 ACLOCAL_AMFLAGS=-I m4
-bin_PROGRAMS = uart_instance mknandflashdump prof_convert
+bin_PROGRAMS = uart_instance mknandflashdump prof_convert skyeye
 
-#skyeye_SOURCES = utils/main/skyeye.c
+skyeye_SOURCES = utils/main/skyeye.c
 uart_instance_SOURCES = utils/uart_console/uart_console.c
 mknandflashdump_SOURCES = utils/nandflash_dump/mknandflashdump.c
 prof_convert_SOURCES = utils/code_cov/prof_convert.c
 if LCD
 #skyeye_LDADD += @LCD_LIBS@
 endif
-all:third-party/bfd/.libs/libbfd.so third-party/libiberty/libiberty.a third-party/opcodes/.libs/libopcodes.so
+all:third-party/libiberty/libiberty.a third-party/bfd/.libs/libbfd.so third-party/opcodes/.libs/libopcodes.so
 
 skyeye_gui:
 	cd gui/qt4_src && rm -f skyeye_gui && make
@@ -115,7 +115,7 @@ clean_lib:
 install-data-hook:
 	rm -f -r $(prefix)/testsuite && mkdir $(prefix)/testsuite
 	cp -a $(top_srcdir)/testsuite/arm_hello $(prefix)/testsuite/arm_hello/
-	cp -a $(top_srcdir)/pyshell/* $(prefix)/bin/
+	cp -a $(top_srcdir)/utils/pycli/*.py $(prefix)/bin/
 #	rm -f -r $(prefix)/conf && mkdir $(prefix)/conf
 #	cp -a $(top_srcdir)/conf/* $(prefix)/conf
 

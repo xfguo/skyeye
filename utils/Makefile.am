@@ -15,6 +15,8 @@ utils_shutdown = shutdown/shutdown_module.c
 
 utils_os = os_supp/os_module.c  os_supp/skyeye_os.c
 
+utils_pycli = pycli/pycli.c
+
 libgdbserver_la_SOURCES = $(utils_debugger)
 libgdbserver_la_LDFLAGS = -module
 
@@ -39,9 +41,14 @@ libdisasm_la_LDFLAGS = -module -L./$(top_builddir)/third-party/opcodes/.libs/ -L
 libos_supp_la_SOURCES = $(utils_os)
 libos_supp_la_LDFLAGS = -module
 
-pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la libos_supp.la
+libpycli_la_SOURCES = $(utils_pycli) 
+libpycli_la_LDFLAGS = -module -lpython2.6
+
+pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la libos_supp.la libpycli.la
 #pkglib_LTLIBRARIES = libutils.la libgdbserver.la
 
-DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@
+skyeye_bin = \"$(prefix)/bin/\"
 
-INCLUDES =  -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/common @COMMON_INCLUDES@ 
+DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_BIN=$(skyeye_bin) @COMMON_CFLAGS@
+
+INCLUDES =  -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/common @COMMON_INCLUDES@ -I/usr/include/python/

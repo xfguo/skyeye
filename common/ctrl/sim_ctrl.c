@@ -38,6 +38,7 @@
 #include "skyeye_loader.h"
 #include "skyeye_symbol.h"
 #include "skyeye_log.h"
+#include "skyeye_cli.h"
 /* FIXME, we should get it from prefix varaible after ./configure */
 #ifndef SKYEYE_MODULE_DIR
 const char* default_lib_dir = "/opt/skyeye/lib/skyeye/";
@@ -73,7 +74,8 @@ void SIM_main_loop(void){
 static exception_t try_init(){
 }
 
-void SIM_cli();
+//void SIM_cli();
+cli_func_t global_cli = NULL;
 
 /**
 * @brief all the initilization of the simulator
@@ -172,7 +174,10 @@ void SIM_init(){
 	 * launch our CLI.
 	 */
 	if(pref->interactive_mode == True){
-		SIM_cli();		
+		if(global_cli != NULL)
+			global_cli("SkyEye");
+		else
+			printf("No cli found\n");
 	}
 	else{
 		if (pref->autoboot == True) {
@@ -340,8 +345,8 @@ void SIM_fini(){
 	return;
 	//exit(0);
 }
-#if 0
-void register_cli(void (*skyeye_cli)(), char *module_name){
-	SIM_cli = skyeye_cli;
+#if 1
+void register_cli(cli_func_t cli){
+	global_cli = cli;
 }
 #endif
