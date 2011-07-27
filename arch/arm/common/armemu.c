@@ -2335,6 +2335,12 @@ ARMul_Emulate26 (ARMul_State * state)
 					LoadHalfWord (state, instr, temp, LUNSIGNED);
 					break;
 				}
+				if (BITS (4, 7) == 0xd) {
+					// alex-ykl fix: 2011-07-20 missing ldrsb instruction
+					temp = LHS + GetLS7RHS (state, instr);
+					LoadByte (state, instr, temp, LSIGNED);
+					break;
+				}
 
 				/* Continue with instruction decoding.  */
 				/*if ((BITS (4, 7) & 0x9) == 0x9) */
