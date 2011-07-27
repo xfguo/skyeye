@@ -152,7 +152,7 @@ void LoadDWord(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 void WOrUBLoad(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 {
 	if(LSBBIT)
-		LoadSByte(cpu, instr, bb, addr);
+		LoadByte(cpu, instr, bb, addr); // alex-ykl fix 2011-07-26 : was loading a signed byte
 	else
 		LoadWord(cpu, instr, bb, addr);
 }
@@ -3866,7 +3866,7 @@ const ISEITEM arm_instruction[] = {
         {"ldrd",        3,      ARMV5TE,        25, 27, 0,      20, 20, 0,      4, 7, 0xd},
         {"ldrex",       2,      ARMALL,         20, 27, 0x19,   4, 7, 9},
 	{"ldrexb",	2,	ARM1176JZF_S,	20, 27, 0x1d,	4, 7, 9},
-        {"ldrh",        3,      ARMALL,         25, 27, 0,      20, 20, 0,      4, 7, 0xb},
+        {"ldrh",        3,      ARMALL,         25, 27, 0,      20, 20, 1,      4, 7, 0xb},
         {"ldrsb",       3,      ARMV4T,         25, 27, 0,      20, 20, 1,      4, 7, 0xd},
         {"ldrsh",       3,      ARMV4T,         25, 27, 0,      20, 20, 1,      4, 7, 0xf},
         {"ldrt",        3,      ARMALL,         26, 27, 1,      24, 24, 0,      20, 22, 3},
