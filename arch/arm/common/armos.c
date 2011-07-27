@@ -30,6 +30,8 @@ fun, and definign VAILDATE will define SWI 1 to enter SVC mode, and SWI
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
+#include <skyeye_ram.h>
+#include "dyncom/defines.h"
 
 #ifndef O_RDONLY
 #define O_RDONLY 0
@@ -378,15 +380,17 @@ static mmap_area_t* new_mmap_area(int sim_addr, int len){
 	area->bank.type = MEMTYPE_RAM;
 	area->bank.objname = "mmap";
 	addr_mapping(&area->bank);
-
-	mmap_next_base = mmap_next_base + len + 4;
-
+	
+#ifdef FAST_MEMORY
+	area->mmap_addr = (uint8_t*)get_dma_addr(mmap_next_base);
+#else	
 	area->mmap_addr = malloc(len);
 	if(area->mmap_addr == NULL){
 		printf("error mmap malloc\n");
 		exit(0);
 	}
 	memset(area->mmap_addr, 0x0, len);
+#endif
 	area->next = NULL;
 	if(mmap_global){
 		area->next = mmap_global->next;
@@ -394,6 +398,7 @@ static mmap_area_t* new_mmap_area(int sim_addr, int len){
 	}else{
 		mmap_global = area;
 	}
+	mmap_next_base = mmap_next_base + len + 4;
 	return area;
 }
 

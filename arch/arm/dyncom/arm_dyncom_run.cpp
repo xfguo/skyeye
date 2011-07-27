@@ -9,12 +9,14 @@
 #include <skyeye.h>
 #include <bank_defs.h>
 #include <skyeye_pref.h>
+#include <skyeye_ram.h>
 
 #include "armdefs.h"
 #include "memory.h"
 #include "dyncom/memory.h"
 #include "dyncom/frontend.h"
 #include "arm_dyncom_translate.h"
+#include "dyncom/defines.h"
 #define MAX_REGNUM 16
 
 uint32_t get_end_of_page(uint32 phys_addr){
@@ -238,39 +240,41 @@ static void arm_dyncom_syscall(cpu_t* cpu, uint32_t num){
 
 void arm_dyncom_init(arm_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, arm_arch_func);
-
+	/* set user mode or not */
+	sky_pref_t *pref = get_skyeye_pref();
+	if(pref->user_mode_sim)
+                cpu->is_user_mode = 1;
+        else
+                cpu->is_user_mode = 0;
+	
+	cpu->dyncom_engine->code_start = 0x8000;
+	cpu->dyncom_engine->code_end = 0x100000;
+	cpu->dyncom_engine->code_entry = 0x80d0;
+	
+	cpu->mem_ops = arm_dyncom_mem_ops;
+	cpu->cpu_data = (conf_object_t*)core;
+	
 	/* init the reg structure */
 	cpu->rf.pc = &core->Reg[15];
 	cpu->rf.phys_pc = &core->Reg[15];
 	cpu->rf.grf = core->Reg;
 	cpu->rf.srf = core->Spsr;
-
-	cpu->mem_ops = arm_dyncom_mem_ops;
-	cpu->cpu_data = (conf_object_t*)core;
-	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
+	
 	cpu->debug_func = arm_debug_func;
-#if 0
-        cpu->rf.pc = &core->pc;
-        //cpu->rf.pc = &core->phys_pc;
-        cpu->rf.phys_pc = &core->phys_pc;
-#endif
-
-
-	sky_pref_t *pref = get_skyeye_pref();
-        if(pref->user_mode_sim)
-                cpu->is_user_mode = 1;
-        else
-                cpu->is_user_mode = 0;
-
+	
 	if(pref->user_mode_sim){
 		cpu->syscall_func = arm_dyncom_syscall;
 	}
 	else
 		cpu->syscall_func = NULL;
+	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
+	
+#ifdef FAST_MEMORY
+	cpu->dyncom_engine->RAM = (uint8_t*)get_dma_addr(0);
+#endif
+	cpu->dyncom_engine->flags &= ~CPU_FLAG_SWAPMEM;
 
-	cpu->dyncom_engine->code_start = 0x8000;
-	cpu->dyncom_engine->code_end = 0x100000;
-	cpu->dyncom_engine->code_entry = 0x80d0;
+	core->Reg[13] = 0x0ffffff0; // alex-ykl fix 2011-07-27: need to specify a sp pointer in the correct memory range
 
 	return;
 }

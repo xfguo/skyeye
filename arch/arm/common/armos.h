@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "bank_defs.h"
+#include "dyncom/defines.h"
 
 typedef struct mmap_area{
 	mem_bank_t bank;
@@ -23,7 +24,12 @@ typedef struct mmap_area{
 	struct mmap_area *next;
 }mmap_area_t;
 
+#ifdef FAST_MEMORY
+// depends on configuration
+#define mmap_base 0x03000000
+#else
 #define mmap_base 0x50000000
+#endif
 static long mmap_next_base = mmap_base;
 
 static mmap_area_t* new_mmap_area(int sim_addr, int len);

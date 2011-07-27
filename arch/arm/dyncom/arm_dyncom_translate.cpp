@@ -35,7 +35,7 @@ typedef struct arm_opc_func_s{
 arm_opc_func_t* arm_get_opc_func(uint32_t opc);
 Value *arm_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 
-arm_opc_func_t  arm_opc_table_main[0xff] ;
+arm_opc_func_t  arm_opc_table_main[0xff+1]; // alex-ykl fix : memory overflow
 
 int init_arm_opc_group0(arm_opc_func_t* arm_opc_table);
 int init_arm_opc_group1(arm_opc_func_t* arm_opc_table);
@@ -1740,7 +1740,15 @@ int DYNCOM_TRANS(bic)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 }
 int DYNCOM_TRANS(bkpt)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
 int DYNCOM_TRANS(blx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
-int DYNCOM_TRANS(bx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
+int DYNCOM_TRANS(bx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
+{
+	// alex-ykl fix :
+	// FIXME missing thumb switching
+	Value *op1 = R(RM);
+	Value *ret = AND(op1, CONST(0xfffffffe));
+
+	LET(15, ret);
+}
 int DYNCOM_TRANS(bxj)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
 int DYNCOM_TRANS(cdp)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
 int DYNCOM_TRANS(clz)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
@@ -1751,9 +1759,21 @@ int DYNCOM_TRANS(cmn)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *op2 = OPERAND;
 	Value *ret = ADD(op1, op2);
 
-	if(SBIT)
-		set_condition(cpu, ret, bb, op1, op2);
+	// alex-ykl fix : cmn updates without SBIT
+	set_condition(cpu, ret, bb, op1, op2);
+
+	// alex-ykl fix : FIXME v flag temporary fix
+	Value *op1_sign = AND(op1, CONST(0x80000000));
+	Value *op2_sign = AND(op2, CONST(0x80000000));
+	Value *ret_sign = AND(ret, CONST(0x80000000));
+	Value *sign = XOR(op1_sign, op2_sign);
+	Value *result = SELECT(ICMP_EQ(sign, CONST(0)), 
+	      SELECT(ICMP_EQ(op1, ret_sign), CONST(0), CONST(1))
+	      , CONST(0));
+	new StoreInst(TRUNC1(result), ptr_V, bb);
 }
+#define ISNEG(VAL) TRUNC1(LSHR(VAL, CONST(31)))
+#define ISPOS(VAL) TRUNC1(LSHR(COM(VAL), CONST(31)))
 int DYNCOM_TRANS(cmp)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* for 0x15 0x35 */
@@ -1763,6 +1783,13 @@ int DYNCOM_TRANS(cmp)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *ret = SUB(op1, op2);
 
 	set_condition(cpu, ret, bb, op1, op2);
+	
+	// alex-ykl fix : FIXME c flag temporary fix
+	Value *tmp1 = AND(ISNEG(op1), ISPOS(op2));
+	Value *tmp2 = AND(ISNEG(op1), ISPOS(ret));
+	Value *tmp3 = AND(ISPOS(op2), ISPOS(ret));
+	Value *res = OR(OR(tmp1, tmp2), tmp3);
+	new StoreInst(res, ptr_C, false, bb);
 }
 int DYNCOM_TRANS(cps)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
 int DYNCOM_TRANS(cpy)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1810,7 +1837,7 @@ int DYNCOM_TRANS(ldrb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 	/* LDRB, WriteBack, Pre Inc, Immed. */
 	/* I = 0, P = 1, U = 1, B = 1, W = 1 */
-
+	
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
 
@@ -1850,7 +1877,10 @@ int DYNCOM_TRANS(ldrsh)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* LDRSH P=1 U=1 W=0 */
 	Value *addr = GetAddr(cpu, instr, bb);
-	LoadStore(cpu,instr,bb,addr);
+	// alex-ykl fix : FIXME temporary fix
+	Value *ret = arch_read_memory(cpu, bb, addr, 0, 16);
+	LET(RD, SELECT(ICMP_EQ(AND(ret, CONST(0x8000)), CONST(0)), ret, OR(CONST(0xffff0000), ret)));
+
 	return 0;
 }
 int DYNCOM_TRANS(ldrt)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
@@ -1979,14 +2009,21 @@ int DYNCOM_TRANS(smuad)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
 int DYNCOM_TRANS(smul)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
 int DYNCOM_TRANS(smull)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
+	// alex-ykl fix : FIXME temporary fix
 	Value *rs64 = SEXT64(R(RS));
 	Value *rm64 = SEXT64(R(RM));
 
 	Value *result = MUL(rs64, rm64);
-	Value *rdhi = LSHR(result, CONST(32));
-	Value *rdlo = AND(result, CONST(0xffffffff));
-	LET(BITS(16, 19), rdhi);
-	LET(BITS(12, 15), rdlo);
+	Value *rdhi = LSHR(result, CONST64(32));
+	Value *rdlo = AND(result, CONST64(0xffffffff));
+	LET(BITS(16, 19), TRUNC32(rdhi));
+	LET(BITS(12, 15), TRUNC32(rdlo));
+	if (SBIT) {
+		Value *cpsr_n = TRUNC1(LSHR(rdhi, CONST64(31)));
+		new StoreInst(cpsr_n, ptr_N, bb);
+		Value *cpsr_z = SELECT(ICMP_EQ(result, CONST64(0)), CONST1(1), CONST1(0));
+		new StoreInst(cpsr_z, ptr_Z, bb);
+	}
 }
 int DYNCOM_TRANS(smulw)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
 int DYNCOM_TRANS(smusd)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}
@@ -2011,6 +2048,7 @@ int DYNCOM_TRANS(str)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *addr = GetAddr(cpu, instr, bb);
 	//StoreWord(cpu, instr, bb, addr);
 	LoadStore(cpu,instr,bb,addr);
+
 }
 int DYNCOM_TRANS(strb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -2213,7 +2251,20 @@ int DYNCOM_TAG(bic)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *n
 }
 int DYNCOM_TAG(bkpt)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(blx)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
-int DYNCOM_TAG(bx)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);printf("in %s instruction is not implementated.\n",	__FUNCTION__);exit(-1);return instr_size;}
+int DYNCOM_TAG(bx)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
+{
+	// alex-ykl fix : added bx tag
+	int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);
+	if (RD == 15) {
+		arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
+		*new_pc = NEW_PC_NONE;
+	} else {
+		arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
+	}
+	if(instr >> 28 != 0xe)
+		*tag |= TAG_CONDITIONAL;
+	return instr_size;
+}
 int DYNCOM_TAG(bxj)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(cdp)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(clz)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
@@ -2366,8 +2417,16 @@ int DYNCOM_TAG(ldrsb)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t 
 int DYNCOM_TAG(ldrsh)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);
-	printf("in %s instruction is not implementated.\n", __FUNCTION__);
-	exit(-1);
+	// alex-ykl : added ldrsh tag
+	if (RD == 15) {
+		arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
+		*new_pc = NEW_PC_NONE;
+	} else {
+		arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
+	}
+	if(instr >> 28 != 0xe)
+		*tag |= TAG_CONDITIONAL;
+
 	return instr_size;
 }
 int DYNCOM_TAG(ldrt)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
