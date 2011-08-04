@@ -118,7 +118,7 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	int rS, spr1, spr2;
 	PPC_OPC_TEMPL_X(instr, rS, spr1, spr2);
-	e500_core_t* current_core = get_current_core();
+	//e500_core_t* current_core = get_current_core();
 //	printf("In %s, spr2 = %d, spr1 = %d, rS = %d\n", __func__, spr2, spr1, rS);
 	switch (spr2) {
 	case 0:
@@ -135,19 +135,21 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 			case 25: arch_ppc_dyncom_mmu_set_sdr1(cpu, bb, rS); return 0;
 			case 26: LETS(SRR_REGNUM, R(rS)); return 0;
 			case 27: LETS(SRR_REGNUM + 1, R(rS)); return 0;
-			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,no such spr\n", spr2,spr1);break;
 		}
 		break;
 	case 1:
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch (spr1) {//TODO...
+		#if 0
 			case 16:current_core->mmu.pid[0] = current_core->gpr[rS];return 0;
 			case 26:current_core->csrr[0] = current_core->gpr[rS];return 0;
 			case 27:current_core->csrr[1] = current_core->gpr[rS];return 0;
 			case 29:current_core->dear = current_core->gpr[rS];return 0;
 			case 30:current_core->esr = current_core->gpr[rS];return 0;
 			case 31:current_core->ivpr = current_core->gpr[rS];return 0;
-			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+		#endif
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,,no such spr\n", spr2,spr1);break;
 		}
 	case 8:
 		switch (spr1) {
@@ -162,7 +164,7 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 			case 23: LETS(SPRG_REGNUM + 7, R(rS)); return 0;
 			case 28: LETS(TBL_REGNUM, R(rS)); return 0;
 			case 29: LETS(TBU_REGNUM, R(rS)); return 0;
-			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,\n", spr2,spr1);break;
 		}
 		break;
 	case 9:
@@ -173,28 +175,30 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 			case 22:LETS(DBCR_REGNUM + 2, R(rS)); return 0;
 			case 28:LETS(DAC_REGNUM, R(rS)); return 0;
 			case 29:LETS(DAC_REGNUM + 1, R(rS)); return 0;
-			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,,no such spr\n", spr2,spr1);break;
 		}
 		break;
 	case 10:
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch (spr1){
 			case 16:
+			#if 0
 				/* W1C, write one to clear */
 				current_core->tsr &= ~(current_core->tsr & current_core->gpr[rS]) ;
 				return 0;
 			case 20:current_core->tcr = current_core->gpr[rS];return 0;
-			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+			#endif
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,no such spr\n", spr2,spr1);break;
 		}
 		break;
 	case 12:
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		if(spr1 >= 16 && spr1 < 32){
-			current_core->ivor[spr1 - 16] = current_core->gpr[rS];
+			//current_core->ivor[spr1 - 16] = current_core->gpr[rS];
 			return 0;
 		}
 		switch (spr1){
-			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,no such spr\n", spr2,spr1);break;
 		}
 		break;
 	case 16:
@@ -258,7 +262,7 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		case 31:
 			LETS(DBATL_REGNUM + 3, R(rS));
 			return 0;
-		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,,no such spr\n", spr2,spr1);break;
 		}
 		break;
 	case 17:
@@ -311,12 +315,13 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		case 31://LCH
 			LETS(E600_DBATL_REGNUM + 3, R(rS));
 			return 0;
-		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,no such spr\n", spr2,spr1);break;
 		}
 		break;
 	case 19:
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch(spr1){
+		#if 0
 			case 16:
 				current_core->mmu.mas[0] = current_core->gpr[rS];
 				return 0;
@@ -343,7 +348,8 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 				current_core->mmu.pid[2] = current_core->gpr[rS];
 				//printf("write pid 2 0x%x\n", current_core->gpr[rS]);
 				return 0;
-			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+		#endif
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,no such spr\n", spr2,spr1);break;
 		}
 		break;
 	case 29:
@@ -356,6 +362,7 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	case 30://LCH
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch(spr1) {
+		#if 0
 		case 20: 
 			current_core->e600_tlbmiss = current_core->gpr[rS];
 			return 0;
@@ -365,6 +372,7 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		case 22: 
 			current_core->e600_pte[1] = current_core->gpr[rS];
 			return 0;
+		#endif
 		}
 		return 0;
 	case 31:
@@ -397,11 +405,11 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		case 29:
 		case 30:
 		case 31: return 0;
-		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+		default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,no such spr\n", spr2,spr1);break;
 		}
 	}
 	fprintf(stderr, "unknown mtspr: %i:%i\n", spr1, spr2);
-	fprintf(stderr, "pc=0x%x\n",current_core->pc);
+	//fprintf(stderr, "pc=0x%x\n",current_core->pc);
 	skyeye_exit(-1);
 }
 /*
@@ -410,15 +418,17 @@ static int opc_mtspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
  */
 static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	e500_core_t* current_core = get_current_core();
+	//e500_core_t* current_core = get_current_core();
 	int rD, spr1, spr2;
 	PPC_OPC_TEMPL_XO(instr, rD, spr1, spr2);
+	#if 0
 	if (current_core->msr & MSR_PR) {
 		//ppc_exception(current_core, PPC_EXC_PROGRAM, PPC_EXC_PROGRAM_PRIV, 0);
 		if(!(spr2 == 0 && spr1 == 8)) /* read lr*/
 			printf("Warning, execute mfspr in user mode, pc=0x%x\n", current_core->pc);
 		//return;
 	}
+	#endif
 	debug(DEBUG_TRANSLATE, "In %s, spr2=%d, spr1=%d\n", __func__, spr2, spr1);
 //	printf("In %s, spr2=%d, spr1=%d\n", __func__, spr2, spr1);
 	switch(spr2) {
@@ -443,11 +453,11 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		switch(spr1) {
 			case 16:
 				printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
-				current_core->gpr[rD] = current_core->mmu.pid[0];
+				//current_core->gpr[rD] = current_core->mmu.pid[0];
 				return 0;
 			case 29: LET(rD, RS(DEAR_REGNUM)); return 0;
 			case 30: LET(rD, RS(ESR_REGNUM)); return 0;
-			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,pc=0x%x,no such spr\n", spr2,spr1,current_core->pc);break;
+			default:fprintf(stderr, "spr2=0x%x,spr1=0x%x,no such spr\n", spr2,spr1);break;
 		}
 		break;
 	case 8:
@@ -474,8 +484,8 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		case 30: LET(rD, RS(PIR_REGNUM)); return 0;
 		case 31: LET(rD, RS(PVR_REGNUM)); return 0;
 		default:
-			fprintf(stderr, "[warning:mfspr]line = %d, pc=0x%x, instr = 0x%x, spr1:spr2 = %i:%i\n",
-					__LINE__, current_core->pc, instr, spr1, spr2);
+			fprintf(stderr, "[warning:mfspr]line = %d, instr = 0x%x, spr1:spr2 = %i:%i\n",
+					__LINE__, instr, spr1, spr2);
 		}
 		break;
 	case 9:
@@ -518,6 +528,7 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	case 17://LCH
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
 		switch (spr1) {
+		#if 0
 		case 16: current_core->gpr[rD] = current_core->e600_ibatu[0]; return 0;
 		case 17: current_core->gpr[rD] = current_core->e600_ibatl[0]; return 0;
 		case 18: current_core->gpr[rD] = current_core->e600_ibatu[1]; return 0;
@@ -534,11 +545,13 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		case 29: current_core->gpr[rD] = current_core->e600_dbatl[2]; return 0;
 		case 30: current_core->gpr[rD] = current_core->e600_dbatu[3]; return 0;
 		case 31: current_core->gpr[rD] = current_core->e600_dbatl[3]; return 0;
+		#endif
 		}
 		break;
 	case 19:
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
                 switch(spr1) {
+		#if 0
 			case 16:
                                 current_core->gpr[rD] = current_core->mmu.mas[0];
                                 return 0;
@@ -565,17 +578,19 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
                                 current_core->gpr[rD] = current_core->mmu.pid[2];
 				//printf("read pid 2 0x%x\n", current_core->gpr[rD]);
                                 return 0;
+		#endif
 
                 }
                 break;
 	case 21:
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
                 switch(spr1) {
-                        case 17:current_core->gpr[rD] = current_core->mmu.tlbcfg[1]; return 0;
+                        //case 17:current_core->gpr[rD] = current_core->mmu.tlbcfg[1]; return 0;
                 }
                 break;
 	case 29:
 		printf("NOT IMPLEMENT... IN %s, line %d\n", __func__, __LINE__);
+		#if 0
 		switch (spr1) {
 		case 16:
 			current_core->gpr[rD] = 0;
@@ -605,6 +620,7 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 			current_core->gpr[rD] = 0;
 			return 0;
 		}
+		#endif
 		break;
 	case 31:
 		switch (spr1) {
@@ -664,8 +680,8 @@ static int opc_mfspr_translate(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		}
 		break;
 	}
-	fprintf(stderr, "[warning:mfspr]line = %d, pc=0x%x, instr = 0x%x, spr1:spr2 = %i:%i\n",
-			__LINE__, current_core->pc, instr, spr1, spr2);
+	fprintf(stderr, "[warning:mfspr]line = %d, instr = 0x%x, spr1:spr2 = %i:%i\n",
+			__LINE__, instr, spr1, spr2);
 }
 /*
  *	cntlzwx		Count Leading Zeros Word
