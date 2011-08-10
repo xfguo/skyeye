@@ -99,6 +99,11 @@ mem_read_halfword (uint32_t addr)
 {
 	uint32_t data, offset;
 	mem_bank_t * global_mbp = bank_ptr(addr);
+	if(global_mbp == NULL){
+		printf("Can not find the suitable bank for the address 0x%x\n", addr);
+		return 0;
+	}
+
 	mem_config_t * memmap = get_global_memmap();
 	generic_arch_t* arch_instance = get_arch_instance(NULL);
 
@@ -140,6 +145,11 @@ mem_read_word (uint32_t addr)
 {
 	uint32_t data;
 	mem_bank_t * global_mbp = bank_ptr(addr);
+	if(global_mbp == NULL){
+		printf("Can not find the suitable bank for the address 0x%x\n", addr);
+		return 0;
+	}
+
 	mem_config_t * memmap = get_global_memmap();
 	generic_arch_t* arch_instance = get_arch_instance(NULL);
 
@@ -177,6 +187,11 @@ mem_write_byte (uint32_t addr, uint32_t data)
 	uint32_t *temp, offset;
 
 	mem_bank_t * global_mbp = bank_ptr(addr);
+	if(global_mbp == NULL){
+		printf("Can not find the suitable bank for the address 0x%x\n", addr);
+		return 0;
+	}
+
 	mem_config_t * memmap = get_global_memmap();
 	mem_state_t* memory = get_global_memory();
 #ifdef DBCT
@@ -225,6 +240,11 @@ mem_write_halfword (uint32_t addr, uint32_t data)
 {
 	uint32_t *temp, offset;
 	mem_bank_t * global_mbp = bank_ptr(addr);
+	if(global_mbp == NULL){
+		printf("Can not find the suitable bank for the address 0x%x\n", addr);
+		return 0;
+	}
+
 	mem_config_t * memmap = get_global_memmap();
 
 #ifdef DBCT
@@ -269,6 +289,11 @@ mem_write_word (uint32_t addr, uint32_t data)
 {
 	uint32_t *temp;
 	mem_bank_t * global_mbp = bank_ptr(addr);
+	if(global_mbp == NULL){
+		printf("Can not find the suitable bank for the address 0x%x\n", addr);
+		return 0;
+	}
+
 	mem_config_t * memmap = get_global_memmap();
 
 #ifdef DBCT
