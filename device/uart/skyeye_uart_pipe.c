@@ -21,7 +21,7 @@
 /*
  * 2007.01.18	by Anthony Lee : initial version
  */
-
+#include <stdlib.h>
 #include "skyeye_uart.h"
 
 #ifdef __BEOS__

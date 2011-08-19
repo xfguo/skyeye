@@ -27,6 +27,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 //#include "armdefs.h"
 //#include "arch/mips/common/mipsdef.h"
@@ -35,6 +36,12 @@
 #include "skyeye_config.h"
 #include "skyeye.h"
 #include "skyeye_lcd.h"
+
+extern void lcd_ep7312_init (struct device_module_set *mod_set);
+extern void lcd_pxa_init (struct device_module_set *mod_set);
+extern void lcd_s3c2410_init (struct device_module_set *mod_set);
+extern void lcd_s3c44b0x_init(struct device_module_set *mod_set);
+extern void lcd_au1100_init(struct device_module_set *mod_set);
 
 static int
 do_lcd_option (skyeye_option_t * this_option, int num_params,

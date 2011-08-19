@@ -22,6 +22,7 @@
  * 06/17/2005   initial verion for ep7312
  */
 
+#include <stdlib.h>
 //#include "armdefs.h"
 #include "skyeye_device.h"
 #include "skyeye_lcd.h"

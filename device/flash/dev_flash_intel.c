@@ -29,6 +29,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 //#include "armdefs.h"
 //#include "armmem.h"
@@ -36,12 +37,14 @@
 #include "skyeye_arch.h"
 #include "skyeye_device.h"
 #include "dev_flash_intel.h"
+#include <skyeye_ram.h>
 
 //chy 2006-08-12 
 //extern mem_bank_t *global_mbp;
 //extern mem_bank_t * bank_ptr (ARMword addr);
 /*ywc 2005-04-01*/
 void init_querytable ();
+int flash_intel_read_word (struct device_desc *dev, uint32 addr, uint32 * data);
 
 static uint32 query[INTEL_QUERYTABLE_SIZE];	/* query table */
 

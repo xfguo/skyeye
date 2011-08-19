@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 //#include "armdefs.h"
 #include "skyeye_device.h"

@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include "skyeye_uart.h"
 #include "skyeye_pref.h"
+#include "skyeye_thread.h"
 
 #ifdef __linux__
 #include <net/if.h>
@@ -35,7 +36,9 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <arpa/inet.h>
 #include <stdint.h>
+#include <sys/socket.h>
 /*
 #ifdef __FreeBSD__
 #include <sys/types.h>

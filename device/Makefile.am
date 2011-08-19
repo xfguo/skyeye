@@ -57,7 +57,7 @@ libpci_la_LDFLAGS = -module
 
 pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la
 
-DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 
+DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0  @COMMON_CFLAGS@
 
 skyeye_bin_dir = \"$(prefix)/bin/\"
 INCLUDES = -I./ @COMMON_INCLUDES@ -DSKYEYE_BIN=$(skyeye_bin_dir)

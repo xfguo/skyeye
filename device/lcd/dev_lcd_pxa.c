@@ -21,6 +21,7 @@
 /*
  * 06/17/2005   initial verion for pxa
  */
+#include <stdlib.h>
 
 //#include "armdefs.h"
 #include "skyeye_device.h"

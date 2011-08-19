@@ -26,6 +26,7 @@
 
 #include "skyeye_lcd.h"
 
+#include <stdlib.h>
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 

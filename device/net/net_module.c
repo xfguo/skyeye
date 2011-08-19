@@ -2,6 +2,8 @@
 
 const char* skyeye_module = "net";
 
+extern void net_register();
+
 void module_init(){
 	net_register();
 }

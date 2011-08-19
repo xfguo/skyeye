@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include "skyeye_uart.h"
+#include "skyeye_thread.h"
 
 #ifdef __linux__
 #include <net/if.h>
@@ -32,6 +33,8 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <poll.h>
 #include <stdint.h>
 

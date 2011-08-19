@@ -24,6 +24,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "skyeye_config.h"
 #include "skyeye_device.h"
 

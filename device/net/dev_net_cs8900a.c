@@ -24,6 +24,7 @@
  * 06/04/2005   initial verion for cs8900a
  *                      walimis <wlm@student.dlut.edu.cn>
  */
+#include <stdlib.h>
 
 #include "skyeye_device.h"
 #include "skyeye_net.h"

@@ -40,6 +40,8 @@
 #include "dev_net_rtl8019.h"
 #include "portable/gettimeofday.h"
 
+#include <stdlib.h>
+
 //if you don't want to the debug info,just commit below two line
 //#define DEBUG 1
 #undef DEBUG

@@ -170,6 +170,9 @@ int register_device_module_set (struct device_module_set *mod_set);
 void initialize_all_devices ();
 void set_device_default (struct device_desc *dev,
 				struct device_default_value *def);
+int setup_device_option (char *option_name, void *dev_option,
+						int num_params, const char *params[]);
+
 /* register funtions of all kinds of device module set. 
  * */
 //extern void uart_register();
@@ -177,6 +180,7 @@ void set_device_default (struct device_desc *dev,
 //extern void net_register();
 //extern void lcd_register();
 //extern void flash_register();
+//extern void nandflash_register();
 //extern void touchscreen_register();
 //extern void sound_register();
 void register_pen_buffer(int* pen_buffer);

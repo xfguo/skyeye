@@ -22,6 +22,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "dev_nandflash_s3c2410.h"
 #include "nandflash_smallblock.h"
 
+#include <stdlib.h>
+
 static void
 nandflash_s3c2410_fini (struct device_desc *dev)
 {

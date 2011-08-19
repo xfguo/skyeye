@@ -38,6 +38,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 //chy: make sure that if_vnet.h is as same as vnet/if_vnet.h
 #include "if_vnet.h"

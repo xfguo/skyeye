@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 //#include <sys/mman.h>
 #include "portable/mman.h"
 #include "skyeye_nandflash.h"

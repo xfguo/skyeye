@@ -24,6 +24,7 @@
 */
 
 #include <string.h>
+#include <stdio.h>
 #include "skyeye_types.h"
 #include "skyeye_obj.h"
 
@@ -45,11 +46,13 @@ exception_t SKY_register_interface(conf_object_t* obj, const char* iface_name, v
 	if(strlen(obj->objname) + strlen(iface_name) + 1 > MAX_OBJNAME){
 		return Invarg_exp;
 	}
-	get_iface_objname(iface_objname, obj->objname, iface);
-	if(new_conf_object(iface_objname, iface) != NULL)	
+	get_iface_objname(iface_objname, obj->objname, iface_name);
+	if(new_conf_object(iface_objname, iface) != NULL) {
 		return No_exp;
-	else
+	}
+	else{
 		return Invarg_exp;
+	}
 }
 
 void* SKY_get_interface(conf_object_t* obj, const char* iface_name){

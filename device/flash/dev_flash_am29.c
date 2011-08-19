@@ -29,6 +29,7 @@
 #include "skyeye_device.h"
 #include "skyeye_flash.h"
 #include "dev_flash_am29.h"
+#include "bank_defs.h"
 
 #define FLASH_AM29_DEBUG			0
 

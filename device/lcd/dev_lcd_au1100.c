@@ -30,6 +30,8 @@
 #include "skyeye_lcd.h"
 #include "dev_lcd_au1100.h"
 
+#include <stdlib.h>
+
 #define LCD_AU1100_DEBUG	1
 
 #define PRINT(x...)		printf("[LCD_AU1100]: " x)

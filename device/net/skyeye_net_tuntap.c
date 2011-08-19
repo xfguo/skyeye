@@ -33,6 +33,7 @@
 #include <linux/if_tun.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #endif
 
 #ifdef __svr4__

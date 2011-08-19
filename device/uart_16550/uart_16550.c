@@ -31,6 +31,9 @@
 #include <skyeye_sched.h>
 #include <skyeye_options.h>
 #include <skyeye_config.h>
+#include <skyeye_obj.h>
+#include <skyeye_command.h>
+#include <skyeye_uart_ops.h>
 
 #define DEBUG
 #include <skyeye_log.h>

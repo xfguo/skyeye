@@ -29,6 +29,7 @@
 #include "skyeye_device.h"
 #include "skyeye_flash.h"
 #include "dev_flash_sst39lvf160.h"
+#include "bank_defs.h"
 
 #define FLASH_SST39LVF160_DEBUG		0
 

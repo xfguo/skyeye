@@ -24,6 +24,7 @@
 
 #include "skyeye_config.h"
 #include "skyeye_options.h"
+#include "skyeye_mm.h"
 #include "skyeye_uart_ops.h"
 
 #include "skyeye_uart.h"

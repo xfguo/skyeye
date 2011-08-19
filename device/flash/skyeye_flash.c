@@ -37,6 +37,7 @@
 #include "skyeye_config.h"
 #include "skyeye_device.h"
 
+#include "skyeye_device.h"
 #include "skyeye_options.h"
 #include "skyeye.h"
 #include "skyeye_flash.h"

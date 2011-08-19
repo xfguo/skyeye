@@ -21,6 +21,7 @@
 /*
  * 01/27/2007   written by Anthony Lee
  */
+#include <stdlib.h>
 
 //#include "armdefs.h"
 #include "skyeye_device.h"

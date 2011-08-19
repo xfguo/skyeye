@@ -25,7 +25,9 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <skyeye_mm.h>
 
+#include <skyeye_interface.h>
 #include <skyeye_types.h>
 #include <bank_defs.h>
 #include <skyeye_sched.h>

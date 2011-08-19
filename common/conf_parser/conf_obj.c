@@ -90,10 +90,12 @@ void* get_conf_obj(char* objname){
 	int ret = hsearch_r(item, FIND, &retval, conf_tab);
 	//printf("In %s, ret= 0x%x, objname=%s, data=0x%x\n", __FUNCTION__, ret, objname, retval->data);
 	/* Non-zero on success */
-	if(ret == 0)
+	if(ret == 0){
 		return NULL;
-	else
+	}
+	else{
 		return retval->data;
+	}
 }
 #define TYPE_CASTING(conf_obj, type_string) (##type_string##)get_cast_conf_obj(conf_obj, type_string)
 
@@ -159,7 +161,6 @@ conf_object_t* new_conf_object(const char* objname, void* obj){
 	/* failed for create or put object */
 	return conf_obj;
 
-	//printf("In %s, conf_obj->objname=%s\n", __FUNCTION__, conf_obj->objname);
 	//printf("In %s, conf_obj=0x%x, conf_obj->objname=0x%x\n", __FUNCTION__, conf_obj, conf_obj->obj);
 	//put_conf_obj(obj, type_string);
 }

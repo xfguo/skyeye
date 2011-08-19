@@ -28,6 +28,8 @@
 #include "skyeye_config.h"
 #include "dev_lcd_s3c2410.h"
 
+#include <stdlib.h>
+
 static struct device_default_value s3c2410_lcd_def[] = {
 	/* name         base        size   interrupt array */
 	{"s3c2410x", 0x4d000000, 0x60, {0, 0, 0, 0}},

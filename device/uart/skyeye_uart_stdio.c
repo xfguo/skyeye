@@ -23,6 +23,7 @@
  */
 
 #include "skyeye_uart.h"
+#include "skyeye_mm.h"
 
 #ifndef __MINGW32__
 
