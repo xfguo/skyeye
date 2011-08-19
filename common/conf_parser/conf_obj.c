@@ -143,19 +143,25 @@ conf_object_t* get_conf_obj_by_cast(void* obj, const char* type_string){
 conf_object_t* new_conf_object(const char* objname, void* obj){
 	conf_object_t* conf_obj = skyeye_mm(sizeof(struct conf_object_s));
 	/* Memory allocation failed. */
-	if(conf_obj == NULL)
-		return NULL;
-	conf_obj->obj = obj;
+	if(conf_obj != NULL){
+		conf_obj->obj = obj;
 	//printf("In %s, type_string=%s\n", __FUNCTION__, type_string);
-	conf_obj->objname = skyeye_strdup(objname);
-	if(put_conf_obj(objname, conf_obj) != No_exp){
-		printf("Can not put the %s to the hash table\n", objname);
+		conf_obj->objname = skyeye_strdup(objname);
+		if(put_conf_obj(objname, conf_obj) != No_exp){
+			printf("Can not put the %s to the hash table\n", objname);
+			skyeye_free(objname);
+		}
+		else /* create and put object successfully */
+			return conf_obj;
+		skyeye_free(conf_obj);
+		conf_obj = NULL;
 	}
+	/* failed for create or put object */
+	return conf_obj;
 
 	//printf("In %s, conf_obj->objname=%s\n", __FUNCTION__, conf_obj->objname);
 	//printf("In %s, conf_obj=0x%x, conf_obj->objname=0x%x\n", __FUNCTION__, conf_obj, conf_obj->obj);
 	//put_conf_obj(obj, type_string);
-	return conf_obj;
 }
 
 /**

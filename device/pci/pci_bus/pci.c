@@ -32,6 +32,8 @@
 #include <skyeye_options.h>
 #include <skyeye_config.h>
 #include <skyeye_class.h>
+#include <memory_space.h>
+#include <skyeye_interface.h>
 #define DEBUG
 #include <skyeye_log.h>
 
@@ -63,14 +65,13 @@ static char pcie_write(short size, int addr, unsigned int data){
 
 static conf_object_t* new_pcie_bus(char* objname){
 	pcie_t* pcie = (pcie_t*)malloc(sizeof(pcie_t));
-#if 0
-	dev->obj = new_conf_object(obj_name, pcie);
-	dev->io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
-        dev->io_memory->read = pci_read;
-        dev->io_memory->write = pci_write;
+	pcie->obj = new_conf_object(objname, pcie);
 
-        dev->state = skyeye_mm_zero(sizeof(conf_access_reg_t));
-#endif
+	memory_space_intf* io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
+        io_memory->read = pcie_read;
+        io_memory->write = pcie_write;
+	SKY_register_interface(pcie->obj, objname, MEMORY_SPACE_INTF_NAME);
+
 	return pcie->obj;
 }
 

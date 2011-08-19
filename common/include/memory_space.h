@@ -32,6 +32,7 @@ typedef struct memory_space{
 	read_byte_t read;
 	write_byte_t write;
 }memory_space_intf;
+#define MEMORY_SPACE_INTF_NAME "memory_space"
 
 #endif
 
