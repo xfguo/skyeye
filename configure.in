@@ -196,7 +196,7 @@ AM_CONDITIONAL([LLVM_EXIST], [test x$LLVM = xllvm])
 #AC_CONFIG_SUBDIRS([third-party/opcodes])
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h locale.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/file.h sys/ioctl.h sys/socket.h sys/time.h termios.h unistd.h bfd.h dlfcn.h])
+AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h locale.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/file.h sys/ioctl.h sys/socket.h sys/time.h termios.h unistd.h bfd.h dlfcn.h Python.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
