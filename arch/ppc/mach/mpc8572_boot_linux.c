@@ -37,7 +37,7 @@ static const int bd_start = 8 * 1024 * 1024;
 static const int boot_param_start = 8 * 1024 * 1024;
 static const int bootcmd_start= 9 * 1024 * 1024;
 //static char * bootcmd = "root=/dev/ram0 console=ttyCPM0 mem=64M";
-static char * bootcmd = "root=/dev/ram0 console=ttyS0 mem=64M";
+static char * bootcmd = "root=/dev/ram0 console=ttyS0 mem=128M";
 
 //const int OFF_DT_STRUCT = 0x200000;
 static const int DT_STRUCT_SIZE = 8 * 1024;
@@ -85,7 +85,7 @@ static void setup_boot_map(e500_mmu_t * mmu){
         entry->v = 1; /* entry is valid */
         entry->ts = 0; /* address space 0 */
         entry->tid = 0; /* TID value for shared(global) page */
-        entry->epn = 0xC0000; /* Virtual address of DDR ram in address space*/
+        entry->epn = 0x0; /* Virtual address of DDR ram in address space*/
         entry->rpn = 0x0; /* Physical address of DDR ram in address space*/
         entry->size = 0x7; /* 16M byte page size */
         /* usxrw should be initialized to 010101 */
