@@ -287,12 +287,21 @@ ARMul_SwitchMode (ARMul_State * state, ARMword oldmode, ARMword newmode)
 	unsigned i;
 	ARMword oldbank;
 	ARMword newbank;
+	static int revision_value = 53;
 
 	oldbank = ModeToBank (oldmode);
 	newbank = state->Bank = ModeToBank (newmode);
 
 	/* Do we really need to do it?  */
 	if (oldbank != newbank) {
+		if (oldbank == 3 && newbank == 2) {
+			//printf("icounter is %d PC is %x MODE CHANGED : %d --> %d\n", state->NumInstrs, state->pc, oldbank, newbank);
+			if (state->NumInstrs >= 5832487) {
+//				printf("%d, ", state->NumInstrs + revision_value);
+//				printf("revision_value : %d\n", revision_value);
+				revision_value ++;
+			}
+		}
 		/* Save away the old registers.  */
 		switch (oldbank) {
 		case USERBANK:

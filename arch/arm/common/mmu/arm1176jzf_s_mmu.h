@@ -31,4 +31,7 @@ typedef struct arm1176jzf-s_mmu_s
 } arm1176jzf-s_mmu_t;
 #endif
 extern mmu_ops_t arm1176jzf_s_mmu_ops;
+
+ARMword
+arm1176jzf_s_mmu_mrc (ARMul_State *state, ARMword instr, ARMword *value);
 #endif /*_ARM1176JZF-S_MMU_H_*/

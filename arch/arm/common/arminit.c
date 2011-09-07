@@ -110,6 +110,10 @@ ARMul_NewState (ARMul_State *state)
 	state->EventPtr =
 		(struct EventNode **) malloc ((unsigned) EVENTLISTSIZE *
 					      sizeof (struct EventNode *));
+#if DIFF_STATE
+	state->state_log = fopen("/data/state.log", "w");
+	printf("create pc log file.\n");
+#endif
 	if (state->EventPtr == NULL) {
 		printf ("SKYEYE: ARMul_NewState malloc state->EventPtr error\n");
 		skyeye_exit (-1);
@@ -120,8 +124,10 @@ ARMul_NewState (ARMul_State *state)
 	state->state_log = fopen("/tmp/state.log", "w");
 	printf("create pc log file.\n");
 #else
+#if DIFF_LOG
 	state->state_log = fopen("/tmp/state.log", "r");
 	printf("loaded pc log file.\n");
+#endif
 #endif
 
 #ifdef ARM61

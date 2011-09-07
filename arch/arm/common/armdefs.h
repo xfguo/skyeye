@@ -26,6 +26,8 @@
 // koodailar remove it for mingw 2005.12.18----------------
 //anthonylee modify it for portable 2007.01.30
 #include "portable/mman.h"
+
+#include "arm_regformat.h"
 //AJ2D--------------------------------------------------------------------------
 
 //teawater add for arm2x86 2005.07.03-------------------------------------------
@@ -39,6 +41,15 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 //AJ2D--------------------------------------------------------------------------
+#if 1
+#if 0
+#define DIFF_STATE 1
+#define __FOLLOW_MODE__ 0
+#else
+#define DIFF_STATE 0
+#define __FOLLOW_MODE__ 1
+#endif
+#endif
 
 #ifndef FALSE
 #define FALSE 0
@@ -204,9 +215,18 @@ struct ARMul_State
 	unsigned EndCondition;	/* reason for stopping */
 	unsigned ErrorCode;	/* type of illegal instruction */
 	ARMword Reg[16];	/* the current register file */
-	ARMword RegBank[7][16];	/* all the registers */
 	ARMword Cpsr;		/* the current psr */
+	ARMword Spsr_copy;
+	ARMword phys_pc;
+	ARMword Reg_usr[2];
+    ARMword Reg_svc[2]; /* R13_SVC R14_SVC */
+    ARMword Reg_abort[2]; /* R13_ABORT R14_ABORT */
+    ARMword Reg_undef[2]; /* R13 UNDEF R14 UNDEF */
+    ARMword Reg_irq[2];   /* R13_IRQ R14_IRQ */
+    ARMword Reg_firq[7];  /* R8---R14 FIRQ */
 	ARMword Spsr[7];	/* the exception psr's */
+	ARMword CP15[MAX_REG_NUM - CP15_BASE];
+	ARMword RegBank[7][16];	/* all the registers */
 	//chy:2003-08-19, used in arm xscale
 	/* 40 bit accumulator.  We always keep this 64 bits wide,
 	   and move only 40 bits out of it in an MRA insn.  */
@@ -264,6 +284,7 @@ struct ARMul_State
 	unsigned bigendSig;
 	unsigned prog32Sig;
 	unsigned data32Sig;
+	unsigned syscallSig;
 
 /* 2004-05-09 chy
 ----------------------------------------------------------
@@ -386,7 +407,12 @@ So, if lateabtSig=1, then it means Late Abort Model(Base Updated Abort Model)
 #ifdef DBCT_TEST_SPEED
 	uint64_t	instr_count;
 #endif	//DBCT_TEST_SPEED
+//	FILE * state_log;
+//diff log
+//#if DIFF_STATE
 	FILE * state_log;
+//#endif
+
 //AJ2D--------------------------------------------------------------------------
 };
 

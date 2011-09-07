@@ -16,6 +16,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+#include "arm_regformat.h"
 #include "armdefs.h"
 #include "armemu.h"
 #include "armos.h"
@@ -295,6 +296,8 @@ extern int (*ui_loop_hook) (int);
 #endif
 //AJ2D--------------------------------------------------------------------------
 
+//Diff register
+unsigned int mirror_register_file[39];
 
 /* EMULATION of ARM6.  */
 
@@ -347,6 +350,7 @@ int ARMul_ICE_debug(ARMul_State *state,ARMword instr,ARMword addr)
 	}
 	return 0;
 }
+
 /*
 void chy_debug()
 {
@@ -371,7 +375,36 @@ ARMul_Emulate26 (ARMul_State * state)
 	ARMword decoded_addr=0;
 	ARMword loaded_addr=0;
 	ARMword have_bp=0;
+    static ARMword last_pc = 0;
 
+	int reg_index = 0;
+#if DIFF_STATE
+//initialize all mirror register for follow mode
+	for (reg_index = 0; reg_index < 16; reg_index ++) {
+			mirror_register_file[reg_index] = state->Reg[reg_index];
+	}
+    mirror_register_file[CPSR_REG] = state->Cpsr;
+    mirror_register_file[R13_SVC] = state->RegBank[SVCBANK][13];
+    mirror_register_file[R14_SVC] = state->RegBank[SVCBANK][14];
+    mirror_register_file[R13_ABORT] = state->RegBank[ABORTBANK][13];
+    mirror_register_file[R14_ABORT] = state->RegBank[ABORTBANK][14];
+    mirror_register_file[R13_UNDEF] = state->RegBank[UNDEFBANK][13];
+    mirror_register_file[R14_UNDEF] = state->RegBank[UNDEFBANK][14];
+    mirror_register_file[R13_IRQ] = state->RegBank[IRQBANK][13];
+    mirror_register_file[R14_IRQ] = state->RegBank[IRQBANK][14];
+    mirror_register_file[R8_FIRQ] = state->RegBank[FIQBANK][8];
+    mirror_register_file[R9_FIRQ] = state->RegBank[FIQBANK][9];
+    mirror_register_file[R10_FIRQ] = state->RegBank[FIQBANK][10];
+    mirror_register_file[R11_FIRQ] = state->RegBank[FIQBANK][11];
+    mirror_register_file[R12_FIRQ] = state->RegBank[FIQBANK][12];
+    mirror_register_file[R13_FIRQ] = state->RegBank[FIQBANK][13];
+    mirror_register_file[R14_FIRQ] = state->RegBank[FIQBANK][14];
+    mirror_register_file[SPSR_SVC] = state->Spsr[SVCBANK];
+    mirror_register_file[SPSR_ABORT] = state->Spsr[ABORTBANK];
+    mirror_register_file[SPSR_UNDEF] = state->Spsr[UNDEFBANK];
+    mirror_register_file[SPSR_IRQ] = state->Spsr[IRQBANK];
+    mirror_register_file[SPSR_FIRQ] = state->Spsr[FIQBANK];
+#endif
 	/* Execute the next instruction.  */
 	if (state->NextInstr < PRIMEPIPE) {
 		decoded = state->decoded;
@@ -383,6 +416,10 @@ ARMul_Emulate26 (ARMul_State * state)
 	}
 
 	do {
+            //print_func_name(state->pc);
+            if (pc) {
+                    last_pc = pc;
+            }
 		/* Just keep going.  */
 		isize = INSN_SIZE;
 
@@ -496,9 +533,117 @@ ARMul_Emulate26 (ARMul_State * state)
 			if (have_bp) goto  TEST_EMULATE;
 			break;
 		}
+#if 0
+        int idx = 0;
+        printf("pc:%x\n", pc);
+        for (;idx < 17; idx ++) {
+                printf("R%d:%x\t", idx, state->Reg[idx]);
+        }
+        printf("\n");
+#endif
+#if DIFF_STATE
+      fprintf(state->state_log, "PC:0x%x\n", pc);
+      if (pc && (pc + 8) != state->Reg[15]) {
+              printf("lucky dog\n");
+              printf("pc is %x, R15 is %x\n", pc, state->Reg[15]);
+              //exit(-1);
+      }
+      for (reg_index = 0; reg_index < 16; reg_index ++) {
+              if (state->Reg[reg_index] != mirror_register_file[reg_index]) {
+                      fprintf(state->state_log, "R%d:0x%x\n", reg_index, state->Reg[reg_index]);
+                      mirror_register_file[reg_index] = state->Reg[reg_index];
+              }
+      }
+      if (state->Cpsr != mirror_register_file[CPSR_REG]) {
+              fprintf(state->state_log, "Cpsr:0x%x\n", state->Cpsr);
+              mirror_register_file[CPSR_REG] = state->Cpsr;
+      }
+      if (state->RegBank[SVCBANK][13] != mirror_register_file[R13_SVC]) {
+              fprintf(state->state_log, "R13_SVC:0x%x\n", state->RegBank[SVCBANK][13]);
+              mirror_register_file[R13_SVC] = state->RegBank[SVCBANK][13];
+      }
+      if (state->RegBank[SVCBANK][14] != mirror_register_file[R14_SVC]) {
+              fprintf(state->state_log, "R14_SVC:0x%x\n", state->RegBank[SVCBANK][14]);
+              mirror_register_file[R14_SVC] = state->RegBank[SVCBANK][14];
+      }
+      if (state->RegBank[ABORTBANK][13] != mirror_register_file[R13_ABORT]) {
+              fprintf(state->state_log, "R13_ABORT:0x%x\n", state->RegBank[ABORTBANK][13]);
+              mirror_register_file[R13_ABORT] = state->RegBank[ABORTBANK][13];
+      }
+      if (state->RegBank[ABORTBANK][14] != mirror_register_file[R14_ABORT]) {
+              fprintf(state->state_log, "R14_ABORT:0x%x\n", state->RegBank[ABORTBANK][14]);
+              mirror_register_file[R14_ABORT] = state->RegBank[ABORTBANK][14];
+      }
+      if (state->RegBank[UNDEFBANK][13] != mirror_register_file[R13_UNDEF]) {
+              fprintf(state->state_log, "R13_UNDEF:0x%x\n", state->RegBank[UNDEFBANK][13]);
+              mirror_register_file[R13_UNDEF] = state->RegBank[UNDEFBANK][13];
+      }
+      if (state->RegBank[UNDEFBANK][14] != mirror_register_file[R14_UNDEF]) {
+              fprintf(state->state_log, "R14_UNDEF:0x%x\n", state->RegBank[UNDEFBANK][14]);
+              mirror_register_file[R14_UNDEF] = state->RegBank[UNDEFBANK][14];
+      }
+      if (state->RegBank[IRQBANK][13] != mirror_register_file[R13_IRQ]) {
+              fprintf(state->state_log, "R13_IRQ:0x%x\n", state->RegBank[IRQBANK][13]);
+              mirror_register_file[R13_IRQ] = state->RegBank[IRQBANK][13];
+      }
+      if (state->RegBank[IRQBANK][14] != mirror_register_file[R14_IRQ]) {
+              fprintf(state->state_log, "R14_IRQ:0x%x\n", state->RegBank[IRQBANK][14]);
+              mirror_register_file[R14_IRQ] = state->RegBank[IRQBANK][14];
+      }
+      if (state->RegBank[FIQBANK][8] != mirror_register_file[R8_FIRQ]) {
+              fprintf(state->state_log, "R8_FIRQ:0x%x\n", state->RegBank[FIQBANK][8]);
+              mirror_register_file[R8_FIRQ] = state->RegBank[FIQBANK][8];
+      }
+      if (state->RegBank[FIQBANK][9] != mirror_register_file[R9_FIRQ]) {
+              fprintf(state->state_log, "R9_FIRQ:0x%x\n", state->RegBank[FIQBANK][9]);
+              mirror_register_file[R9_FIRQ] = state->RegBank[FIQBANK][9];
+      }
+      if (state->RegBank[FIQBANK][10] != mirror_register_file[R10_FIRQ]) {
+              fprintf(state->state_log, "R10_FIRQ:0x%x\n", state->RegBank[FIQBANK][10]);
+              mirror_register_file[R10_FIRQ] = state->RegBank[FIQBANK][10];
+      }
+      if (state->RegBank[FIQBANK][11] != mirror_register_file[R11_FIRQ]) {
+              fprintf(state->state_log, "R11_FIRQ:0x%x\n", state->RegBank[FIQBANK][11]);
+              mirror_register_file[R11_FIRQ] = state->RegBank[FIQBANK][11];
+      }
+      if (state->RegBank[FIQBANK][12] != mirror_register_file[R12_FIRQ]) {
+              fprintf(state->state_log, "R12_FIRQ:0x%x\n", state->RegBank[FIQBANK][12]);
+              mirror_register_file[R12_FIRQ] = state->RegBank[FIQBANK][12];
+      }
+      if (state->RegBank[FIQBANK][13] != mirror_register_file[R13_FIRQ]) {
+              fprintf(state->state_log, "R13_FIRQ:0x%x\n", state->RegBank[FIQBANK][13]);
+              mirror_register_file[R13_FIRQ] = state->RegBank[FIQBANK][13];
+      }
+      if (state->RegBank[FIQBANK][14] != mirror_register_file[R14_FIRQ]) {
+              fprintf(state->state_log, "R14_FIRQ:0x%x\n", state->RegBank[FIQBANK][14]);
+              mirror_register_file[R14_FIRQ] = state->RegBank[FIQBANK][14];
+      }
+      if (state->Spsr[SVCBANK] != mirror_register_file[SPSR_SVC]) {
+              fprintf(state->state_log, "SPSR_SVC:0x%x\n", state->Spsr[SVCBANK]);
+              mirror_register_file[SPSR_SVC] = state->RegBank[SVCBANK];
+      }
+      if (state->Spsr[ABORTBANK] != mirror_register_file[SPSR_ABORT]) {
+              fprintf(state->state_log, "SPSR_ABORT:0x%x\n", state->Spsr[ABORTBANK]);
+              mirror_register_file[SPSR_ABORT] = state->RegBank[ABORTBANK];
+      }
+      if (state->Spsr[UNDEFBANK] != mirror_register_file[SPSR_UNDEF]) {
+              fprintf(state->state_log, "SPSR_UNDEF:0x%x\n", state->Spsr[UNDEFBANK]);
+              mirror_register_file[SPSR_UNDEF] = state->RegBank[UNDEFBANK];
+      }
+      if (state->Spsr[IRQBANK] != mirror_register_file[SPSR_IRQ]) {
+              fprintf(state->state_log, "SPSR_IRQ:0x%x\n", state->Spsr[IRQBANK]);
+              mirror_register_file[SPSR_IRQ] = state->RegBank[IRQBANK];
+      }
+      if (state->Spsr[FIQBANK] != mirror_register_file[SPSR_FIRQ]) {
+              fprintf(state->state_log, "SPSR_FIRQ:0x%x\n", state->Spsr[FIQBANK]);
+              mirror_register_file[SPSR_FIRQ] = state->RegBank[FIQBANK];
+      }
+#endif
+
 
 		if (state->EventSet)
 			ARMul_EnvokeEvent (state);
+
 #if 0
 		/* do profiling for code coverage */
 		if (skyeye_config.code_cov.prof_on)
@@ -654,6 +799,16 @@ ARMul_Emulate26 (ARMul_State * state)
 		}
 
 //teawater add for arm2x86 2005.04.26-------------------------------------------
+#if 1
+//        if (state->pc == 0xc011a868 || state->pc == 0xc011a86c) {
+        if (state->NumInstrs == 1671574 || state->NumInstrs == 1671573 || state->NumInstrs == 1671572
+            || state->NumInstrs == 1671575) {
+                for (reg_index = 0; reg_index < 16; reg_index ++) {
+                    printf("R%d:%x\t", reg_index, state->Reg[reg_index]);
+                }
+                printf("\n");
+        }
+#endif
 		if (state->tea_pc) {
 			int i;
 
@@ -699,6 +854,9 @@ ARMul_Emulate26 (ARMul_State * state)
 		}
 		io_do_cycle (state);
 		state->NumInstrs++;
+		if (state->NumInstrs % 10000000 == 0) {
+				printf("10 MIPS instr have been executed\n");
+		}
 
 #ifdef MODET
 		/* Provide Thumb instruction decoding. If the processor is in Thumb
@@ -4216,6 +4374,101 @@ ARMul_Emulate26 (ARMul_State * state)
 #ifdef MODET
 	      donext:
 #endif
+				  state->pc = pc;
+#if 0
+		  fprintf(state->state_log, "PC:0x%x\n", pc);
+		  for (reg_index = 0; reg_index < 16; reg_index ++) {
+				  if (state->Reg[reg_index] != mirror_register_file[reg_index]) {
+						  fprintf(state->state_log, "R%d:0x%x\n", reg_index, state->Reg[reg_index]);
+						  mirror_register_file[reg_index] = state->Reg[reg_index];
+				  }
+		  }
+		  if (state->Cpsr != mirror_register_file[CPSR_REG]) {
+				  fprintf(state->state_log, "Cpsr:0x%x\n", state->Cpsr);
+				  mirror_register_file[CPSR_REG] = state->Cpsr;
+		  }
+          if (state->RegBank[SVCBANK][13] != mirror_register_file[R13_SVC]) {
+                  fprintf(state->state_log, "R13_SVC:0x%x\n", state->RegBank[SVCBANK][13]);
+                  mirror_register_file[R13_SVC] = state->RegBank[SVCBANK][13];
+          }
+          if (state->RegBank[SVCBANK][14] != mirror_register_file[R14_SVC]) {
+                  fprintf(state->state_log, "R14_SVC:0x%x\n", state->RegBank[SVCBANK][14]);
+                  mirror_register_file[R14_SVC] = state->RegBank[SVCBANK][14];
+          }
+          if (state->RegBank[ABORTBANK][13] != mirror_register_file[R13_ABORT]) {
+                  fprintf(state->state_log, "R13_ABORT:0x%x\n", state->RegBank[ABORTBANK][13]);
+                  mirror_register_file[R13_ABORT] = state->RegBank[ABORTBANK][13];
+          }
+          if (state->RegBank[ABORTBANK][14] != mirror_register_file[R14_ABORT]) {
+                  fprintf(state->state_log, "R14_ABORT:0x%x\n", state->RegBank[ABORTBANK][14]);
+                  mirror_register_file[R14_ABORT] = state->RegBank[ABORTBANK][14];
+          }
+          if (state->RegBank[UNDEFBANK][13] != mirror_register_file[R13_UNDEF]) {
+                  fprintf(state->state_log, "R13_UNDEF:0x%x\n", state->RegBank[UNDEFBANK][13]);
+                  mirror_register_file[R13_UNDEF] = state->RegBank[UNDEFBANK][13];
+          }
+          if (state->RegBank[UNDEFBANK][14] != mirror_register_file[R14_UNDEF]) {
+                  fprintf(state->state_log, "R14_UNDEF:0x%x\n", state->RegBank[UNDEFBANK][14]);
+                  mirror_register_file[R14_UNDEF] = state->RegBank[UNDEFBANK][14];
+          }
+          if (state->RegBank[IRQBANK][13] != mirror_register_file[R13_IRQ]) {
+                  fprintf(state->state_log, "R13_IRQ:0x%x\n", state->RegBank[IRQBANK][13]);
+                  mirror_register_file[R13_IRQ] = state->RegBank[IRQBANK][13];
+          }
+          if (state->RegBank[IRQBANK][14] != mirror_register_file[R14_IRQ]) {
+                  fprintf(state->state_log, "R14_IRQ:0x%x\n", state->RegBank[IRQBANK][14]);
+                  mirror_register_file[R14_IRQ] = state->RegBank[IRQBANK][14];
+          }
+          if (state->RegBank[FIQBANK][8] != mirror_register_file[R8_FIRQ]) {
+                  fprintf(state->state_log, "R8_FIRQ:0x%x\n", state->RegBank[FIQBANK][8]);
+                  mirror_register_file[R8_FIRQ] = state->RegBank[FIQBANK][8];
+          }
+          if (state->RegBank[FIQBANK][9] != mirror_register_file[R9_FIRQ]) {
+                  fprintf(state->state_log, "R9_FIRQ:0x%x\n", state->RegBank[FIQBANK][9]);
+                  mirror_register_file[R9_FIRQ] = state->RegBank[FIQBANK][9];
+          }
+          if (state->RegBank[FIQBANK][10] != mirror_register_file[R10_FIRQ]) {
+                  fprintf(state->state_log, "R10_FIRQ:0x%x\n", state->RegBank[FIQBANK][10]);
+                  mirror_register_file[R10_FIRQ] = state->RegBank[FIQBANK][10];
+          }
+          if (state->RegBank[FIQBANK][11] != mirror_register_file[R11_FIRQ]) {
+                  fprintf(state->state_log, "R11_FIRQ:0x%x\n", state->RegBank[FIQBANK][11]);
+                  mirror_register_file[R11_FIRQ] = state->RegBank[FIQBANK][11];
+          }
+          if (state->RegBank[FIQBANK][12] != mirror_register_file[R12_FIRQ]) {
+                  fprintf(state->state_log, "R12_FIRQ:0x%x\n", state->RegBank[FIQBANK][12]);
+                  mirror_register_file[R12_FIRQ] = state->RegBank[FIQBANK][12];
+          }
+          if (state->RegBank[FIQBANK][13] != mirror_register_file[R13_FIRQ]) {
+                  fprintf(state->state_log, "R13_FIRQ:0x%x\n", state->RegBank[FIQBANK][13]);
+                  mirror_register_file[R13_FIRQ] = state->RegBank[FIQBANK][13];
+          }
+          if (state->RegBank[FIQBANK][14] != mirror_register_file[R14_FIRQ]) {
+                  fprintf(state->state_log, "R14_FIRQ:0x%x\n", state->RegBank[FIQBANK][14]);
+                  mirror_register_file[R14_FIRQ] = state->RegBank[FIQBANK][14];
+          }
+          if (state->Spsr[SVCBANK] != mirror_register_file[SPSR_SVC]) {
+                  fprintf(state->state_log, "SPSR_SVC:0x%x\n", state->Spsr[SVCBANK]);
+                  mirror_register_file[SPSR_SVC] = state->RegBank[SVCBANK];
+          }
+          if (state->Spsr[ABORTBANK] != mirror_register_file[SPSR_ABORT]) {
+                  fprintf(state->state_log, "SPSR_ABORT:0x%x\n", state->Spsr[ABORTBANK]);
+                  mirror_register_file[SPSR_ABORT] = state->RegBank[ABORTBANK];
+          }
+          if (state->Spsr[UNDEFBANK] != mirror_register_file[SPSR_UNDEF]) {
+                  fprintf(state->state_log, "SPSR_UNDEF:0x%x\n", state->Spsr[UNDEFBANK]);
+                  mirror_register_file[SPSR_UNDEF] = state->RegBank[UNDEFBANK];
+          }
+          if (state->Spsr[IRQBANK] != mirror_register_file[SPSR_IRQ]) {
+                  fprintf(state->state_log, "SPSR_IRQ:0x%x\n", state->Spsr[IRQBANK]);
+                  mirror_register_file[SPSR_IRQ] = state->RegBank[IRQBANK];
+          }
+          if (state->Spsr[FIQBANK] != mirror_register_file[SPSR_FIRQ]) {
+                  fprintf(state->state_log, "SPSR_FIRQ:0x%x\n", state->Spsr[FIQBANK]);
+                  mirror_register_file[SPSR_FIRQ] = state->RegBank[FIQBANK];
+          }
+
+#endif
 
 #ifdef NEED_UI_LOOP_HOOK
 		if (ui_loop_hook != NULL && ui_loop_hook_counter-- < 0) {
@@ -5964,8 +6217,12 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 		/* ldrexb */
 		temp = LHS;
 		LoadByte (state, instr, temp, LUNSIGNED);
+        //state->Reg[BITS(12, 15)] = ARMul_LoadByte(state, state->Reg[BITS(16, 19)]);
+        //printf("ldrexb\n");
+        //printf("instr is %x rm is %d\n", instr, BITS(16, 19));
+        //exit(-1);
 		return 1;
-	}
+    }
 	break;
       }
 /* add end */
@@ -6124,7 +6381,12 @@ handle_v6_insn (ARMul_State * state, ARMword instr)
 	} else {
 	    /* UXTAH */
 	    /* state->Reg[BITS (12, 15)] = state->Reg [BITS (16, 19)] + Rm; */
-	    state->Reg[BITS (12, 15)] = state->Reg[BITS (16, 19)] >> (8 * (BITS(10, 11))) + Rm;
+//            printf("rd is %x rn is %x rm is %x rotate is %x\n", state->Reg[BITS (12, 15)], state->Reg[BITS (16, 19)]
+//                   , Rm, BITS(10, 11));
+//            printf("icounter is %lld\n", state->NumInstrs);
+	    state->Reg[BITS (12, 15)] = (state->Reg[BITS (16, 19)] >> (8 * (BITS(10, 11)))) + Rm;
+//        printf("rd is %x\n", state->Reg[BITS (12, 15)]);
+//        exit(-1);
 	}
       }
       return 1;

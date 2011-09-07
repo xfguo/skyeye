@@ -40,6 +40,8 @@ check_perms (ARMul_State *state, int ap, int read)
 	s = state->mmu.control & CONTROL_SYSTEM;
 	r = state->mmu.control & CONTROL_ROM;
 	/* chy 2006-02-15 , should consider system mode, don't conside 26bit mode */
+//    printf("ap is %x, user is %x, s is %x, read is %x\n", ap, user, s, read);
+//    printf("mode is %x\n", state->Mode);
 	user = (state->Mode == USER32MODE) || (state->Mode == USER26MODE) || (state->Mode == SYSTEM32MODE);
 
 	switch (ap) {
@@ -155,6 +157,15 @@ mmu_translate (ARMul_State *state, ARMword virt_addr, ARMword *phys_addr, int *a
 		/* l1desc = mem_read_word (state, l1addr); */
 
 		bus_read(32, l1addr, &l1desc);
+        #if 0
+        if (virt_addr == 0xc000d2bc) {
+                printf("mmu_control is %x\n", state->mmu.translation_table_ctrl);
+                printf("mmu_table_0 is %x\n", state->mmu.translation_table_base0);
+                printf("mmu_table_1 is %x\n", state->mmu.translation_table_base1);
+                printf("l1addr is %x l1desc is %x\n", l1addr, l1desc);
+ //               exit(-1);
+        }
+        #endif
 		switch (l1desc & 3) {
 		case 0:
 		case 3:
@@ -180,6 +191,7 @@ mmu_translate (ARMul_State *state, ARMword virt_addr, ARMword *phys_addr, int *a
 				/* chy 2003-09-02 for xscale */
 				*ap = (l2desc >> 4) & 0x3;
 				*sop = 1;	/* page */
+
 				switch (l2desc & 3) {
 				case 0:
 					return PAGE_TRANSLATION_FAULT;
@@ -200,7 +212,20 @@ mmu_translate (ARMul_State *state, ARMword virt_addr, ARMword *phys_addr, int *a
 
 			*ap = (l1desc >> 10) & 3;
 			*sop = 0; 	/* section */
-			if (l1desc & 0x30000)
+            #if 0
+            if (virt_addr == 0xc000d2bc) {
+                    printf("mmu_control is %x\n", state->mmu.translation_table_ctrl);
+                    printf("mmu_table_0 is %x\n", state->mmu.translation_table_base0);
+                    printf("mmu_table_1 is %x\n", state->mmu.translation_table_base1);
+                    printf("l1addr is %x l1desc is %x\n", l1addr, l1desc);
+//                    printf("l2addr is %x l2desc is %x\n", l2addr, l2desc);
+                    printf("ap is %x, sop is %x\n", *ap, *sop);
+                    printf("mode is %d\n", state->Mode);
+//                      exit(-1);
+            }
+            #endif
+
+            if (l1desc & 0x30000)
 				*phys_addr = (l1desc & 0xFF000000) | (virt_addr & 0x00FFFFFF);
 			else
 				*phys_addr = (l1desc & 0xFFF00000) | (virt_addr & 0x000FFFFF);
@@ -249,7 +274,9 @@ arm1176jzf_s_mmu_load_instr (ARMul_State *state, ARMword va, ARMword *instr)
 
 	va = mmu_pid_va_map (va);
 	if (MMU_Enabled) {
-		/* align check */
+//            printf("MMU enabled.\n");
+//            sleep(1);
+            /* align check */
 		if ((va & (WORD_SIZE - 1)) && MMU_Aligned) {
 			d_msg ("align\n");
 			return ALIGNMENT_FAULT;
@@ -285,6 +312,8 @@ arm1176jzf_s_mmu_load_instr (ARMul_State *state, ARMword va, ARMword *instr)
 
 	/*if MMU disabled or C flag is set alloc cache */
 	if (MMU_Disabled) {
+//            printf("MMU disabled.\n");
+//            sleep(1);
 		pa = va;
 	}
 
@@ -333,6 +362,9 @@ arm1176jzf_s_mmu_read (ARMul_State *state, ARMword va, ARMword *data,
 	real_va = va;
 	/* if MMU disabled, memory_read */
 	if (MMU_Disabled) {
+//            printf("MMU disabled cpu_id:%x addr:%x.\n", state->mmu.process_id, va);
+//            sleep(1);
+
 		/* *data = mem_read_word(state, va); */
 		if (datatype == ARM_BYTE_TYPE)
 			/* *data = mem_read_byte (state, va); */
@@ -350,6 +382,8 @@ arm1176jzf_s_mmu_read (ARMul_State *state, ARMword va, ARMword *data,
 
 		return 0;
 	}
+//    printf("MMU enabled.\n");
+//    sleep(1);
 
 	/* align check */
 	if (((va & 3) && (datatype == ARM_WORD_TYPE) && MMU_Aligned) ||
@@ -367,9 +401,12 @@ arm1176jzf_s_mmu_read (ARMul_State *state, ARMword va, ARMword *data,
 	fault = mmu_translate (state, va, &pa, &ap, &sop);
 	if (fault) {
 		d_msg ("translate\n");
+        printf("mmu read fault at %x\n", va);
+        printf("fault is %d\n", fault);
+        exit(-1);
 		return fault;
 	}
-
+//    printf("va is %x pa is %x\n", va, pa);
 
 	/* no tlb, only check permission */
 	if (!check_perms(state, ap, 1)) {
@@ -401,6 +438,13 @@ arm1176jzf_s_mmu_read (ARMul_State *state, ARMword va, ARMword *data,
 		printf ("SKYEYE:2 arm1176jzf_s_mmu_read error: unknown data type %d\n", datatype);
 		skyeye_exit (-1);
 	}
+#if 0
+    if (state->pc == 0xc011a868) {
+            printf("pa is %x value is %x size is %x\n", pa, data, datatype);
+            printf("icounter is %lld\n", state->NumInstrs);
+//            exit(-1);
+    }
+#endif
 
 	return 0;
 }
@@ -483,8 +527,11 @@ arm1176jzf_s_mmu_write (ARMul_State *state, ARMword va, ARMword data,
 	fault = mmu_translate (state, va, &pa, &ap, &sop);
 	if (fault) {
 		d_msg ("translate\n");
+        printf("mmu write fault at %x\n", va);
+        exit(-1);
 		return fault;
 	}
+//    printf("va is %x pa is %x\n", va, pa);
 
 	/* no tlb, only check permission */
 	if (!check_perms(state, ap, 0)) {
@@ -503,7 +550,18 @@ arm1176jzf_s_mmu_write (ARMul_State *state, ARMword va, ARMword data,
 		return fault;
 	}
 #endif
-
+#if 0
+    if (pa <= 0x502860ff && (pa + 1 << datatype) > 0x502860ff) {
+            printf("pa is %x value is %x size is %x\n", pa, data, datatype);
+    }
+#endif
+#if 0
+    if (state->pc == 0xc011a878) {
+            printf("write pa is %x value is %x size is %x\n", pa, data, datatype);
+            printf("icounter is %lld\n", state->NumInstrs);
+            exit(-1);
+    }
+#endif
 	if (datatype == ARM_BYTE_TYPE) {
 		/* mem_write_byte (state,
 				(pa | (real_va & 3)),
@@ -521,7 +579,13 @@ arm1176jzf_s_mmu_write (ARMul_State *state, ARMword va, ARMword data,
 	else if (datatype == ARM_WORD_TYPE)
 		/* mem_write_word (state, pa, data); */
 		bus_write(32, pa, data);
-
+#if 0
+    if (state->NumInstrs > 236403) {
+            printf("write memory\n");
+                printf("pa is %x value is %x size is %x\n", pa, data, datatype);
+                printf("icounter is %lld\n", state->NumInstrs);
+    }
+#endif
 		return 0;
 }
 
