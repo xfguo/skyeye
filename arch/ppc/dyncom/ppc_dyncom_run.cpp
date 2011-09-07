@@ -8,7 +8,6 @@
 #include <fstream>
 #include <sstream>
 
-
 #include <llvm/LLVMContext.h>
 #include <llvm/Type.h>
 #include <llvm/Function.h>
@@ -59,6 +58,7 @@ e500_core_t* get_core_from_dyncom_cpu(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)(cpu->cpu_data->obj);
 	return core;
 }
+/* FIXME: Only 4k page is supported. */
 static bool_t is_inside_page(cpu_t *cpu, addr_t a)
 {
 	return ((a & 0xfffff000) == cpu->current_page_phys) ? True : False;
@@ -209,12 +209,18 @@ static arch_func_t powerpc_arch_func = {
 	arch_powerpc_get_reg,
 	NULL,
 };
+
+/* Check address load/store instruction access.*/
+static uint32_t ppc_check_mm(cpu_t *cpu, uint32_t instr){
+	return 0;
+}
 static arch_mem_ops_t ppc_dyncom_mem_ops = {
 	is_inside_page,
 	is_page_start,
 	is_page_end,
 	ppc_read_memory,
 	ppc_write_memory,
+	ppc_check_mm,
 	arch_powerpc_effective_to_physical
 };
 
@@ -224,7 +230,7 @@ int ppc_dyncom_start_debug_flag = 0;
 *
 * @param cpu the instance of cpu_t
 */
-static void ppc_debug_func(cpu_t* cpu){
+static uint32_t ppc_debug_func(cpu_t* cpu){
 	e500_core_t* core = (e500_core_t*)get_cast_conf_obj(cpu->cpu_data, "e500_core_t");
 	if(ppc_dyncom_start_debug_flag
 			&& core->pir == DEBUG_CORE
@@ -282,7 +288,7 @@ extern void ppc_dyncom_diff_log(const unsigned long long icount,
 		ppc_dyncom_diff_log(core->icount, *(addr_t*)cpu->rf.phys_pc, core->gpr, &core->cr);
 #endif
 	core->icount ++;
-	return;
+	return 0;
 }
 /**
  * @brief for llvm ir invoking
@@ -391,6 +397,10 @@ arch_ppc_dyncom_mmu_set_sdr1(cpu_t *cpu, BasicBlock *bb, uint32_t rS)
 	params.push_back(CONST(rS));
 	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_arch_func[PPC_DYNCOM_CALLOUT_MMU_SET_SDR1], params.begin(), params.end(), "", bb);
 }
+void ppc_switch_mode(cpu_t *cpu)
+{
+	return;
+}
 
 void ppc_dyncom_init(e500_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, powerpc_arch_func);
@@ -412,6 +422,7 @@ void ppc_dyncom_init(e500_core_t* core){
 		cpu->dyncom_engine->code_end = 0x20000000;
 	}
 	cpu->mem_ops = ppc_dyncom_mem_ops;
+	cpu->switch_mode = ppc_switch_mode;
 	cpu->cpu_data = get_conf_obj_by_cast(core, "e500_core_t");
 	/* Initilize different register set for different core */
 	cpu->rf.pc = &core->pc;
