@@ -129,9 +129,9 @@ arch_func_t arch_func_mips = {
 	NULL
 };
 
-static void mips_debug_func(cpu_t* cpu)
+static uint32_t mips_debug_func(cpu_t* cpu)
 {
-
+	return 0;
 }
 
 void mips_dyncom_init(mips_core_t *core)
