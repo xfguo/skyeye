@@ -190,3 +190,61 @@ void skyeye_log(log_level_t log_level,const char* func_name, char* format, ...){
 		printf("In %s, %s\n", func_name, buf);
 	}
 }
+
+void skyeye_printf_in_color(COLOR_TYPE type, char *format, ...)
+{
+	static char buf[1024];
+	memset(buf, '\0', 1024);
+	va_list args;
+	va_start(args, format);
+	vsprintf(buf, format, args);
+	va_end(args);
+	switch (type) {
+	case BLACK:
+		_debug_in_black("%s", buf);
+		break;
+	case BLUE:
+		_debug_in_blue("%s", buf);
+		break;
+	case BROWN:
+		_debug_in_brown("%s", buf);
+		break;
+	case CYAN:
+		_debug_in_cyan("%s", buf);
+		break;
+	case DARK_GRAY:
+		_debug_in_dark_gray("%s", buf);
+		break;
+	case GREEN:
+		_debug_in_green("%s", buf);
+		break;
+	case LIGHT_BLUE:
+		_debug_in_light_blue("%s", buf);
+		break;
+	case LIGHT_CYAN:
+		_debug_in_light_cyan("%s", buf);
+		break;
+	case LIGHT_GRAY:
+		_debug_in_light_gray("%s", buf);
+		break;
+	case LIGHT_GREEN:
+		_debug_in_light_green("%s", buf);
+		break;
+	case LIGHT_PURPLE:
+		_debug_in_light_purple("%s", buf);
+		break;
+	case LIGHT_RED:
+		_debug_in_light_red("%s", buf);
+		break;
+	case PURPLE:
+		_debug_in_purple("%s", buf);
+		break;
+	case RED:
+		_debug_in_red("%s", buf);
+		break;
+	default:
+		fprintf(stderr, "Not supported color type %d\n", type);
+		break;
+	}
+}
+
