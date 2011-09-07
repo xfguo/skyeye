@@ -1,1 +1,1 @@
-BasicBlock *cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap);
+BasicBlock *cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap, BasicBlock *bb_timeout);

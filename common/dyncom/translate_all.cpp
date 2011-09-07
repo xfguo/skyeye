@@ -32,7 +32,7 @@
  * @return dispatch basic block 
  */
 BasicBlock *
-cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
+cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap, BasicBlock *bb_timeout)
 {
 	// find all instructions that need labels and create basic blocks for them
 	int bbs = 0;
@@ -62,7 +62,7 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 		LoadInst* v_old_icount = new LoadInst(cpu->ptr_OLD_ICOUNTER, "", false, bb_dispatch);
 		Value *cycles =	BinaryOperator::Create(Instruction::Sub, v_icount, v_old_icount, "", bb_dispatch);
 		Value *gout = new ICmpInst(*bb_dispatch, ICmpInst::ICMP_UGT, cycles, CONST(TIMEOUT_THRESHOLD), "");
-		BranchInst::Create(bb_trap, bb_real_dispatch, gout, bb_dispatch);
+		BranchInst::Create(bb_timeout, bb_real_dispatch, gout, bb_dispatch);
 		// create dispatch basicblock
 		Value *v_pc = new LoadInst(cpu->ptr_PHYS_PC, "", false, bb_real_dispatch);
 		sw = SwitchInst::Create(v_pc, bb_ret, bbs, bb_real_dispatch);
@@ -112,14 +112,22 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 			}
 			#endif
 			/* get not-taken basic block */
-			if (tag & (TAG_CONDITIONAL | TAG_POSTCOND | TAG_LAST_INST))
+			if (tag & (TAG_CONDITIONAL | TAG_POSTCOND | TAG_LAST_INST | TAG_MEMORY))
  				bb_next = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, next_pc, bb_ret, BB_TYPE_NORMAL);
+//			if (!(tag & TAG_BRANCH)) {
+//			if (!(tag & TAG_COND_BRANCH) && !(tag & TAG_BRANCH)) {
+//				arm_emit_store_pc(cpu, cur_bb, pc);
+//			}
+//			}
+#if 1
 #if 1 /* enabled for OS running */
+//            printf("new pc is %x\n", pc);
 			emit_store_pc(cpu, cur_bb, pc);
 #else
 			if(!(tag & TAG_CONTINUE))
 				//update pc
 				emit_store_pc(cpu, cur_bb, pc);
+#endif
 #endif
 
 #if ENABLE_ICOUNTER
@@ -127,16 +135,21 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap)
 #endif
 // Only for debug all the execution instructions
 #if ENABLE_DEBUG_ME 
-			arch_debug_me(cpu, cur_bb);
+			cur_bb = arch_debug_me(cpu, cur_bb, bb_trap);
 #endif
 
 			if((tag & TAG_EXCEPTION) && !is_user_mode(cpu))
 				emit_store_pc(cpu, cur_bb, next_pc);
-			if((tag & TAG_END_PAGE) && !is_user_mode(cpu))
+			if((tag & TAG_END_PAGE) && !is_user_mode(cpu)) {
+				printf("TAG_END_PAGE next pc is %x\n", next_pc);
 				emit_store_pc_end_page(cpu, tag, cur_bb, next_pc);
-
+			}
 			bb_cont = translate_instr(cpu, pc, next_pc, tag, bb_target, bb_trap, bb_next, bb_ret, cur_bb);
-
+			if (bb_cont && (tag & TAG_MEMORY) && !(tag & TAG_BRANCH)) {
+				if (!bb_cont->getTerminator()) {
+					BranchInst::Create(bb_next, bb_cont);
+				}
+			}
 			pc = next_pc;
 		} while (
 					/* new basic block starts here (and we haven't translated it yet)*/
