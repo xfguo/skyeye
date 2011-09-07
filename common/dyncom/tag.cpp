@@ -159,6 +159,45 @@ check_tag_memory_integrity(cpu_t *cpu, addr_t addr)
 	}
 }
 
+/* check instruction at the address is translated or not. */
+bool
+is_translated_code(cpu_t *cpu, addr_t addr)
+{
+	if (!is_tag_level2_table_allocated(cpu, addr)) {
+//		init_tag_level2_table(cpu, addr);
+		return false;
+	}
+	if (!is_tag_level3_table_allocated(cpu, addr)) {
+//		init_tag_level3_table(cpu, addr);
+		return false;
+	}
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(addr);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(addr);
+	uint32_t level3_offset = TAG_LEVEL3_OFFSET(addr);
+	tag_t tag = cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset];
+	if (tag & TAG_TRANSLATED) {
+		return true;
+	} else
+		return false;
+}
+
+/* In os simulation ,tag depth is 1, so we can find out the first instruction of jit function
+   by checking tag attribute backward in tag table. If tag has TAG_ENTRY, it is start of jit.*/
+addr_t find_bb_start(cpu_t *cpu, addr_t addr)
+{
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(addr);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(addr);
+	uint32_t level3_offset = TAG_LEVEL3_OFFSET(addr);
+	tag_t tag = cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset];
+	int i = level3_offset;
+	while (!(tag & TAG_ENTRY) && i) {
+		i --;
+		tag = cpu->dyncom_engine->tag_table[level1_offset][level2_offset][i];
+	}
+	return (level1_offset << TAG_LEVEL1_TABLE_SHIFT) |
+		(level2_offset << TAG_LEVEL2_TABLE_SHIFT) |
+		(i);
+}
 /**
  * @brief Determine an address is in code area or not
  *
@@ -205,17 +244,35 @@ xor_tag(cpu_t *cpu, addr_t a, tag_t t)
 	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
 	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset] &= ~t;
 }
-void clear_tag(cpu_t *cpu)
+void clear_tag(cpu_t *cpu, addr_t a)
 {
 	addr_t nitems, i;
-
-	nitems = cpu->dyncom_engine->code_end - cpu->dyncom_engine->code_start;
-	//nitems = cpu->dyncom_engine->tag_end - cpu->dyncom_engine->tag_start + 1;
-	//uint32_t offset = arch_xtensa_address_to_offset(cpu->dyncom_engine->tag_start);
-	for (i = 0; i < nitems; i++)
-		cpu->dyncom_engine->tag[i] = TAG_UNKNOWN;
+	/* NEW_PC_NONE is not a real address. Some branch/call address could not be known at translate-time*/
+	if (a == NEW_PC_NONE) {
+		return;
+	}
+	check_tag_memory_integrity(cpu, a);
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(a);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
+	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
+	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset] = TAG_UNKNOWN;
 }
 
+void clear_tag_page(cpu_t *cpu, addr_t a)
+{
+	addr_t nitems, i;
+	/* NEW_PC_NONE is not a real address. Some branch/call address could not be known at translate-time*/
+	if (a == NEW_PC_NONE) {
+		return;
+	}
+	check_tag_memory_integrity(cpu, a);
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(a);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
+	for (i = 0; i < 4096; i++) {
+		/* clear all instructions tag except TAG_ENTRY & TAG_TRANSLATED */
+		cpu->dyncom_engine->tag_table[level1_offset][level2_offset][i] &= TAG_TRANSLATED | TAG_ENTRY;
+	}
+}
 /* access functions */
 /**
  * @brief Get the tag of an address 
@@ -312,6 +369,9 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 //			disasm_instr(cpu, pc);
 		}
 
+		/* clear tag when instruction re-transalted. */
+		tag = get_tag(cpu, pc);
+
 		bytes = cpu->f.tag_instr(cpu, pc, &tag, &new_pc, &next_pc);
 
 		or_tag(cpu, pc, tag | TAG_CODE);
@@ -328,6 +388,9 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 			}
 		}
 #endif
+		if (tag & TAG_MEMORY) {
+			or_tag(cpu, next_pc, TAG_AFTER_COND);
+		}
 		if (tag & (TAG_CONDITIONAL))
 			or_tag(cpu, next_pc, TAG_AFTER_COND);
 
@@ -400,6 +463,7 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 	save_startbb_addr(cpu, pc);
 	cpu->dyncom_engine->tag_end = pc;
 	LOG("tag end at %x\n", pc);
+    LOG("next pc is %x\n", next_pc);
 }
 /**
  * @brief Start tag from current pc.
