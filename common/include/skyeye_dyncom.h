@@ -104,6 +104,7 @@ typedef bool_t			(*fp_is_page_start)(addr_t addr);
 typedef bool_t			(*fp_is_page_end)(addr_t addr);
 typedef uint32_t 		(*fp_read_memory_t)(cpu_t *cpu, addr_t addr, uint32_t size);
 typedef void 			(*fp_write_memory_t)(cpu_t *cpu, addr_t addr, uint32_t value, uint32_t size);
+typedef uint32_t		(*fp_check_mm_t)(cpu_t *cpu, uint32_t instr);
 typedef int				(*fp_effective_to_physical)(struct cpu *cpu, uint32_t addr, uint32_t *result);
 typedef struct {
 	fp_is_inside_page is_inside_page;
@@ -111,6 +112,7 @@ typedef struct {
 	fp_is_page_end is_page_end;
 	fp_read_memory_t read_memory;
 	fp_write_memory_t write_memory;
+	fp_check_mm_t	check_mm;
 	fp_effective_to_physical effective_to_physical;
 } arch_mem_ops_t;
 
@@ -147,7 +149,7 @@ enum {
 				 // to avoid confusing the client about the number of
 				 // registers available.
 	CPU_REG_SPR,
-	MAX_REG_NUM
+	MAX_REG_TYPES
 };
 // @@@END_DEPRECATION
 
@@ -221,8 +223,8 @@ typedef struct cpu_archinfo {
 	uint32_t default_page_size;
 
 	// @@@BEGIN_DEPRECATION
-	uint32_t register_count[MAX_REG_NUM];
-	uint32_t register_size[MAX_REG_NUM];
+	uint32_t register_count[MAX_REG_TYPES];
+	uint32_t register_size[MAX_REG_TYPES];
 	// @@@END_DEPRECATION
 
 	cpu_register_layout_t const *register_layout;
@@ -247,7 +249,9 @@ typedef struct cpu_archrf {
  * type of the debug callback; second parameter is
  * pointer to CPU specific register struct
  */
-typedef void (*debug_function_t)(cpu_t*);
+typedef uint32_t (*debug_function_t)(cpu_t*);
+
+typedef void (*switch_mode_function_t)(cpu_t*);
 /*
  * type of the syscall callback; second parameter is
  * pointer to CPU specific register struct
@@ -317,6 +321,13 @@ static inline void clear_fmap(fast_map fmap)
 		}
 	}
 }
+
+inline void clear_cache_item(fast_map fmap, addr_t addr)
+{
+	for (int i = 0; i < 4096; i ++) {
+		fmap[HASH_MAP_INDEX_L1(addr)][HASH_MAP_INDEX_L2(addr)][i] = 0;
+	}
+}
 #else
 /* This map save <address, native code function pointer> */
 typedef std::map<addr_t, void *> fast_map;
@@ -377,6 +388,7 @@ typedef struct dyncom_engine{
 
 	PointerType *type_pread_memory;
 	PointerType *type_pwrite_memory;
+	PointerType *type_check_mm;
 
 	Value *ptr_RAM;
 	Value *ptr_grf; // gpr register file
@@ -384,6 +396,7 @@ typedef struct dyncom_engine{
 	Value *ptr_frf; // fp register file
 	Value *ptr_func_read_memory;
 	Value *ptr_func_write_memory;
+	Value *ptr_func_check_mm;
 
 	/* arch functions are for each architecture to declare it's own functions
 	   which can be invoked in llvm IR.Usually,the functions to be invoked are
@@ -455,6 +468,13 @@ typedef struct cpu {
 	dyncom_engine_t* dyncom_engine;
 	debug_function_t debug_func;
 	syscall_function_t syscall_func;
+	switch_mode_function_t switch_mode;
+
+	/* This flag used in debug mode. Sync with interpreter mode. */
+	uint32_t check_int_flag;
+
+	FILE *fm_log;
+	FILE *src_log;
 } cpu_t;
 
 enum {
