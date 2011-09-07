@@ -12,4 +12,12 @@ char *get_sym(generic_address_t address);
 * @return the target name in bfd library
 */
 char* get_bfd_target(const char* arch_name);
+
+struct symbolInfo {
+        struct symbolInfo *next;
+        uint8 *name;
+        uint32_t address;
+};
+void _print_func_name(uint32_t address);
+
 #endif
