@@ -334,7 +334,6 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 	if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
 		fprintf(stderr, "unlock error\n");
 	}
-
 #else
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
@@ -351,13 +350,13 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 static void
 cpu_translate_function(cpu_t *cpu, addr_t addr)
 {
-	BasicBlock *bb_ret, *bb_trap, *label_entry, *bb_start;
-
+	BasicBlock *bb_ret, *bb_trap, *label_entry, *bb_start, *bb_timeout;
+	static int jit_num = 0;
 	//addr_t start_addr = cpu->f.get_pc(cpu, cpu->rf.grf);
 	addr_t start_addr = addr;
 
 	/* create function and fill it with std basic blocks */
-	cpu->dyncom_engine->cur_func = cpu_create_function(cpu, "jitmain", &bb_ret, &bb_trap, &label_entry);
+	cpu->dyncom_engine->cur_func = cpu_create_function(cpu, "jitmain", &bb_ret, &bb_trap, &bb_timeout, &label_entry);
 
 	/* TRANSLATE! */
 	UPDATE_TIMING(cpu, TIMER_FE, true);
@@ -366,19 +365,22 @@ cpu_translate_function(cpu_t *cpu, addr_t addr)
 	} else if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP_BB) {
 		bb_start = cpu_translate_singlestep_bb(cpu, bb_ret, bb_trap);
 	} else {
-		bb_start = cpu_translate_all(cpu, bb_ret, bb_trap);
+		bb_start = cpu_translate_all(cpu, bb_ret, bb_trap, bb_timeout);
 	}
 	UPDATE_TIMING(cpu, TIMER_FE, false);
 
 	/* finish entry basicblock */
 	BranchInst::Create(bb_start, label_entry);
 
+	jit_num++;
+	if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_PRINT_IR)
+		if (jit_num > 11761) {
+			cpu->dyncom_engine->mod->dump();
+		}
+
 	/* make sure everything is OK */
 	if (cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_VERIFY)
 		verifyFunction(*cpu->dyncom_engine->cur_func, AbortProcessAction);
-
-	if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_PRINT_IR)
-		cpu->dyncom_engine->mod->dump();
 
 	if (cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_OPTIMIZE) {
 		UPDATE_TIMING(cpu, TIMER_OPT, true);
@@ -418,7 +420,7 @@ cpu_translate(cpu_t *cpu, addr_t addr)
 }
 
 //typedef int (*fp_t)(uint8_t *RAM, void *grf, void *frf, read_memory_t readfp, write_memory_t writefp);
-typedef int (*fp_t)(uint8_t *RAM, void *grf, void *srf, void *frf, fp_read_memory_t readfp, fp_write_memory_t writefp);
+typedef int (*fp_t)(uint8_t *RAM, void *grf, void *srf, void *frf, fp_read_memory_t readfp, fp_write_memory_t writefp, fp_check_mm_t checkfp);
 
 #ifdef __GNUC__
 void __attribute__((noinline))
@@ -442,7 +444,7 @@ cpu_run(cpu_t *cpu)
 	addr_t pc = 0, orig_pc = 0, phys_pc = 0;
 	uint64_t icounter, orig_icounter;
 	uint32_t i;
-	int ret;
+	int ret = 0;
 	bool success;
 	bool do_translate = true;
 	fp_t pfunc = NULL;
@@ -453,11 +455,23 @@ cpu_run(cpu_t *cpu)
 	/* try to find the entry in all functions */
 	while(true) {
 		pc = cpu->f.get_pc(cpu, cpu->rf.grf);
+//		if (cpu->icounter > 1690000) {
+//			printf("in %s\nret is %d current_page_phys is %x\ncurrent_page_effec is %x\n", 
+//			       __FUNCTION__, ret, cpu->current_page_phys, cpu->current_page_effec);
+//		}
+		#if 0
+		if(!is_user_mode(cpu)){
+			cpu->current_page_phys = phys_pc & 0xfffff000;
+			cpu->current_page_effec = pc & 0xfffff000; 
+		}
+		#endif
 		int ret = cpu->mem_ops.effective_to_physical(cpu, pc, &phys_pc);
 		/* if ISI exception happened here, we mush set pc to phys_pc which is
 		 * the exception handler address.*/
-		if(ret)
+		if(ret) {
 			pc = phys_pc;
+			return JIT_RETURN_TRAP;
+		}
 		*(addr_t*)cpu->rf.phys_pc = phys_pc;
 		if(!is_user_mode(cpu)){
 			cpu->current_page_phys = phys_pc & 0xfffff000;
@@ -485,7 +499,12 @@ cpu_run(cpu_t *cpu)
 #endif
 		UPDATE_TIMING(cpu, TIMER_RUN, true);
 		LOG("******Run jit 0x%x\n", pc);
-		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, cpu->mem_ops.read_memory, cpu->mem_ops.write_memory);
+		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, cpu->mem_ops.read_memory, cpu->mem_ops.write_memory, cpu->mem_ops.check_mm);
+		if (cpu->icounter > 248765780) {
+//			printf("out of jit ret is %d icounter is %lld\n", ret, cpu->icounter);
+//			return ret;
+		}
+		cpu->switch_mode(cpu);
 		UPDATE_TIMING(cpu, TIMER_RUN, false);
 		if (ret != JIT_RETURN_FUNCNOTFOUND)
 			return ret;
@@ -545,7 +564,7 @@ static void debug_func_init(cpu_t *cpu){
 	PointerType *type_intptr = PointerType::get(cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX()), 0);
 	type_func_debug_args.push_back(type_intptr);	/* intptr *cpu */
 	FunctionType *type_func_debug_callout = FunctionType::get(
-		Type::getVoidTy(cpu->dyncom_engine->mod->getContext()),	//return
+		Type::getInt32Ty(cpu->dyncom_engine->mod->getContext()),	//return
 		type_func_debug_args,	/* Params */
 		false);		      	/* isVarArg */
 	Constant *debug_const = cpu->dyncom_engine->mod->getOrInsertFunction("debug_output",	//function name
