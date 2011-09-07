@@ -653,17 +653,22 @@ void arch_inc_icounter(cpu_t *cpu, BasicBlock *bb)
  * @param cpu CPU core structure
  * @param bb basic block to store llvm IR
  */
-void
-arch_debug_me(cpu_t *cpu, BasicBlock *bb)
+BasicBlock *
+arch_debug_me(cpu_t *cpu, BasicBlock *bb, BasicBlock *exit_bb)
 {
 	if (cpu->dyncom_engine->ptr_arch_func[0] == NULL)
-		return;
+		return bb;
 	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
 	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
 	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
 	// XXX synchronize cpu context!
-	CallInst::Create(cpu->dyncom_engine->ptr_arch_func[0], v_cpu_ptr, "", bb);
+	Value *exit_val = CallInst::Create(cpu->dyncom_engine->ptr_arch_func[0], v_cpu_ptr, "", bb);
+	Value *cond = ICMP_EQ(exit_val, CONST(0));
+	BasicBlock *next_bb = BasicBlock::Create(_CTX(), "debug_exit", cpu->dyncom_engine->cur_func, 0);
+	arch_branch(1, next_bb, exit_bb, cond, bb);
+	return next_bb;
 }
+
 /**
  * @brief Generate the write memory llvm IR 
  *
@@ -776,4 +781,33 @@ arch_syscall(cpu_t *cpu, BasicBlock *bb, uint32_t num)
 	// XXX synchronize cpu context!
 	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_arch_func[1], params.begin(), params.end(), "", bb);
 	//CallInst::Create(cpu->dyncom_engine->ptr_arch_func[1], v_cpu_ptr, "", bb);
+}
+
+BasicBlock *
+arch_check_mm(cpu_t *cpu, uint32_t instr, BasicBlock *bb, BasicBlock *next_bb, BasicBlock *exit_bb)
+{
+	#if 1
+	if (cpu->dyncom_engine->ptr_func_check_mm == NULL) {
+		printf("No check mm\n");
+		return bb;
+	}
+	#endif
+	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
+	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
+	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
+	std::vector<Value *> params;
+	params.push_back(v_cpu_ptr);
+	params.push_back(CONST(instr));
+	// XXX synchronize cpu context!
+	Value *exit_val = CallInst::Create(cpu->dyncom_engine->ptr_func_check_mm, params.begin(), params.end(), "", bb);
+//    return bb;
+	Value *cond = ICMP_EQ(exit_val, CONST(0));
+	BasicBlock *main_bb = BasicBlock::Create(_CTX(), "load_store", cpu->dyncom_engine->cur_func, 0);
+	if (next_bb) {
+		arch_branch(1, main_bb, exit_bb, cond, bb);
+	} else {
+		printf("No next_bb");
+		exit(-1);
+	}
+	return main_bb;
 }
