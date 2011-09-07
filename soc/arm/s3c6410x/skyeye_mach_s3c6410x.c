@@ -120,6 +120,7 @@ s3c6410x_io_reset (generic_arch_t *arch_instance)
 		io.uart[i].utrstat = UART_UTRSTAT_INIT;
 	}
 
+	io.tc_prescale = 1;
 	/* time reigsters reset */
 	io.timer.tcfg0 = 0x101;
 
@@ -140,58 +141,61 @@ static void
 s3c6410x_io_do_cycle (generic_arch_t *state)
 {
 	int i;
-
-	/* 0x100000 equals [bit:20] = 1 start timer 4*/
-	if ((io.timer.tcon & 0x100000) != 0) {
-		/*tcntx is the orignal value we set, it equals tcntbx firstly*/
-		io.timer.tcnt[4]--;
-		if (io.timer.tcnt[4] <= 0) {
-			/* whe the tcntx is 0, reset the timer tcntx as the value of
-			 * tcntb
-			 */
-			io.timer.tcnt[4] = io.timer.tcntb[4];
-			/*timer 4 hasn't tcmp */
-			io.timer.tcnto[4] = io.timer.tcntb[4];
-			/* Timer4 request status*/
-
-			/* set timer4 interrupt */
-			io.vic0rawintr |= 1 << INT_TIMER4;
-			io.vic0irqstatus |=  ((1 << INT_TIMER4) & ~(io.vic0intselect) & io.vic0intenable);
-			io.vic0fiqstatus |=  ((1 << INT_TIMER4) & io.vic0intselect & io.vic0intenable);
-
-			s3c6410x_update_int (state);
-			return;
+	io.tc_prescale --;
+	if (io.tc_prescale < 0) {
+		io.tc_prescale = 1;
+		/* 0x100000 equals [bit:20] = 1 start timer 4*/
+		if ((io.timer.tcon & 0x100000) != 0) {
+			/*tcntx is the orignal value we set, it equals tcntbx firstly*/
+			io.timer.tcnt[4]--;
+			if (io.timer.tcnt[4] <= 0) {
+				/* whe the tcntx is 0, reset the timer tcntx as the value of
+				 * tcntb
+				 */
+				io.timer.tcnt[4] = io.timer.tcntb[4];
+				/*timer 4 hasn't tcmp */
+				io.timer.tcnto[4] = io.timer.tcntb[4];
+				/* Timer4 request status*/
+	
+				/* set timer4 interrupt */
+				io.vic0rawintr |= 1 << INT_TIMER4;
+				io.vic0irqstatus |=  ((1 << INT_TIMER4) & ~(io.vic0intselect) & io.vic0intenable);
+				io.vic0fiqstatus |=  ((1 << INT_TIMER4) & io.vic0intselect & io.vic0intenable);
+	
+				s3c6410x_update_int (state);
+				return;
+			}
 		}
-	}
-
-	for (i = 0; i < 3; i++) {
-		if (((io.uart[i].utrstat & 0x1) == 0x0) && ((io.uart[i].ucon & 0x3) == 0x1)) {
-			struct timeval tv;
-			unsigned char buf;
-
-			tv.tv_sec = 0;
-			tv.tv_usec = 0;
-
-			if (skyeye_uart_read(i, &buf, 1, &tv, NULL) > 0) {
-				/* convert ctrl+c to ctrl+a. */
-				if (buf == 1) buf = 3;
-				io.uart[i].urxh = buf;
-
-				/* Receiver Ready
-				 * */
-				io.uart[i].ufstat |= (0x1); /* 2007-02-09 by Anthony Lee : for 1 bytes */
-
-				/* pending usart0 interrupt
-				 * */
-				io.uart[i].uintp |= (0x1 & ~io.uart[i].uintm);
-				io.uart[i].uintsp |= 0x1;
-
-				if (io.uart[i].uintp) {
-					io.vic1rawintr	 |=  1 << (INT_UART0 + i);
-					io.vic1irqstatus |=  ((1 << (INT_UART0 + i)) & ~(io.vic1intselect) & io.vic1intenable);
-					io.vic1fiqstatus |=  ((1 << (INT_UART0 + i)) & io.vic1intselect & io.vic1intenable);
-
-					s3c6410x_update_int (state);
+	
+		for (i = 0; i < 3; i++) {
+			if (((io.uart[i].utrstat & 0x1) == 0x0) && ((io.uart[i].ucon & 0x3) == 0x1)) {
+				struct timeval tv;
+				unsigned char buf;
+	
+				tv.tv_sec = 0;
+				tv.tv_usec = 0;
+	
+				if (skyeye_uart_read(i, &buf, 1, &tv, NULL) > 0) {
+					/* convert ctrl+c to ctrl+a. */
+					if (buf == 1) buf = 3;
+					io.uart[i].urxh = buf;
+	
+					/* Receiver Ready
+					 * */
+					io.uart[i].ufstat |= (0x1); /* 2007-02-09 by Anthony Lee : for 1 bytes */
+	
+					/* pending usart0 interrupt
+					 * */
+					io.uart[i].uintp |= (0x1 & ~io.uart[i].uintm);
+					io.uart[i].uintsp |= 0x1;
+	
+					if (io.uart[i].uintp) {
+						io.vic1rawintr	 |=  1 << (INT_UART0 + i);
+						io.vic1irqstatus |=  ((1 << (INT_UART0 + i)) & ~(io.vic1intselect) & io.vic1intenable);
+						io.vic1fiqstatus |=  ((1 << (INT_UART0 + i)) & io.vic1intselect & io.vic1intenable);
+	
+						s3c6410x_update_int (state);
+					}
 				}
 			}
 		}

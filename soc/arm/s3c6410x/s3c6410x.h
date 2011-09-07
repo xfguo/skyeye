@@ -870,7 +870,8 @@ typedef struct s3c6410x_io_t{
 	/* UART Registers */
 	struct s3c6410x_uart_io uart[3];
 
-	struct s3c6410x_wd_timer wd_timer
+	struct s3c6410x_wd_timer wd_timer;
+	int tc_prescale;
 	/* DMA Registers */
 } s3c6410x_io_t;
 
