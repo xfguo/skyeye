@@ -15,6 +15,51 @@
 #include "mmu/tlb.h"
 #include "mmu/cache.h"
 
+
+const char* arm_regstr[] = {
+	"R0",
+	"R1",
+	"R2",
+	"R3",
+	"R4",
+	"R5",
+	"R6",
+	"R7",
+	"R8",
+	"R9",
+	"R10",
+	"R11",
+	"R12",
+	"R13",
+	"R14",
+	"R15",
+	"Cpsr",
+	"PHYS_PC",
+	"R13_SVC",
+	"R14_SVC",
+	"R13_ABORT",
+	"R14_ABORT",
+	"R13_UNDEF",
+	"R14_UNDEF",
+	"R13_IRQ",
+	"R14_IRQ",
+	"R8_FIRQ",
+	"R9_FIRQ",
+	"R10_FIRQ",
+	"R11_FIRQ",
+	"R12_FIRQ",
+	"R13_FIRQ",
+	"R14_FIRQ",
+	"SPSR_INVALID1",
+	"SPSR_INVALID2",
+	"SPSR_SVC",
+	"SPSR_ABORT",
+	"SPSR_UNDEF",
+	"SPSR_IRQ",
+	"SPSR_FIRQ"
+
+};
+
 int debugmode = 0;
 //extern int big_endian;
 int big_endian = 0;
@@ -250,7 +295,8 @@ static arm_cpu_init()
 		ARMul_State* core = &cpu->core[i];
 		arm_core_init(core, i);
 		skyeye_exec_t* exec = create_exec();
-		exec->priv_data = get_conf_obj_by_cast(core, "ARMul_State");
+		exec->priv_data = get_conf_obj_by_cast(core, "arm_core_t");
+		//exec->priv_data = get_conf_obj_by_cast(core, "ARMul_State");
 		exec->run = per_cpu_step;
 		exec->stop = per_cpu_stop;
 		add_to_default_cell(exec);

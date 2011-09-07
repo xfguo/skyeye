@@ -70,7 +70,7 @@ static inline ARMul_State* get_current_core(){
 	/* Judge if we are running in paralell or sequenial */
 	if(thread_exist(id)){
 		conf_object_t* conf_obj = get_current_exec_priv(id);
-		return (ARMul_State*)get_cast_conf_obj(conf_obj, "ARMul_State");
+		return (ARMul_State*)get_cast_conf_obj(conf_obj, "arm_core_t");
 	}
 
 	return NULL;
