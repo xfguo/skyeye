@@ -23,6 +23,8 @@
 #define TAG_END_PAGE (1 << 25)	/* The last instruction of a page */
 #define TAG_EXCEPTION (1 << 26)	/* instruction may occur exception(next instruction is exception handler) */
 #define TAG_AFTER_EXCEPTION (1 << 27)
+#define TAG_MEMORY		(1 << 28) /* load store instruction */
+#define TAG_NEED_PC		(1 << 29) /**/
 
 /* flags internal to libcpu */
 #define TAG_CODE		(1<<7)	/* there is a reachable executable instruction here */
@@ -57,8 +59,12 @@ static bool is_tag_level3_table_allocated(cpu_t *cpu, addr_t addr);
 static void init_tag_level2_table(cpu_t *cpu, addr_t addr);
 static void init_tag_level3_table(cpu_t *cpu, addr_t addr);
 
+bool
+is_translated_code(cpu_t *cpu, addr_t addr);
+addr_t find_bb_start(cpu_t *cpu, addr_t addr);
 tag_t get_tag(cpu_t *cpu, addr_t a);
-void clear_tag(cpu_t *cpu);
+void clear_tag(cpu_t *cpu, addr_t a);
+void clear_tag_page(cpu_t *cpu, addr_t a);
 void or_tag(cpu_t *cpu, addr_t a, tag_t t);
 void xor_tag(cpu_t *cpu, addr_t a, tag_t t);
 bool is_inside_code_area(cpu_t *cpu, addr_t a);
