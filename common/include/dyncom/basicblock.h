@@ -38,5 +38,6 @@ const BasicBlock *lookup_basicblock(cpu_t *cpu, Function* f, addr_t pc, BasicBlo
 void emit_store_pc(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc);
 void emit_store_pc_return(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc, BasicBlock *bb_ret);
 void emit_store_pc_end_page(cpu_t *cpu, tag_t tag, BasicBlock *bb, addr_t new_pc);
-void emit_store_pc_cond(cpu_t *cpu, Value *cond, BasicBlock *bb, addr_t new_pc);
+void emit_store_pc_cond(cpu_t *cpu, tag_t tag, Value *cond, BasicBlock *bb, addr_t new_pc);
+void arm_emit_store_pc(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc);
 #endif
