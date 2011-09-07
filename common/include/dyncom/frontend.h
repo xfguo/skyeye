@@ -45,7 +45,8 @@ void arch_store_fp_reg(cpu_t *cpu, uint32_t index, Value *v, uint32_t bits, Basi
 
 Value *arch_sqrt(cpu_t *cpu, size_t width, Value *v, BasicBlock *bb);
 
-void arch_debug_me(cpu_t *cpu, BasicBlock *bb);
+BasicBlock *arch_debug_me(cpu_t *cpu, BasicBlock *bb, BasicBlock *exit_bb);
+BasicBlock *arch_check_mm(cpu_t *cpu, uint32_t instr, BasicBlock *bb, BasicBlock *next_bb, BasicBlock *exit_bb);
 void arch_syscall(cpu_t *cpu, BasicBlock *bb, uint32_t num);
 void arch_windowcheck(cpu_t *cpu, BasicBlock *bb, BasicBlock *bb_ret, BasicBlock *bb_instr);
 void arch_write_memory(cpu_t *cpu, BasicBlock *bb, Value *addr, Value *value, uint32_t size);
