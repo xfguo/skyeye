@@ -31,6 +31,13 @@
 #define RM (instr & 0xF)
 #define BIT(n) ((instr >> (n)) & 1)
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
+
+/* CP15 registers */
+#define OPCODE_1        BITS(21, 23)
+#define CRn             BITS(16, 19)
+#define CRm             BITS(0, 3)
+#define OPCODE_2        BITS(5, 7)
+
 /*xxxx xx1x xxxx xxxx xxxx xxxx xxxx xxxx */
 #define I BIT(25)
 /*xxxx xxxx xxx1 xxxx xxxx xxxx xxxx xxxx */

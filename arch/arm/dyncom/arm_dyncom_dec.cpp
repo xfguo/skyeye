@@ -1,4 +1,5 @@
 #include "llvm/Instructions.h"
+#include "arm_regformat.h"
 #include "skyeye_dyncom.h"
 #include "dyncom/dyncom_llvm.h"
 #include "dyncom/frontend.h"
@@ -228,6 +229,27 @@ void LoadM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 	int i;
 	Value *ret;
 	Value *Addr = addr;
+	if (BITS(25, 27) == 4 && BIT(22) && BIT(20) && !BIT(15)) {
+		/* LDM (2) user */
+		for (i = 0; i < 13; i++) {
+			if(BIT(i)){
+				ret = arch_read_memory(cpu, bb, Addr, 0, 32);
+				LET(i, ret);
+				Addr = ADD(Addr, CONST(4));
+			}
+		}
+		if (BIT(13)) {
+			ret = arch_read_memory(cpu, bb, Addr, 0, 32);
+			LET(R13_USR, ret);
+			Addr = ADD(Addr, CONST(4));
+		}
+		if (BIT(14)) {
+			ret = arch_read_memory(cpu, bb, Addr, 0, 32);
+			LET(R14_USR, ret);
+			Addr = ADD(Addr, CONST(4));
+		}
+		return;
+	}
 	for( i = 0; i < 16; i ++ ){
 		if(BIT(i)){
 			ret = arch_read_memory(cpu, bb, Addr, 0, 32);
@@ -244,6 +266,26 @@ void StoreM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 {
 	int i;
 	Value *Addr = addr;
+	if (BITS(25, 27) == 4 && BITS(20, 22) == 4) {
+		for (i = 0; i < 13; i++) {
+			if(BIT(i)){
+				arch_write_memory(cpu, bb, Addr, R(i), 32);
+				Addr = ADD(Addr, CONST(4));
+			}
+		}
+		if (BIT(13)) {
+			arch_write_memory(cpu, bb, Addr, R(R13_USR), 32);
+			Addr = ADD(Addr, CONST(4));
+		}
+		if (BIT(14)) {
+			arch_write_memory(cpu, bb, Addr, R(R14_USR), 32);
+			Addr = ADD(Addr, CONST(4));
+		}
+		if(BIT(15)){
+			arch_write_memory(cpu, bb, Addr, STOREM_CHECK_PC, 32);
+		}
+		return;
+	}
 	for( i = 0; i < 15; i ++ ){
 		if(BIT(i)){
 			arch_write_memory(cpu, bb, Addr, R(i), 32);
@@ -269,6 +311,11 @@ void LoadStoreM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 /* load store operations collection */
 void LoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 {
+	if (BITS(20, 27) == 0x19 && BITS(0, 11) == 0xf9f) {
+		/* LDREX */
+		LoadWord(cpu, instr, bb, addr);
+		return;
+	}
 	if(BITS(24,27) == 0x4 || BITS(24,27) == 0x5 || BITS(24,27) == 0x6 || BITS(24,27) == 0x7){
 		WOrUBLoadStore(cpu, instr, bb, addr);
 	}else if(BITS(24,27) == 0x0 || BITS(24,27) == 0x1){
@@ -293,9 +340,10 @@ int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2
 {
 	/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
 	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+	//new StoreInst(ICMP_EQ(ret, CONST(0x80000000)), ptr_N, bb);
 	/* new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb); */
 //	/* C */ new StoreInst(ICMP_SLE(ret, op1), ptr_C, false, bb);
-	/* C */ new StoreInst(ICMP_ULE(ret, op1), ptr_C, false, bb);
+	/* C */ new StoreInst(ICMP_ULT(ret, op1), ptr_C, false, bb);
 	/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
 
 	return 0;
@@ -437,11 +485,11 @@ Value *WOrUBGetAddrImm(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		}
 	}else if(BITS(24,27) == 0x4){
 		/* ImmPost */
-		if(!BIT(21)){
+		if(!BIT(21) || BIT(21)){
 			return WOrUBGetAddrImmPost(cpu, instr, bb);
 		}
 	}
-	printf(" Error in WOrUB Get Imm Addr \n");
+	printf(" Error in WOrUB Get Imm Addr instr is %x \n", instr);
 }
 
 /* Getting Word or Unsigned Byte Address reg operand operations collection */
@@ -475,8 +523,10 @@ Value *WOrUBGetAddrReg(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 				return WOrUBGetAddrScaledRegPost(cpu, instr, bb);
 			}
 		}
+	} else if (BITS(24, 27) == 0x5 && BIT(21) == 0) {
+		return WOrUBGetAddrImmOffset(cpu, instr, bb);
 	}
-	printf(" Error in WOrUB Get Reg Addr \n");
+	printf(" Error in WOrUB Get Reg Addr inst is %x\n", instr);
 }
 
 /* Getting Word or Unsigned Byte Address operand operations collection */
@@ -715,7 +765,7 @@ Value *LSMGetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 /* all,Getting Load Store Address operand operation collection */
 Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	if(BITS(24,27) == 0x1 || BITS(24,27) == 0x2 ){
+	if(BITS(24,27) == 0x1 || BITS(24,27) == 0x2 || BITS(24, 27) == 0){
 		return MisGetAddr(cpu,instr,bb);
 	}else if(BITS(24,27) == 0x4 || BITS(24,27) == 0x5 || BITS(24,27) == 0x6 || BITS(24,27) == 0x7 ){
 		return WOrUBGetAddr(cpu,instr,bb);
@@ -741,6 +791,20 @@ Value *Data_ope_Reg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_
 	if(!shift_imm){ /* Register */
 		//return R(RM);
 		OPERAND_RETURN_CHECK_PC;
+#if 0
+		if (BITS(25, 27) == 0) {
+			if (RM == 15) {
+				return ADD(ADD(R(RN), R(RM)), CONST(8));
+			} else {
+				return ADD(R(RN), R(RM));
+			}
+		} else {
+			if(RM == 15)		
+				return ADD(R(RM), CONST(8));	
+			else	
+				return R(RM);	
+		}
+#endif
 	}else{	/* logic shift left by imm */
 		return SHL(R(RM), CONST(shift_imm));
 	}
@@ -792,7 +856,7 @@ Value *Data_ope_AriRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t sh
 	/* arth shift right by reg */
 	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM),
 			SELECT(ICMP_ULT(shamt, CONST(32)), ASHR(R(RM), shamt),
-				SELECT(LSHR(R(RM), CONST(31)), CONST(0xffffffff), CONST(0))));
+				SELECT(ICMP_EQ(LSHR(R(RM), CONST(31)), CONST(0x80000000)), CONST(0xffffffff), CONST(0))));
 }
 
 /* index:6 */
@@ -804,7 +868,7 @@ Value *Data_ope_RotRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t sh
 		return ROTL(OR(SHL(ptr_C, CONST(31)), ASHR(R(RM), CONST(1))), CONST(1));
 	}else{
 		/* Rotate right by imm */
-		return ROTL(R(RM), CONST(shift_imm));
+		return ROTL(R(RM), CONST(32 - shift_imm));
 	}
 }
 
@@ -812,9 +876,9 @@ Value *Data_ope_RotRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t sh
 /* Getting data form Rotate Shift Right register operand. following arm doc. */
 Value *Data_ope_RotRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
 {
-	Value *sham = AND(R(BITS(8, 11)), CONST(0xf));
+	Value *sham = AND(R(BITS(8, 11)), CONST(0x1f));
 	/* Rotate right by reg */
-	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_EQ(sham, CONST(0)), R(RM), ROTL(R(RM), sham)));
+	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_EQ(sham, CONST(0)), R(RM), ROTL(R(RM), SUB(CONST(32), sham))));
 }
 
 Value *(*Data_operand[8])(cpu_t*, uint32_t, BasicBlock *, uint32_t, Value*) = {Data_ope_Reg, Data_ope_LogLReg, Data_ope_LogRImm, Data_ope_LogRReg, Data_ope_AriRImm, Data_ope_AriRReg, Data_ope_RotRImm, Data_ope_RotRReg};
@@ -838,6 +902,11 @@ Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 							CONST(31)), CONST(1)), shifter_carry_out, bb);
 		*/
 		return CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm)));
+	} else if (BITS(4, 11) == 0x6 && BITS(25, 27) == 0) {
+		/*  Rotate right with extend  */
+		Value *rm = LSHR(R(RM), CONST(1));
+		Value *tmp = SELECT(ICMP_EQ(LOAD(ptr_C), CONST1(0)), CONST(0), CONST(0x80000000));
+		return OR(rm, tmp);
 	}
 	else{
 		/* operand with BIT 4 ~ 6 */
@@ -915,14 +984,24 @@ Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 /* Getting data from branch instruction operand */
 Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 {
-		uint32_t rotate_imm = instr;
-		if(instr &  0x800000)
-			rotate_imm = (~rotate_imm + 1) & 0x0ffffff;
+	#if 1
+               uint32_t rotate_imm = instr;
+               if(instr &  0x800000)
+                       rotate_imm = (~rotate_imm + 1) & 0x0ffffff;
+#else
+		uint32_t rotate_imm = instr & 0xffffff;
+		if(rotate_imm &  0x800000) {
+			rotate_imm |= 0xff000000;
+			//rotate_imm = (~rotate_imm + 1) & 0x3fffffff;
+			//rotate_imm &= 0x3fffffff;
+		}
+#endif
 		else
 			rotate_imm &= 0x0ffffff;
 
 		rotate_imm = rotate_imm << 2;
 
+//		printf("rotate_imm is %x\n", rotate_imm);
 		return CONST(rotate_imm);
 }
 #if 0
@@ -936,6 +1015,7 @@ void Dec_ADD(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	/* for 0x08 0x09 0x28 0x29 */
 	//Value *op1 = R(RN);
+		printf("ADD instr:%x\n", instr);
 	Value *op1 = CHECK_RN_PC;
 	Value *op2 = OPERAND;
 	Value *ret = ADD(op1, op2);
@@ -2148,7 +2228,7 @@ int arm_opc_trans_31(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 }
 
-#define CPSR 16
+//#define CPSR 16
 /* complete the instruction operation which bits 20-27 is 32 */
 int arm_opc_trans_32(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -2156,6 +2236,7 @@ int arm_opc_trans_32(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
     /* MSR immed to CPSR. R = 0(set CPSR) */
 	if (DESTReg == 15){
 		/* MSR immed to CPSR.  */
+			LET(CPSR_REG, CONST(BITS(0, 7)));
 		return 0;
 	}
 	else{
@@ -2211,7 +2292,7 @@ int arm_opc_trans_36(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	/* CMN immed and MSR immed to SPSR */
 	/* MSR R = 1 set SPSR*/
 	if (DESTReg == 15){
-		return 0;
+		LET(CPSR_REG, CONST(BITS(0, 7)));
 	}
 	else{
 		/*UNDEF*/
@@ -3850,17 +3931,21 @@ const ISEITEM arm_instruction[] = {
         {"bx",          2,      ARMV4T,         20, 27, 0x12,   4, 7, 1},
         {"bxj",         2,      ARMV5TEJ,       20, 27, 0x12,   4, 7, 2},
         {"cdp",         2,      ARMALL,         24, 27, 0xe,    4, 4, 0},
+	{"clrex",	1,	ARMV6,		0, 31, 0xf57ff01f},
         {"clz",         2,      ARMV5T,         20, 27, 0x16,   4, 7, 1},
         {"cmn",         2,      ARMALL,         26, 27, 0,      20, 24, 0x17},
         {"cmp",         2,      ARMALL,         26, 27, 0,      20, 24, 0x15},
         {"cps",         3,      ARMV6,          20, 31, 0xf10,  16, 16, 0,      5, 5, 0},
-//        {"cpy",         2,      ARMV6,          20, 27, 0x1a,   4, 11, 0},
+        {"cpy",         2,      ARMV6,          20, 27, 0x1a,   4, 11, 0},
         {"eor",         2,      ARMALL,         26, 27, 0,      21, 24, 1},
         {"ldc",         2,      ARMALL,         25, 27, 6,      20, 20, 1},
         {"ldm(1)",      3,      ARMALL,         25, 27, 4,      22, 22, 0,      20, 20, 1},
         {"ldm(2)",      3,      ARMALL,         25, 27, 4,      20, 22, 5,      15, 15, 0},
         {"ldm(3)",      4,      ARMALL,         25, 27, 4,      22, 22, 1,      20 ,20, 1,      15, 15, 1},
+        {"sxth",        2,      ARMV6,          16, 27, 0x6bf,  4, 7, 7},
         {"ldr",         3,      ARMALL,         26, 27, 1,      22, 22, 0,      20, 20, 1},
+        {"uxth",        2,      ARMV6,          16, 27, 0x6ff,  4, 7, 7},
+        {"uxtah",       2,      ARMV6,          20, 27, 0x6f,   4, 7, 7},
         {"ldrb",        3,      ARMALL,         26, 27, 1,      22, 22, 1,      20, 20, 1},
         {"ldrbt",       3,      ARMALL,         26, 27, 1,      24, 24, 0,      20, 22, 7},
         {"ldrd",        3,      ARMV5TE,        25, 27, 0,      20, 20, 0,      4, 7, 0xd},
@@ -3876,7 +3961,7 @@ const ISEITEM arm_instruction[] = {
         {"mov",         2,      ARMALL,         26, 27, 0,      21, 24, 0xd},
         {"mrc",         3,      ARMV6,          24, 27, 0xe,    20, 20, 1,      4, 4, 1},
         {"mrrc",        1,      ARMV6,          20, 27, 0xc5},
-        {"mrs",         2,      ARMALL,         23, 27, 2,      20, 21, 0},
+        {"mrs",         4,      ARMALL,         23, 27, 2,      20, 21, 0,	16, 19, 0xf,	0, 11, 0},
         {"msr",         2,      ARMALL,         23, 27, 6,      20, 21, 2},
         {"msr",         3,      ARMALL,         23, 27, 2,      20, 21, 2,	4, 7, 0},
         {"mul",         2,      ARMALL,         21, 27, 0,      4, 7, 9},
@@ -3937,7 +4022,10 @@ const ISEITEM arm_instruction[] = {
         {"stc",         2,      ARMALL,         25, 27, 6,      20, 20, 0},
         {"stm(1)",      3,      ARMALL,         25, 27, 4,      22, 22, 0,      20, 20, 0},
         {"stm(2)",      2,      ARMALL,         25, 27, 4,      20, 22, 4},
+        {"sxtb",        2,      ARMV6,          16, 27, 0x6af,  4, 7, 7},
         {"str",         3,      ARMALL,         26, 27, 1,      22, 22, 0,      20, 20, 0},
+        {"uxtb",        2,      ARMV6,          16, 27, 0x6ef,  4, 7, 7},
+        {"uxtab",       2,      ARMV6,          20, 27, 0x6e,   4, 9, 7},
         {"strb",        3,      ARMALL,         26, 27, 1,      22, 22, 1,      20, 20, 0},
         {"strbt",       3,      ARMALL,         26, 27, 1,      24, 24, 0,      20, 22, 6},
         {"strd",        3,      ARMV5TE,        25, 27, 0,      20, 20, 0,      4, 7, 0xf},//ARMv5TE and above, excluding ARMv5TExP
@@ -3952,9 +4040,7 @@ const ISEITEM arm_instruction[] = {
         {"sxtab",       2,      ARMV6,          20, 27, 0x6a,   4, 7, 7},
         {"sxtab16",     2,      ARMV6,          20, 27, 0x68,   4, 7, 7},
         {"sxtah",       2,      ARMV6,          20, 27, 0x6b,   4, 7, 7},
-        {"sxtb",        2,      ARMV6,          16, 27, 0x6af,  4, 7, 7},
         {"sxtb16",      2,      ARMV6,          16, 27, 0x68f,  4, 7, 7},
-        {"sxth",        2,      ARMV6,          16, 27, 0x6bf,  4, 7, 7},
         {"teq",         2,      ARMALL,         26, 27, 0,      20, 24, 0x13},
         {"tst",         2,      ARMALL,         26, 27, 0,      20, 24, 0x11},
         {"uadd16",      2,      ARMV6,          20, 27, 0x65,   4, 7, 1},
@@ -3982,12 +4068,8 @@ const ISEITEM arm_instruction[] = {
         {"usub16",      2,      ARMV6,          20, 27, 0x65,   4, 7, 7},
         {"usub8",       2,      ARMV6,          20, 27, 0x65,   4, 7, 0xf},
         {"usubaddx",    2,      ARMV6,          20, 27, 0x65,   4, 7, 5},
-        {"uxtab",       2,      ARMV6,          20, 27, 0x6e,   4, 7, 7},
         {"uxtab16",     2,      ARMV6,          20, 27, 0x6c,   4, 7, 7},
-        {"uxtah",       2,      ARMV6,          20, 27, 0x6f,   4, 7, 7},
-        {"uxtb",        2,      ARMV6,          16, 27, 0x6ef,  4, 7, 7},
-        {"uxtb16",      2,      ARMV6,          16, 27, 0x6cf,  4, 7, 7},
-        {"uxth",        2,      ARMV6,          16, 27, 0x6ff,  4, 7, 7}
+        {"uxtb16",      2,      ARMV6,          16, 27, 0x6cf,  4, 7, 7}
 };
 
 
@@ -4003,17 +4085,21 @@ const ISEITEM arm_exclusion_code[] = {
         {"bx",          0,      ARMV4T, 0},        
         {"bxj",         0,      ARMV5TEJ, 0},      
         {"cdp",         0,      ARMALL, 0},        
+	{"clrex",	0,	ARMV6,	0},
         {"clz",         0,      ARMV5T, 0},        
         {"cmn",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
         {"cmp",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
         {"cps",         0,      ARMV6, 0},         
-//        {"cpy",         0,      ARMV6, 0},         
+        {"cpy",         0,      ARMV6, 0},         
         {"eor",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
         {"ldc",         0,      ARMALL, 0},        
         {"ldm(1)",      0,      ARMALL, 0},        
         {"ldm(2)",      0,      ARMALL, 0},        
         {"ldm(3)",      0,      ARMALL, 0},        
+        {"sxth",        0,      ARMV6, 0},         
         {"ldr",         0,      ARMALL, 0},        
+        {"uxth",        0,      ARMV6, 0},
+        {"uxtah",       0,      ARMV6, 0},         
         {"ldrb",        0,      ARMALL, 0},        
         {"ldrbt",       0,      ARMALL, 0},        
         {"ldrd",        0,      ARMV5TE, 0},       
@@ -4090,7 +4176,10 @@ const ISEITEM arm_exclusion_code[] = {
         {"stc",         0,      ARMALL, 0},        
         {"stm(1)",      0,      ARMALL, 0},        
         {"stm(2)",      0,      ARMALL, 0},        
+        {"sxtb",        0,      ARMV6, 0},         
         {"str",         0,      ARMALL, 0},        
+        {"uxtb",        0,      ARMV6, 0},         
+        {"uxtab",       0,      ARMV6, 0},         
         {"strb",        0,      ARMALL, 0},        
         {"strbt",       0,      ARMALL, 0},        
         {"strd",        0,      ARMV5TE, 0},       
@@ -4105,9 +4194,7 @@ const ISEITEM arm_exclusion_code[] = {
         {"sxtab",       0,      ARMV6, 0},         
         {"sxtab16",     0,      ARMV6, 0},         
         {"sxtah",       0,      ARMV6, 0},         
-        {"sxtb",        0,      ARMV6, 0},         
         {"sxtb16",      0,      ARMV6, 0},         
-        {"sxth",        0,      ARMV6, 0},         
         {"teq",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
         {"tst",         3,      ARMALL, 	4, 4, 1,	7, 7, 1,	25, 25, 0},        
         {"uadd16",      0,      ARMV6, 0},         
@@ -4135,12 +4222,8 @@ const ISEITEM arm_exclusion_code[] = {
         {"usub16",      0,      ARMV6, 0},         
         {"usub8",       0,      ARMV6, 0},         
         {"usubaddx",    0,      ARMV6, 0},         
-        {"uxtab",       0,      ARMV6, 0},         
         {"uxtab16",     0,      ARMV6, 0},         
-        {"uxtah",       0,      ARMV6, 0},         
-        {"uxtb",        0,      ARMV6, 0},         
-        {"uxtb16",      0,      ARMV6, 0},         
-        {"uxth",        0,      ARMV6, 0}
+        {"uxtb16",      0,      ARMV6, 0}         
 };
 
 
@@ -4158,7 +4241,12 @@ int decode_arm_instr(uint32_t instr, int32_t *idx)
 		n = arm_instruction[i].attribute_value;
 		base = 0;
 		while (n) {
-			if (BITS(arm_instruction[i].content[base], arm_instruction[i].content[base + 1]) != arm_instruction[i].content[base + 2]) {
+			if (arm_instruction[i].content[base + 1] == 31 && arm_instruction[i].content[base] == 0) {
+				/* clrex */
+				if (instr != arm_instruction[i].content[base + 2]) {
+					break;
+				}
+			} else if (BITS(arm_instruction[i].content[base], arm_instruction[i].content[base + 1]) != arm_instruction[i].content[base + 2]) {
 				break;
 			}
 			base += 3;
@@ -4174,8 +4262,7 @@ int decode_arm_instr(uint32_t instr, int32_t *idx)
 				base = 0;
 				while (n) {
 					if (BITS(arm_exclusion_code[i].content[base], arm_exclusion_code[i].content[base + 1]) != arm_exclusion_code[i].content[base + 2]) {
-						break;
-					}
+						break;					}
 					base += 3;
 					n --;
 				}
