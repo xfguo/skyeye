@@ -282,10 +282,10 @@ emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 		}
 
 		// decode P
-		Value *flags = new LoadInst(cpu->ptr_xr[0], "", false, bb);
-		arch_flags_decode(cpu, flags, bb);
+//		Value *flags = new LoadInst(cpu->ptr_xr[0], "", false, bb);
+//		arch_flags_decode(cpu, flags, bb);
 
-		STORE(TRUNC1(LOAD(cpu->ptr_xr[0])),cpu->ptr_Z); /* fix me use xr tmp */
+//		STORE(TRUNC1(LOAD(cpu->ptr_xr[0])),cpu->ptr_Z); /* fix me use xr tmp */
 	}
 	
 	// frontend specific part
@@ -349,10 +349,10 @@ spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 
 	// flags
 	if (cpu->info.psr_size != 0) {
-		Value *flags = arch_flags_encode(cpu, bb);
+		//Value *flags = arch_flags_encode(cpu, bb);
 		//new StoreInst(flags, cpu->ptr_xr[0], false, bb);
 
-		STORE(ZEXT32(LOAD(cpu->ptr_Z)), cpu->ptr_xr[0]); /* fix me use xr tmp */
+		//STORE(ZEXT32(LOAD(cpu->ptr_Z)), cpu->ptr_xr[0]); /* fix me use xr tmp */
 	}
 
 	// GPRs
@@ -371,6 +371,10 @@ spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 	spill_fp_reg_state_helper(cpu, cpu->info.register_count[CPU_REG_FPR],
 		cpu->info.register_size[CPU_REG_FPR], cpu->in_ptr_fpr,
 		cpu->ptr_fpr, bb);
+
+	if (cpu->f.spill_reg_state != NULL) {
+		cpu->f.spill_reg_state(cpu,bb);
+	}
 }
 /**
  * @brief Create a llvm Function and fill it with some necessary basic blocks.
@@ -388,6 +392,7 @@ Function*
 cpu_create_function(cpu_t *cpu, const char *name,
 	BasicBlock **p_bb_ret,
 	BasicBlock **p_bb_trap,
+	BasicBlock **p_bb_timeout,
 	BasicBlock **p_label_entry)
 {
 	Function *func;
@@ -440,6 +445,15 @@ cpu_create_function(cpu_t *cpu, const char *name,
 		false);		      	/* isVarArg */
 	cpu->dyncom_engine->type_pwrite_memory = PointerType::get(type_func_write_memory_callout, 0);
 
+	std::vector<const Type*> type_func_check_mm_args;
+	type_func_check_mm_args.push_back(type_intptr);	/* intptr *cpu */
+	type_func_check_mm_args.push_back(type_i32);
+	FunctionType *type_func_check_mm_callout = FunctionType::get(
+		getIntegerType(32),	/* Result */
+		type_func_check_mm_args,	/* Params */
+		false);		      	/* isVarArg */
+	cpu->dyncom_engine->type_check_mm = PointerType::get(type_func_check_mm_callout, 0);
+
 	// - (*f)(uint8_t *, reg_t *, fp_reg_t *, (*)(...)) [jitmain() function pointer)
 	std::vector<const Type*>type_func_args;
 	type_func_args.push_back(type_pi8);				/* uint8_t *RAM */
@@ -448,6 +462,7 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	type_func_args.push_back(type_pstruct_fp_reg_t);	/* fp_reg_t *fp_reg */
 	type_func_args.push_back(cpu->dyncom_engine->type_pread_memory);
 	type_func_args.push_back(cpu->dyncom_engine->type_pwrite_memory);
+	type_func_args.push_back(cpu->dyncom_engine->type_check_mm);
 	FunctionType* type_func = FunctionType::get(
 		getIntegerType(32),		/* Result */
 		type_func_args,		/* Params */
@@ -485,6 +500,9 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	cpu->dyncom_engine->ptr_func_read_memory->setName("readmemory");
 	cpu->dyncom_engine->ptr_func_write_memory = args++;
 	cpu->dyncom_engine->ptr_func_write_memory->setName("writememory");
+	cpu->dyncom_engine->ptr_func_check_mm = args++;
+	cpu->dyncom_engine->ptr_func_check_mm->setName("checkmm");
+
 
 	// entry basicblock
 	BasicBlock *label_entry = BasicBlock::Create(_CTX(), "entry", func, 0);
@@ -513,8 +531,12 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	// return
 	BranchInst::Create(bb_ret, bb_trap);
 
+	BasicBlock *bb_timeout = BasicBlock::Create(_CTX(), "timeout", func, 0);
+	new StoreInst(ConstantInt::get(XgetType(Int32Ty), JIT_RETURN_TIMEOUT), exit_code, false, 0, bb_timeout);
+	BranchInst::Create(bb_ret, bb_timeout);
 	*p_bb_ret = bb_ret;
 	*p_bb_trap = bb_trap;
+	*p_bb_timeout = bb_timeout;
 	*p_label_entry = label_entry;
 	return func;
 }
