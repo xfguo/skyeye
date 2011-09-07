@@ -42,6 +42,32 @@ is_start_of_basicblock(cpu_t *cpu, addr_t a)
 		 TAG_ENTRY))			/* client wants to enter guest code here */
 		&& (tag & TAG_CODE);	/* only if we actually tagged it */
 }
+
+void
+arm_emit_store_pc(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc)
+{
+	if(is_user_mode(cpu)){
+		Value *v_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+		new StoreInst(v_pc, cpu->ptr_PHYS_PC, bb_branch);
+	}else{
+#if 0
+		Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+		Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb_branch);
+		Value *v_page_effec = new LoadInst(cpu->ptr_CURRENT_PAGE_EFFEC, "", false, bb_branch);
+		Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, v_page_effec, "", bb_branch); 
+		new SoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb_branch);
+#endif
+		new StoreInst(CONST(new_pc), cpu->ptr_PC, bb_branch);
+		new StoreInst(CONST(new_pc), cpu->ptr_PHYS_PC, bb_branch);
+		//Value **regs = cpu->ptr_gpr;
+		//new StoreInst(CONST(new_pc), regs[15], bb_branch);
+		//new StoreInst(CONST(new_pc), cpu->ptr_PC, bb_branch);
+		//LET(15, CONST(new_pc));
+		//arch_put_reg(cpu, 15, CONST(new_pc), 0, false, bb_branch);
+	}
+}
+
+
 /**
  * @brief Store PC to cpu structure 
  *
@@ -62,6 +88,11 @@ emit_store_pc(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc)
 		Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, v_page_effec, "", bb_branch); 
 		new StoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb_branch);
 		new StoreInst(v_effec_pc, cpu->ptr_PC, bb_branch);
+		//Value **regs = cpu->ptr_gpr;
+		//new StoreInst(CONST(new_pc), regs[15], bb_branch);
+		//new StoreInst(CONST(new_pc), cpu->ptr_PC, bb_branch);
+		//LET(15, CONST(new_pc));
+		//arch_put_reg(cpu, 15, CONST(new_pc), 0, false, bb_branch);
 	}
 }
 /**
@@ -92,6 +123,7 @@ emit_store_pc_end_page(cpu_t *cpu, tag_t tag, BasicBlock *bb, addr_t new_pc)
 	 * count the new pc in the translation of the instruction.
 	 */
 	if(!(tag & TAG_BRANCH)){
+#if 0
 		Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
 		Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb);
 		Value *v_page_effec = new LoadInst(cpu->ptr_CURRENT_PAGE_EFFEC, "", false, bb);
@@ -99,21 +131,45 @@ emit_store_pc_end_page(cpu_t *cpu, tag_t tag, BasicBlock *bb, addr_t new_pc)
 		Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, next_page_effec, "", bb); 
 		new StoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb);
 		new StoreInst(v_effec_pc, cpu->ptr_PC, bb);
+#else
+		//new StoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb);
+		//new StoreInst(CONST(new_pc), cpu->ptr_PC, bb);
+		Value *pc = new LoadInst(cpu->ptr_PC, "", false, bb);
+		if (!(tag & TAG_NEED_PC)) {
+			new StoreInst(ADD(pc, CONST(4)), cpu->ptr_PC, bb);
+		}
+		Value *new_page_effec = AND(ADD(pc, CONST(4)), CONST(0xfffff000));
+		new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
+		//new StoreInst(CONST(new_pc), cpu->ptr_PHYS_PC, bb);
+#endif
 	}
 }
 void
-emit_store_pc_cond(cpu_t *cpu, Value *cond, BasicBlock *bb, addr_t new_pc)
+emit_store_pc_cond(cpu_t *cpu, tag_t tag, Value *cond, BasicBlock *bb, addr_t new_pc)
 {
 	/* if cond is true, do not save pc */
 	Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
 	Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb);
 	Value *v_page_effec = new LoadInst(cpu->ptr_CURRENT_PAGE_EFFEC, "", false, bb);
-	Value *next_page_effec = BinaryOperator::Create(Instruction::Add, CONST(0x1000), v_page_effec, "", bb);
+	Value *next_page_effec;
+	if (tag & TAG_BRANCH) {
+		next_page_effec = BinaryOperator::Create(Instruction::Add, CONST(0x1000), v_page_effec, "", bb);
+	} else {
+		next_page_effec = BinaryOperator::Create(Instruction::Add, CONST(0), v_page_effec, "", bb);
+	}
 	Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, next_page_effec, "", bb); 
 	Value *orig_phys_pc = new LoadInst(cpu->ptr_PHYS_PC, "", false, bb);
 	Value *orig_pc = new LoadInst(cpu->ptr_PC, "", false, bb);
 	new StoreInst(SELECT(cond, orig_phys_pc, v_phys_pc), cpu->ptr_PHYS_PC, bb);
 	new StoreInst(SELECT(cond, orig_pc, v_effec_pc), cpu->ptr_PC, bb);
+#if 0
+	Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+	Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb_branch);
+	Value *v_page_effec = new LoadInst(cpu->ptr_CURRENT_PAGE_EFFEC, "", false, bb_branch);
+	Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, v_page_effec, "", bb_branch); 
+	new StoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb_branch);
+	new StoreInst(v_effec_pc, cpu->ptr_PC, bb_branch);
+#endif
 }
 /**
  * @brief Create a basicblock and put it to the current JIT Function.Add it to func_bb map.
