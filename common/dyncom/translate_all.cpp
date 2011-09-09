@@ -145,7 +145,7 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap, BasicBloc
 				emit_store_pc_end_page(cpu, tag, cur_bb, next_pc);
 			}
 			bb_cont = translate_instr(cpu, pc, next_pc, tag, bb_target, bb_trap, bb_next, bb_ret, cur_bb);
-			if (bb_cont && (tag & TAG_MEMORY) && !(tag & TAG_BRANCH)) {
+			if (!is_user_mode(cpu) && bb_cont && (tag & TAG_MEMORY) && !(tag & TAG_BRANCH)) {
 				if (!bb_cont->getTerminator()) {
 					BranchInst::Create(bb_next, bb_cont);
 				}
