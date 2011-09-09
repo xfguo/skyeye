@@ -164,9 +164,12 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap, BasicBloc
 		if (bb_cont) {
 			BasicBlock *target = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, pc, bb_ret, BB_TYPE_NORMAL);
 			LOG("info: linking continue $%04llx!\n", (unsigned long long)pc);
-			BranchInst::Create(target, bb_cont);
+			if (!(tag & TAG_CONDITIONAL)) {
+				if (!bb_cont->getTerminator()) {
+					BranchInst::Create(target, bb_cont);
+				}
+			}
 		}
     }
-
 	return bb_dispatch;
 }
