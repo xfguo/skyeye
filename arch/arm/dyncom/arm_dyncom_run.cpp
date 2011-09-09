@@ -405,8 +405,8 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 
 	//debug
 	cpu_set_flags_debug(cpu, 0
-//               | CPU_DEBUG_PRINT_IR
-          //     | CPU_DEBUG_LOG
+	//	| CPU_DEBUG_PRINT_IR
+	//	| CPU_DEBUG_LOG
                );
         cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT 
 			      | CPU_CODEGEN_VERIFY
@@ -494,10 +494,10 @@ static arch_func_t arm_arch_func = {
 static uint32_t arm_debug_func(cpu_t* cpu){
 	int idx = 0;
 	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
-		for (idx = 0;idx < 16; idx ++) {
-			LOG_IN_CLR(RED, "R%d:0x%x\t", idx, core->Reg[idx]);
-		}
-
+	for (idx = 0;idx < 16; idx ++) {
+		LOG_IN_CLR(RED, "R%d:0x%x\t", idx, core->Reg[idx]);
+	}
+	printf("\n");
 #if 0
 	if (cpu->icounter > 248306790) {
 		if ((core->Reg[15] & 0xf0000000) == 0x50000000) {
@@ -808,7 +808,11 @@ static int flush_current_page(cpu_t *cpu){
 void arm_dyncom_run(cpu_t* cpu){
 	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
 	uint32_t mode;
-	//addr_t phys_pc = core->Reg[15];
+
+	addr_t phys_pc;
+	if(is_user_mode(cpu)){
+		addr_t phys_pc = core->Reg[15];
+	}
 #if 0
 	if(mmu_read_(core, core->pc, PPC_MMU_CODE, &phys_pc) != PPC_MMU_OK){
 		/* we donot allow mmu exception in tagging state */
@@ -834,19 +838,22 @@ void arm_dyncom_run(cpu_t* cpu){
 //			printf("pc %x is not found\n", core->Reg[15]);
 //			printf("phys_pc is %x\n", core->phys_pc);
 //			printf("out of jit\n");
-			switch_mode(core, core->Cpsr & 0x1f);
-			#if 1
-			if(!is_user_mode(cpu))
+			if(!is_user_mode(cpu)){
+				switch_mode(core, core->Cpsr & 0x1f);
 				if (flush_current_page(cpu)) {
 					return;
 				}
-			#endif
-			clear_tag_page(cpu, core->phys_pc);
-			//cpu_tag(cpu, core->Reg[15]);
-			cpu_tag(cpu, core->phys_pc);
-			cpu->dyncom_engine->cur_tagging_pos ++;
-			//cpu_translate(cpu, core->Reg[15]);
-			cpu_translate(cpu, core->phys_pc);
+				clear_tag_page(cpu, core->phys_pc);
+				cpu_tag(cpu, core->phys_pc);
+				cpu->dyncom_engine->cur_tagging_pos ++;
+				//cpu_translate(cpu, core->Reg[15]);
+				cpu_translate(cpu, core->phys_pc);
+			}
+			else{
+				cpu_tag(cpu, core->Reg[15]);
+				cpu->dyncom_engine->cur_tagging_pos ++;
+				cpu_translate(cpu, core->Reg[15]);
+			}
 
 		 /*
                   *If singlestep,we run it here,otherwise,break.
