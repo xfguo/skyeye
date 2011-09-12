@@ -388,7 +388,7 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 			}
 		}
 #endif
-		if (tag & TAG_MEMORY) {
+		if ((tag & TAG_MEMORY) && !is_user_mode(cpu)) {
 			or_tag(cpu, next_pc, TAG_AFTER_COND);
 		}
 		if (tag & (TAG_CONDITIONAL))

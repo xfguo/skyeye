@@ -94,7 +94,7 @@ translate_instr(cpu_t *cpu, addr_t pc, addr_t next_pc, tag_t tag,
 			BranchInst::Create(bb_cond, bb_next, c, cur_bb);
 		cur_bb = bb_cond;
 	}
-	if ((tag & TAG_MEMORY)) { //&& !(tag & TAG_BRANCH)) {
+	if ((tag & TAG_MEMORY) && !is_user_mode(cpu)) { //&& !(tag & TAG_BRANCH)) {
 		uint32_t instr;
 		bus_read(32, pc, &instr);
 		cur_bb = arch_check_mm(cpu, instr, cur_bb, bb_next, bb_trap);
