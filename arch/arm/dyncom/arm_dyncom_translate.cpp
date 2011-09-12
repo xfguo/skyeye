@@ -2815,7 +2815,8 @@ int DYNCOM_TAG(bbl)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *n
 {
 	int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);
 	arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
-	*new_pc = NEW_PC_NONE;
+	if(!is_user_mode(cpu))
+		*new_pc = NEW_PC_NONE;
 	if(instr >> 28 != 0xe)
 		*tag |= TAG_CONDITIONAL;
 	return instr_size;
