@@ -504,7 +504,9 @@ cpu_run(cpu_t *cpu)
 //			printf("out of jit ret is %d icounter is %lld\n", ret, cpu->icounter);
 //			return ret;
 		}
-		cpu->switch_mode(cpu);
+		if(!is_user_mode(cpu)){
+			cpu->switch_mode(cpu);
+		}
 		UPDATE_TIMING(cpu, TIMER_RUN, false);
 		if (ret != JIT_RETURN_FUNCNOTFOUND)
 			return ret;
