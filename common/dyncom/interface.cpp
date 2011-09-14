@@ -108,8 +108,14 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 
 	/* init hash fast map */
 #ifdef HASH_FAST_MAP
+#if L3_HASHMAP
 	cpu->dyncom_engine->fmap = (fast_map)malloc(sizeof(void***) * HASH_MAP_SIZE_L1);
 	memset(cpu->dyncom_engine->fmap, NULL, sizeof(addr_t) * HASH_MAP_SIZE_L1);
+#else
+	cpu->dyncom_engine->fmap = (fast_map)malloc(sizeof(void*) * HASH_FAST_MAP_SIZE);
+	memset(cpu->dyncom_engine->fmap, 0, sizeof(addr_t) * HASH_FAST_MAP_SIZE);
+#endif /* #if L3_HASHMAP */
+
 #endif
 	uint32_t i;
 	for (i = 0; i < 4; i++) {
@@ -320,6 +326,7 @@ cpu_tag(cpu_t *cpu, addr_t pc)
 void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 {
 #ifdef HASH_FAST_MAP
+#if L3_HASHMAP
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
 	pthread_rwlock_wrlock(&(cpu->dyncom_engine->rwlock));
@@ -334,6 +341,13 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 	if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
 		fprintf(stderr, "unlock error\n");
 	}
+#else
+	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
+	bbaddr_map::iterator i = bb_addr.begin();
+         for (; i != bb_addr.end(); i++)
+                 cpu->dyncom_engine->fmap[i->first & 0x1fffff] = native_code_func;
+#endif /* #if L3_HASHMAP */
+
 #else
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
@@ -478,6 +492,7 @@ cpu_run(cpu_t *cpu)
 			cpu->current_page_effec = pc & 0xfffff000; 
 		}
 #ifdef HASH_FAST_MAP
+#if L3_HASHMAP
 		fast_map hash_map = cpu->dyncom_engine->fmap;
 		if(hash_map[HASH_MAP_INDEX_L1(phys_pc)] == NULL)
 			return JIT_RETURN_FUNCNOTFOUND;
@@ -486,6 +501,12 @@ cpu_run(cpu_t *cpu)
 		else if(hash_map[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)][HASH_MAP_INDEX_L3(phys_pc)] == NULL)
 			return JIT_RETURN_FUNCNOTFOUND;
 		pfunc = (fp_t)hash_map[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)][HASH_MAP_INDEX_L3(phys_pc)];
+#else
+		fast_map hash_map = cpu->dyncom_engine->fmap;
+		pfunc = (fp_t)hash_map[pc & 0x1fffff];
+		if(pfunc == NULL)
+			return JIT_RETURN_FUNCNOTFOUND;
+#endif
 #else
 		fast_map &func_addr = cpu->dyncom_engine->fmap;
 		fast_map::const_iterator it = func_addr.find(pc);

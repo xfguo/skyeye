@@ -307,7 +307,11 @@ static void arch_arm_write_memory(cpu_t *cpu, addr_t virt_addr, uint32_t value, 
 	if (is_translated_code(cpu, phys_addr)) {
 		//clear native code when code section was written.
 		addr_t addr = find_bb_start(cpu, phys_addr);
+#if L3_HASHMAP
 		clear_cache_item(cpu->dyncom_engine->fmap, addr);
+#else
+		fprintf(stderr, "Warnning: not clear the cache");
+#endif
 	}
 	//bus_write(size, virt_addr, value);
 }

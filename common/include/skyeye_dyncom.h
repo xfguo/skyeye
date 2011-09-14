@@ -30,6 +30,7 @@
 #include "config.h"
 #include "skyeye_platform.h"
 #include "skyeye_types.h"
+#include "dyncom/defines.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -271,6 +272,9 @@ typedef void (*callout4)(cpu_t *, uint32_t, uint32_t, uint32_t, uint32_t);
 typedef std::map<addr_t, BasicBlock *> bbaddr_map;
 typedef std::map<Function *, bbaddr_map> funcbb_map;
 #ifdef HASH_FAST_MAP
+
+#define L3_HASHMAP 1
+#if L3_HASHMAP
 #define HASH_MAP_SIZE_L1 1024
 #define HASH_MAP_SIZE_L2 1024
 #define HASH_MAP_SIZE_L3 4096
@@ -328,6 +332,12 @@ inline void clear_cache_item(fast_map fmap, addr_t addr)
 		fmap[HASH_MAP_INDEX_L1(addr)][HASH_MAP_INDEX_L2(addr)][i] = 0;
 	}
 }
+
+#else
+typedef void** fast_map;
+#define HASH_FAST_MAP_SIZE 0x100000
+
+#endif /* #if L3_HASHMAP */
 #else
 /* This map save <address, native code function pointer> */
 typedef std::map<addr_t, void *> fast_map;
