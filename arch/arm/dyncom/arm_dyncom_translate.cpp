@@ -345,6 +345,7 @@ int arm_tag_branch(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *ne
 	uint32_t opc = instr;
 	*tag = TAG_BRANCH;
 	if(is_user_mode(cpu))
+		/* For R15 update , that should be NEW_PC_NONE */
 		*new_pc = ARM_BRANCH_TARGET;
 	else
 		*new_pc = NEW_PC_NONE;
@@ -2829,8 +2830,7 @@ int DYNCOM_TAG(bic)(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *n
 	int instr_size = INSTR_SIZE;uint32_t instr;bus_read(32, pc, &instr);
 	if (RD == 15) {
 		arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
-		if(!is_user_mode(cpu))
-			*new_pc = NEW_PC_NONE;
+		*new_pc = NEW_PC_NONE;
 	} else {
 		arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
 	}
