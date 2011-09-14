@@ -32,6 +32,9 @@ fun, and definign VAILDATE will define SWI 1 to enter SVC mode, and SWI
 #include <fcntl.h>
 #include <skyeye_ram.h>
 #include "dyncom/defines.h"
+#include <sys/utsname.h>
+#include <sys/times.h>
+#include "skyeye_pref.h" /* temporary */
 
 #ifndef O_RDONLY
 #define O_RDONLY 0
@@ -201,7 +204,7 @@ SWIwrite (ARMul_State * state, ARMword f, ARMword ptr, ARMword len)
 	if (local == NULL) {
 		fprintf (stderr,
 			 "sim: Unable to write 0x%lx bytes - out of memory\n",
-			 (int) len);
+			 (long unsigned int) len);
 		return;
 	}
 
@@ -236,7 +239,11 @@ SWIflen (ARMul_State * state, ARMword fh)
 * parameter passed is the SWI number (lower 24 bits of the instruction).    *
 \***************************************************************************/
 //static int brk_static =  0x00082008 + 0x000bbf38;
-static int brk_static =  0x10000000;
+// ahe-ykl information is retrieved from elf header and the starting value of
+// brk_static is in sky_info_t
+//static int brk_static = 0x10000000;
+static int brk_static = -1;
+
 unsigned
 ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 {
@@ -290,20 +297,47 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 		return TRUE;
 
 	case SWI_Times:{
-		time_t now;
-		time(&now);
-		bus_write(32, state->Reg[0], now);
-		state->Reg[0] = now;
+		uint32_t dest = state->Reg[0];
+		struct tms now;
+		struct target_tms32 nowret;
+		//printf("Times size is %x and %x\n", sizeof(now), sizeof(nowret));
+		uint32_t ret = times(&now);
 
+		if (ret == -1){
+			printf("syscall %s error %d\n", "SWI_Times", ret);
+			state->Reg[0] = ret;
+			return FALSE;
+		}
+		
+		nowret.tms_cstime = now.tms_cstime;
+		nowret.tms_cutime = now.tms_cutime;
+		nowret.tms_stime = now.tms_stime;
+		nowret.tms_utime = now.tms_utime;
+
+		uint32_t offset;
+		for (offset = 0; offset < sizeof(nowret); offset++) {
+			bus_write(8, dest + offset, *((uint8_t *) &now + offset));
+		}
+
+		state->Reg[0] = ret;
 		return TRUE;
 		}
 
 	case SWI_Brk:
+		/* initialize brk value */
+		/* suppose that brk_static doesn't reach 0xffffffff... */
+		if (brk_static == -1) {
+			brk_static = (get_skyeye_pref()->info).brk;
+		}
+
+		/* FIXME there might be a need to do a mmap */
+		
 		if(state->Reg[0]){
 			brk_static = state->Reg[0];
-			state->Reg[0] = 0;
-		} else
+			//state->Reg[0] = 0; /* FIXME return value of brk set to be the address on success */
+		} else {
 			state->Reg[0] = brk_static;
+		}
 		return TRUE;
 
 	case SWI_Break:
@@ -336,6 +370,109 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 		/*modified by ksh to support breakpoiont*/
 		state->Emulate = STOP;
 		return (TRUE);
+	case SWI_Uname:
+		{
+		struct utsname *uts = (uintptr_t) state->Reg[0]; /* uname should write data in this address */
+		struct utsname utsbuf;
+		//printf("Uname size is %x\n", sizeof(utsbuf));
+		char *buf;
+		uintptr_t sp ; /* used as a temporary address */
+
+#define COPY_UTS_STRING(addr) 					\
+			buf = addr;				\
+			while(*buf != NULL) { 			\
+				bus_write(8, sp, *buf); 	\
+				sp++; 				\
+				buf++;	 			\
+			}
+#define COPY_UTS(field)	/*printf("%s: %s at %p\n", #field, utsbuf.field, uts->field);*/	\
+			sp = (uintptr_t) uts->field;						\
+			COPY_UTS_STRING((&utsbuf)->field);
+
+		if (uname(&utsbuf) < 0) {
+			printf("syscall uname: utsname error\n");
+			state->Reg[0] = -1;
+			return FALSE;
+		}
+		
+		/* FIXME for now, this is just the host system call
+		   Some data should be missing, as it depends on
+		   the version of utsname */
+		COPY_UTS(sysname);
+		COPY_UTS(nodename);
+		COPY_UTS(release);
+		COPY_UTS(version);
+		COPY_UTS(machine);
+		
+		state->Reg[0] = 0;
+		return TRUE;
+		}
+	case SWI_Fcntl:
+		{
+			uint32_t fd = state->Reg[0];
+			uint32_t cmd = state->Reg[1];
+			uint32_t arg = state->Reg[2];
+			uint32_t ret;
+
+			switch(cmd){
+			case (F_GETFD):
+			{
+				ret = fcntl(fd, cmd, arg);
+				//printf("syscall fcntl for getfd not implemented, ret %d\n", ret);
+				state->Reg[0] = ret;
+				return FALSE;
+			}
+			default:
+				break;
+			}
+
+			printf("syscall fcntl unimplemented fd %x cmd %x\n", fd, cmd);
+			state->Reg[0] = -1;
+			return FALSE;
+
+		}
+	case SWI_Fstat64:
+		{
+			uint32_t dest = state->Reg[1];
+			uint32_t fd = state->Reg[0];
+			struct stat64 statbuf;
+			struct target_stat64 statret; 
+			uint32_t ret = fstat64(fd, &statbuf);
+
+			if (ret == -1){
+				printf("syscall %s returned error\n", "SWI_Fstat");
+				state->Reg[0] = ret;
+				return FALSE;
+			}
+			
+			/* copy statbuf to the process memory space
+			   FIXME can't say if endian has an effect here */
+			uint32_t offset;
+			//printf("Fstat system is size %x\n", sizeof(statbuf));
+			//printf("Fstat target is size %x\n", sizeof(statret));
+			
+			/* we copy system structure data stat64 into arm fixed size structure target_stat64 */
+			statret.st_dev = 	statbuf.st_dev;
+			statret.st_ino = 	statbuf.st_ino;
+			statret.st_mode = 	statbuf.st_mode;
+			statret.st_nlink = 	statbuf.st_nlink;
+			statret.st_uid = 	statbuf.st_uid;
+			statret.st_gid = 	statbuf.st_gid;
+			statret.st_rdev = 	statbuf.st_rdev;
+			statret.st_size = 	statbuf.st_size;
+			statret.st_blksize = 	statbuf.st_blksize;
+			statret.st_blocks = 	statbuf.st_blocks;
+			statret.st32_atime = 	statbuf.st_atime;
+			statret.st32_mtime = 	statbuf.st_mtime;
+			statret.st32_ctime = 	statbuf.st_ctime;
+			
+			for (offset = 0; offset < sizeof(statret); offset++) {
+				bus_write(8, dest + offset, *((uint8_t *) &statret + offset));
+			}
+
+			state->Reg[0] = ret;
+			return TRUE;
+		}
 #if 0
 	case SWI_Clock:
 		/* return number of centi-seconds... */
@@ -398,7 +535,7 @@ static mmap_area_t* new_mmap_area(int sim_addr, int len){
 	}else{
 		mmap_global = area;
 	}
-	mmap_next_base = mmap_next_base + len + 4;
+	mmap_next_base = mmap_next_base + len;
 	return area;
 }
 

@@ -2,6 +2,7 @@
 #define __SKYEYE_DEFS_H__
 #include <termios.h>
 #include "skyeye_types.h"
+#include "skyeye_exec_info.h"
 
 #ifdef __cplusplus
  extern "C" {
@@ -49,6 +50,13 @@ struct _sky_pref_s{
 	char* conf_filename;
 	bool_t interactive_mode;
 	endian_t endian;
+
+	/* FIXME sky_exec_info_t is inside sky_pref_t, to avoid
+	   the complexity of allocating memory separately 
+	   (it is after all attached to exec_file)
+	   It is not very clean for now so maybe we should put it elsewhere */
+	sky_exec_info_t info;
+
 	/*
 	 * if true, we will run the simulator loop before cli.
 	 */

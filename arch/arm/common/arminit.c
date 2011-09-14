@@ -50,6 +50,45 @@ void arm_dyncom_Abort(ARMul_State * state, ARMword vector)
 	ARMul_Abort(state, vector);
 }
 
+
+// ahe-ykl : the following code to initialize user mode 
+// code is architecture dependent and probably model dependant.
+
+#include "skyeye_arch.h"
+#include "skyeye_pref.h"
+#include "skyeye_exec_info.h"
+#include "bank_defs.h"
+#include "armcpu.h"
+#include "skyeye_callback.h"
+
+void arm_user_mode_init(generic_arch_t * arch_instance)
+{
+	sky_pref_t *pref = get_skyeye_pref();
+	
+	if (pref->user_mode_sim)
+	{
+		sky_exec_info_t *info = get_skyeye_exec_info();
+		info->arch_stack_top = 0x7fffff0;
+		info->arch_page_size = 0x1000;
+
+		exec_stack_init();
+		
+		ARM_CPU_State* cpu = get_current_cpu();
+		arm_core_t* core = &cpu->core[0];
+
+		uint32_t sp = info->initial_sp;
+
+		core->Cpsr = 0x10; /* User mode */
+		/* FIXME: may need to add thumb */
+		core->Reg[13] = sp;
+		core->Reg[10] = info->start_data;
+		core->Reg[0] = 0;
+		bus_read(32, sp + 4, &(core->Reg[1]));
+		bus_read(32, sp + 8, &(core->Reg[2]));
+	}
+
+}
+
 /***************************************************************************\
 *         Call this routine once to set up the emulator's tables.           *
 \***************************************************************************/
@@ -144,6 +183,11 @@ ARMul_NewState (ARMul_State *state)
 	//chy:2003-08-19 
 	state->LastTime = 0;
 	state->CP14R0_CCD = -1;
+	
+	/* ahe-ykl: common function for interpret and dyncom */
+	sky_pref_t *pref = get_skyeye_pref();
+	if (pref->user_mode_sim)
+		register_callback(arm_user_mode_init, Bootmach_callback);
 
 	//state->cpu = (cpu_config_t *) malloc (sizeof (cpu_config_t));
 	//state->mem_bank = (mem_config_t *) malloc (sizeof (mem_config_t));

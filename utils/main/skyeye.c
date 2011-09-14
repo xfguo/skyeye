@@ -56,6 +56,7 @@ struct _sky_pref_s{
 typedef struct _sky_pref_s sky_pref_t;
 #endif
 #include "skyeye_pref.h"
+#include "skyeye_exec_info.h"
 /**
  * A global variable , point to the current archtecture
  */
@@ -295,26 +296,26 @@ usage ()
 	printf ("Usage: skyeye [options] -e program [program args]\n");
 	printf ( "Default mode is STANDALONE mode\n");
 	printf (
-		 "------------------------------------------------------------------\n");
+		 "--------------------------------------------------------------------------------\n");
 	printf ( "Options:\n");
 	printf (
-		 "-e exec-file        the (ELF executable format)kernel file name.\n");
+		 "-e exec-file     The (ELF executable format) kernel file name.\n");
 	printf (
-		 "-n         non-interactive mode, means we do not have available command line .\n");
+		 "-n               Non-interactive mode, i.e. command line is not available.\n");
 	printf (
 		 "-l load_address,load_address_mask\n");
 	printf (
-		 "                    Load ELF file to another address, not its entry.\n");
+		 "                 Load ELF file to another address, not its entry.\n");
 	printf ( /* 2007-03-29 by Anthony Lee : for specify big endian when non ELF */
-		 "-b                  specify the data type is big endian when non \"-e\" option.\n");
+		 "-b               Specify the data type is big endian when non \"-e\" option.\n");
 	printf (
-		 "-d                  in GDB Server mode (can be connected by GDB).\n");
+		 "-d               In GDB Server mode (can be connected by GDB).\n");
 	printf (
-		 "-c config-file      the skyeye configure file name.\n");
+		 "-c config-file   The Skyeye configuration file name.\n");
 	printf (
-		 "-h                  The SkyEye command options, and ARCHs and CPUs simulated.\n");
+		 "-h               The SkyEye command options, and ARCHs and CPUs simulated.\n");
 	printf (
-		 "------------------------------------------------------------------\n");
+		 "--------------------------------------------------------------------------------\n");
 }
 
 #if 0
@@ -364,6 +365,10 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	endian_t endian = Little_endian;
 	
 	char* exec_file = NULL;
+	char* exec_argv = NULL;
+	char* exec_envp = NULL;
+	int exec_argc = 0;
+	int exec_envc = 0;
 	generic_address_t elf_load_base = 0x0;
 	uint32_t elf_load_mask = 0xFFFFFFFF;
 	/**
@@ -380,12 +385,12 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 		switch (c) {
 		case 'e':
 			exec_file = optarg;
-			break;
+			goto loop_exit;
 		case 'd':
 			remote_debugmode = 1;
 			break;
 		case 'h':
-			usage ();
+			usage();
 			display_all_support();
 			ret = -1;
 		case 'c':
@@ -436,12 +441,41 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 			fprintf(stderr, "Default option .....\n");
 			break;
 	}
-	
+
+loop_exit:
+
 	if (skyeye_config_filename == NULL)
                 skyeye_config_filename = DEFAULT_CONFIG_FILE;
 
-	for (index = optind; index < argc; index++)
-		printf ("Non-option argument %s\n", argv[index]);
+	if (!exec_file)
+		for (index = optind; index < argc; index++)
+			printf ("Non-option argument %s\n", argv[index]);
+	else
+	{
+		// sequence to get arguments from the command line
+		exec_argv = (char *) (optarg);
+		char * temp_arg = exec_argv;
+		exec_argc = argc - optind + 1;
+		index = 0;
+		//printf(">>> Found %d args starting at %p : %s\n", exec_argc, exec_argv, exec_argv);
+		while( strlen(temp_arg) && (index < exec_argc) )
+		{
+			//printf(">>>%s\n", temp_arg);
+			temp_arg = (char *) (temp_arg + strlen(temp_arg) + 1);
+			index++;
+		}
+		exec_envp = temp_arg;
+		while ( strlen(temp_arg) )
+		{
+			exec_envc += 1;
+			//printf(">>%02d>>%s\n", exec_envc, temp_arg);
+			temp_arg = (char *) (temp_arg + strlen(temp_arg) + 1);
+			index++;
+		}
+		// last envp is not part of envc
+		exec_envc -= 1;
+		//printf(">>> Found %d envp starting at %p : %s\n", exec_envc, exec_envp, exec_envp);
+	}
 
 	/* detection of endian */
 #if 0
@@ -470,6 +504,11 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 			fprintf(stderr, "Can not allocate memory.\n");
 			exit(-1);
 		}
+		sky_exec_info_t * info = get_skyeye_exec_info();
+		info->exec_argc = exec_argc;
+		info->exec_argv = exec_argv;
+		info->exec_envp = exec_envp;
+		info->exec_envc = exec_envc;
 		endian = get_elf_endian(exec_file);
 	}
 	pref->exec_load_base = elf_load_base;

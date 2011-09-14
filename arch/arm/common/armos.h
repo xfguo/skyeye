@@ -25,8 +25,9 @@ typedef struct mmap_area{
 }mmap_area_t;
 
 #ifdef FAST_MEMORY
-// depends on configuration
+/* depends on memory layout and skyeye.conf */
 #define mmap_base 0x03000000
+//#define mmap_base 0x40801000
 #else
 #define mmap_base 0x50000000
 #endif
@@ -72,5 +73,50 @@ static char mmap_mem_read(short size, int addr, uint32_t * value);
 #define SWI_Flen                   0x6c
 #endif
 
+#define SWI_Uname		   0x7a
+#define SWI_Fcntl                  0xdd 
+#define SWI_Fstat64  		   0xc5
+
 #define SWI_Breakpoint             0x180000	/* see gdb's tm-arm.h */
 
+/***************************************************************************\
+*                             SWI structures                                *
+\***************************************************************************/
+
+/* Arm binaries (for now) only support 32 bit, and expect to receive
+   32-bit compliant structure in return of a systen call. Because
+   we use host system calls to emulate system calls, the returned
+   structure can be 32-bit compliant or 64-bit compliant, depending
+   on the OS running skyeye. Therefore, we need a fixed size structure
+   adapted to arm.*/
+
+/* Borrowed from qemu */
+struct target_stat64 {
+	unsigned short	st_dev;
+	unsigned char	__pad0[10];
+	uint32_t	__st_ino;
+	unsigned int	st_mode;
+	unsigned int	st_nlink;
+	uint32_t	st_uid;
+	uint32_t	st_gid;
+	unsigned short	st_rdev;
+	unsigned char	__pad3[10];
+	long long	st_size;
+	uint32_t	st_blksize;
+	uint32_t	st_blocks;
+	uint32_t	__pad4;
+	uint32_t	st32_atime;
+	uint32_t	__pad5;
+	uint32_t	st32_mtime;
+	uint32_t	__pad6;
+	uint32_t	st32_ctime;
+	uint32_t	__pad7;
+	unsigned long long	st_ino;
+} __attribute__((packed));
+
+struct target_tms32 {
+    uint32_t tms_utime;
+    uint32_t tms_stime;
+    uint32_t tms_cutime;
+    uint32_t tms_cstime;
+};
