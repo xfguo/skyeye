@@ -10,5 +10,15 @@
 
 #ifndef __PPC_SYSCALL_H__
 #define __PPC_SYSCALL_H__
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 int ppc_syscall(e500_core_t* core);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

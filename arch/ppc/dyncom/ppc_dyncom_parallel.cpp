@@ -34,6 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "ppc_dec.h"
 #include "ppc_dyncom_dec.h"
 #include "ppc_dyncom_parallel.h"
+#include "ppc_syscall.h"
 
 #include "skyeye_dyncom.h"
 #include "dyncom/tag.h"
@@ -48,7 +49,8 @@ static void push_compiled_work(cpu_t* cpu, uint32_t pc);
 /*
  * Three running mode: PURE_INTERPRET, PURE_DYNCOM, HYBRID
  */
-static running_mode_t mode = PURE_INTERPRET;
+//static running_mode_t mode = PURE_INTERPRET;
+static running_mode_t mode = PURE_DYNCOM;
 static char* running_mode_str[] = {
 	"pure interpret running",
 	"pure dyncom running",
@@ -108,7 +110,8 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 			core->phys_pc = core->pc;
 			//printf("In %s, found compiled pc = 0x%x\n", __FUNCTION__, pc);
 
-			rc = cpu_run(cpu);
+			//rc = cpu_run(cpu);
+			rc = um_cpu_run(cpu);
 			core->pc = core->phys_pc;
 			if(rc == JIT_RETURN_TRAP){
 #ifdef OPT_LOCAL_REGISTERS
@@ -116,14 +119,14 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 				core->phys_pc += 4;
 #endif
 			}	
-			if(rc == JIT_RETURN_FUNCNOTFOUND){
+			else if(rc == JIT_RETURN_FUNCNOTFOUND){
 				//printf("In %s, FUNCNOTFOUND, push compiled pc = 0x%x\n", __FUNCTION__, core->pc);
 				/* cpu_run have already run some JIT functions */
 				if(core->pc != pc)
 					push_compiled_work(cpu, core->pc);
 			}	
 			else{
-				fprintf(stderr, "In %s, wrong return value\n", __FUNCTION__);
+				fprintf(stderr, "In %s, wrong return value, rc=0x%x\n", __FUNCTION__, rc);
 			}
 		}
 	}//if(mode != PURE_INTERPRET)
