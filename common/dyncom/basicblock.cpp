@@ -36,7 +36,7 @@ is_start_of_basicblock(cpu_t *cpu, addr_t a)
 		 TAG_AFTER_COND |		/* instruction after a branch */
 		 TAG_AFTER_TRAP |		/* instruction after a trap */
 		 TAG_SYSCALL	|
-		 TAG_START_PAGE	|
+		 (TAG_START_PAGE && !is_user_mode(cpu))|
 		 TAG_AFTER_EXCEPTION|	/* instruction after a exception instruction */
 		 TAG_AFTER_SYSCALL	|
 		 TAG_ENTRY))			/* client wants to enter guest code here */

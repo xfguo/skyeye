@@ -496,13 +496,14 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	cpu->dyncom_engine->ptr_srf->setName("srf");
 	cpu->dyncom_engine->ptr_frf = args++;
 	cpu->dyncom_engine->ptr_frf->setName("frf");
-	cpu->dyncom_engine->ptr_func_read_memory = args++;
-	cpu->dyncom_engine->ptr_func_read_memory->setName("readmemory");
-	cpu->dyncom_engine->ptr_func_write_memory = args++;
-	cpu->dyncom_engine->ptr_func_write_memory->setName("writememory");
-	cpu->dyncom_engine->ptr_func_check_mm = args++;
-	cpu->dyncom_engine->ptr_func_check_mm->setName("checkmm");
-
+	if(is_user_mode){
+		cpu->dyncom_engine->ptr_func_read_memory = args++;
+		cpu->dyncom_engine->ptr_func_read_memory->setName("readmemory");
+		cpu->dyncom_engine->ptr_func_write_memory = args++;
+		cpu->dyncom_engine->ptr_func_write_memory->setName("writememory");
+		cpu->dyncom_engine->ptr_func_check_mm = args++;
+		cpu->dyncom_engine->ptr_func_check_mm->setName("checkmm");
+	}
 
 	// entry basicblock
 	BasicBlock *label_entry = BasicBlock::Create(_CTX(), "entry", func, 0);
