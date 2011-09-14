@@ -441,13 +441,16 @@ um_cpu_run(cpu_t *cpu){
 	int ret;
         fp_t pfunc = NULL;
 	generic_address_t pc;
+	/* before running jit, update old_icounter first */
+	cpu->old_icounter = cpu->icounter;
 	while(1){
 		pc = cpu->f.get_pc(cpu, cpu->rf.grf);
+		*(addr_t*)cpu->rf.phys_pc = pc;
 		fast_map hash_map = cpu->dyncom_engine->fmap;
 		pfunc = (fp_t)hash_map[pc & 0x1fffff];
 		if(!pfunc)
 			return JIT_RETURN_FUNCNOTFOUND;
-		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, cpu->mem_ops.read_memory, cpu->mem_ops.write_memory);
+		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, cpu->mem_ops.read_memory, cpu->mem_ops.write_memory, cpu->mem_ops.check_mm);
 		if(ret != JIT_RETURN_FUNCNOTFOUND)
 			return ret;
 	}
