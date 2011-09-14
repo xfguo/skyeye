@@ -806,7 +806,8 @@ static int flush_current_page(cpu_t *cpu){
 }
 
 void arm_dyncom_run(cpu_t* cpu){
-	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
+	//arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
+	arm_core_t* core = (arm_core_t*)(cpu->cpu_data->obj);
 	uint32_t mode;
 
 	addr_t phys_pc;
