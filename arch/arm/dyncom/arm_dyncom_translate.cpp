@@ -344,7 +344,10 @@ int arm_tag_branch(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *ne
 {
 	uint32_t opc = instr;
 	*tag = TAG_BRANCH;
-	*new_pc = ARM_BRANCH_TARGET;
+	if(is_user_mode(cpu))
+		*new_pc = ARM_BRANCH_TARGET;
+	else
+		*new_pc = NEW_PC_NONE;
 	//printf("in %s pc is %x new pc is %x\n", __FUNCTION__, pc, ARM_BRANCH_TARGET);
 //	sleep(1);
 	*next_pc = pc + INSTR_SIZE;
