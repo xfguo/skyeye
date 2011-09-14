@@ -81,7 +81,7 @@ emit_store_pc(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc)
 	if(is_user_mode(cpu)){
 		Value *v_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
 		new StoreInst(v_pc, cpu->ptr_PHYS_PC, bb_branch);
-		new StoreInst(v_pc, cpu->ptr_PC, bb_branch);
+		//new StoreInst(v_pc, cpu->ptr_PC, bb_branch);
 	}else{
 		Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
 		Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb_branch);

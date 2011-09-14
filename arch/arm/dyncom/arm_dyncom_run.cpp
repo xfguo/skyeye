@@ -665,8 +665,11 @@ void arm_dyncom_init(arm_core_t* core){
 	
 	/* init the reg structure */
 	cpu->rf.pc = &core->Reg[15];
-	cpu->rf.phys_pc = &core->phys_pc;
-	//cpu->rf.phys_pc = &core->Reg[15];
+	/* Under user mode sim, both phys_pc and pc are pointed to Reg 15 */
+	if(is_user_mode(cpu))
+		cpu->rf.phys_pc = &core->Reg[15];
+	else
+		cpu->rf.phys_pc = &core->phys_pc;
 	cpu->rf.grf = core->Reg;
 	//cpu->rf.srf = core->Spsr;
 	//cpu->rf.srf = &core->phys_pc;
