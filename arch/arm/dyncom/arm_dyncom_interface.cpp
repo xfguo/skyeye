@@ -143,29 +143,34 @@ static void per_cpu_step(conf_object_t * running_core){
         machine_config_t* mach = get_current_mach();
         ARM_CPU_State* cpu = get_current_cpu();
         cpu_t *cpu_dyncom = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
-	arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
+	if(is_user_mode(cpu_dyncom)){
+		arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
+		return;
+	}
+	else
+		arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 
-    if (core->Reg[15] == 0xc00101a0) {
+	if (core->Reg[15] == 0xc00101a0) {
             /* undefine float-point instruction in kernel : fmrx */
             arm_dyncom_abort(core, ARMul_UndefinedInstrV);
-    }
-    if (core->syscallSig) {
-            core->syscallSig = 0;
-            arm_dyncom_abort(core, ARMul_SWIV);
-    }
-    #if SYNC_WITH_INTERPRET
-    if (cpu_dyncom->icounter > 1951000 && is_int_in_interpret(cpu_dyncom))
-    {
-            while(core->NirqSig) {
-                    mach->mach_io_do_cycle(cpu);
-            }
-    }
-    #endif
-    if (core->abortSig) {
-            arm_dyncom_abort(core, core->Aborted);
-    }
-    if (!core->NirqSig) {
-             if (!(core->Cpsr & 0x80)) {
+	}
+	if (core->syscallSig) {
+		core->syscallSig = 0;
+		arm_dyncom_abort(core, ARMul_SWIV);
+	}
+	#if SYNC_WITH_INTERPRET
+	if (cpu_dyncom->icounter > 1951000 && is_int_in_interpret(cpu_dyncom))
+	{
+		while(core->NirqSig) {
+			mach->mach_io_do_cycle(cpu);
+		}
+	}
+	#endif
+	if (core->abortSig) {
+		arm_dyncom_abort(core, core->Aborted);
+	}
+	if (!core->NirqSig) {
+		if (!(core->Cpsr & 0x80)) {
                      #if SYNC_WITH_INTERPRET
                      if (cpu_dyncom->icounter > 1951000 && !is_int_in_interpret(cpu_dyncom)) {
                              return;
@@ -173,9 +178,8 @@ static void per_cpu_step(conf_object_t * running_core){
                      #endif
                     arm_dyncom_abort(core, ARMul_IRQV);
              }
-    }
-
-    mach->mach_io_do_cycle(cpu);
+	}
+	mach->mach_io_do_cycle(cpu);
 }
 
 static void per_cpu_stop(conf_object_t * core){
