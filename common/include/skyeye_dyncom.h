@@ -273,7 +273,7 @@ typedef std::map<addr_t, BasicBlock *> bbaddr_map;
 typedef std::map<Function *, bbaddr_map> funcbb_map;
 #ifdef HASH_FAST_MAP
 
-#define L3_HASHMAP 1
+#define L3_HASHMAP 0
 #if L3_HASHMAP
 #define HASH_MAP_SIZE_L1 1024
 #define HASH_MAP_SIZE_L2 1024
@@ -553,6 +553,7 @@ API_FUNC void cpu_set_flags_hint(cpu_t *cpu, uint32_t f);
 API_FUNC void cpu_set_flags_debug(cpu_t *cpu, uint32_t f);
 API_FUNC void cpu_tag(cpu_t *cpu, addr_t pc);
 API_FUNC int cpu_run(cpu_t *cpu);
+API_FUNC int um_cpu_run(cpu_t *cpu);
 API_FUNC void cpu_translate(cpu_t *cpu, addr_t pc);
 API_FUNC void cpu_set_ram(cpu_t *cpu, uint8_t *RAM);
 API_FUNC void cpu_flush(cpu_t *cpu);
