@@ -79,12 +79,16 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		arm_core_t* core = (arm_core_t*)(cpu->cpu_data->obj);
 		core->phys_pc = core->pc;
 		rc = um_cpu_run(cpu);
+		//rc = cpu_run(cpu);
 		core->pc = core->phys_pc;
 		if(rc == JIT_RETURN_TRAP){
 #ifdef OPT_LOCAL_REGISTERS
 //			ppc_syscall(core);
 //				core->phys_pc += 4;
 #endif
+			//printf("In %s, TRAP triggered.\n", __FUNCTION__);
+			core->Reg[15] += 4;
+			return;
 		}	
 		if(rc == JIT_RETURN_FUNCNOTFOUND){
 			//printf("In %s, FUNCNOTFOUND, push compiled pc = 0x%x\n", __FUNCTION__, core->pc);
@@ -93,7 +97,7 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 				push_compiled_work(cpu, core->pc);
 		}	
 		else{
-			fprintf(stderr, "In %s, wrong return value\n", __FUNCTION__);
+			fprintf(stderr, "In %s, wrong return value %d\n", __FUNCTION__,  rc);
 		}
 	}
 }

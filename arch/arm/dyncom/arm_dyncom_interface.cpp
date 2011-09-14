@@ -40,6 +40,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "arm_arch_interface.h"
 #include "arm_dyncom_translate.h"
 #include "arm_dyncom_mmu.h"
+#include "arm_dyncom_parallel.h"
 #include "arm_dyncom_run.h"
 
 static void
@@ -144,7 +145,7 @@ static void per_cpu_step(conf_object_t * running_core){
         ARM_CPU_State* cpu = get_current_cpu();
         cpu_t *cpu_dyncom = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
 	if(is_user_mode(cpu_dyncom)){
-		arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
+		launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
 		return;
 	}
 	else
