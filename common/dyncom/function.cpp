@@ -496,7 +496,7 @@ cpu_create_function(cpu_t *cpu, const char *name,
 	cpu->dyncom_engine->ptr_srf->setName("srf");
 	cpu->dyncom_engine->ptr_frf = args++;
 	cpu->dyncom_engine->ptr_frf->setName("frf");
-	if(is_user_mode){
+	if(!is_user_mode(cpu)){
 		cpu->dyncom_engine->ptr_func_read_memory = args++;
 		cpu->dyncom_engine->ptr_func_read_memory->setName("readmemory");
 		cpu->dyncom_engine->ptr_func_write_memory = args++;
