@@ -1753,9 +1753,7 @@ int DYNCOM_TRANS(add)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *ret = ADD(op1, op2);
 	LET(RD, ret);
 	if (RD == 15) {
-		Value *new_page_effec = AND(R(15), CONST(0xfffff000));
-		new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
-		LET(PHYS_PC, R(15));
+		SET_NEW_PAGE;
 	} else if(SBIT) {
 		//set_condition(cpu, ret, bb, op1, op2);
 		//new StoreInst(ICMP_ULT(ret, op1), ptr_C, false, bb);
@@ -1781,34 +1779,42 @@ int DYNCOM_TRANS(and)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 }
 int DYNCOM_TRANS(bbl)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
-	if (BIT(24)) {
-		if(BITS(20, 27) >= 0xb8 && BITS(20, 27) <=0xbf) {
-			LET(14, ADD(R(15),CONST(4)));
-			LET(15, SUB(ADD(R(15), CONST(8)), CONST(BOPERAND))); 
-			//LET(15, ADD(R(15), BOPERANDS(8)));
-
-		} else if (BITS(20, 27) >= 0xb0 && BITS(20, 27) <=0xb7) {
-			LET(14, ADD(R(15),CONST(4)));
-			//LET(15, ADD(ADD(R(15),BOPERAND), CONST(8)));
-			LET(15, ADD(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
-			//LET(15, ADD(R(15), BOPERANDA(8)));
-			//LET(PHYS_PC, R(15));
+	if (cpu->is_user_mode) {
+		if (BIT(24)) {
+			if(BITS(20, 27) >= 0xb8 && BITS(20, 27) <=0xbf) {
+				LET(14, CONST(pc + 4));
+				LET(15, CONST(pc + 8 - BOPERAND));
+				SET_NEW_PAGE_PC(pc + 8 - BOPERAND);
+			} else if (BITS(20, 27) >= 0xb0 && BITS(20, 27) <=0xb7) {
+				LET(14, CONST(pc + 4));
+				LET(15, CONST(pc + 8 + BOPERAND));
+				SET_NEW_PAGE_PC(pc + 8 + BOPERAND);
+			}
+		} else if(BIT(23)) {
+			LET(15, CONST(pc + 8 - BOPERAND));
+			SET_NEW_PAGE_PC(pc + 8 - BOPERAND);
+		} else {
+			LET(15, CONST(pc + 8 + BOPERAND));
+			SET_NEW_PAGE_PC(pc + 8 + BOPERAND);
 		}
 	} else {
-		if(BIT(23)) {
-			LET(15, SUB(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
-			//LET(15, ADD(R(15), BOPERANDS(8)));
-			//LET(14, R(15));
-			//LET(PHYS_PC, R(15));
+		if (BIT(24)) {
+			if(BITS(20, 27) >= 0xb8 && BITS(20, 27) <=0xbf) {
+				LET(14, ADD(R(15),CONST(4)));
+				LET(15, SUB(ADD(R(15), CONST(8)), CONST(BOPERAND)));
+			} else if (BITS(20, 27) >= 0xb0 && BITS(20, 27) <=0xb7) {
+				LET(14, ADD(R(15),CONST(4)));
+				LET(15, ADD(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
+			}
 		} else {
-			LET(15, ADD(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
-			//LET(15, ADD(R(15), BOPERANDA(8)));
-			//LET(14, R(15));
+			if(BIT(23)) {
+				LET(15, SUB(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
+			} else {
+				LET(15, ADD(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
+			}
 		}
+		SET_NEW_PAGE;
 	}
-	Value *new_page_effec = AND(R(15), CONST(0xfffff000));
-	new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
-	LET(PHYS_PC, R(15));
 }
 int DYNCOM_TRANS(bic)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
@@ -1826,11 +1832,12 @@ int DYNCOM_TRANS(bkpt)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(blx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
 	if (BITS(20, 27) == 0x12 && BITS(4, 7) == 0x3) {
-		LET(14, ADD(R(15),CONST(4)));
+		if (cpu->is_user_mode)
+			LET(14, CONST(pc + 4));
+		else
+			LET(14, ADD(R(15),CONST(4)));
 		LET(15, AND(R(RM), CONST(0xFFFFFFFE)));
-		Value *new_page_effec = AND(R(15), CONST(0xfffff000));
-		new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
-		LET(PHYS_PC, R(15));
+		SET_NEW_PAGE;
 	} else {
 		printf("in %s\n", __FUNCTION__);
 		exit(-1);
@@ -1843,9 +1850,7 @@ int DYNCOM_TRANS(bx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *ret = AND(op1, CONST(0xfffffffe));
 
 	LET(15, ret);
-	Value *new_page_effec = AND(R(15), CONST(0xfffff000));
-	new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
-	LET(PHYS_PC, R(15));
+	SET_NEW_PAGE;
 }
 int DYNCOM_TRANS(bxj)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(cdp)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
@@ -1907,10 +1912,7 @@ int DYNCOM_TRANS(cmp)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	new StoreInst(res, ptr_C, false, bb);
 #endif
 
-	if (!cpu->is_user_mode)
-	{
-		SET_CPSR;
-	}
+	SET_CPSR;
 }
 int DYNCOM_TRANS(cps)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
@@ -1949,8 +1951,13 @@ int DYNCOM_TRANS(cps)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 int DYNCOM_TRANS(cpy)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
 	if(RM == 15) {
-		LET(15, ADD(R(15), CONST(8)));
-		LET(PHYS_PC, R(15));
+		if (cpu->is_user_mode) {
+			LET(15, CONST(pc + 8));
+			LET(PHYS_PC, CONST(pc + 8));
+		} else {
+			LET(15, ADD(R(15), CONST(8)));
+			LET(PHYS_PC, R(15));
+		}
 	}
 	Value *op1 = R(RM);
 
@@ -1976,9 +1983,7 @@ int DYNCOM_TRANS(ldm)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
 	if (BIT(15)) {
-		Value *new_page_effec = AND(R(15), CONST(0xfffff000));
-		new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
-		LET(PHYS_PC, R(15));
+		SET_NEW_PAGE;
 		if (BITS(25, 27) == 4 && BIT(22) == 1 && BIT(20) == 1) {
 			LET(CPSR_REG, R(SPSR_REG));
 			cpu->f.emit_decode_reg(cpu, bb);
@@ -1992,9 +1997,7 @@ int DYNCOM_TRANS(ldr)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
 	if (RD == 15) {
-		Value *new_page_effec = AND(R(15), CONST(0xfffff000));
-		new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
-		LET(PHYS_PC, R(15));
+		SET_NEW_PAGE;
 	}
 	return 0;
 }
@@ -2122,8 +2125,13 @@ int DYNCOM_TRANS(mla)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 int DYNCOM_TRANS(mov)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
 	if(RN == 15) {
-		LET(15, ADD(R(15), CONST(8)));
-		LET(PHYS_PC, R(15));
+		if (cpu->is_user_mode) {
+			LET(15, CONST(pc + 8));
+			LET(PHYS_PC, CONST(pc + 8));
+		} else {
+			LET(15, ADD(R(15), CONST(8)));
+			LET(PHYS_PC, R(15));
+		}
 	}
 	/* for 0x10 0x11 0x30 0x31 */
 	Value *op1 = R(RN);
@@ -2188,9 +2196,7 @@ int DYNCOM_TRANS(mov)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	}
 #if 1
 	if (RD == 15) {
-		Value *new_page_effec = AND(R(15), CONST(0xfffff000));
-		new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
-		LET(PHYS_PC, R(15));
+		SET_NEW_PAGE;
 	}
 	if(SBIT && (RD != 15)) {
 		set_condition(cpu, op2, bb, op1, op2);
@@ -2382,11 +2388,8 @@ int DYNCOM_TRANS(rsb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 		EQZERO(ret,ptr_Z);
 		NOTBORROWFROMSUB(op2,op1,ptr_C);
 		OVERFLOWFROMSUB(op2,op1,ret,ptr_V);
-		
-		if (!cpu->is_user_mode)
-		{
-			SET_CPSR;
-		}
+	
+		SET_CPSR;
 	}
 
 }
