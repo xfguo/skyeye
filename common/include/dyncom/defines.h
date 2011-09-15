@@ -36,17 +36,30 @@
 // allocation for us
 //#define OPT_LOCAL_REGISTERS
 
+/* The USER_MODE_OPT can not work with kernel running */
+#define USER_MODE_OPT 1
+
 // DFS limit when CPU_CODEGEN_TAG_LIMIT is set by the client.
 // '6' is the optimum for OpenBSD's 'date' on M88K.
+#if USER_MODE_OPT
 #define LIMIT_TAGGING_DFS 2
+#else
+#define LIMIT_TAGGING_DFS 1
+#endif
 /* FAST_MEMORY is only used in user mode simulation */
+#if USER_MODE_OPT
 #define FAST_MEMORY
+#endif
 
 #define ENABLE_DEBUG_ME 0
 /* Running kernel should set ENABLE_ICOUNTER */
+#if USER_MODE_OPT
 #define ENABLE_ICOUNTER 0
+#else
+#define ENABLE_ICOUNTER 1
+#endif
 
 /* Micros of time prifile */
-#define THREAD_CLOCK 1
-#define TIMING_PROF 1
+#define THREAD_CLOCK 0
+#define TIMING_PROF 0
 #endif
