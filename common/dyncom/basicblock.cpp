@@ -135,13 +135,24 @@ emit_store_pc_end_page(cpu_t *cpu, tag_t tag, BasicBlock *bb, addr_t new_pc)
 #else
 		//new StoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb);
 		//new StoreInst(CONST(new_pc), cpu->ptr_PC, bb);
-		Value *pc = new LoadInst(cpu->ptr_PC, "", false, bb);
-		if (!(tag & TAG_NEED_PC)) {
-			new StoreInst(ADD(pc, CONST(4)), cpu->ptr_PC, bb);
+		if(save_pc_before_exec(cpu)){ /* for powerpc case */
+			Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+			Value *v_offset = BinaryOperator::Create(Instruction::And, v_phys_pc, CONST(0xfff), "", bb);
+			Value *v_page_effec = new LoadInst(cpu->ptr_CURRENT_PAGE_EFFEC, "", false, bb);
+			Value *next_page_effec = BinaryOperator::Create(Instruction::Add, CONST(0x1000), v_page_effec, "", bb);
+			Value *v_effec_pc = BinaryOperator::Create(Instruction::Or, v_offset, next_page_effec, "", bb); 
+			new StoreInst(v_phys_pc, cpu->ptr_PHYS_PC, bb);
+			new StoreInst(v_effec_pc, cpu->ptr_PC, bb);
 		}
-		Value *new_page_effec = AND(ADD(pc, CONST(4)), CONST(0xfffff000));
-		new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
-		//new StoreInst(CONST(new_pc), cpu->ptr_PHYS_PC, bb);
+		else{
+			Value *pc = new LoadInst(cpu->ptr_PC, "", false, bb);
+			if (!(tag & TAG_NEED_PC)) {
+				new StoreInst(ADD(pc, CONST(4)), cpu->ptr_PC, bb);
+			}
+			Value *new_page_effec = AND(ADD(pc, CONST(4)), CONST(0xfffff000));
+			new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
+			//new StoreInst(CONST(new_pc), cpu->ptr_PHYS_PC, bb);
+		}
 #endif
 	}
 }

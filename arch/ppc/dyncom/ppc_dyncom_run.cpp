@@ -118,6 +118,7 @@ static void arch_powerpc_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf
 	// This architecture is biendian, accept whatever the
 	// client wants, override other flags.
 	info->common_flags &= CPU_FLAG_ENDIAN_MASK;
+	info->common_flags |= CPU_FLAG_SAVE_PC_BEFORE_EXEC;
 
 	info->delay_slots = 0;
 	// The byte size is 8bits.
