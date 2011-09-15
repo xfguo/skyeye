@@ -90,8 +90,16 @@ translate_instr(cpu_t *cpu, addr_t pc, addr_t next_pc, tag_t tag,
                         emit_store_pc_cond(cpu, tag, c, cur_bb, next_pc);
                         BranchInst::Create(bb_cond, bb_ret, c, cur_bb);
 		}
-		else
-			BranchInst::Create(bb_cond, bb_next, c, cur_bb);
+		else{
+			if (tag & TAG_BEFORE_SYSCALL){
+				printf("In %s, next_pc=0x%x\n", __FUNCTION__, next_pc);
+				sleep(4);
+				emit_store_pc(cpu, cur_bb, next_pc);
+				BranchInst::Create(bb_cond, bb_trap, c, cur_bb);
+			}
+			else
+				BranchInst::Create(bb_cond, bb_next, c, cur_bb);
+		}
 		cur_bb = bb_cond;
 	}
 	if ((tag & TAG_MEMORY) && !is_user_mode(cpu)) { //&& !(tag & TAG_BRANCH)) {
@@ -122,8 +130,15 @@ translate_instr(cpu_t *cpu, addr_t pc, addr_t next_pc, tag_t tag,
 
 #ifdef OPT_LOCAL_REGISTERS
 	if (tag & TAG_BEFORE_SYSCALL) {//bb_instr needs a terminator inst.
-		emit_store_pc_return(cpu, cur_bb, pc + 4, bb_trap);
-		cur_bb = NULL;
+		/* the branch instruction before syscall */
+		if((tag & TAG_BRANCH)){ 
+			/* Do nothing for Unconditional branch */
+			printf("In %s, pc=0x%x\n", __FUNCTION__, pc);
+		}
+		else{
+			emit_store_pc_return(cpu, cur_bb, pc + 4, bb_trap);
+			cur_bb = NULL;
+		}
 	}
 	if (tag & TAG_SYSCALL) {//bb_instr needs a terminator inst.
 		emit_store_pc_return(cpu, cur_bb, pc + 4, bb_ret);
