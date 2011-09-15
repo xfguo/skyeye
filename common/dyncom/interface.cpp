@@ -447,10 +447,21 @@ um_cpu_run(cpu_t *cpu){
 	while(1){
 		pc = cpu->f.get_pc(cpu, cpu->rf.grf);
 		*(addr_t*)cpu->rf.phys_pc = pc;
+#if L3_HASHMAP
+		fast_map hash_map = cpu->dyncom_engine->fmap;
+		if(hash_map[HASH_MAP_INDEX_L1(pc)] == NULL)
+			return JIT_RETURN_FUNCNOTFOUND;
+		else if(hash_map[HASH_MAP_INDEX_L1(pc)][HASH_MAP_INDEX_L2(pc)] == NULL)
+			return JIT_RETURN_FUNCNOTFOUND;
+		else if(hash_map[HASH_MAP_INDEX_L1(pc)][HASH_MAP_INDEX_L2(pc)][HASH_MAP_INDEX_L3(pc)] == NULL)
+			return JIT_RETURN_FUNCNOTFOUND;
+		pfunc = (um_fp_t)hash_map[HASH_MAP_INDEX_L1(pc)][HASH_MAP_INDEX_L2(pc)][HASH_MAP_INDEX_L3(pc)];
+#else
 		fast_map hash_map = cpu->dyncom_engine->fmap;
 		pfunc = (um_fp_t)hash_map[pc & 0x1fffff];
 		if(!pfunc)
 			return JIT_RETURN_FUNCNOTFOUND;
+#endif
 		//ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf, cpu->mem_ops.read_memory, cpu->mem_ops.write_memory, cpu->mem_ops.check_mm);
 		ret = pfunc(cpu->dyncom_engine->RAM, cpu->rf.grf, cpu->rf.srf, cpu->rf.frf);
 		if(ret != JIT_RETURN_FUNCNOTFOUND)

@@ -273,7 +273,7 @@ typedef std::map<addr_t, BasicBlock *> bbaddr_map;
 typedef std::map<Function *, bbaddr_map> funcbb_map;
 #ifdef HASH_FAST_MAP
 
-#define L3_HASHMAP 0
+#define L3_HASHMAP 1
 #if L3_HASHMAP
 #define HASH_MAP_SIZE_L1 1024
 #define HASH_MAP_SIZE_L2 1024
