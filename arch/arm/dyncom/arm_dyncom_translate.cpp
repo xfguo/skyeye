@@ -1693,6 +1693,21 @@ int init_arm_opc_group15(arm_opc_func_t* arm_opc_table)
 
 #define DYNCOM_FILL_ACTION(s) 	{#s, DYNCOM_TRANS(s), DYNCOM_TAG(s), arm_translate_cond}
 
+#define GETSIGN(ret,ptr)			(new StoreInst(ICMP_SLT(ret, CONST(0)), ptr, bb))
+#define EQZERO(ret,ptr)				(new StoreInst(ICMP_EQ(ret, CONST(0)), ptr, bb))
+#define CARRYFROMADD(op1,ret,ptr)		(new StoreInst(ICMP_ULT(ret, op1), ptr, false, bb))
+#define NOTBORROWFROMSUB(op1,op2,ptr)		(new StoreInst(ICMP_UGE(op1, op2), ptr, false, bb))
+#define OVERFLOWFROMADD(op1,op2,ret,ptr)	(new StoreInst(ICMP_SLT(AND(COM(XOR(op1, op2)), XOR(op1,ret)), CONST(0)), ptr, bb))
+#define OVERFLOWFROMSUB(op1,op2,ret,ptr)	(new StoreInst(ICMP_SLT(AND((XOR(op1, op2)), XOR(op1,ret)), CONST(0)), ptr, bb))
+
+#define SET_CPSR Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30)); 	\
+	Value *n = SHL(ZEXT32(LOAD(ptr_N)), CONST(31));			\
+	Value *c = SHL(ZEXT32(LOAD(ptr_C)), CONST(29));			\
+	Value *v = SHL(ZEXT32(LOAD(ptr_V)), CONST(28));			\
+	Value *nzcv = OR(OR(OR(z, n), c), v);				\
+	Value *cpsr = OR(AND(R(CPSR_REG), CONST(0xfffffff)), nzcv);	\
+	LET(CPSR_REG, cpsr);
+
 
 int DYNCOM_TRANS(adc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -1705,15 +1720,12 @@ int DYNCOM_TRANS(adc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	LET(RD, ret);
 	if(SBIT) {
 		set_condition(cpu, ret, bb, op1, op2);
-#if 0
-		Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30));
-		Value *n = SHL(ZEXT32(LOAD(ptr_N)), CONST(31));
-		Value *c = SHL(ZEXT32(LOAD(ptr_C)), CONST(29));
-		Value *v = SHL(ZEXT32(LOAD(ptr_V)), CONST(28));
-		Value *nzcv = OR(OR(OR(z, n), c), v);
-		Value *cpsr = OR(AND(R(CPSR_REG), CONST(0xfffffff)), nzcv);
-		LET(CPSR_REG, cpsr);
-#endif
+
+		if (!cpu->is_user_mode)
+		{
+			SET_CPSR;
+		}
+
 		//new StoreInst(cpsr, cpu->ptr_gpr[16], false, bb);
 	}
 }
@@ -1727,14 +1739,17 @@ int DYNCOM_TRANS(add)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *op2 = OPERAND;
 	Value *ret = ADD(op1, op2);
 	LET(RD, ret);
-	if(SBIT) {
-		set_condition(cpu, ret, bb, op1, op2);
-		new StoreInst(ICMP_ULT(ret, op1), ptr_C, false, bb);
-	}
 	if (RD == 15) {
 		Value *new_page_effec = AND(R(15), CONST(0xfffff000));
 		new StoreInst(new_page_effec, cpu->ptr_CURRENT_PAGE_EFFEC, bb);
 		LET(PHYS_PC, R(15));
+	} else if(SBIT) {
+		//set_condition(cpu, ret, bb, op1, op2);
+		//new StoreInst(ICMP_ULT(ret, op1), ptr_C, false, bb);
+		GETSIGN(ret,ptr_N);
+		EQZERO(ret,ptr_Z);
+		CARRYFROMADD(op1,ret,ptr_C);
+		OVERFLOWFROMADD(op1,op2,ret,ptr_V);
 	}
 }
 int DYNCOM_TRANS(and)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
@@ -1744,29 +1759,37 @@ int DYNCOM_TRANS(and)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *op2 = OPERAND;
 	Value *ret = AND(op1,op2);
 	LET(RD, ret);
-	if(SBIT)
+	if(SBIT && (RD != 15))
+	{
+		//GETSIGN(ret,ptr_N);
+		//EQZERO(ret,ptr_Z);
 		set_condition(cpu, ret, bb, op1, op2);
+	}
 }
 int DYNCOM_TRANS(bbl)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	if (BIT(24)) {
 		if(BITS(20, 27) >= 0xb8 && BITS(20, 27) <=0xbf) {
 			LET(14, ADD(R(15),CONST(4)));
-			LET(15, SUB(ADD(R(15), CONST(8)),BOPERAND));
+			//LET(15, SUB(ADD(R(15), CONST(8)),BOPERAND)); 
+			LET(15, ADD(R(15), BOPERANDS(8)));
 
 		} else if (BITS(20, 27) >= 0xb0 && BITS(20, 27) <=0xb7) {
 			LET(14, ADD(R(15),CONST(4)));
 			//LET(15, ADD(ADD(R(15),BOPERAND), CONST(8)));
-			LET(15, ADD(ADD(R(15), CONST(8)),BOPERAND));
+			//LET(15, ADD(ADD(R(15), CONST(8)),BOPERAND)); 
+			LET(15, ADD(R(15), BOPERANDA(8)));
 			//LET(PHYS_PC, R(15));
 		}
 	} else {
 		if(BIT(23)) {
-			LET(15, SUB(ADD(R(15), CONST(8)),BOPERAND));
+			//LET(15, SUB(ADD(R(15), CONST(8)),BOPERAND)); 
+			LET(15, ADD(R(15), BOPERANDS(8)));
 			//LET(14, R(15));
 			//LET(PHYS_PC, R(15));
 		} else {
-			LET(15, ADD(ADD(R(15), CONST(8)),BOPERAND));
+			//LET(15, ADD(ADD(R(15), CONST(8)),BOPERAND)); 
+			LET(15, ADD(R(15), BOPERANDA(8)));
 			//LET(14, R(15));
 		}
 	}
@@ -1827,10 +1850,16 @@ int DYNCOM_TRANS(cmn)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *op1 = R(RN);
 	Value *op2 = OPERAND;
 	Value *ret = ADD(op1, op2);
-
-	set_condition(cpu, ret, bb, op1, op2);
+	
+	GETSIGN(ret,ptr_N);
+	EQZERO(ret,ptr_Z);
+	CARRYFROMADD(op1,ret,ptr_C);
+	OVERFLOWFROMADD(op1,op2,ret,ptr_V);
+	
+	//set_condition(cpu, ret, bb, op1, op2);
 
 	//new StoreInst(ICMP_EQ(ret, CONST(0x80000000)), ptr_N, bb);
+#if 0
 	Value *op1_sign = AND(op1, CONST(0x80000000));
 	Value *op2_sign = AND(op2, CONST(0x80000000));
 	Value *ret_sign = AND(ret, CONST(0x80000000));
@@ -1839,6 +1868,7 @@ int DYNCOM_TRANS(cmn)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 			       SELECT(ICMP_EQ(op1, ret_sign), CONST(0), CONST(1))
 			       , CONST(0));
 	new StoreInst(TRUNC1(result), ptr_V, bb);
+#endif
 }
 #define ISNEG(VAL) TRUNC1(LSHR(VAL, CONST(31)))
 #define ISPOS(VAL) TRUNC1(LSHR(COM(VAL), CONST(31)))
@@ -1850,22 +1880,24 @@ int DYNCOM_TRANS(cmp)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 	Value *ret = SUB(op1, op2);
 
-	set_condition(cpu, ret, bb, op1, op2);
-	
+	//set_condition(cpu, ret, bb, op1, op2);
+	GETSIGN(ret,ptr_N);
+	EQZERO(ret,ptr_Z);
+	NOTBORROWFROMSUB(op1,op2,ptr_C);
+	OVERFLOWFROMSUB(op1,op2,ret,ptr_V);
+
+#if 0
 	Value *tmp1 = AND(ISNEG(op1), ISPOS(op2));
 	Value *tmp2 = AND(ISNEG(op1), ISPOS(ret));
 	Value *tmp3 = AND(ISPOS(op2), ISPOS(ret));
 	Value *res = OR(OR(tmp1, tmp2), tmp3);
 	new StoreInst(res, ptr_C, false, bb);
+#endif
 
-	Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30));
-	Value *n = SHL(ZEXT32(LOAD(ptr_N)), CONST(31));
-	Value *c = SHL(ZEXT32(LOAD(ptr_C)), CONST(29));
-	Value *v = SHL(ZEXT32(LOAD(ptr_V)), CONST(28));
-	Value *nzcv = OR(OR(OR(z, n), c), v);
-	Value *cpsr = OR(AND(R(CPSR_REG), CONST(0xfffffff)), nzcv);
-	LET(CPSR_REG, cpsr);
-
+	if (!cpu->is_user_mode)
+	{
+		SET_CPSR;
+	}
 }
 int DYNCOM_TRANS(cps)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -1873,13 +1905,7 @@ int DYNCOM_TRANS(cps)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	uint32_t cpsr_val = 0;
 	uint32_t aif = 0;
 
-	Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30));
-	Value *n = SHL(ZEXT32(LOAD(ptr_N)), CONST(31));
-	Value *c = SHL(ZEXT32(LOAD(ptr_C)), CONST(29));
-	Value *v = SHL(ZEXT32(LOAD(ptr_V)), CONST(28));
-	Value *nzcv = OR(OR(OR(z, n), c), v);
-	Value *cpsr = OR(AND(R(CPSR_REG), CONST(0xfffffff)), nzcv);
-	LET(CPSR_REG, cpsr);
+	SET_CPSR;
 
 	if (BIT(19) == 1) {
 		if (BIT(8) == 1) {
@@ -2073,7 +2099,12 @@ int DYNCOM_TRANS(mla)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	LET(MUL_RD, ret);
 
 	if(SBIT)
-		set_condition(cpu, ret, bb, CONST(0), CONST(0));
+	{
+		GETSIGN(ret,ptr_N);
+		EQZERO(ret,ptr_Z);
+		//set_condition(cpu, ret, bb, CONST(0), CONST(0));
+	}
+		
 }
 int DYNCOM_TRANS(mov)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -2086,9 +2117,9 @@ int DYNCOM_TRANS(mov)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *op2 = OPERAND;
 	Value *tmp1, *tmp2, *tmp3, *tmp4, *tmp5;
 #if 1
-	if (SBIT&& BITS(4, 6) == 0 && BITS(25, 27) == 0) {
+	if (SBIT && BITS(4, 6) == 0 && BITS(25, 27) == 0) {
+		/* Logical shift left by immediate */
 		if (BITS(7, 11) != 0) {
-			//Shift by imme
 			tmp1 = CONST(32 - BITS(7, 11));
 			//tmp1 = CONST(BITS(7, 11));
 			tmp4 = LSHR(R(RM), tmp1);
@@ -2167,13 +2198,7 @@ int DYNCOM_TRANS(mov)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	}
 
 	if (SBIT && (RD != 15)) {
-		Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30));
-		Value *n = SHL(ZEXT32(LOAD(ptr_N)), CONST(31));
-		Value *c = SHL(ZEXT32(LOAD(ptr_C)), CONST(29));
-		Value *v = SHL(ZEXT32(LOAD(ptr_V)), CONST(28));
-		Value *nzcv = OR(OR(OR(z, n), c), v);
-		Value *cpsr = OR(AND(R(CPSR_REG), CONST(0xfffffff)), nzcv);
-		LET(CPSR_REG, cpsr);
+		SET_CPSR;
 	}
 #endif
 }
@@ -2225,26 +2250,14 @@ int DYNCOM_TRANS(mrs)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 		printf("in %s\n", __FUNCTION__);
 		LET(RD, R(SPSR_REG));
 	} else {
-		Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30));
-		Value *n = SHL(ZEXT32(LOAD(ptr_N)), CONST(31));
-		Value *c = SHL(ZEXT32(LOAD(ptr_C)), CONST(29));
-		Value *v = SHL(ZEXT32(LOAD(ptr_V)), CONST(28));
-		Value *nzcv = OR(OR(OR(z, n), c), v);
-		Value *cpsr = OR(AND(R(CPSR_REG), CONST(0xfffffff)), nzcv);
-		LET(CPSR_REG, cpsr);
+		SET_CPSR;
 
 		LET(RD, R(CPSR_REG));
 	}
 }
 int DYNCOM_TRANS(msr)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30));
-	Value *n = SHL(ZEXT32(LOAD(ptr_N)), CONST(31));
-	Value *c = SHL(ZEXT32(LOAD(ptr_C)), CONST(29));
-	Value *v = SHL(ZEXT32(LOAD(ptr_V)), CONST(28));
-	Value *nzcv = OR(OR(OR(z, n), c), v);
-	Value *cpsr = OR(AND(R(CPSR_REG), CONST(0xfffffff)), nzcv);
-	LET(CPSR_REG, cpsr);
+	SET_CPSR;
 
 	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
 	Value *psr = CONST(0);
@@ -2283,7 +2296,11 @@ int DYNCOM_TRANS(mul)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	LET(MUL_RD, ret);
 
 	if(SBIT)
-		set_condition(cpu, ret, bb, op1, op2);
+	{
+		GETSIGN(ret,ptr_N);
+		EQZERO(ret,ptr_Z);
+		//set_condition(cpu, ret, bb, op1, op2);
+	}
 }
 int DYNCOM_TRANS(mvn)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -2331,7 +2348,8 @@ int DYNCOM_TRANS(rsb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *ret = SUB(op2, op1);
 	LET(RD, ret);
 
-	if(SBIT) {
+	if(SBIT && RD !=15) {
+#if 0
 		set_condition(cpu, ret, bb, op2, op1);
 		Value *z = SELECT(ICMP_EQ(R(RD), CONST(0)), CONST1(1), CONST1(0));
 		new StoreInst(z, ptr_Z, false, bb);
@@ -2346,17 +2364,18 @@ int DYNCOM_TRANS(rsb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 #endif
 //		Value *res = NOT(ICMP_EQ(AND(ret, CONST(0x80000000)), CONST(0)));
 		new StoreInst(res, ptr_C, false, bb);
+#endif
+		GETSIGN(ret,ptr_N);
+		EQZERO(ret,ptr_Z);
+		NOTBORROWFROMSUB(op2,op1,ptr_C);
+		OVERFLOWFROMSUB(op2,op1,ret,ptr_V);
+		
+		if (!cpu->is_user_mode)
+		{
+			SET_CPSR;
+		}
 	}
 
-	if (SBIT) {
-		Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30));
-		Value *n = SHL(ZEXT32(LOAD(ptr_N)), CONST(31));
-		Value *c = SHL(ZEXT32(LOAD(ptr_C)), CONST(29));
-		Value *v = SHL(ZEXT32(LOAD(ptr_V)), CONST(28));
-		Value *nzcv = OR(OR(OR(z, n), c), v);
-		Value *cpsr = OR(AND(R(CPSR_REG), CONST(0xfffffff)), nzcv);
-		LET(CPSR_REG, cpsr);
-	}
 }
 int DYNCOM_TRANS(rsc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -2366,6 +2385,7 @@ int DYNCOM_TRANS(rsc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *carry = ZEXT32(NOT(op3));
 	Value *ret = SUB(SUB(op2, op1), carry);
 	LET(RD, ret);
+	
 	if(SBIT)
 		set_condition(cpu, ret, bb, op2, op1);
 }
@@ -2527,7 +2547,12 @@ int DYNCOM_TRANS(sub)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	Value *ret = SUB(op1, op2);
 	LET(RD, ret);
 
-	if(SBIT) {
+	if(SBIT && RD!=15) {
+		GETSIGN(ret,ptr_N);
+		EQZERO(ret,ptr_Z);
+		NOTBORROWFROMSUB(op1,op2,ptr_C);
+		OVERFLOWFROMSUB(op1,op2,ret,ptr_V);
+#if 0
 		set_condition(cpu, ret, bb, op1, op2);
 		Value *tmp1 = AND(ISNEG(op1), ISPOS(op2));
 		Value *tmp2 = AND(ISNEG(op1), ISPOS(ret));
@@ -2537,11 +2562,12 @@ int DYNCOM_TRANS(sub)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	//	Value *ptr_c = SELECT(ICMP_SGE(op1, op2), res, CONST1(0));
 	//	new StoreInst(ptr_c, ptr_C, false, bb);
 		new StoreInst(res, ptr_C, false, bb);
+#endif
 	}
 }
 int DYNCOM_TRANS(swi)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
-	printf("swi inst\n\n\n\n");
+	//printf("swi inst\n\n\n\n");
 	arch_syscall(cpu, bb, BITS(0,19));
 }
 int DYNCOM_TRANS(swp)(cpu_t *cpu, uint32_t instr, BasicBlock *bb){}

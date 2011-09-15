@@ -344,8 +344,8 @@ int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2
 	/* new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb); */
 //	/* C */ new StoreInst(ICMP_SLE(ret, op1), ptr_C, false, bb);
 	/* C */ new StoreInst(ICMP_ULT(ret, op1), ptr_C, false, bb);
-	/* V */ new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
-
+	/* V */ //new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
+	(new StoreInst(ICMP_SLT(AND((XOR(op1, op2)), XOR(op1,ret)), CONST(0)), ptr_V, bb));
 	return 0;
 }
 
@@ -982,7 +982,7 @@ Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 #endif
 
 /* Getting data from branch instruction operand */
-Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
+Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, bool sub, int32_t offset)
 {
 	#if 1
                uint32_t rotate_imm = instr;
@@ -1002,7 +1002,10 @@ Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 		rotate_imm = rotate_imm << 2;
 
 //		printf("rotate_imm is %x\n", rotate_imm);
-		return CONST(rotate_imm);
+		if (sub)
+			return CONST(offset - rotate_imm);
+		else 
+			return CONST(rotate_imm + offset);
 }
 #if 0
 #define OPERAND operand(cpu,instr,bb)

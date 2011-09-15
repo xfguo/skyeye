@@ -68,12 +68,14 @@
 #define STORE_CHECK_RD_PC	ADD(R(RD), CONST(8))
 
 #define OPERAND operand(cpu,instr,bb)
-#define BOPERAND boperand(cpu,instr,bb)
+#define BOPERAND boperand(cpu,instr,bb,false,0)
+#define BOPERANDA(offset) boperand(cpu,instr,bb,false,offset)
+#define BOPERANDS(offset) boperand(cpu,instr,bb,true,offset)
 
 #define CHECK_RN_PC  (RN==15? ADD(R(RN), CONST(8)):R(RN))
 
 Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb);
-Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb);
+Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, bool sub, int32_t offset);
 int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2);
 Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 void LoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr);
