@@ -112,8 +112,14 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap, BasicBloc
 			}
 			#endif
 			/* get not-taken basic block */
-			if (tag & (TAG_CONDITIONAL | TAG_POSTCOND | TAG_LAST_INST | (TAG_MEMORY && !is_user_mode(cpu))))
- 				bb_next = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, next_pc, bb_ret, BB_TYPE_NORMAL);
+			if(is_user_mode(cpu)){
+				if (tag & (TAG_CONDITIONAL | TAG_POSTCOND | TAG_LAST_INST ))
+ 						bb_next = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, next_pc, bb_ret, BB_TYPE_NORMAL);
+			}
+			else{
+				if (tag & (TAG_CONDITIONAL | TAG_POSTCOND | TAG_LAST_INST | (TAG_MEMORY)))
+ 						bb_next = (BasicBlock*)lookup_basicblock(cpu, cpu->dyncom_engine->cur_func, next_pc, bb_ret, BB_TYPE_NORMAL);
+			}
 //			if (!(tag & TAG_BRANCH)) {
 //			if (!(tag & TAG_COND_BRANCH) && !(tag & TAG_BRANCH)) {
 //				arm_emit_store_pc(cpu, cur_bb, pc);
