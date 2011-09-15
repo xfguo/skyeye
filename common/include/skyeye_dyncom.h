@@ -137,6 +137,9 @@ enum {
 	CPU_FLAG_FP80          = (1 << 15), // FP80 is natively supported.
 	CPU_FLAG_FP128         = (1 << 16), // FP128 is natively supported.
 	CPU_FLAG_SWAPMEM       = (1 << 17), // Swap load/store
+	/* if pc is saved in every instruction */
+	CPU_FLAG_SAVE_PC	= (1 << 18),
+	CPU_FLAG_SAVE_PC_BEFORE_EXEC	= (1 << 19)
 };
 
 // @@@BEGIN_DEPRECATION
@@ -566,4 +569,12 @@ static inline int is_user_mode(cpu_t *cpu)
 {
 	return cpu->is_user_mode;
 }
+
+static inline int save_pc_for_all_insn(cpu_t* cpu){
+	return ((cpu)->info.common_flags & CPU_FLAG_SAVE_PC);
+}
+static inline int save_pc_before_exec(cpu_t* cpu){
+	return ((cpu)->info.common_flags & CPU_FLAG_SAVE_PC_BEFORE_EXEC);
+}
+
 #endif
