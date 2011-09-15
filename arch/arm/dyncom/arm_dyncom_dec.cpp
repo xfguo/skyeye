@@ -982,7 +982,7 @@ Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 #endif
 
 /* Getting data from branch instruction operand */
-Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, bool sub, int32_t offset)
+uint32_t boperand(uint32_t instr)
 {
 	#if 1
                uint32_t rotate_imm = instr;
@@ -1002,10 +1002,7 @@ Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, bool sub, int32_t o
 		rotate_imm = rotate_imm << 2;
 
 //		printf("rotate_imm is %x\n", rotate_imm);
-		if (sub)
-			return CONST(offset - rotate_imm);
-		else 
-			return CONST(rotate_imm + offset);
+		return rotate_imm;
 }
 #if 0
 #define OPERAND operand(cpu,instr,bb)
@@ -1013,6 +1010,8 @@ Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, bool sub, int32_t o
 
 #define CHECK_RN_PC  (RN==15? ADD(R(RN), CONST(8)):R(RN))
 #endif
+
+#if 0
 /* complete ADD logic use llvm asm */
 void Dec_ADD(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
@@ -3919,7 +3918,7 @@ int arm_opc_trans_ff(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	arm_opc_trans_f0(cpu, instr, bb);
 }
 
-
+#endif
 
 
 const ISEITEM arm_instruction[] = {

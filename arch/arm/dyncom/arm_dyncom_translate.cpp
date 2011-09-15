@@ -41,6 +41,7 @@ Value *arm_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
 
 arm_opc_func_t  arm_opc_table_main[0xff+1];
 
+#if 0
 int init_arm_opc_group0(arm_opc_func_t* arm_opc_table);
 int init_arm_opc_group1(arm_opc_func_t* arm_opc_table);
 int init_arm_opc_group2(arm_opc_func_t* arm_opc_table);
@@ -57,6 +58,7 @@ int init_arm_opc_group12(arm_opc_func_t* arm_opc_table);
 int init_arm_opc_group13(arm_opc_func_t* arm_opc_table);
 int init_arm_opc_group14(arm_opc_func_t* arm_opc_table);
 int init_arm_opc_group15(arm_opc_func_t* arm_opc_table);
+#endif
 
 #ifndef INSTR_SIZE
 #define INSTR_SIZE 4
@@ -238,6 +240,7 @@ void arm_opc_func_init()
 		arm_opc_table[i].translate_cond = arm_translate_cond;
 	}
 
+#if 0
 	init_arm_opc_group0(&arm_opc_table[0x0]);
 	init_arm_opc_group1(&arm_opc_table[0x10]);
 	init_arm_opc_group2(&arm_opc_table[0x20]);
@@ -254,6 +257,7 @@ void arm_opc_func_init()
 	init_arm_opc_group13(&arm_opc_table[0xd0]);
 	init_arm_opc_group14(&arm_opc_table[0xe0]);
 	init_arm_opc_group15(&arm_opc_table[0xf0]);
+#endif
 }
 
 
@@ -358,6 +362,7 @@ int arm_tag_branch(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *ne
 	}
 }
 
+#if 0
 int init_arm_opc_group0(arm_opc_func_t* arm_opc_table)
 {
 	{
@@ -1685,6 +1690,7 @@ int init_arm_opc_group15(arm_opc_func_t* arm_opc_table)
 		(arm_opc_table)[0xf].tag = arm_tag_continue;
 	}
 }
+#endif
 
 #define glue(x, y)		x ## y
 #define DYNCOM_TRANS(s) 	glue(arm_translate_, s)
@@ -1771,25 +1777,25 @@ int DYNCOM_TRANS(bbl)(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	if (BIT(24)) {
 		if(BITS(20, 27) >= 0xb8 && BITS(20, 27) <=0xbf) {
 			LET(14, ADD(R(15),CONST(4)));
-			//LET(15, SUB(ADD(R(15), CONST(8)),BOPERAND)); 
-			LET(15, ADD(R(15), BOPERANDS(8)));
+			LET(15, SUB(ADD(R(15), CONST(8)), CONST(BOPERAND))); 
+			//LET(15, ADD(R(15), BOPERANDS(8)));
 
 		} else if (BITS(20, 27) >= 0xb0 && BITS(20, 27) <=0xb7) {
 			LET(14, ADD(R(15),CONST(4)));
 			//LET(15, ADD(ADD(R(15),BOPERAND), CONST(8)));
-			//LET(15, ADD(ADD(R(15), CONST(8)),BOPERAND)); 
-			LET(15, ADD(R(15), BOPERANDA(8)));
+			LET(15, ADD(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
+			//LET(15, ADD(R(15), BOPERANDA(8)));
 			//LET(PHYS_PC, R(15));
 		}
 	} else {
 		if(BIT(23)) {
-			//LET(15, SUB(ADD(R(15), CONST(8)),BOPERAND)); 
-			LET(15, ADD(R(15), BOPERANDS(8)));
+			LET(15, SUB(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
+			//LET(15, ADD(R(15), BOPERANDS(8)));
 			//LET(14, R(15));
 			//LET(PHYS_PC, R(15));
 		} else {
-			//LET(15, ADD(ADD(R(15), CONST(8)),BOPERAND)); 
-			LET(15, ADD(R(15), BOPERANDA(8)));
+			LET(15, ADD(ADD(R(15), CONST(8)),CONST(BOPERAND))); 
+			//LET(15, ADD(R(15), BOPERANDA(8)));
 			//LET(14, R(15));
 		}
 	}
