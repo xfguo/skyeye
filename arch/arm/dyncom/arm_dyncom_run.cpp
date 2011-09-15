@@ -376,6 +376,8 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	// This architecture is biendian, accept whatever the
 	// client wants, override other flags.
 	info->common_flags &= CPU_FLAG_ENDIAN_MASK;
+	/* set the flag of save pc */
+	cpu->info.common_flags |= CPU_FLAG_SAVE_PC;
 
 	info->delay_slots = 0;
 	// The byte size is 8bits.

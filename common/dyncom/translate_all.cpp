@@ -125,7 +125,7 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap, BasicBloc
 //				arm_emit_store_pc(cpu, cur_bb, pc);
 //			}
 //			}
-#if 1
+#if 0
 #if 1 /* enabled for OS running */
 //            printf("new pc is %x\n", pc);
 			emit_store_pc(cpu, cur_bb, pc);
@@ -135,6 +135,14 @@ cpu_translate_all(cpu_t *cpu, BasicBlock *bb_ret, BasicBlock *bb_trap, BasicBloc
 				emit_store_pc(cpu, cur_bb, pc);
 #endif
 #endif
+			if(save_pc_for_all_insn(cpu)){
+				emit_store_pc(cpu, cur_bb, pc);
+			}
+			else{
+				if(!(tag & TAG_CONTINUE))
+					//update pc
+					emit_store_pc(cpu, cur_bb, pc);
+			}
 
 #if ENABLE_ICOUNTER
 			arch_inc_icounter(cpu, cur_bb);
