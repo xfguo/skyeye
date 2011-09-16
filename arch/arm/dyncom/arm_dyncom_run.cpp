@@ -688,13 +688,13 @@ void arm_dyncom_init(arm_core_t* core){
 		cpu->syscall_func = arm_dyncom_syscall;
 	core->dyncom_cpu = get_conf_obj_by_cast(cpu, "cpu_t");
 	
-#ifdef FAST_MEMORY
-	cpu->dyncom_engine->RAM = (uint8_t*)get_dma_addr(0);
-#endif
 	cpu->dyncom_engine->flags &= ~CPU_FLAG_SWAPMEM;
 
-	if (pref->user_mode_sim)
-		core->Reg[13] = 0x0ffffff0; // alex-ykl fix 2011-07-27: need to specify a sp pointer in the correct memory range
+	if (pref->user_mode_sim){
+#ifdef FAST_MEMORY
+		cpu->dyncom_engine->RAM = (uint8_t*)get_dma_addr(0);
+#endif
+	}
 
 	//core->CP15[CP15(CP15_MAIN_ID)] = 0x410FB760;
 	core->CP15[CP15(CP15_MAIN_ID)] = 0x7b000;
@@ -893,7 +893,7 @@ void arm_dyncom_run(cpu_t* cpu){
 		//exit(-1);
 		//core->Reg[15] += 4;
 		mode = core->Cpsr & 0x1f;
-		if (mode != core->Mode) {
+		if ( (mode != core->Mode) && (!is_user_mode(cpu)) ) {
 			switch_mode(core, mode);
 			//exit(-1);
 		}
