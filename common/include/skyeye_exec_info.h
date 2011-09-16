@@ -24,10 +24,13 @@ struct _sky_exec_info_s{
 	uint32_t arch_page_size;
 	uint32_t arch_stack_top;
 	uint32_t initial_sp;
+	uint32_t mmap_access;
 };
 typedef struct _sky_exec_info_s sky_exec_info_t;
 
 sky_exec_info_t* get_skyeye_exec_info();
+
+void retrieve_info();
 
 void exec_stack_init();
 

@@ -142,6 +142,11 @@ void retrieve_info(char * exec_file, Elf32_Ehdr* elf_header){
 		fprintf(stderr, "In %s, can not open file %s\n", __FUNCTION__, exec_file);
 		exit(-1);
 	}
+	if (elf_header == NULL)
+	{
+		Elf32_Ehdr header;
+		elf_header = &header;
+	}
 	if (fread (elf_header, sizeof(Elf32_Ehdr), 1, file) != 1){
 		fprintf(stderr, "In %s, could not read the elf reader of %s\n", __FUNCTION__, exec_file);
 		exit(-1);

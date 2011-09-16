@@ -315,6 +315,12 @@ usage ()
 	printf (
 		 "-h               The SkyEye command options, and ARCHs and CPUs simulated.\n");
 	printf (
+		 "-u               User application emulation. To use with -e.\n");
+	printf (
+		 "-m               Direct mapping to memory (in User application emulation).\n");
+	printf (
+		 "                 Faster but may not be compatible with some applications.\n");
+	printf (
 		 "--------------------------------------------------------------------------------\n");
 }
 
@@ -361,6 +367,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	bool_t interactive_mode = True;
 	bool_t autoboot_mode = False;
 	bool_t user_mode = False;
+	bool_t mmap_access = False;
 	int remote_debugmode = 0;
 	endian_t endian = Little_endian;
 	
@@ -381,7 +388,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	//char *exec_file = NULL;
 	int ret = 0;
 	opterr = 0;
-	while ((c = getopt (argc, argv, "be:dc:p:nl:hu")) != -1)
+	while ((c = getopt (argc, argv, "be:dc:p:nl:hum")) != -1)
 		switch (c) {
 		case 'e':
 			exec_file = optarg;
@@ -421,6 +428,9 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 			break;
 		case 'u':
 			user_mode = True;
+			break;
+		case 'm':
+			mmap_access = True;
 			break;
 		case '?':
 			if (isprint (optopt))
@@ -504,15 +514,24 @@ loop_exit:
 			fprintf(stderr, "Can not allocate memory.\n");
 			exit(-1);
 		}
-		sky_exec_info_t * info = get_skyeye_exec_info();
-		info->exec_argc = exec_argc;
-		info->exec_argv = exec_argv;
-		info->exec_envp = exec_envp;
-		info->exec_envc = exec_envc;
 		endian = get_elf_endian(exec_file);
+		if (user_mode)
+		{
+			sky_exec_info_t *info = get_skyeye_exec_info();
+			info->exec_argc = exec_argc;
+			info->exec_argv = exec_argv;
+			info->exec_envp = exec_envp;
+			info->exec_envc = exec_envc;
+		
+			/* read complementary information */
+			retrieve_info(pref->exec_file, NULL);
+		
+			info->mmap_access = mmap_access;
+		}
 	}
+	
 	pref->exec_load_base = elf_load_base;
-       	pref->exec_load_mask = elf_load_mask;
+	pref->exec_load_mask = elf_load_mask;
 	pref->endian = endian;
 	pref->uart_port = uart_port;
 	pref->user_mode_sim = user_mode;
