@@ -138,6 +138,28 @@ emit_decode_reg_helper(cpu_t *cpu, uint32_t count, uint32_t width,
 		ptr_r[i] = get_struct_member_pointer(rf, i + offset, bb);
 #endif
 }
+static void
+emit_decode_xr_reg_helper(cpu_t *cpu, uint32_t count, uint32_t width,
+	uint32_t offset, Value *rf, Value **in_ptr_r, Value **ptr_r,
+	char const *rcname, BasicBlock *bb)
+{
+#ifdef OPT_LOCAL_REGISTERS_XR
+	// decode struct reg and copy the registers into local variables
+	for (uint32_t i = 0; i < count; i++) {
+		char reg_name[16];
+		snprintf(reg_name, sizeof(reg_name), "%s_%u", rcname, i);
+
+		in_ptr_r[i] = get_struct_member_pointer(rf, i + offset, bb);
+		ptr_r[i] = new AllocaInst(getIntegerType(width), reg_name, bb);
+		LoadInst* v = new LoadInst(in_ptr_r[i], "", false, bb);
+		new StoreInst(v, ptr_r[i], false, bb);
+	}
+#else
+	// just decode struct reg
+	for (uint32_t i = 0; i < count; i++) 
+		ptr_r[i] = get_struct_member_pointer(rf, i + offset, bb);
+#endif
+}
 
 static void
 emit_decode_spr_reg_helper(cpu_t *cpu, uint32_t count, uint32_t width,
@@ -214,7 +236,8 @@ emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 		cpu->in_ptr_gpr, cpu->ptr_gpr, "gpr", bb);
 
 	// XRs
-	emit_decode_reg_helper(cpu, cpu->info.register_count[CPU_REG_XR],
+	//emit_decode_reg_helper(cpu, cpu->info.register_count[CPU_REG_XR],
+	emit_decode_xr_reg_helper(cpu, cpu->info.register_count[CPU_REG_XR],
 		cpu->info.register_size[CPU_REG_XR],
 		cpu->info.register_count[CPU_REG_GPR], cpu->dyncom_engine->ptr_grf,
 		cpu->in_ptr_xr, cpu->ptr_xr, "xr", bb);
@@ -360,9 +383,10 @@ spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 		cpu->in_ptr_gpr, cpu->ptr_gpr, bb);
 
 	// XRs
+#ifdef OPT_LOCAL_REGISTERS_XR
 	spill_reg_state_helper(cpu->info.register_count[CPU_REG_XR],
 		cpu->in_ptr_xr, cpu->ptr_xr, bb);
-
+#endif
 	// SPRs
 	spill_spr_reg_state_helper(cpu->info.register_count[CPU_REG_SPR],
 		cpu->in_ptr_spr, cpu->ptr_spr, bb);
