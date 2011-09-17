@@ -55,6 +55,14 @@ write_phys (uint32 addr, uint8_t * buffer, int size)
 	unsigned long load_mask = pref->exec_load_mask;
 	//skyeye_log(Info_log, __FUNCTION__, "load_base=0x%x,load_mask=0x%x", load_base, load_mask);
 	addr = (addr & load_mask)|load_base;
+
+	if(get_skyeye_exec_info()->mmap_access){
+		for (i = 0; i < size; i++) {
+			*(uint8_t *)(addr + i) = buffer[i];
+		}
+		return;
+	}
+	
 	for (i = 0; i < size; i++) {
 		/*
 		if(arch_instance->ICE_write_byte)
@@ -298,7 +306,29 @@ load_exec (const char *file, addr_type_t addr_type)
 
 	printf ("exec file \"%s\"'s format is %s.\n", file,
 		tmp_bfd->xvec->name);
-
+	
+	/* trying a direct mmap access, where user application
+	   will be mapped to 0x8000 of skyeye memory space. */
+	
+	uint32_t ret_mmap = -1;
+	sky_exec_info_t* info = get_skyeye_exec_info();
+	if (info->mmap_access)
+	{
+		uint32_t prog_top = info->brk;
+		/* For now, the only protection needed is write as we are going to copy data */
+		/* contains text, rodata and bss as well */
+		ret_mmap = (uint32_t) mmap ( (void *) 0x8000, prog_top - 0x4000, 
+		       PROT_WRITE, MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0 );
+		if (ret_mmap == (uint32_t) MAP_FAILED)
+		{
+#include <errno.h>
+			printf("Direct mmap access failed, mmap error %d\nExecute application without -m argument.\n", errno);
+			exit(-1);
+		} else {
+			printf("Direct mmap access success, at 0x%08x-0x%08x\n", ret_mmap, ret_mmap + prog_top - 0x4000);
+		}
+	}
+	
 	/* load the corresponding section to memory */
 	for (s = tmp_bfd->sections; s; s = s->next) {
 		if (bfd_get_section_flags (tmp_bfd, s) & (SEC_LOAD)) {

@@ -28,6 +28,7 @@
 #include "skyeye_arch.h"
 #include "skyeye_callback.h"
 #include "skyeye_bus.h"
+#include "skyeye_exec_info.h"
 
 /**
 * @brief The global memory map
@@ -69,6 +70,19 @@ int bus_read(short size, generic_address_t addr, uint32_t * value){
 	mem_bank_t * bank;
 	generic_arch_t* arch_instance = get_arch_instance("");
 
+	/* bypass the bank check */
+	/* in case of error, a seg fault will happen, I guess */
+	if (get_skyeye_exec_info()->mmap_access) {
+		if (size == 8) {
+			*value = *(uint8_t *)(addr) & 0xff;
+		} else if (size == 16) {
+			*value = *(uint16_t *)(addr) & 0xffff;
+		} else if (size == 32) {
+			*value = *(uint32_t *)(addr);
+		}
+		return 0;
+	} 
+		
 	if((bank = bank_ptr(addr)) && (bank->bank_read))
 		bank->bank_read(size, addr, value);
 	else{
@@ -98,6 +112,19 @@ int bus_write(short size, generic_address_t addr, uint32_t value){
 	mem_bank_t * bank;
 	generic_arch_t* arch_instance = get_arch_instance("");
 
+	/* bypass the bank check */
+	/* in case of error, a seg fault will happen, I guess */
+	if (get_skyeye_exec_info()->mmap_access) {
+		if (size == 8) {
+			*(uint8_t *)(addr) = (value & 0xff);
+		} else if (size == 16) {
+			*(uint16_t *)(addr) = (value & 0xffff);
+		} else if (size == 32) {
+			*(uint32_t *)(addr) = value;
+		}
+		return 0;
+	}
+	
 	bus_snoop(SIM_access_write, size ,addr, value, Before_act);
 	exec_callback(Bus_write_callback, arch_instance);
         if(bank = bank_ptr(addr))

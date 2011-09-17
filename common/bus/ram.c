@@ -354,6 +354,11 @@ mem_reset ()
 	tmp[5] = 0x123;*/
 	mem_bank_t *mb = mc->mem_banks;
 	num = mc->current_num;
+	
+	/* if direct mmap access, we just don't use membanks so we ignore the next part */
+	if (get_skyeye_exec_info()->mmap_access)
+		return ;
+
 	/* 
 	 * scan all the bank in the memory map and allocate memory for memory bank	   */
 	for (i = 0; i < num; i++) {
@@ -523,17 +528,22 @@ unsigned char * get_dma_addr(unsigned long guest_addr){
 * @return the host address for the given guest address
 */
 unsigned long get_dma_addr(unsigned long guest_addr){
-        unsigned char * host_addr;
+        /* checking for direct mmap access in user mode */
+	if(get_skyeye_exec_info()->mmap_access)
+	{
+		printf("In %s, guest_addr=0x%lx, \n", __FUNCTION__, (unsigned long) guest_addr);
+		return guest_addr;
+	}
+
+	unsigned char * host_addr;
         mem_bank_t * global_mbp = bank_ptr(guest_addr);
         mem_config_t * memmap = get_global_memmap();
 	if(global_mbp == NULL){
-		fprintf(stderr, "Can not find the bank for the address 0x%x\n", guest_addr);
+		fprintf(stderr, "Can not find the bank for the address 0x%lx\n", guest_addr);
 		return 0;
 	}
-        host_addr = &global_memory.rom[global_mbp -
-                              memmap->mem_banks][(guest_addr -
-                                                           global_mbp->
-                                                           addr) >> 2];
+	
+	host_addr = &global_memory.rom[global_mbp - memmap->mem_banks][(guest_addr - global_mbp->addr) >> 2];
         printf("In %s, host_addr=0x%llx, \n", __FUNCTION__, (unsigned long)host_addr);
         return (unsigned long)host_addr;
 }

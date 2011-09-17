@@ -238,11 +238,11 @@ SWIflen (ARMul_State * state, ARMword fh)
 * The emulator calls this routine when a SWI instruction is encuntered. The *
 * parameter passed is the SWI number (lower 24 bits of the instruction).    *
 \***************************************************************************/
-//static int brk_static =  0x00082008 + 0x000bbf38;
-// ahe-ykl information is retrieved from elf header and the starting value of
-// brk_static is in sky_info_t
-//static int brk_static = 0x10000000;
-static int brk_static = -1;
+/* ahe-ykl information is retrieved from elf header and the starting value of
+   brk_static is in sky_info_t */
+
+/* brk static hold the value of brk */
+static uint32_t brk_static = -1;
 
 unsigned
 ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
@@ -333,6 +333,15 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 		/* FIXME there might be a need to do a mmap */
 		
 		if(state->Reg[0]){
+			if (get_skyeye_exec_info()->mmap_access) {
+				/* if new brk is greater than current brk, allocate memory */
+				if (state->Reg[0] > brk_static) {
+					uint32_t ret = mmap( (void *) brk_static, state->Reg[0] - brk_static,
+							   PROT_WRITE, MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0 );
+					if (ret != MAP_FAILED)
+						brk_static = ret;
+				}
+			}
 			brk_static = state->Reg[0];
 			//state->Reg[0] = 0; /* FIXME return value of brk set to be the address on success */
 		} else {
@@ -506,9 +515,16 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 static mmap_area_t* new_mmap_area(int sim_addr, int len){
 	mmap_area_t *area = (mmap_area_t *)malloc(sizeof(mmap_area_t));
 	if(area == NULL){
-		printf("error ,failed %s\n",__FUNCTION__);
+		printf("error, failed %s\n",__FUNCTION__);
 		exit(0);
 	}
+#ifdef FAST_MEMORY   
+	if (mmap_next_base == -1)
+	{
+		mmap_next_base = get_skyeye_exec_info()->brk;
+	}
+#endif
+
 	memset(area, 0x0, sizeof(mmap_area_t));
 	area->bank.addr = mmap_next_base;
 	area->bank.len = len;
@@ -517,8 +533,15 @@ static mmap_area_t* new_mmap_area(int sim_addr, int len){
 	area->bank.type = MEMTYPE_RAM;
 	area->bank.objname = "mmap";
 	addr_mapping(&area->bank);
-	
+
 #ifdef FAST_MEMORY
+	if (get_skyeye_exec_info()->mmap_access)
+	{
+		/* FIXME check proper flags */
+		/* FIXME we may delete the need of banks up there */
+		uint32_t ret = mmap(mmap_next_base, len, PROT_WRITE | PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		mmap_next_base = ret;
+	}
 	area->mmap_addr = (uint8_t*)get_dma_addr(mmap_next_base);
 #else	
 	area->mmap_addr = malloc(len);
@@ -528,6 +551,7 @@ static mmap_area_t* new_mmap_area(int sim_addr, int len){
 	}
 	memset(area->mmap_addr, 0x0, len);
 #endif
+	
 	area->next = NULL;
 	if(mmap_global){
 		area->next = mmap_global->next;

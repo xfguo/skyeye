@@ -51,8 +51,8 @@ void arm_dyncom_Abort(ARMul_State * state, ARMword vector)
 }
 
 
-// ahe-ykl : the following code to initialize user mode 
-// code is architecture dependent and probably model dependant.
+/* ahe-ykl : the following code to initialize user mode 
+   code is architecture dependent and probably model dependant. */
 
 #include "skyeye_arch.h"
 #include "skyeye_pref.h"
@@ -68,8 +68,38 @@ void arm_user_mode_init(generic_arch_t * arch_instance)
 	if (pref->user_mode_sim)
 	{
 		sky_exec_info_t *info = get_skyeye_exec_info();
-		info->arch_stack_top = 0x7fffff0;
 		info->arch_page_size = 0x1000;
+		info->arch_stack_top = 0x1ffffff0;// + 0x401fe7 - 0xff0; /* arbitrary value */
+		/* stack initial address specific to architecture may be placed here */
+		
+		/* we need to mmap the stack space, if we are using skyeye space */
+		if (info->mmap_access)
+		{
+			/* get system stack size */
+			size_t stacksize = 0;
+			pthread_attr_t attr;
+			pthread_attr_init(&attr);
+			pthread_attr_getstacksize(&attr, &stacksize);
+			if (stacksize > info->arch_stack_top)
+			{
+				printf("arch_stack_top is too low\n");
+				stacksize = info->arch_stack_top;
+			}
+			
+			/* Note: Skyeye is occupating 0x400000 to 0x600000 */
+			/* We do a mmap */
+			void* ret = mmap( (info->arch_stack_top) - stacksize, 
+				    stacksize + 0x1000 , PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+			if (ret == MAP_FAILED){
+				/* ideally, we should find an empty space until it works */
+				printf("mmap error, stack couldn't be mapped: errno %d\n", errno);
+				exit(-1);
+			} else {
+				memset(ret, '\0', stacksize);
+				//printf("stack top has been defined at %x size %x\n", (uint32_t) ret + stacksize, stacksize);
+				//info->arch_stack_top = (uint32_t) ret + stacksize;
+			}
+		}
 
 		exec_stack_init();
 		

@@ -21,6 +21,7 @@
 #include "dyncom/dyncom_llvm.h"
 #include "dyncom/frontend.h"
 #include "dyncom/defines.h"
+#include "skyeye_exec_info.h"
 
 //////////////////////////////////////////////////////////////////////
 // GENERIC: register access
@@ -303,20 +304,32 @@ RAM32LE(uint8_t *RAM, addr_t a) {
 /* get a RAM pointer to a 8 bit value */
 static Value *
 arch_gep8(cpu_t *cpu, Value *a, BasicBlock *bb) {
-	return GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
-//	return new BitCastInst(a, PointerType::get(XgetType(Int8Ty), 0), "", bb);
+	if (get_skyeye_exec_info()->mmap_access)
+		return new IntToPtrInst(a, PointerType::get(XgetType(Int8Ty), 0), "", bb);
+	else {
+		a = GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
+		return new BitCastInst(a, PointerType::get(XgetType(Int8Ty), 0), "", bb);
+	}
 }
 /* get a RAM pointer to a 16 bit value */
 static Value *
 arch_gep16(cpu_t *cpu, Value *a, BasicBlock *bb) {
-	a = GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
-	return new BitCastInst(a, PointerType::get(XgetType(Int16Ty), 0), "", bb);
+	if (get_skyeye_exec_info()->mmap_access) {
+		return new IntToPtrInst(a, PointerType::get(XgetType(Int16Ty), 0), "", bb);
+	} else {
+		a = GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
+		return new BitCastInst(a, PointerType::get(XgetType(Int16Ty), 0), "", bb);
+	}
 }
 /* get a RAM pointer to a 32 bit value */
 static Value *
 arch_gep32(cpu_t *cpu, Value *a, BasicBlock *bb) {
-	a = GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
-	return new BitCastInst(a, PointerType::get(XgetType(Int32Ty), 0), "", bb);
+	if (get_skyeye_exec_info()->mmap_access) {
+		return new IntToPtrInst(a, PointerType::get(XgetType(Int32Ty), 0), "", bb);
+	} else {
+		a = GetElementPtrInst::Create(cpu->dyncom_engine->ptr_RAM, a, "", bb);
+		return new BitCastInst(a, PointerType::get(XgetType(Int32Ty), 0), "", bb);
+	}
 }
 
 /* load 32 bit ALIGNED value from RAM */

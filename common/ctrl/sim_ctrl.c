@@ -214,24 +214,26 @@ void SIM_start(void){
 	mem_reset();
 	arch_instance->init();
 
-	config->mach->mach_init(arch_instance, config->mach);
-	/* reset current arch_instanc */
-	arch_instance->reset();
-	/* reset all the values of mach */
-	io_reset(arch_instance);
-	
 	if(pref->exec_file){
 		exception_t ret;
 		/* 
 		 * If no relocation is indicated, we will load elf file by 
 		 * virtual address
 		 */
+		/* load the elf file before doing the reset */
 		if((((~pref->exec_load_mask) & pref->exec_load_base) == 0x0) &&
 			(arch_instance->mmu_write != NULL))
 			ret = SKY_load_elf(pref->exec_file, Virt_addr);
 		else
 			ret = SKY_load_elf(pref->exec_file, Phys_addr);
 	}
+
+	config->mach->mach_init(arch_instance, config->mach);
+	/* reset current arch_instanc */
+	arch_instance->reset();
+	/* reset all the values of mach */
+	io_reset(arch_instance);
+	
 	init_symbol_table(pref->exec_file, arch_instance->arch_name);
 
 	/* set pc from config */

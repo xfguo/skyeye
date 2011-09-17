@@ -25,9 +25,9 @@ typedef struct mmap_area{
 }mmap_area_t;
 
 #ifdef FAST_MEMORY
-/* depends on memory layout and skyeye.conf */
-#define mmap_base 0x03000000
-//#define mmap_base 0x40801000
+/* in user mode, mmap_base will be on initial brk,
+   set at the first mmap request */
+#define mmap_base -1
 #else
 #define mmap_base 0x50000000
 #endif
