@@ -411,7 +411,8 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	//	| CPU_DEBUG_LOG
                );
         cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT 
-			      | CPU_CODEGEN_VERIFY
+				| CPU_CODEGEN_OPTIMIZE
+				| CPU_CODEGEN_VERIFY
 			      );
 	/* Initilize different register set for different core */
 
