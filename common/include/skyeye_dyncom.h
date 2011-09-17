@@ -235,6 +235,8 @@ typedef struct cpu_archinfo {
 	uint32_t register_count2;
 	cpu_flags_layout_t const *flags_layout;
 	uint32_t flags_count;
+	/* indicate the pc location in gpr array, only for arm now */
+	int pc_index_in_gpr;
 } cpu_archinfo_t;
 
 typedef struct cpu_archrf {

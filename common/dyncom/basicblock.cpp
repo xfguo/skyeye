@@ -80,7 +80,15 @@ emit_store_pc(cpu_t *cpu, BasicBlock *bb_branch, addr_t new_pc)
 {
 	if(is_user_mode(cpu)){
 		Value *v_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);
+		#ifdef OPT_LOCAL_REGISTERS
+		/* Now only for arm platform */
+		if(cpu->info.pc_index_in_gpr != -1)
+			arch_put_reg(cpu, cpu->info.pc_index_in_gpr, v_pc, 32, 0, bb_branch);
+		else
+			new StoreInst(v_pc, cpu->ptr_PHYS_PC, bb_branch);
+		#else
 		new StoreInst(v_pc, cpu->ptr_PHYS_PC, bb_branch);
+		#endif
 		//new StoreInst(v_pc, cpu->ptr_PC, bb_branch);
 	}else{
 		Value *v_phys_pc = ConstantInt::get(getIntegerType(cpu->info.address_size), new_pc);

@@ -444,6 +444,8 @@ void ppc_dyncom_init(e500_core_t* core){
 	/* set endian */
 	cpu->info.common_flags |= CPU_FLAG_ENDIAN_BIG;
 	cpu->info.psr_size = 0;
+	/* Indicate the pc index for OPT_LOCAL_REGISTERS */
+	cpu->info.pc_index_in_gpr = -1;
  
 	cpu->debug_func = ppc_debug_func;
 	ppc_dyncom_exception_init(cpu);

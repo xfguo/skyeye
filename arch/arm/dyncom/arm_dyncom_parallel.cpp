@@ -26,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "dyncom/tag.h"
 #include "dyncom/basicblock.h"
 #include "portable/usleep.h"
+#include "bank_defs.h"
 
 #define QUEUE_LENGTH 1024
 static uint32_t compiled_queue[QUEUE_LENGTH];
@@ -81,13 +82,39 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		rc = um_cpu_run(cpu);
 		//rc = cpu_run(cpu);
 		core->pc = core->phys_pc;
-		if(rc == JIT_RETURN_TRAP){
-#ifdef OPT_LOCAL_REGISTERS
-//			ppc_syscall(core);
-//				core->phys_pc += 4;
+		int idx = 0;
+#if 0
+		printf("In %s, AFTER cpu_run.pc=0x%x\n", __FUNCTION__, core->Reg[15]);
+		for (idx = 0;idx < 16; idx ++) {
+			skyeye_printf_in_color(BLUE, "R%d:0x%x\t", idx, core->Reg[idx]);
+		}
+		printf("\n");
 #endif
-			//printf("In %s, TRAP triggered.\n", __FUNCTION__);
+		if(rc == JIT_RETURN_TRAP){
+#if 0
+			printf("In %s, BEFORE TRAP triggered.pc=0x%x\n", __FUNCTION__, core->Reg[15]);
+		for (idx = 0;idx < 16; idx ++) {
+			skyeye_printf_in_color(RED, "R%d:0x%x\t", idx, core->Reg[idx]);
+		}
+		printf("\n");
+#endif
+#ifdef OPT_LOCAL_REGISTERS
+			uint32_t instr;
+			bus_read(32, core->Reg[15], &instr);
+			//printf("In %s, OPT_LOCAL, pc=0x%x, instr=0x%x, number=0x%x\n", __FUNCTION__, core->Reg[15], instr, BITS(0,19));
+	
+			ARMul_OSHandleSWI(core, BITS(0,19));
+			//ppc_syscall(core);
+		//		core->phys_pc += 4;
+#endif
 			core->Reg[15] += 4;
+#if 0
+			printf("In %s, AFTER TRAP triggered.pc=0x%x\n", __FUNCTION__, core->Reg[15]);
+			for (idx = 0;idx < 16; idx ++) {
+				skyeye_printf_in_color(GREEN, "R%d:0x%x\t", idx, core->Reg[idx]);
+		}
+		printf("\n");
+#endif
 			return;
 		}	
 		if(rc == JIT_RETURN_FUNCNOTFOUND){

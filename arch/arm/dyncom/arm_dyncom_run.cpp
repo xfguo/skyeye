@@ -403,6 +403,8 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	info->psr_size = 32;
 	info->flags_count = 4;
 	info->flags_layout = arm_flags_layout;
+	/* Indicate the pc index for OPT_LOCAL_REGISTERS */
+	info->pc_index_in_gpr = 15;
 
 	cpu->redirection = false;
 

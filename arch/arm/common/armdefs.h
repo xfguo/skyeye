@@ -696,7 +696,17 @@ extern void ARMul_CoProDetach (ARMul_State * state, unsigned number);
 
 extern unsigned ARMul_OSInit (ARMul_State * state);
 extern void ARMul_OSExit (ARMul_State * state);
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 extern unsigned ARMul_OSHandleSWI (ARMul_State * state, ARMword number);
+#ifdef __cplusplus
+}
+#endif
+
+
 extern ARMword ARMul_OSLastErrorP (ARMul_State * state);
 
 extern ARMword ARMul_Debug (ARMul_State * state, ARMword pc, ARMword instr);

@@ -376,6 +376,7 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 
 		or_tag(cpu, pc, tag | TAG_CODE);
 #ifdef OPT_LOCAL_REGISTERS
+#if 0
 		if (is_inside_code_area(cpu, next_pc)){
 			tag_t tmp_tag;
 			addr_t tmp_newpc, tmp_nextpc;
@@ -387,6 +388,7 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 				or_tag(cpu, next_pc, TAG_AFTER_SYSCALL);
 			}
 		}
+#endif
 #endif
 		if ((tag & TAG_MEMORY) && !is_user_mode(cpu)) {
 			or_tag(cpu, next_pc, TAG_AFTER_COND);

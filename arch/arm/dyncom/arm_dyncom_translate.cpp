@@ -7,6 +7,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 
+#include "dyncom/defines.h"
 #include "skyeye_dyncom.h"
 #include "skyeye_obj.h"
 #include "dyncom/dyncom_llvm.h"
@@ -2581,8 +2582,12 @@ int DYNCOM_TRANS(sub)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 }
 int DYNCOM_TRANS(swi)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
-	//printf("swi inst\n\n\n\n");
+#ifdef OPT_LOCAL_REGISTERS
+	/* Do nothing, we will finish syscall in trap */
+	//LOG("OPT_LOCAL_REGISTERS swi inst\n");
+#else
 	arch_syscall(cpu, bb, BITS(0,19));
+#endif
 }
 int DYNCOM_TRANS(swp)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(swpb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
