@@ -565,7 +565,7 @@ ppc_opc_func_t ppc_opc_addic__func = {
 int opc_sc_tag(cpu_t *cpu, uint32_t instr, addr_t phys_addr,tag_t *tag, addr_t *new_pc, addr_t *next_pc){
 	if(is_user_mode(cpu)) {
 #ifdef OPT_LOCAL_REGISTERS
-		*tag = TAG_SYSCALL | TAG_CONTINUE;
+		*tag = TAG_TRAP;
 		*next_pc = phys_addr + PPC_INSN_SIZE;
 #else
 		*tag = TAG_CONTINUE;
