@@ -65,5 +65,6 @@ void* SKY_get_interface(conf_object_t* obj, const char* iface_name){
 	}
 	get_iface_objname(iface_objname, obj->objname, iface_name);
 	DBG("In %s, obj->objname=%s, interface name=%s\n", __FUNCTION__, obj->objname, iface_objname);
-	return get_conf_obj(iface_objname);
+	conf_object_t* intf_obj = get_conf_obj(iface_objname);
+	return intf_obj->obj;
 }
