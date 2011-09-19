@@ -24,13 +24,20 @@
 */
 #include "skyeye_obj.h"
 #include "skyeye_class.h"
+#include "skyeye_log.h"
 void SKY_register_class(const char* name, skyeye_class_t* skyeye_class){
-	new_conf_object(name, skyeye_class);	
+	skyeye_log(Debug_log, __FUNCTION__, "register the class %s\n", name);
+	new_conf_object(name, skyeye_class);
 	return;
 }
 
 conf_object_t* pre_conf_obj(const char* objname, const char* class_name){
-	skyeye_class_t* class_data = (skyeye_class_t*)get_conf_obj(class_name);
-	conf_object_t* obj = class_data->new_instance(objname);
-	return obj;
+	conf_object_t* obj = get_conf_obj(class_name);
+	skyeye_class_t* class_data = obj->obj;
+	if(class_data == NULL){
+		skyeye_log(Error_log, __FUNCTION__, "Can not find the class %s\n", class_name);
+		return NULL;
+	}
+	conf_object_t* instance = class_data->new_instance(objname);
+	return instance;
 }
