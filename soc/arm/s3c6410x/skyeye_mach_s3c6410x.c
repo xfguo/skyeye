@@ -27,6 +27,8 @@
 #include "s3c6410x.h"
 #include "skyeye_internal.h"
 #include <skyeye_interface.h>
+#include <skyeye_log.h>
+#include <skyeye_uart.h>
 
 #ifdef __CYGWIN__
 #include <time.h>
@@ -434,6 +436,15 @@ s3c6410x_io_read_word (void *arch_instance, uint32 addr)
 {
 	uint32 data = -1;
 	int i;
+
+	conf_object_t* conf_obj = get_conf_obj("s3c6410_mach_space");
+	addr_space_t* phys_mem = (addr_space_t*)conf_obj->obj;
+	exception_t ret = phys_mem->memory_space->read(conf_obj, addr, &data, 4);
+	/* Read the data successfully */
+	if(ret == No_exp){
+		return data;
+	}
+
 	/* uart */
 	if ((addr >= UART_CTL_BASE0)
 	    && (addr < (UART_CTL_BASE0 + UART_CTL_SIZE))) {
@@ -623,6 +634,7 @@ s3c6410x_io_read_word (void *arch_instance, uint32 addr)
 		else
 		if (addr - VIC1VECPRIORITY0 >= 0 && addr - VIC1VECPRIORITY0 <= 0x7c &&  (addr - VIC1VECPRIORITY0) & 0x3 == 0)
 			data = io.vic1vecpriority[(addr - VIC1VECTADDR0)>>2];
+ 		fprintf(stderr, "ERROR: %s(0x%08x) = 0x%08x\n", __FUNCTION__, addr ,data); 
 		break;
 	}
 	return data;
@@ -643,6 +655,14 @@ s3c6410x_io_read_halfword (void *arch_instance, uint32 addr)
 static void
 s3c6410x_io_write_word (generic_arch_t *state, uint32 addr, uint32 data)
 {
+	conf_object_t* conf_obj = get_conf_obj("s3c6410_mach_space");
+	addr_space_t* phys_mem = (addr_space_t*)conf_obj->obj;
+	exception_t ret = phys_mem->memory_space->write(conf_obj, addr, &data, 4);
+	/* Read the data successfully */
+	if(ret == No_exp){
+		return;
+	}
+
 	if ((addr >= UART_CTL_BASE0)
 	    && (addr < UART_CTL_BASE0 + UART_CTL_SIZE)) {
 #if 0
@@ -818,7 +838,7 @@ s3c6410x_io_write_word (generic_arch_t *state, uint32 addr, uint32 data)
 			io.vic1vecpriority[(addr - VIC1VECTADDR0)>>2] = data;
 
 /* 		SKYEYE_DBG ("io_write_word(0x%08x) = 0x%08x\n", addr, data); */
-/* 		fprintf(stderr, "ERROR: %s(0x%08x) = 0x%08x\n", __FUNCTION__, addr ,data); */
+ 		fprintf(stderr, "ERROR: %s(0x%08x) = 0x%08x\n", __FUNCTION__, addr ,data); 
 		break;
 	}
 }
@@ -862,6 +882,7 @@ s3c6410x_mach_init (void *arch_instance, machine_config_t *this_mach)
 	conf_object_t* lcd = pre_conf_obj("s3c6410_lcd_0", "s3c6410_lcd");
 	if(lcd != NULL){
 		memory_space_intf* lcd_io_memory = (memory_space_intf*)SKY_get_interface(lcd, MEMORY_SPACE_INTF_NAME);
+		DBG("In %s, get the interface instance 0x%x\n", __FUNCTION__, lcd_io_memory);
 		exception_t ret;
         	ret = add_map(phys_mem, 0x77100000, 0x100000, 0x0, lcd, lcd_io_memory, 1, 1);
 	}
