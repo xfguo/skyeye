@@ -47,6 +47,8 @@ static exception_t space_read(conf_object_t* addr_space, generic_address_t addr,
 	int i = 0;
 	for(; i < MAX_MAP; i++){
 		map_info_t* iterator = space->map_array[i];
+		if(iterator == NULL)
+			continue;
 		DBG("In %s, i=%d, addr=0x%x, base_addr=0x%x, length=0x%x\n", __FUNCTION__, i, addr, iterator->base_addr, iterator->length);
 		if(iterator->base_addr <= addr && ((iterator->base_addr + iterator->length) > addr)){
 			return iterator->memory_space->read(iterator->target, (addr - iterator->base_addr), buf, count);
@@ -71,7 +73,7 @@ static exception_t space_write(conf_object_t* addr_space, generic_address_t addr
 }
 
 /**
-* @brief new instance for addr_space_t
+* @brief new instance for addr_space_t, Note that the instance is put to conf_obj hash table.
 *
 * @param obj_name the instance name
 *
