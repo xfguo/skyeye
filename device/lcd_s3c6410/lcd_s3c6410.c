@@ -16,9 +16,12 @@
 #include <skyeye_sched.h>
 #include <skyeye_signal.h>
 #include <skyeye_class.h>
+#include <skyeye_interface.h>
 #include <skyeye_obj.h>
 #include <skyeye_mm.h>
 #include <memory_space.h>
+#define DEBUG
+#include <skyeye_log.h>
 
 #include "lcd_s3c6410.h"
 #include "regs-fb.h"
@@ -106,45 +109,22 @@ typedef struct {
 } FbUpdateState;
 static exception_t s3c6410_fb_read(conf_object_t *opaque, generic_address_t offset, void* buf, size_t count)
 {
-    uint32_t ret;
-    struct s3c6410_fb_device *s = opaque;
+	uint32_t ret;
+	struct s3c6410_fb_device *s = opaque;
+	DBG("In %s, offset=0x%x\n", __FUNCTION__, offset);
+	switch(offset) {
+        case VIDCON0:
+		return ret;
 
-    switch(offset) {
-        case FB_GET_WIDTH:
-          //  ret = ds_get_width(s->fb->ds);
-            //printf("FB_GET_WIDTH => %d\n", ret);
-            return ret;
+        case VIDCON1:
+		return ret;
 
-        case FB_GET_HEIGHT:
-           // ret = ds_get_height(s->fb->ds);
-            //printf( "FB_GET_HEIGHT = %d\n", ret);
-            return ret;
-
-        case FB_INT_STATUS:
-            ret = s->fb->int_status & s->fb->int_enable;
-            if(ret) {
-                s->fb->int_status &= ~ret;
-                //s3c6410_device_set_irq(&s->fb->dev, 0, 0);
-            }
-            return ret;
-
-        case FB_GET_PHYS_WIDTH:
-            //ret = pixels_to_mm( ds_get_width(s->fb->ds), s->fb->dpi );
-            //printf( "FB_GET_PHYS_WIDTH => %d\n", ret );
-            return ret;
-
-        case FB_GET_PHYS_HEIGHT:
-            //ret = pixels_to_mm( ds_get_height(s->fb->ds), s->fb->dpi );
-            //printf( "FB_GET_PHYS_HEIGHT => %d\n", ret );
-            return ret;
-
-        case FB_GET_FORMAT:
-    //        return s3c6410_fb_get_pixel_format(s);
-
-        default:
-//cpu_abort (cpu_single_env, "s3c6410_fb_read: Bad offset %x\n", offset);
-            return 0;
-    }
+        case VIDCON2:
+		return ret;
+	default:
+		printf("Can not read the register at 0x%x\n", offset);
+		return 0;
+	}
 }
 
 //static void s3c6410_fb_write(void *opaque, target_phys_addr_t offset,
@@ -197,17 +177,19 @@ static conf_object_t* new_s3c6410_lcd(char* obj_name){
 	fb->dev = dev;
 
 	dev->fb = fb;
-	dev->io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
-	dev->io_memory->read = s3c6410_fb_read;
-	dev->io_memory->write = s3c6410_fb_write;
-	
+
+	/* Register io function to the object */
+	memory_space_intf* io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
+	io_memory->read = s3c6410_fb_read;
+	io_memory->write = s3c6410_fb_write;
+	SKY_register_interface(dev->obj, obj_name, MEMORY_SPACE_INTF_NAME);	
 	return dev;
 }
 void free_s3c6410_lcd(conf_object_t* dev){
 	
 }
 
-void init_s3c6410_fb(){
+void init_s3c6410_lcd(){
 	static skyeye_class_t class_data = {
 		.class_name = "s3c6410_lcd",
 		.class_desc = "s3c6410 lcd",

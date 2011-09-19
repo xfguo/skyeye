@@ -23,6 +23,5 @@ typedef struct s3c6410_fb_device{
 	fb_state_t* fb;
 	conf_object_t* signal_target;
 	general_signal_intf* master;
-	memory_space_intf* io_memory;
 }s3c6410_fb_device;
 #endif
