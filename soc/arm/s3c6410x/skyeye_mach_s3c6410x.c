@@ -22,8 +22,11 @@
 #include <skyeye_arch.h>
 #include <skyeye_sched.h>
 #include <skyeye_lock.h>
+#include <skyeye_class.h>
+#include <skyeye_addr_space.h>
 #include "s3c6410x.h"
 #include "skyeye_internal.h"
+#include <skyeye_interface.h>
 
 #ifdef __CYGWIN__
 #include <time.h>
@@ -852,4 +855,17 @@ s3c6410x_mach_init (void *arch_instance, machine_config_t *this_mach)
 	this_mach->state = (void *) arch_instance;
 
 	add_chp_data(&s3c6410x_io, sizeof(s3c6410x_io_t), "6410io");
+	/* The whole address space */
+	addr_space_t* phys_mem = new_addr_space("s3c6410_mach_space");
+
+	/* Register lcd io memory to the whole address space */
+	conf_object_t* lcd = pre_conf_obj("s3c6410_lcd_0", "s3c6410_lcd");
+	if(lcd != NULL){
+		memory_space_intf* lcd_io_memory = (memory_space_intf*)SKY_get_interface(lcd, MEMORY_SPACE_INTF_NAME);
+		exception_t ret;
+        	ret = add_map(phys_mem, 0x77100000, 0x100000, 0x0, lcd, lcd_io_memory, 1, 1);
+	}
+	else{
+		printf("can not initlize the lcd, maybe the module not exist\n");
+	}
 }
