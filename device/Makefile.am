@@ -4,6 +4,7 @@ dev_uart = uart/skyeye_uart.c          uart/skyeye_uart_net.c   uart/skyeye_uart
 uart/skyeye_uart_pipe.c uart/skyeye_uart_term.c
 
 dev_uart_16550 = uart_16550/uart_16550.c uart_16550/uart_16550_module.c
+dev_lcd_s3c6410 = lcd_s3c6410/lcd_s3c6410.c lcd_s3c6410/lcd_s3c6410_module.c
 
 #dev_flash = flash/armflash.c  flash/dev_flash_sst39lvf160.c flash/flash_module.c\
 #flash/dev_flash_am29.c  flash/dev_flash_intel.c  flash/skyeye_flash.c
@@ -34,6 +35,9 @@ libuart_la_LDFLAGS = -module
 libuart_16550_la_SOURCES = $(dev_uart_16550)
 libuart_16550_la_LDFLAGS = -module
 
+liblcd_s3c6410_la_SOURCES = $(dev_lcd_s3c6410)
+liblcd_s3c6410_la_LDFLAGS = -module
+
 libflash_la_SOURCES = $(dev_flash)
 libflash_la_LDFLAGS = -module
 
@@ -55,7 +59,7 @@ libts_la_LDFLAGS = -module
 libpci_la_SOURCES = $(dev_pci)
 libpci_la_LDFLAGS = -module
 
-pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la
+pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la liblcd_s3c6410.la
 
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0  @COMMON_CFLAGS@
 
