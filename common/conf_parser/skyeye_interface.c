@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include "skyeye_types.h"
 #include "skyeye_obj.h"
+#define DEBUG
+#include "skyeye_log.h"
 
 /**
 * @brief compose an interface object name for hash table
@@ -41,13 +43,14 @@ static inline void get_iface_objname(char* iface_objname, const char* objname, c
 	strcat(iface_objname, iface_name);
 	return;
 }
-exception_t SKY_register_interface(conf_object_t* obj, const char* iface_name, void* iface){
+exception_t SKY_register_interface(conf_object_t* obj, const char* objname, const char* iface_name){
 	char iface_objname[MAX_OBJNAME];
 	if(strlen(obj->objname) + strlen(iface_name) + 1 > MAX_OBJNAME){
 		return Invarg_exp;
 	}
-	get_iface_objname(iface_objname, obj->objname, iface_name);
-	if(new_conf_object(iface_objname, iface) != NULL) {
+	get_iface_objname(iface_objname, objname, iface_name);
+	DBG("In %s, interface name=%s\n", __FUNCTION__, iface_objname);
+	if(new_conf_object(iface_objname, obj) != NULL) {
 		return No_exp;
 	}
 	else{
@@ -61,5 +64,6 @@ void* SKY_get_interface(conf_object_t* obj, const char* iface_name){
 		return Invarg_exp;
 	}
 	get_iface_objname(iface_objname, obj->objname, iface_name);
+	DBG("In %s, obj->objname=%s, interface name=%s\n", __FUNCTION__, obj->objname, iface_objname);
 	return get_conf_obj(iface_objname);
 }
