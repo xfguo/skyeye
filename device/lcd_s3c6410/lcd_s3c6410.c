@@ -131,59 +131,33 @@ static exception_t s3c6410_fb_read(conf_object_t *opaque, generic_address_t offs
  //                       uint32_t val)
 static exception_t s3c6410_fb_write(conf_object_t *opaque, generic_address_t offset, uint32_t* buf, size_t count)
 {
-    struct s3c6410_fb_device *s = opaque;
-
+	struct s3c6410_fb_device *s = opaque;
+	DBG("In %s, offset=0x%x\n", __FUNCTION__, offset);
 	uint32_t val = *(uint32_t*)buf;
-    switch(offset) {
+	switch(offset) {
         case FB_INT_ENABLE:
-            s->fb->int_enable = val;
-            //s3c6410_device_set_irq(&s->fb->dev, 0, (s->fb->int_status & s->fb->int_enable));
-            break;
-        case FB_SET_BASE: {
-            int need_resize = !s->fb->base_valid;
-            s->fb->fb_base = val;
-            s->fb->int_status &= ~FB_INT_BASE_UPDATE_DONE;
-            s->fb->need_update = 1;
-            s->fb->need_int = 1;
-            s->fb->base_valid = 1;
-            if(s->fb->set_rotation != s->fb->rotation) {
-                //printf("FB_SET_BASE: rotation : %d => %d\n", s->fb->rotation, s->fb->set_rotation);
-                s->fb->rotation = s->fb->set_rotation;
-                need_resize = 1;
-            }
-            //s3c6410_device_set_irq(&s->fb->dev, 0, (s->fb->int_status & s->fb->int_enable));
-            if (need_resize) {
-                //printf("FB_SET_BASE: need resize (rotation=%d)\n", s->fb->rotation );
-               // dpy_resize(s->fb->ds);
-            }
-            } break;
-        case FB_SET_ROTATION:
-            //printf( "FB_SET_ROTATION %d\n", val);
-            s->fb->set_rotation = val;
-            break;
+                    break;
+        case FB_SET_BASE: 
+                    break;
         case FB_SET_BLANK:
-            s->fb->blank = val;
-            s->fb->need_update = 1;
             break;
         default:
             break;
             //cpu_abort (cpu_single_env, "s3c6410_fb_write: Bad offset %x\n", offset);
-    }
+	}
 }
 static conf_object_t* new_s3c6410_lcd(char* obj_name){
 	s3c6410_fb_device* dev = skyeye_mm_zero(sizeof(s3c6410_fb_device));
 	dev->obj = new_conf_object(obj_name, dev);
 	fb_state_t* fb =  skyeye_mm_zero(sizeof(fb_state_t));
 	fb->dev = dev;
-
 	dev->fb = fb;
-
 	/* Register io function to the object */
 	memory_space_intf* io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
 	io_memory->read = s3c6410_fb_read;
 	io_memory->write = s3c6410_fb_write;
-	SKY_register_interface(dev->obj, obj_name, MEMORY_SPACE_INTF_NAME);	
-	return dev;
+	SKY_register_interface(io_memory, obj_name, MEMORY_SPACE_INTF_NAME);	
+	return dev->obj;
 }
 void free_s3c6410_lcd(conf_object_t* dev){
 	
