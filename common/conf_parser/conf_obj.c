@@ -149,7 +149,7 @@ conf_object_t* new_conf_object(const char* objname, void* obj){
 		conf_obj->obj = obj;
 	//printf("In %s, type_string=%s\n", __FUNCTION__, type_string);
 		conf_obj->objname = skyeye_strdup(objname);
-		if(put_conf_obj(objname, conf_obj) != No_exp){
+		if(put_conf_obj(conf_obj->objname, conf_obj) != No_exp){
 			printf("Can not put the %s to the hash table\n", objname);
 			skyeye_free(objname);
 		}
