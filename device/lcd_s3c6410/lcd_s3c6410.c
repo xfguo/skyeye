@@ -66,10 +66,12 @@ typedef struct {
 } FbConfig;
 static int s3c6410_fb_get_bytes_per_pixel(struct s3c6410_fb_device *s)
 {
+#if 0
     if (s->fb->pixel_format < 0) {
 //        (void) s3c6410_fb_get_pixel_format(s);
     }
     return s->fb->bytes_per_pixel;
+#endif
 }
 
 static int
@@ -110,16 +112,20 @@ typedef struct {
 static exception_t s3c6410_fb_read(conf_object_t *opaque, generic_address_t offset, void* buf, size_t count)
 {
 	uint32_t ret;
-	struct s3c6410_fb_device *s = opaque;
+	struct s3c6410_fb_device *dev = opaque->obj;
+	fb_reg_t* regs = dev->regs;
 	DBG("In %s, offset=0x%x\n", __FUNCTION__, offset);
 	switch(offset) {
         case VIDCON0:
+		regs->vidcon[0];
 		return ret;
 
         case VIDCON1:
+		regs->vidcon[1];
 		return ret;
 
         case VIDCON2:
+		regs->vidcon[2];
 		return ret;
 	default:
 		printf("Can not read the register at 0x%x\n", offset);
@@ -131,27 +137,130 @@ static exception_t s3c6410_fb_read(conf_object_t *opaque, generic_address_t offs
  //                       uint32_t val)
 static exception_t s3c6410_fb_write(conf_object_t *opaque, generic_address_t offset, uint32_t* buf, size_t count)
 {
-	struct s3c6410_fb_device *s = opaque;
-	DBG("In %s, offset=0x%x\n", __FUNCTION__, offset);
-	uint32_t val = *(uint32_t*)buf;
+	struct s3c6410_fb_device *dev = opaque->obj;
+	fb_reg_t* regs = dev->regs;
+
+	uint32_t data = *(uint32_t*)buf;
+	DBG("In %s, offset=0x%x, data=0x%x\n", __FUNCTION__, offset, data);
 	switch(offset) {
-        case FB_INT_ENABLE:
-                    break;
-        case FB_SET_BASE: 
-                    break;
-        case FB_SET_BLANK:
-            break;
-        default:
-            break;
+	case VIDCON0:
+		regs->vidcon[0] = data;
+		break;
+
+        case VIDCON1: 
+		regs->vidcon[1] = data;
+		break;
+	case VIDTCON0:
+		regs->vidtcon[0] = data;
+		break;
+	case VIDTCON1:
+		regs->vidtcon[1] = data;
+		break;
+	case VIDTCON2:
+		regs->vidtcon[2] = data;
+		break;
+	case WINCON(0):
+		regs->wincon[0] = data;
+		if(data & WINCONx_ENWIN){
+		/* Enable the window */
+			
+		}
+		else{
+		/* Disable the window */
+		}
+		int bpp = (data & WINCON0_BPPMODE_MASK) >> WINCON0_BPPMODE_SHIFT;
+		if(bpp == WINCON0_BPPMODE_1BPP){
+		}
+		break;
+	case WINCON(1):
+		regs->wincon[1] = data;
+		break;
+	case WINCON(2):
+		regs->wincon[2] = data;
+		break;
+	case WINCON(3):
+		regs->wincon[3] = data;
+		break;
+	case WINCON(4):
+		regs->wincon[4] = data;
+		break;
+
+	case VIDOSD_BASE:
+		regs->vidosd[0][0] = data;
+		break;
+	case (VIDOSD_BASE + 4):
+		regs->vidosd[0][1] = data;
+		break;
+	case (VIDOSD_BASE + 8):
+		regs->vidosd[0][2] = data;
+		break;
+	case (VIDOSD_BASE + 0x10):
+		regs->vidosd[1][0] = data;
+		break;
+	case (VIDOSD_BASE + 0x14):
+		regs->vidosd[1][1] = data;
+		break;
+	case (VIDOSD_BASE + 0x18):
+		regs->vidosd[1][2] = data;
+		break;
+	case (VIDOSD_BASE + 0x20):
+		regs->vidosd[2][0] = data;
+		break;
+	case (VIDOSD_BASE + 0x24):
+		regs->vidosd[2][1] = data;
+		break;
+	case (VIDOSD_BASE + 0x28):
+		regs->vidosd[2][2] = data;
+		break;
+	case (VIDOSD_BASE + 0x30):
+		regs->vidosd[3][0] = data;
+		break;
+	case (VIDOSD_BASE + 0x34):
+		regs->vidosd[3][1] = data;
+		break;
+	case (VIDOSD_BASE + 0x38):
+		regs->vidosd[3][2] = data;
+		break;
+	case (VIDOSD_BASE + 0x40):
+		regs->vidosd[4][0] = data;
+		break;
+	case (VIDOSD_BASE + 0x44):
+		regs->vidosd[4][1] = data;
+		break;
+	case (VIDOSD_BASE + 0x48):
+		regs->vidosd[4][2] = data;
+		break;
+	case 0xa0:
+		regs->vidw00add0b0 = data;
+		break;
+	case 0xd0:
+		regs->vidw00add1b0 = data;
+		break;
+	case 0x100:
+		regs->vidw_buf_size[0] = data;
+		break;
+	case 0x180:
+		regs->winmap[0] = data;
+		break;
+	default:
+		if(offset >= 0x140 && offset <= 0x15c){
+			regs->wkeycon[((offset - 0x140) / 4)] = data;
+			break;
+		}
+
+		printf("Can not read the register at 0x%x\n", offset);
+		return Invarg_exp;
             //cpu_abort (cpu_single_env, "s3c6410_fb_write: Bad offset %x\n", offset);
 	}
+	return No_exp;
 }
 static conf_object_t* new_s3c6410_lcd(char* obj_name){
 	s3c6410_fb_device* dev = skyeye_mm_zero(sizeof(s3c6410_fb_device));
 	dev->obj = new_conf_object(obj_name, dev);
-	fb_state_t* fb =  skyeye_mm_zero(sizeof(fb_state_t));
-	fb->dev = dev;
-	dev->fb = fb;
+	fb_state_t* state =  skyeye_mm_zero(sizeof(fb_state_t));
+	dev->state = state;
+	fb_reg_t* regs = skyeye_mm_zero(sizeof(fb_reg_t));
+	dev->regs = regs;
 	/* Register io function to the object */
 	memory_space_intf* io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
 	io_memory->read = s3c6410_fb_read;

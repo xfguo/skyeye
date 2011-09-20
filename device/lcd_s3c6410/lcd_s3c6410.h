@@ -17,10 +17,39 @@ typedef struct fb_state {
 	int      rotation;   /* 0, 1, 2 or 3 */
 	int      dpi;
 }fb_state_t;
+typedef struct fb_reg{
+	uint32 vidcon[3];
+	uint32 vidtcon[3];
+	uint32 wincon[5];
+	uint32 vidosd[5][3];
+	uint32 vidw00add0b0;
+	uint32 vidw00add0b1;
+	uint32 vidw01add0b0;
+	uint32 vidw01add0b1;
+	uint32 vidw02add0;
+	uint32 vidw03add0;
+	uint32 vidw04add0;
+	uint32 vidw00add1b0;
+	uint32 vidw00add1b1;
+	uint32 vidw_buf_size[5];
+	uint32 vidintcon0;
+	uint32 vidintcon1;
+	uint32 wkeycon[8];
+	uint32 winmap[5];
+	uint32 wpalcon;
+	uint32 tgigcon;
+	uint32 ituifcon0;
+	uint32 sifccon[3];
+	uint32 ldi_cmd[12];
+	uint32 w2pdata[8];
+	uint32 w3pdata[8];
+	uint32 w4pdata[2];
+}fb_reg_t;
 typedef struct s3c6410_fb_device{
 	conf_object_t* obj;
+	fb_reg_t* regs;
 	int line_no;
-	fb_state_t* fb;
+	fb_state_t* state;
 	conf_object_t* signal_target;
 	general_signal_intf* master;
 }s3c6410_fb_device;
