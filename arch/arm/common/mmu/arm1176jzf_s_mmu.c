@@ -401,9 +401,8 @@ arm1176jzf_s_mmu_read (ARMul_State *state, ARMword va, ARMword *data,
 	fault = mmu_translate (state, va, &pa, &ap, &sop);
 	if (fault) {
 		d_msg ("translate\n");
-        printf("mmu read fault at %x\n", va);
-        printf("fault is %d\n", fault);
-        exit(-1);
+		printf("mmu read fault at %x\n", va);
+		printf("fault is %d\n", fault);
 		return fault;
 	}
 //    printf("va is %x pa is %x\n", va, pa);
@@ -527,8 +526,7 @@ arm1176jzf_s_mmu_write (ARMul_State *state, ARMword va, ARMword data,
 	fault = mmu_translate (state, va, &pa, &ap, &sop);
 	if (fault) {
 		d_msg ("translate\n");
-        printf("mmu write fault at %x\n", va);
-        exit(-1);
+		printf("mmu write fault at %x\n", va);
 		return fault;
 	}
 //    printf("va is %x pa is %x\n", va, pa);
