@@ -854,9 +854,11 @@ ARMul_Emulate26 (ARMul_State * state)
 		}
 		io_do_cycle (state);
 		state->NumInstrs++;
+		#if 0
 		if (state->NumInstrs % 10000000 == 0) {
 				printf("10 MIPS instr have been executed\n");
 		}
+		#endif
 
 #ifdef MODET
 		/* Provide Thumb instruction decoding. If the processor is in Thumb
