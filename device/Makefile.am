@@ -20,6 +20,8 @@ dev_sound = sound/skyeye_sound.c  sound/skyeye_sound_pcm.c sound/sound_module.c
 dev_lcd = lcd/dev_lcd_au1100.c  lcd/dev_lcd_s3c2410.c   lcd/skyeye_lcd.c \
 lcd/dev_lcd_ep7312.c  lcd/dev_lcd_s3c44b0x.c lcd/dev_lcd_pxa.c lcd/lcd_module.c
 
+gtk_lcd = lcd_gtk/lcd_gtk_module.c lcd_gtk/lcd_gtk.c
+
 #dev_net = net/dev_net_cs8900a.c  net/dev_net_s3c4510b.c net/skyeye_net_tuntap.c \
 #net/dev_net_rtl8019.c  net/skyeye_net.c    net/skyeye_net_vnet.c net/net_module.c
 #dev_net = net/dev_net_cs8900a.c  net/skyeye_net_tuntap.c net/dev_net_s3c4510b.c
@@ -38,6 +40,9 @@ libuart_16550_la_LDFLAGS = -module
 
 liblcd_s3c6410_la_SOURCES = $(dev_lcd_s3c6410)
 liblcd_s3c6410_la_LDFLAGS = -module
+
+libgtk_lcd_la_SOURCES = $(gtk_lcd)
+libgtk_lcd_la_LDFLAGS = -module
 
 libsdhci_s3c6410_la_SOURCES = $(dev_sdhci_s3c6410)
 libsdhci_s3c6410_la_LDFLAGS = -module
@@ -63,7 +68,7 @@ libts_la_LDFLAGS = -module
 libpci_la_SOURCES = $(dev_pci)
 libpci_la_LDFLAGS = -module
 
-pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la liblcd_s3c6410.la libsdhci_s3c6410.la
+pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la liblcd_s3c6410.la libsdhci_s3c6410.la libgtk_lcd.la
 
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0  @COMMON_CFLAGS@
 
