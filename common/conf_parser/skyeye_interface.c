@@ -30,27 +30,14 @@
 #define DEBUG
 #include "skyeye_log.h"
 
-/**
-* @brief compose an interface object name for hash table
-*
-* @param iface_objname
-* @param objname
-* @param iface_name
-*/
-static inline void get_iface_objname(char* iface_objname, const char* objname, const char* iface_name){
-	memcpy(&iface_objname[0], objname, strlen(objname));
-	iface_objname[strlen(objname)] = '\0';
-	strcat(iface_objname, iface_name);
-	return;
-}
-exception_t SKY_register_interface(conf_object_t* obj, const char* objname, const char* iface_name){
+exception_t SKY_register_interface(void* intf_obj, const char* objname, const char* iface_name){
 	char iface_objname[MAX_OBJNAME];
-	if(strlen(obj->objname) + strlen(iface_name) + 1 > MAX_OBJNAME){
+	if(strlen(objname) + strlen(iface_name) + 1 > MAX_OBJNAME){
 		return Invarg_exp;
 	}
-	get_iface_objname(iface_objname, objname, iface_name);
+	get_strcat_objname(iface_objname, objname, iface_name);
 	DBG("In %s, interface name=%s\n", __FUNCTION__, iface_objname);
-	if(new_conf_object(iface_objname, obj) != NULL) {
+	if(new_conf_object(iface_objname, intf_obj) != NULL) {
 		return No_exp;
 	}
 	else{
@@ -61,9 +48,9 @@ exception_t SKY_register_interface(conf_object_t* obj, const char* objname, cons
 void* SKY_get_interface(conf_object_t* obj, const char* iface_name){
 	char iface_objname[MAX_OBJNAME];
 	if(strlen(obj->objname) + strlen(iface_name) + 1 > MAX_OBJNAME){
-		return Invarg_exp;
+		return NULL;
 	}
-	get_iface_objname(iface_objname, obj->objname, iface_name);
+	get_strcat_objname(iface_objname, obj->objname, iface_name);
 	DBG("In %s, obj->objname=%s, interface name=%s\n", __FUNCTION__, obj->objname, iface_objname);
 	conf_object_t* intf_obj = get_conf_obj(iface_objname);
 	return intf_obj->obj;
