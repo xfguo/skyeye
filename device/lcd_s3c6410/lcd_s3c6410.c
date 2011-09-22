@@ -19,6 +19,7 @@
 #include <skyeye_interface.h>
 #include <skyeye_obj.h>
 #include <skyeye_mm.h>
+#include <skyeye_attr.h>
 #include <memory_space.h>
 #define DEBUG
 #include <skyeye_log.h>
@@ -265,13 +266,16 @@ static conf_object_t* new_s3c6410_lcd(char* obj_name){
 	memory_space_intf* io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
 	io_memory->read = s3c6410_fb_read;
 	io_memory->write = s3c6410_fb_write;
-	SKY_register_interface(io_memory, obj_name, MEMORY_SPACE_INTF_NAME);	
+	SKY_register_interface(io_memory, obj_name, MEMORY_SPACE_INTF_NAME);
+
+	dev->lcd_ctrl = make_new_attr(Val_ptr);
+	SKY_register_attr(dev->obj, "lcd_ctrl_0", dev->lcd_ctrl);
+
 	return dev->obj;
 }
 void free_s3c6410_lcd(conf_object_t* dev){
 	
 }
-
 void init_s3c6410_lcd(){
 	static skyeye_class_t class_data = {
 		.class_name = "s3c6410_lcd",

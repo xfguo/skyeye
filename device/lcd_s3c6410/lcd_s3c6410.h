@@ -52,5 +52,6 @@ typedef struct s3c6410_fb_device{
 	fb_state_t* state;
 	conf_object_t* signal_target;
 	general_signal_intf* master;
+	attr_value_t* lcd_ctrl;
 }s3c6410_fb_device;
 #endif
