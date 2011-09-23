@@ -26,7 +26,7 @@
  *		Cai Qiang <caiqiang@ustc.edu>
  *
  * */
-
+#include <stdlib.h>
 #include <skyeye_config.h>
 #include <skyeye_arch.h>
 #include <skyeye_sched.h>

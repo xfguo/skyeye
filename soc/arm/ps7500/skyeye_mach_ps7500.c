@@ -33,6 +33,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <bank_defs.h>
 #include "ps7500.h"
 
 /* 2007-01-18 added by Anthony Lee : for new uart device frame */
@@ -40,6 +42,8 @@
 
 extern int skyeye_net_maxfd;
 extern int skyeye_net_on;
+
+ps7500_kb_next(void *state);
 
 #define TC_DIVISOR	(32)	/* Set your BogoMips here :) */
 #define FLYBACK_DIVISOR	(1000000)

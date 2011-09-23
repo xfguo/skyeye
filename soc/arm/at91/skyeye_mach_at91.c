@@ -36,6 +36,7 @@
 #include <skyeye_arch.h>
 #include <skyeye_sched.h>
 #include <skyeye_lock.h>
+#include <bank_defs.h>
 #include "at91.h"
 
 #define DEBUG 0

@@ -32,6 +32,7 @@
 #include <skyeye_sched.h>
 #include <skyeye_pref.h>
 #include <skyeye_lock.h>
+#include <bank_defs.h>
 #include "s3c3410x.h"
 #include "skyeye_uart.h"
 
