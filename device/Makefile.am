@@ -41,8 +41,8 @@ libuart_16550_la_LDFLAGS = -module
 liblcd_s3c6410_la_SOURCES = $(dev_lcd_s3c6410)
 liblcd_s3c6410_la_LDFLAGS = -module
 
-libgtk_lcd_la_SOURCES = $(gtk_lcd)
-libgtk_lcd_la_LDFLAGS = -module
+libgtk_lcd_la_SOURCES = $(gtk_lcd) 
+libgtk_lcd_la_LDFLAGS = -module $(LCD_LIBS)
 
 libsdhci_s3c6410_la_SOURCES = $(dev_sdhci_s3c6410)
 libsdhci_s3c6410_la_LDFLAGS = -module
