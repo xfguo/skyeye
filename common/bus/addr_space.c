@@ -19,12 +19,12 @@
 #include "skyeye_obj.h"
 
 
-exception_t add_map(addr_space_t* space, generic_address_t base_addr, generic_address_t length, generic_address_t start, conf_object_t* target, memory_space_intf* memory_space, int priority, int swap_endian){
+exception_t add_map(addr_space_t* space, generic_address_t base_addr, generic_address_t length, generic_address_t start, memory_space_intf* memory_space, int priority, int swap_endian){
 	map_info_t* map = skyeye_mm(sizeof(map_info_t));
 	map->base_addr = base_addr;
 	map->length = length;
 	map->start = start;
-	map->target = target;
+	//map->target = target;
 	map->memory_space = memory_space;
 	map->priority = priority;
 
@@ -51,7 +51,7 @@ static exception_t space_read(conf_object_t* addr_space, generic_address_t addr,
 			continue;
 		DBG("In %s, i=%d, addr=0x%x, base_addr=0x%x, length=0x%x\n", __FUNCTION__, i, addr, iterator->base_addr, iterator->length);
 		if(iterator->base_addr <= addr && ((iterator->base_addr + iterator->length) > addr)){
-			return iterator->memory_space->read(iterator->target, (addr - iterator->base_addr), buf, count);
+			return iterator->memory_space->read(iterator->memory_space->conf_obj, (addr - iterator->base_addr), buf, count);
 		}
 	}
 
@@ -66,7 +66,7 @@ static exception_t space_write(conf_object_t* addr_space, generic_address_t addr
 			continue;
 		DBG("In %s, i=%d, addr=0x%x, base_addr=0x%x, length=0x%x\n", __FUNCTION__, i, addr, iterator->base_addr, iterator->length);
 		if(iterator->base_addr <= addr && ((iterator->base_addr + iterator->length) > addr)){
-			return iterator->memory_space->write(iterator->target, (addr - iterator->base_addr), buf, count);
+			return iterator->memory_space->write(iterator->memory_space->conf_obj, (addr - iterator->base_addr), buf, count);
 		}
 	}
 	return Not_found_exp;

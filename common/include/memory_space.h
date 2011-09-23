@@ -29,6 +29,7 @@ typedef exception_t(*read_byte_t)(conf_object_t* target, generic_address_t addr,
 typedef exception_t(*write_byte_t)(conf_object_t* target, generic_address_t addr, const void *buf, size_t count);
 
 typedef struct memory_space{
+	conf_object_t* conf_obj;
 	read_byte_t read;
 	write_byte_t write;
 }memory_space_intf;

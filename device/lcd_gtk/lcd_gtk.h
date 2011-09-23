@@ -46,6 +46,7 @@ typedef struct SkyEyeLCD_GTK {
 } SkyEyeLCD_GTK;
 
 typedef struct lcd_gtk_device{
+	conf_object_t* obj;
 	SkyEyeLCD_GTK* gtk_win;	
 	int mod;
 

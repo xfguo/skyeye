@@ -264,6 +264,7 @@ static conf_object_t* new_s3c6410_lcd(char* obj_name){
 	dev->regs = regs;
 	/* Register io function to the object */
 	memory_space_intf* io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
+	io_memory->conf_obj = dev->obj;
 	io_memory->read = s3c6410_fb_read;
 	io_memory->write = s3c6410_fb_write;
 	SKY_register_interface(io_memory, obj_name, MEMORY_SPACE_INTF_NAME);

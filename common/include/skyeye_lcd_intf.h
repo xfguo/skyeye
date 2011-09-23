@@ -25,6 +25,7 @@
 #ifndef __SKYEYE_LCD_INTF_H__
 #define __SKYEYE_LCD_INTF_H__
 typedef struct lcd_ctrl{
+	conf_object_t* conf_obj;
 	int (*lcd_open) (conf_object_t *lcd_dev);
 	int (*lcd_close) (conf_object_t *lcd_dev);
 	int (*lcd_update) (conf_object_t *lcd_dev);

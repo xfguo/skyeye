@@ -551,9 +551,11 @@ static conf_object_t* new_gtk_lcd(char* obj_name)
 		once = TRUE;
 	}
 	lcd_gtk_device* dev = skyeye_mm_zero(sizeof(lcd_gtk_device));
+	dev->obj = new_conf_object(obj_name, dev);
 	//dev->gtk_win = gtk_win;
 
 	lcd_control_intf* lcd_ctrl = skyeye_mm_zero(sizeof(lcd_control_intf));
+	lcd_ctrl->conf_obj = dev->obj;
 	lcd_ctrl->lcd_open = gtk_lcd_open;
 	lcd_ctrl->lcd_close = gtk_lcd_close;
 	lcd_ctrl->lcd_update = gtk_lcd_update;
@@ -563,7 +565,7 @@ static conf_object_t* new_gtk_lcd(char* obj_name)
 
 	SKY_register_interface(lcd_ctrl, obj_name, LCD_CTRL_INTF_NAME);
 
-	return 0;
+	return dev->obj;
 }
 void free_gtk_lcd(conf_object_t* dev){
 	
