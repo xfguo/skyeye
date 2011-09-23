@@ -83,6 +83,11 @@ set_attr_error_t SKY_set_attr(conf_object_t* conf_obj, const char* attr_name, at
 	}
 	get_strcat_objname(&attr_objname[0], conf_obj->objname, attr_name);
 	conf_object_t* attr_obj = get_conf_obj(attr_objname);
+	if(attr_obj == NULL){
+		skyeye_log(Error_log, __FUNCTION__, "The object %s not exist.\n", attr_objname);
+		return Set_error;
+		
+	}
 	attr_value_t* current_attr = attr_obj->obj;
 	if(current_attr->type != attr->type){
 		return Set_invalid_type;

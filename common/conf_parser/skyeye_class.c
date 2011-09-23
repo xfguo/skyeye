@@ -33,6 +33,11 @@ void SKY_register_class(const char* name, skyeye_class_t* skyeye_class){
 
 conf_object_t* pre_conf_obj(const char* objname, const char* class_name){
 	conf_object_t* obj = get_conf_obj(class_name);
+	if(obj == NULL){
+		skyeye_log(Error_log, __FUNCTION__, "Can not find the object %s\n", class_name);
+		return NULL;
+
+	}
 	skyeye_class_t* class_data = obj->obj;
 	if(class_data == NULL){
 		skyeye_log(Error_log, __FUNCTION__, "Can not find the class %s\n", class_name);
