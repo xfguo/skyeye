@@ -886,7 +886,7 @@ s3c6410x_mach_init (void *arch_instance, machine_config_t *this_mach)
 		DBG("In %s, get the interface instance 0x%x\n", __FUNCTION__, lcd_io_memory);
 		exception_t ret;
         	ret = add_map(phys_mem, 0x77100000, 0x100000, 0x0, lcd_io_memory, 1, 1);
-
+#ifdef GTK_LCD
 		/* set the lcd_ctrl_0 attribute for lcd */
 		conf_object_t* gtk_painter = pre_conf_obj("gtk_lcd_0", "gtk_lcd");
 
@@ -894,6 +894,7 @@ s3c6410x_mach_init (void *arch_instance, machine_config_t *this_mach)
 		attr_value_t* attr = make_new_attr(Val_ptr);
 		attr->u.ptr = lcd_ctrl;
 		SKY_set_attr(gtk_painter, "lcd_ctrl_0", attr);
+#endif
 	}
 	else{
 		printf("can not initlize the lcd, maybe the module not exist\n");

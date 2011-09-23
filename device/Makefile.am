@@ -41,8 +41,10 @@ libuart_16550_la_LDFLAGS = -module
 liblcd_s3c6410_la_SOURCES = $(dev_lcd_s3c6410)
 liblcd_s3c6410_la_LDFLAGS = -module
 
+if GTK_LCD
 libgtk_lcd_la_SOURCES = $(gtk_lcd) 
 libgtk_lcd_la_LDFLAGS = -module $(LCD_LIBS)
+endif
 
 libsdhci_s3c6410_la_SOURCES = $(dev_sdhci_s3c6410)
 libsdhci_s3c6410_la_LDFLAGS = -module
@@ -68,7 +70,12 @@ libts_la_LDFLAGS = -module
 libpci_la_SOURCES = $(dev_pci)
 libpci_la_LDFLAGS = -module
 
-pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la liblcd_s3c6410.la libsdhci_s3c6410.la libgtk_lcd.la
+pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la liblcd_s3c6410.la libsdhci_s3c6410.la
+
+if GTK_LCD
+pkglib_LTLIBRARIES += libgtk_lcd.la
+endif
+
 
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0  @COMMON_CFLAGS@
 

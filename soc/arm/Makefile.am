@@ -85,5 +85,8 @@ libns9750.la libsharp.la  libomap5912.la liblpc2210.la liblh79520.la libps7500.l
 libs3c4510b.la
 
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@
+if GTK_LCD
+DEFS += -DGTK_LCD
+endif
 
 INCLUDES = -I$(top_srcdir)/arch/arm/mach -I$(top_srcdir)/common @COMMON_INCLUDES@
