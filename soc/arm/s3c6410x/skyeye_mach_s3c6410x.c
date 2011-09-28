@@ -893,7 +893,8 @@ s3c6410x_mach_init (void *arch_instance, machine_config_t *this_mach)
 		lcd_control_intf* lcd_ctrl = (lcd_control_intf*)SKY_get_interface(gtk_painter, LCD_CTRL_INTF_NAME);
 		attr_value_t* attr = make_new_attr(Val_ptr);
 		attr->u.ptr = lcd_ctrl;
-		SKY_set_attr(gtk_painter, "lcd_ctrl_0", attr);
+		/* set the attribute of lcd */
+		SKY_set_attr(lcd, "lcd_ctrl_0", attr);
 #endif
 	}
 	else{
