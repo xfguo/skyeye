@@ -21,6 +21,8 @@
 #include <skyeye_mm.h>
 #include <skyeye_attr.h>
 #include <memory_space.h>
+#include <skyeye_lcd_intf.h>
+#include <skyeye_lcd_surface.h>
 #define DEBUG
 #include <skyeye_log.h>
 
@@ -140,9 +142,15 @@ static exception_t s3c6410_fb_write(conf_object_t *opaque, generic_address_t off
 {
 	struct s3c6410_fb_device *dev = opaque->obj;
 	fb_reg_t* regs = dev->regs;
+	lcd_surface_t* surface = dev->surface;
 
 	uint32_t data = *(uint32_t*)buf;
 	DBG("In %s, offset=0x%x, data=0x%x\n", __FUNCTION__, offset, data);
+	lcd_control_intf* lcd_ctrl = dev->lcd_ctrl->u.ptr;
+	if(lcd_ctrl == NULL){
+		skyeye_log(Error_log, __FUNCTION__, "Need to set the lcd panel\n");
+		return;
+	}
 	switch(offset) {
 	case VIDCON0:
 		regs->vidcon[0] = data;
@@ -162,16 +170,21 @@ static exception_t s3c6410_fb_write(conf_object_t *opaque, generic_address_t off
 		break;
 	case WINCON(0):
 		regs->wincon[0] = data;
+		int bpp = (data & WINCON0_BPPMODE_MASK) >> WINCON0_BPPMODE_SHIFT;
+		if(bpp == WINCON0_BPPMODE_1BPP){
+		}
 		if(data & WINCONx_ENWIN){
 		/* Enable the window */
+			surface->width = 640;
+			surface->height = 480;
+			surface->depth = 16; /* BPP setting */
+			lcd_ctrl->lcd_open(lcd_ctrl->conf_obj, dev->surface);	
 			
 		}
 		else{
 		/* Disable the window */
 		}
-		int bpp = (data & WINCON0_BPPMODE_MASK) >> WINCON0_BPPMODE_SHIFT;
-		if(bpp == WINCON0_BPPMODE_1BPP){
-		}
+
 		break;
 	case WINCON(1):
 		regs->wincon[1] = data;
@@ -232,12 +245,17 @@ static exception_t s3c6410_fb_write(conf_object_t *opaque, generic_address_t off
 		regs->vidosd[4][2] = data;
 		break;
 	case 0xa0:
+		DBG("In %s, windows0 buf start=0x%x", __FUNCTION__, data);
 		regs->vidw00add0b0 = data;
+		surface->lcd_addr_begin = data;
 		break;
 	case 0xd0:
+		DBG("In %s, windows0 buf end=0x%x", __FUNCTION__, data);
 		regs->vidw00add1b0 = data;
+		surface->lcd_addr_end = data;
 		break;
 	case 0x100:
+		DBG("In %s, windows 0 buffer size is 0x%x\n", __FUNCTION__, data);
 		regs->vidw_buf_size[0] = data;
 		break;
 	case 0x180:
@@ -262,6 +280,8 @@ static conf_object_t* new_s3c6410_lcd(char* obj_name){
 	dev->state = state;
 	fb_reg_t* regs = skyeye_mm_zero(sizeof(fb_reg_t));
 	dev->regs = regs;
+	lcd_surface_t* surface = skyeye_mm_zero(sizeof(lcd_surface_t));
+	dev->surface = surface;
 	/* Register io function to the object */
 	memory_space_intf* io_memory = skyeye_mm_zero(sizeof(memory_space_intf));
 	io_memory->conf_obj = dev->obj;
@@ -270,6 +290,7 @@ static conf_object_t* new_s3c6410_lcd(char* obj_name){
 	SKY_register_interface(io_memory, obj_name, MEMORY_SPACE_INTF_NAME);
 
 	dev->lcd_ctrl = make_new_attr(Val_ptr);
+	printf("In %s, attr=0x%x\n", __FUNCTION__, dev->lcd_ctrl);
 	SKY_register_attr(dev->obj, "lcd_ctrl_0", dev->lcd_ctrl);
 
 	return dev->obj;

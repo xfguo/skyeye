@@ -48,6 +48,7 @@ typedef struct fb_reg{
 typedef struct s3c6410_fb_device{
 	conf_object_t* obj;
 	fb_reg_t* regs;
+	lcd_surface_t* surface;
 	int line_no;
 	fb_state_t* state;
 	conf_object_t* signal_target;

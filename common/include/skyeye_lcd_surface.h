@@ -15,25 +15,22 @@
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * 
 */
+#ifndef __SKYEYE_LCD_H__
+#define __SKYEYE_LCD_H__
 /**
-* @file skyeye_lcd_intf.c
-* @brief The interface for lcd controller
+* @file skyeye_lcd.h
+* @brief The lcd interface
 * @author Michael.Kang blackfin.kang@gmail.com
 * @version 0.1
-* @date 2011-09-20
+* @date 2011-09-27
 */
-#ifndef __SKYEYE_LCD_INTF_H__
-#define __SKYEYE_LCD_INTF_H__
-#include <skyeye_lcd_surface.h>
-typedef struct lcd_ctrl{
-	conf_object_t* conf_obj;
-	int (*lcd_open) (conf_object_t *lcd_dev, lcd_surface_t* surface);
-	int (*lcd_close) (conf_object_t *lcd_dev);
-	int (*lcd_update) (conf_object_t *lcd_dev);
-	int (*lcd_filter_read) (conf_object_t *lcd_dev, uint32 addr, uint32 *data, size_t count);
-	int (*lcd_filter_write) (conf_object_t *lcd_dev, uint32 addr, uint32 data, size_t count);
-	uint32 (*lcd_lookup_color) (conf_object_t *lcd_dev, uint32 color); /* return RGB32 color. */
+typedef struct lcd_surface{
+	int width;
+	int height;
+	int depth;
 
-}lcd_control_intf;
-#define LCD_CTRL_INTF_NAME "lcd_ctrl"
+	uint32 lcd_addr_begin;
+	uint32 lcd_addr_end;
+	uint32 lcd_line_offset
+}lcd_surface_t;
 #endif

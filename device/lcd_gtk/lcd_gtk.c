@@ -35,7 +35,10 @@
 #include <skyeye_mm.h>
 #include <skyeye_lcd_intf.h>
 #include <skyeye_device.h>
+#include <skyeye_sched.h>
 #include "lcd_gtk.h"
+#define DEBUG
+#include <skyeye_log.h>
 
 //extern unsigned int Pen_buffer[8];
 
@@ -342,34 +345,36 @@ static void callback_motion_notify(GtkWidget *w, GdkEventMotion *event)
 
 static gint callback_redraw(GtkWidget *window)
 {
+	//g_print("In %s\n", __FUNCTION__);
 	gtk_widget_queue_draw(window);
 	return TRUE;
 }
 
 
-static int gtk_lcd_open(conf_object_t *lcd_dev)
+static int gtk_lcd_open(conf_object_t *lcd_dev, lcd_surface_t* surface)
 {
 	lcd_gtk_device* dev = lcd_dev->obj;
 	SkyEyeLCD_GTK *lcd;
 	guint32 *fbmem;
 	char *title;
 	GtkWidget *touch_screen;
+	assert(dev != NULL);
+	DBG("In %s, width=%d, height=%d, begin_addr=0x%x,end_addr=0x%x\n, ", __FUNCTION__, surface->width, surface->height, surface->lcd_addr_begin, surface->lcd_addr_end);
+	if (dev == NULL || 
+	    surface->width <= 0 || surface->height <= 0) return -1;
 
-	if (dev == NULL || dev->gtk_win != NULL ||
-	    dev->width <= 0 || dev->height <= 0) return -1;
-
-	if ((fbmem = (guint32*)get_dma_addr(dev->lcd_addr_begin)) == NULL) {
-		fprintf(stderr, "[GTK_LCD]: Can't find LCD DMA from address 0x%x\n", dev->lcd_addr_begin);
+	if ((fbmem = (guint32*)get_dma_addr(surface->lcd_addr_begin)) == NULL) {
+		fprintf(stderr, "[GTK_LCD]: Can't find LCD DMA from address 0x%x\n", surface->lcd_addr_begin);
 		return -1;
 	}
-
+	DBG("In %s, fb_mem=0x%x\n", __FUNCTION__, fbmem);
 	if ((lcd = (SkyEyeLCD_GTK*)malloc(sizeof(SkyEyeLCD_GTK))) == NULL) return -1;
 	memset(lcd, 0, sizeof(SkyEyeLCD_GTK));
 
-	lcd->width = dev->width;
-	lcd->virtual_width = dev->width + (int)dev->lcd_line_offset;
-	lcd->height = dev->height;
-	lcd->depth = dev->depth;
+	lcd->width = surface->width;
+	lcd->virtual_width = surface->width + surface->lcd_line_offset;
+	lcd->height = surface->height;
+	lcd->depth = surface->depth;
 	lcd->update_rect.width = -1;
 	lcd->update_rect.height = -1;
 	lcd->update_all = TRUE;
@@ -398,6 +403,7 @@ static int gtk_lcd_open(conf_object_t *lcd_dev)
 			break;
 	}
 
+	DBG("In %s, lcd->rgbbuf=0x%x\n", __FUNCTION__, lcd->rgbbuf);
 	lcd->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_signal_connect(GTK_OBJECT(lcd->window), "delete-event",
 			   GTK_SIGNAL_FUNC(gtk_true), NULL);
@@ -407,11 +413,13 @@ static int gtk_lcd_open(conf_object_t *lcd_dev)
 		gtk_window_set_title(GTK_WINDOW(lcd->window), title);
 		g_free(title);
 	}
+	DBG("In %s, set title\n", __FUNCTION__);
 
 	gtk_widget_set_usize(lcd->window, lcd->width, lcd->height);
 	gtk_widget_set_events(lcd->window, GDK_EXPOSURE_MASK);
 
 	touch_screen = gtk_event_box_new();
+	DBG("In %s, set event\n", __FUNCTION__);
 	gtk_container_add(GTK_CONTAINER(lcd->window), touch_screen);
 	gtk_widget_set_events(touch_screen,
 			      GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
@@ -431,8 +439,10 @@ static int gtk_lcd_open(conf_object_t *lcd_dev)
 			   GTK_SIGNAL_FUNC(callback_expose_event), dev);
 
 	gtk_widget_show_all(lcd->window);
-
-	if (dev->lcd_lookup_color == NULL) switch (lcd->depth) {
+	DBG("In %s, show all\n", __FUNCTION__);
+	if (dev->lcd_lookup_color == NULL){
+	}
+	 switch (lcd->depth) {
 		case 1:
 			lcd->colormap = gdk_rgb_cmap_new(colors1b, 2);
 			break;
@@ -448,11 +458,12 @@ static int gtk_lcd_open(conf_object_t *lcd_dev)
 		default:
 			break;
 	}
+	DBG("In %s, add redraw event\n", __FUNCTION__);
 
 	lcd->timer = gtk_timeout_add(200, (GtkFunction)callback_redraw, lcd->window);
 
 	dev->gtk_win = (void*)lcd;
-
+	//gtk_main_iteration_do(FALSE);
 	return 0;
 }
 
@@ -523,6 +534,10 @@ static int gtk_lcd_update(conf_object_t *lcd_dev)
 	return 0;
 }
 
+static void timer_update(conf_object_t *lcd_dev){
+	gtk_lcd_update(lcd_dev);
+}
+
 static conf_object_t* new_gtk_lcd(char* obj_name)
 {
 	static int tmp_argc = 0;
@@ -551,8 +566,14 @@ static conf_object_t* new_gtk_lcd(char* obj_name)
 		once = TRUE;
 	}
 	lcd_gtk_device* dev = skyeye_mm_zero(sizeof(lcd_gtk_device));
+	dev->width = 640;
+	dev->height = 480;
+	dev->depth = 16;
 	dev->obj = new_conf_object(obj_name, dev);
 	//dev->gtk_win = gtk_win;
+	/* lcd update*/
+	int timer_id;
+	create_thread_scheduler(1000000, Periodic_sched, timer_update, dev->obj, &timer_id);
 
 	lcd_control_intf* lcd_ctrl = skyeye_mm_zero(sizeof(lcd_control_intf));
 	lcd_ctrl->conf_obj = dev->obj;
