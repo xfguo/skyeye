@@ -167,18 +167,29 @@ static exception_t s3c6410_fb_write(conf_object_t *opaque, generic_address_t off
 		break;
 	case VIDTCON2:
 		regs->vidtcon[2] = data;
+		int vertical = data & 0x7FF;
+		int horizontal = ((data >> 11) & 0x7FF);
+		DBG("In %s, vertical = %d, hor = %d\n", __FUNCTION__, vertical, horizontal);
+		surface->width = horizontal + 1;
+		surface->height = vertical + 1;
 		break;
 	case WINCON(0):
 		regs->wincon[0] = data;
-		int bpp = (data & WINCON0_BPPMODE_MASK) >> WINCON0_BPPMODE_SHIFT;
-		if(bpp == WINCON0_BPPMODE_1BPP){
+		int bpp = (data & WINCON0_BPPMODE_MASK) ;
+		DBG("In %s, bpp=%d\n", __FUNCTION__, bpp);
+		if(bpp == WINCON0_BPPMODE_16BPP_565){
+			surface->depth = 16;
+		}
+		else{
+			fprintf(stderr, "Wrong bpp in %s\n", __FUNCTION__);
 		}
 		if(data & WINCONx_ENWIN){
-		/* Enable the window */
-			surface->width = 640;
-			surface->height = 480;
-			surface->depth = 16; /* BPP setting */
-			lcd_ctrl->lcd_open(lcd_ctrl->conf_obj, dev->surface);	
+			/* Enable the window */
+			static int done = 0;
+			if(!done){
+				lcd_ctrl->lcd_open(lcd_ctrl->conf_obj, dev->surface);	
+				done = 1;
+			}
 			
 		}
 		else{
@@ -201,12 +212,15 @@ static exception_t s3c6410_fb_write(conf_object_t *opaque, generic_address_t off
 
 	case VIDOSD_BASE:
 		regs->vidosd[0][0] = data;
+		DBG("In %s,left_top_x=%d, left_top_y=%d\n", __FUNCTION__, ((data >> 11) & 0x7ff), data & 0x7FF);
 		break;
 	case (VIDOSD_BASE + 4):
 		regs->vidosd[0][1] = data;
+		DBG("In %s,right_bot_x=%d, right_bot_y=%d\n", __FUNCTION__, ((data >> 11) & 0x7ff), data & 0x7FF);
 		break;
 	case (VIDOSD_BASE + 8):
 		regs->vidosd[0][2] = data;
+		DBG("In %s, windows size is %d\n", __FUNCTION__, data & 0xFFFFFF);
 		break;
 	case (VIDOSD_BASE + 0x10):
 		regs->vidosd[1][0] = data;
