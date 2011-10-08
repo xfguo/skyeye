@@ -460,7 +460,7 @@ static int gtk_lcd_open(conf_object_t *lcd_dev, lcd_surface_t* surface)
 	}
 	DBG("In %s, add redraw event\n", __FUNCTION__);
 
-	lcd->timer = gtk_timeout_add(200, (GtkFunction)callback_redraw, lcd->window);
+	//lcd->timer = gtk_timeout_add(200, (GtkFunction)callback_redraw, lcd->window);
 
 	dev->gtk_win = (void*)lcd;
 	//gtk_main_iteration_do(FALSE);
@@ -530,6 +530,8 @@ static int gtk_lcd_update(conf_object_t *lcd_dev)
 	if (dev == NULL || dev->gtk_win == NULL) return -1;
 
 	gtk_main_iteration_do(FALSE);
+	SkyEyeLCD_GTK *lcd = dev->gtk_win;
+	gtk_widget_queue_draw(lcd->window);
 
 	return 0;
 }
