@@ -167,8 +167,8 @@ static exception_t s3c6410_fb_write(conf_object_t *opaque, generic_address_t off
 		break;
 	case VIDTCON2:
 		regs->vidtcon[2] = data;
-		int vertical = data & 0x7FF;
-		int horizontal = ((data >> 11) & 0x7FF);
+		int vertical = ((data >> 11) & 0x7FF);
+		int horizontal = data & 0x7FF;
 		DBG("In %s, vertical = %d, hor = %d\n", __FUNCTION__, vertical, horizontal);
 		surface->width = horizontal + 1;
 		surface->height = vertical + 1;
