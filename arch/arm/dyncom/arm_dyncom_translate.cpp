@@ -2905,7 +2905,7 @@ int DYNCOM_TAG(bx)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *ne
 	return instr_size;
 }
 int DYNCOM_TAG(bxj)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
-int DYNCOM_TAG(cdp)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
+int DYNCOM_TAG(cdp)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);return instr_size;}
 int DYNCOM_TAG(clrex)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = INSTR_SIZE;
