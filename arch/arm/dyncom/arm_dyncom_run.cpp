@@ -35,6 +35,7 @@
 #include "dyncom/memory.h"
 #include "dyncom/frontend.h"
 #include "arm_dyncom_translate.h"
+#include "arm_dyncom_parallel.h"
 #include "dyncom/defines.h"
 #include "common/mmu/arm1176jzf_s_mmu.h"
 #include "armmmu.h"
@@ -841,6 +842,7 @@ void arm_dyncom_init(arm_core_t* core){
 	core->Mode = SVC32MODE;
 
 //	load_symbol_from_sysmap();
+	init_compiled_queue(cpu);
 	return;
 }
 
