@@ -375,7 +375,7 @@ ARMul_Emulate26 (ARMul_State * state)
 	ARMword decoded_addr=0;
 	ARMword loaded_addr=0;
 	ARMword have_bp=0;
-    static ARMword last_pc = 0;
+	static ARMword last_pc = 0;
 
 	int reg_index = 0;
 #if DIFF_STATE
@@ -422,7 +422,7 @@ ARMul_Emulate26 (ARMul_State * state)
             }
 		/* Just keep going.  */
 		isize = INSN_SIZE;
-
+		
 		switch (state->NextInstr) {
 		case SEQ:
 			/* Advance the pipeline, and an S cycle.  */
@@ -640,6 +640,32 @@ ARMul_Emulate26 (ARMul_State * state)
       }
 #endif
 
+#if 0
+		uint32_t alex = 0;
+		static int flagged = 0;
+		if ((flagged == 0) && (pc == 0xb224))
+		{
+			flagged++;
+		}
+		if ((flagged == 1) && (pc == 0x1a800))
+		{
+			flagged++;
+		}
+		if (flagged == 3) {
+			printf("---|%p|---  %x\n", pc, state->NumInstrs);
+			for (alex = 0; alex < 15; alex++)
+			{
+				printf("R%02d % 8x\n", alex, state->Reg[alex]);
+			}
+			printf("R%02d % 8x\n", alex, state->Reg[alex] - 8);
+			printf("CPS %x%07x\n", (state->NFlag<<3 | state->ZFlag<<2 | state->CFlag<<1 | state->VFlag), state->Cpsr & 0xfffffff);
+		} else {
+			if (state->NumInstrs < 0x400000)
+			{
+				//exit(-1);
+			}
+		}
+#endif
 
 		if (state->EventSet)
 			ARMul_EnvokeEvent (state);
@@ -773,7 +799,6 @@ ARMul_Emulate26 (ARMul_State * state)
 			}
 		}
 #endif
-
 		/* Any exceptions ?  */
 		if (state->NresetSig == LOW) {
 			ARMul_Abort (state, ARMul_ResetV);
@@ -799,7 +824,7 @@ ARMul_Emulate26 (ARMul_State * state)
 		}
 
 //teawater add for arm2x86 2005.04.26-------------------------------------------
-#if 1
+#if 0
 //        if (state->pc == 0xc011a868 || state->pc == 0xc011a86c) {
         if (state->NumInstrs == 1671574 || state->NumInstrs == 1671573 || state->NumInstrs == 1671572
             || state->NumInstrs == 1671575) {
@@ -1220,7 +1245,7 @@ ARMul_Emulate26 (ARMul_State * state)
 				//if (ARMul_HandleIwmmxt (state, instr))
 				//        goto donext;
 			}
-
+			
 			switch ((int) BITS (20, 27)) {
 				/* Data Processing Register RHS Instructions.  */
 
@@ -4372,11 +4397,11 @@ ARMul_Emulate26 (ARMul_State * state)
 				break;
 			}
 		}
-
+		
 #ifdef MODET
 	      donext:
 #endif
-				  state->pc = pc;
+		      state->pc = pc;
 #if 0
 		  fprintf(state->state_log, "PC:0x%x\n", pc);
 		  for (reg_index = 0; reg_index < 16; reg_index ++) {
@@ -4509,6 +4534,7 @@ ARMul_Emulate26 (ARMul_State * state)
       }
    }
 #endif
+		
 		/* jump out every time */
 		//state->EndCondition = 0;
                 //state->Emulate = STOP;
@@ -4531,7 +4557,7 @@ TEST_EMULATE:
 	//chy 2006-04-12, for ICE debug
 	state->decoded_addr=decoded_addr;
 	state->loaded_addr=loaded_addr;
-
+	
 	return pc;
 }
 
