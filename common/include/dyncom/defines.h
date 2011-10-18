@@ -34,7 +34,6 @@
 // This works particularly well with PromoteMemoryToReg optimization
 // pass, which removes the local arrays and make LLVM do the register
 // allocation for us
-//#define OPT_LOCAL_REGISTERS
 
 /* The USER_MODE_OPT can not work with kernel running */
 #define USER_MODE_OPT 1
@@ -48,6 +47,7 @@
 #endif
 /* FAST_MEMORY is only used in user mode simulation */
 #if USER_MODE_OPT
+#define OPT_LOCAL_REGISTERS
 #define FAST_MEMORY
 #endif
 

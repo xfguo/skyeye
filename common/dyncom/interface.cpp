@@ -327,9 +327,10 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 {
 #ifdef HASH_FAST_MAP
 #if L3_HASHMAP
+	//printf("\t\t### Saving %p\n", native_code_func);
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
-	pthread_rwlock_wrlock(&(cpu->dyncom_engine->rwlock));
+	//pthread_rwlock_wrlock(&(cpu->dyncom_engine->rwlock));
 	for (; i != bb_addr.end(); i++){
 		if(cpu->dyncom_engine->fmap[HASH_MAP_INDEX_L1(i->first)] == NULL)
 			init_fmap_l2(cpu->dyncom_engine->fmap, i->first);
@@ -337,10 +338,11 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 			init_fmap_l3(cpu->dyncom_engine->fmap, i->first);
 		cpu->dyncom_engine->fmap[HASH_MAP_INDEX_L1(i->first)][HASH_MAP_INDEX_L2(i->first)][HASH_MAP_INDEX_L3(i->first)] =
 			native_code_func;
+		//printf("\t\t### Added fmap %x %p", i->first, native_code_func);
 	}
-	if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
+	/*if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
 		fprintf(stderr, "unlock error\n");
-	}
+	}*/
 #else
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();

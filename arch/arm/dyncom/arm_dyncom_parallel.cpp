@@ -42,14 +42,29 @@ static void push_compiled_work(cpu_t* cpu, uint32_t pc);
  * Three running mode: PURE_INTERPRET, PURE_DYNCOM, HYBRID
  */
 //static running_mode_t mode = PURE_INTERPRET;
-//static running_mode_t mode = PURE_DYNCOM;
-static running_mode_t mode = HYBRID;
+static running_mode_t mode = PURE_DYNCOM;
+//static running_mode_t mode = HYBRID;
 static char* running_mode_str[] = {
 	"pure interpret running",
 	"pure dyncom running",
 	"hybrid running",
 	NULL
 };
+
+#if L3_HASHMAP
+#define PFUNC(pc)					\
+	if(hash_map[HASH_MAP_INDEX_L1(pc)] == NULL)	\
+		pfunc = NULL;				\
+	else if(hash_map[HASH_MAP_INDEX_L1(pc)][HASH_MAP_INDEX_L2(pc)] == NULL)				\
+		pfunc = NULL;										\
+	else if(hash_map[HASH_MAP_INDEX_L1(pc)][HASH_MAP_INDEX_L2(pc)][HASH_MAP_INDEX_L3(pc)] == NULL)	\
+		pfunc = NULL;										\
+	else												\
+		pfunc = (void *)hash_map[HASH_MAP_INDEX_L1(pc)][HASH_MAP_INDEX_L2(pc)][HASH_MAP_INDEX_L3(pc)];
+#else
+#define PFUNC(pc)					\
+	pfunc = (void*) hash_map[pc & 0x1fffff];
+#endif
 
 void init_compiled_queue(cpu_t* cpu){
 	memset(&compiled_queue[0], 0xff, sizeof(uint32_t) * QUEUE_LENGTH);
@@ -123,8 +138,8 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 	
 	/* Check if the wanted instruction is in the dyncom engine */
 	fast_map hash_map = cpu->dyncom_engine->fmap;
-	pfunc = (void*) hash_map[pc & 0x1fffff];
-		
+	PFUNC(pc);
+	
 	/* The instruction is not is the engine, we interpret it */
 	if (!pfunc)
 	{
@@ -156,7 +171,7 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		}
 			
 		if(rc == JIT_RETURN_TRAP){
-			pfunc = (void*) hash_map[core->Reg[15] & 0x1fffff];
+			//pfunc = (void*) hash_map[core->Reg[15] & 0x1fffff];
 			//printf("| Out %d %p ",core_->NextInstr, core_->Reg[15]); 
 			//printf("| pfunc %p | TRAP\n", pfunc);
 			core->NextInstr = PRIMEPIPE;
@@ -171,7 +186,7 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 			return;
 		}	
 
-		pfunc = (void *)hash_map[core->Reg[15] & 0x1fffff];
+		//pfunc = (void *)hash_map[core->Reg[15] & 0x1fffff];
 		//printf("| Out %d %p ",core_->NextInstr, core_->Reg[15]); 
 		if (rc == JIT_RETURN_FUNCNOTFOUND)
 		{
@@ -191,6 +206,81 @@ void launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		core->NextInstr = PRIMEPIPE;
 	}
 }
+
+#if 0
+void arm_dyncom_run(cpu_t* cpu){
+	arm_core_t* core = (arm_core_t*)(cpu->cpu_data->obj);
+	uint32_t mode;
+
+	addr_t phys_pc;
+
+	int rc = cpu_run(cpu);
+//	printf("pc %x is not found\n", core->Reg[15]);
+	switch (rc) {
+	case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
+	case JIT_RETURN_TIMEOUT:
+                        break;
+                case JIT_RETURN_SINGLESTEP:
+	case JIT_RETURN_FUNCNOTFOUND:
+//			printf("pc %x is not found\n", core->Reg[15]);
+//			printf("phys_pc is %x\n", core->phys_pc);
+//			printf("out of jit\n");
+			switch_mode(core, core->Cpsr & 0x1f);
+			if (flush_current_page(cpu)) {
+				return;
+			}
+			clear_tag_page(cpu, core->phys_pc);
+			cpu_tag(cpu, core->phys_pc);
+			cpu->dyncom_engine->cur_tagging_pos ++;
+			//cpu_translate(cpu, core->Reg[15]);
+			cpu_translate(cpu, core->phys_pc);
+
+		 /*
+                  *If singlestep,we run it here,otherwise,break.
+                  */
+                        if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP){
+                                rc = cpu_run(cpu);
+                                if(rc != JIT_RETURN_TRAP)
+                                        break;
+                        }
+                        else
+                                break;
+	case JIT_RETURN_TRAP:
+		if (core->Reg[15] == 0xc00101a0) {
+			printf("undef instr\n");
+			return;
+		}
+		if (core->syscallSig) {
+			printf("swi inst\n");
+			return;
+		}
+		if (cpu->check_int_flag == 1) {
+			cpu->check_int_flag = 0;
+			return;
+		}
+		if (core->abortSig) {
+			return;
+		}
+//		printf("cpu maybe changed mode.\n");
+//		printf("pc is %x\n", core->Reg[15]);
+		//printf("icounter is %lld\n", cpu->icounter);
+		//exit(-1);
+		//core->Reg[15] += 4;
+		mode = core->Cpsr & 0x1f;
+		if ( (mode != core->Mode) && (!is_user_mode(cpu)) ) {
+			switch_mode(core, mode);
+			//exit(-1);
+		}
+		core->Reg[15] += 4;
+		return;
+			break;
+		default:
+                        fprintf(stderr, "unknown return code: %d\n", rc);
+			skyeye_exit(-1);
+        }// switch (rc)
+	return;
+}
+#endif
 
 static int cur_queue_pos = 0;
 static void push_compiled_work(cpu_t* cpu, uint32_t pc){
@@ -213,10 +303,9 @@ static void push_compiled_work(cpu_t* cpu, uint32_t pc){
 			cpu_tag(cpu, pc);
 			cpu_translate(cpu, pc);
 			#if 0
-			typedef int (*um_fp_t)(uint8_t *RAM, void *grf, void *srf, void *frf);
-			um_fp_t pfunc = NULL;
+			void* pfunc = NULL;
 			fast_map hash_map = cpu->dyncom_engine->fmap;
-			pfunc = (um_fp_t)hash_map[pc & 0x1fffff];
+			PFUNC(pc);
 			printf("######### (Dyncom) Translated %x %p\n", pc, pfunc);
 			#endif
 		}
@@ -263,12 +352,26 @@ try_compile:
 			fast_map hash_map = cpu->dyncom_engine->fmap;
 
 			pthread_rwlock_rdlock(&(cpu->dyncom_engine->rwlock));
-			void* pfunc = (void *)hash_map[compiled_addr & 0x1fffff];
-			//void* pfunc = (void*)hash_map[compiled_addr & 0x1fffff];
-			//printf("   pfunc exist for %x? %p ", compiled_addr, pfunc);
+			void* pfunc;
+#if L3_HASHMAP
+			if(hash_map[HASH_MAP_INDEX_L1(compiled_addr)] == NULL)
+				pfunc = NULL;
+			else if(hash_map[HASH_MAP_INDEX_L1(compiled_addr)][HASH_MAP_INDEX_L2(compiled_addr)] == NULL)
+				pfunc = NULL;
+			else if(hash_map[HASH_MAP_INDEX_L1(compiled_addr)][HASH_MAP_INDEX_L2(compiled_addr)][HASH_MAP_INDEX_L3(compiled_addr)] == NULL)
+				pfunc = NULL;
+			else
+				pfunc = (void *)hash_map[HASH_MAP_INDEX_L1(compiled_addr)][HASH_MAP_INDEX_L2(compiled_addr)][HASH_MAP_INDEX_L3(compiled_addr)];
+#else
+			pfunc = (void *)hash_map[compiled_addr & 0x1fffff];
+#endif
+
 			if(pfunc == NULL){
 				cpu->dyncom_engine->functions = pos_to_translate;
+				//printf("Planning to translate %p\n", cpu->dyncom_engine->functions);
 				cpu_translate(cpu, compiled_addr);
+				//printf("Translated %p\n", pos_to_translate);
+				PFUNC(compiled_addr);
 				//pfunc = (void *)hash_map[compiled_addr & 0x1fffff];
 				//printf("####### (Hybrid) Translated %x %p\n", compiled_addr, pfunc);
 				//printf("In %s, finish translate addr 0x%x, functions=%d, compiling_pos=%d\n", __FUNCTION__, compiled_addr, cpu->dyncom_engine->functions, compiling_pos);
