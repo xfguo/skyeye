@@ -455,8 +455,20 @@ ARMul_ThumbDecode (state, pc, tinstr, ainstr)
 		FLUSHPIPE;
 		valid = t_branch;
 		break;
-	case 29:		/* UNDEFINED */
-		valid = t_undefined;
+	case 29:
+		if(tinstr & 0x1)
+			valid = t_undefined;
+		else{
+			/* BLX 1 for armv5t and above */
+			ARMword tmp = (pc + 2);
+			state->Reg[15] =
+				(state->Reg[14] + ((tinstr & 0x07FF) << 1)) & 0xFFFFFFFC;
+			state->Reg[14] = (tmp | 1);
+			CLEART;
+			printf("In %s, After  BLX(1),LR=0x%x,PC=0x%x, offset=0x%x\n", __FUNCTION__, state->Reg[14], state->Reg[15], (tinstr &0x7FF) << 1);
+			valid = t_branch;
+			FLUSHPIPE;
+		}
 		break;
 	case 30:		/* BL instruction 1 */
 		/* Format 19 */
