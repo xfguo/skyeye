@@ -647,6 +647,7 @@ arm1176jzf_s_mmu_mrc (ARMul_State *state, ARMword instr, ARMword *value)
 		break;
 	case MMU_PID:
 		data = state->mmu.process_id;
+		break;
 	default:
 		printf ("mmu_mrc read UNKNOWN - reg %d\n", creg);
 		data = 0;
@@ -729,7 +730,8 @@ arm1176jzf_s_mmu_mcr (ARMul_State *state, ARMword instr, ARMword value)
 			break;
 		case MMU_PID:
 			/*0:24 should be zero. */
-			state->mmu.process_id = value & 0xfe000000;
+			//state->mmu.process_id = value & 0xfe000000;
+			state->mmu.process_id = value;
 			break;
 
 		default:
