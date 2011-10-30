@@ -23,6 +23,12 @@
 
 #include "armdefs.h"
 #include "bank_defs.h"
+#define NEW_THRAD_ID 1
+#if NEW_THRAD_ID
+//#if 1
+	ARMword context_id;
+	ARMword thread_uro_id; /* Not sure, only appear some specific SOC perhaps */
+#endif
 
 #if 0
 fault_t
@@ -250,6 +256,10 @@ arm1176jzf_s_mmu_init (ARMul_State *state)
 	state->mmu.fault_status = 0;
 	state->mmu.fault_address = 0;
 	state->mmu.process_id = 0;
+#if NEW_THRAD_ID
+	context_id = 0;
+	thread_uro_id = 0;
+#endif
 
 }
 
@@ -591,6 +601,7 @@ ARMword
 arm1176jzf_s_mmu_mrc (ARMul_State *state, ARMword instr, ARMword *value)
 {
 	mmu_regnum_t creg = BITS (16, 19) & 0xf;
+	int OPC_1 = BITS (21, 23) & 0x7;
 	int OPC_2 = BITS (5, 7) & 0x7;
 	ARMword data;
 
@@ -646,7 +657,21 @@ arm1176jzf_s_mmu_mrc (ARMul_State *state, ARMword instr, ARMword *value)
 		data = state->mmu.fault_address;
 		break;
 	case MMU_PID:
-		data = state->mmu.process_id;
+		//data = state->mmu.process_id;
+		#if NEW_THRAD_ID
+		if(OPC_2 == 0)
+			data = state->mmu.process_id;
+		else if(OPC_2 == 1)
+			data = context_id;
+		else if(OPC_2 == 3){
+			data = thread_uro_id;
+		}
+		else{
+			printf ("mmu_mcr read UNKNOWN - reg %d\n", creg);
+		}
+		#endif
+		//printf("SKYEYE In %s, read pid 0x%x, OPC_2 %d, instr=0x%x\n", __FUNCTION__, data, OPC_2, instr);
+		//exit(-1);
 		break;
 	default:
 		printf ("mmu_mrc read UNKNOWN - reg %d\n", creg);
@@ -729,9 +754,22 @@ arm1176jzf_s_mmu_mcr (ARMul_State *state, ARMword instr, ARMword value)
 			/* FIXME:tlb lock down */
 			break;
 		case MMU_PID:
+			//printf("SKYEYE In %s, write pid 0x%x OPC_2=%d instr=0x%x\n", __FUNCTION__, value, OPC_2, instr);
+			//state->mmu.process_id = value;
 			/*0:24 should be zero. */
 			//state->mmu.process_id = value & 0xfe000000;
-			state->mmu.process_id = value;
+			#if NEW_THRAD_ID
+			if(OPC_2 == 0)
+				state->mmu.process_id = value;
+			else if(OPC_2 == 1)
+				context_id = value;
+			else if(OPC_2 == 3){
+				thread_uro_id = value;
+			}
+			else{
+				printf ("mmu_mcr wrote UNKNOWN - reg %d\n", creg);
+			}
+			#endif
 			break;
 
 		default:
