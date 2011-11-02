@@ -187,7 +187,12 @@ void MisLoad(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 			LoadHWord(cpu,instr,bb,addr);
 			break;
 		case 2:
-			LoadSByte(cpu,instr,bb,addr);
+		{
+			if (LSLBIT)
+				LoadSByte(cpu,instr,bb,addr);
+			else
+				LoadDWord(cpu,instr,bb,addr);
+		}
 			break;
 		case 3:
 			LoadHWord(cpu,instr,bb,addr);
@@ -217,7 +222,7 @@ void MisStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 /* Miscellaneous store load operation collecton, following arm doc */
 void MisLoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 {
-	if(LSLBIT)
+	if ((LSLBIT) || ((LSLBIT==0) && (LSSHBITS==0x2)))
 		MisLoad(cpu,instr,bb,addr);
 	else
 		MisStore(cpu,instr,bb,addr);
@@ -338,14 +343,10 @@ void LoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 // if S = 1 set CPSR zncv bit
 int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2)
 {
-	/* z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
 	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
-	//new StoreInst(ICMP_EQ(ret, CONST(0x80000000)), ptr_N, bb);
-	/* new StoreInst(ICMP_SLE(ret, CONST(0)), ptr_N, bb); */
-//	/* C */ new StoreInst(ICMP_SLE(ret, op1), ptr_C, false, bb);
+	/* Z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
 	/* C */ new StoreInst(ICMP_ULT(ret, op1), ptr_C, false, bb);
-	/* V */ //new StoreInst(TRUNC1(LSHR(AND(XOR(op1, op2), XOR(op1,ret)),CONST(31))), ptr_V, false, bb);
-	(new StoreInst(ICMP_SLT(AND((XOR(op1, op2)), XOR(op1,ret)), CONST(0)), ptr_V, bb));
+	/* V */ new StoreInst(ICMP_SLT(AND((XOR(op1, op2)), XOR(op1,ret)), CONST(0)), ptr_V, bb);
 	return 0;
 }
 
@@ -643,7 +644,7 @@ Value *MisGetAddrReg(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 			return MisGetAddrRegPre(cpu, instr, bb);
 		}
 	}
-	printf(" Error in Mis Get Reg Addr \n");
+	printf(" (DEC) Error in Mis Get Reg Addr %x\n", instr);
 }
 
 
@@ -901,6 +902,16 @@ Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
 			new StoreInst(AND(ASHR(CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm))),
 							CONST(31)), CONST(1)), shifter_carry_out, bb);
 		*/
+
+		/*Value *shifter_operand = CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm)));
+		
+		if(rotate_imm)
+			new StoreInst(ICMP_SLT(shifter_operand, CONST(0)) ,ptr_C, bb);*/
+		/* No changes in C flag else */
+		
+		/* Note: the shifter carry out is not always set. Compute it
+		   then set it in trans function instead. */
+		
 		return CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm)));
 	} else if (BITS(4, 11) == 0x6 && BITS(25, 27) == 0) {
 		/*  Rotate right with extend  */

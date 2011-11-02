@@ -172,20 +172,10 @@ int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t
 #else
 	int index = -1;
 	int ret = DECODE_FAILURE;
-	if (cpu->icounter > 196037061) {
-	//	printf("icounter is %d decode arm instr\n", cpu->icounter);
-	}
 	ret = decode_arm_instr(instr, &index);
 	if (ret == DECODE_SUCCESS) {
 		arch_arm_insert_instr_category(pc, index);
 		arm_instruction_action[index].tag_func(cpu, pc, instr, tag, new_pc, next_pc);
-		if (cpu->icounter > 196037061) {
-//			printf("instr is %x\n", instr);
-//			printf("pc is %x instr idx : %d, %s\n", pc, index, arm_instruction[index].name);
-//			printf("tag is %x\n", *tag);
-//			exit(-1);
-		}
-
 	} else {
 		printf("in %s unknown instruction %x at %x.\n", __FUNCTION__, instr, pc);
 		exit(-1);
@@ -1736,9 +1726,14 @@ int DYNCOM_TRANS(adc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 
 	LET(RD, ret);
 	if(SBIT) {
-		set_condition(cpu, ret, bb, op1, op2);
-
+		//set_condition(cpu, ret, bb, op1, op2);
+		/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+		/* Z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+		CARRYFROMADD(op1,ret,ptr_C);
+		OVERFLOWFROMADD(op1,op2,ret,ptr_V);
 		//new StoreInst(cpsr, cpu->ptr_gpr[16], false, bb);
+		
+		SET_CPSR; /* Temporary */
 	}
 }
 int DYNCOM_TRANS(add)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
@@ -1760,6 +1755,8 @@ int DYNCOM_TRANS(add)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 		EQZERO(ret,ptr_Z);
 		CARRYFROMADD(op1,ret,ptr_C);
 		OVERFLOWFROMADD(op1,op2,ret,ptr_V);
+		
+		SET_CPSR; /* Temporary */
 	}
 }
 int DYNCOM_TRANS(and)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
@@ -1773,7 +1770,12 @@ int DYNCOM_TRANS(and)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	{
 		//GETSIGN(ret,ptr_N);
 		//EQZERO(ret,ptr_Z);
-		set_condition(cpu, ret, bb, op1, op2);
+		//set_condition(cpu, ret, bb, op1, op2);
+		/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+		/* Z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+		/* C */ /* Operation carried out in OPERAND */
+
+		SET_CPSR; /*Temporary */
 	}
 }
 int DYNCOM_TRANS(bbl)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
@@ -1876,16 +1878,7 @@ int DYNCOM_TRANS(cmn)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	//set_condition(cpu, ret, bb, op1, op2);
 
 	//new StoreInst(ICMP_EQ(ret, CONST(0x80000000)), ptr_N, bb);
-#if 0
-	Value *op1_sign = AND(op1, CONST(0x80000000));
-	Value *op2_sign = AND(op2, CONST(0x80000000));
-	Value *ret_sign = AND(ret, CONST(0x80000000));
-	Value *sign = XOR(op1_sign, op2_sign);
-	Value *result = SELECT(ICMP_EQ(sign, CONST(0)), 
-			       SELECT(ICMP_EQ(op1, ret_sign), CONST(0), CONST(1))
-			       , CONST(0));
-	new StoreInst(TRUNC1(result), ptr_V, bb);
-#endif
+	SET_CPSR; /* Temporary */
 }
 #define ISNEG(VAL) TRUNC1(LSHR(VAL, CONST(31)))
 #define ISPOS(VAL) TRUNC1(LSHR(COM(VAL), CONST(31)))
@@ -2019,16 +2012,12 @@ int DYNCOM_TRANS(ldrb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 int DYNCOM_TRANS(ldrbt)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(ldrd)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
-#if 0
+
 	/* LDRD P = 0, U = 0, I = 0, W = 0 */
 	Value *addr = GetAddr(cpu, instr, bb);
 	LoadStore(cpu,instr,bb,addr);
+	printf("in %s instruction is not fully implementated.\n", __FUNCTION__);
 	return 0;
-#endif
-	int instr_size = INSTR_SIZE;
-	printf("in %s instruction is not implementated.\n", __FUNCTION__);
-	//exit(-1);
-	return instr_size;
 }
 int DYNCOM_TRANS(ldrex)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
@@ -2198,9 +2187,12 @@ int DYNCOM_TRANS(mov)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 		SET_NEW_PAGE;
 	}
 	if(SBIT && (RD != 15)) {
-		set_condition(cpu, op2, bb, op1, op2);
-		Value *z = SELECT(ICMP_EQ(R(RD), CONST(0)), CONST1(1), CONST1(0));
-		new StoreInst(z, ptr_Z, false, bb);
+		//set_condition(cpu, op2, bb, op1, op2);
+		//Value *z = SELECT(ICMP_EQ(R(RD), CONST(0)), CONST1(1), CONST1(0));
+		//new StoreInst(z, ptr_Z, false, bb);
+		/* N */ new StoreInst(ICMP_SLT(R(RD), CONST(0)), ptr_N, bb);
+		/* Z */ new StoreInst(ICMP_EQ(R(RD), CONST(0)), ptr_Z, bb);
+		/* V unaffected */
 	}
 	if (SBIT && BITS(4, 6) == 0 && BITS(25, 27) == 0 && BITS(7, 11) != 0) {
 		//Shift by imme
@@ -2298,6 +2290,15 @@ int DYNCOM_TRANS(msr)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 			mask = byte_mask & UserMask;
 		}
 		LET(CPSR_REG, OR(AND(R(CPSR_REG), COM(CONST(mask))), AND(operand, CONST(mask))));
+		Value *nzcv = LSHR(AND(R(CPSR_REG), CONST(0xf0000000)), CONST(28));
+		Value *n = TRUNC1(AND(LSHR(nzcv, CONST(3)), CONST(1)));
+		Value *z = TRUNC1(AND(LSHR(nzcv, CONST(2)), CONST(1)));
+		Value *c = TRUNC1(AND(LSHR(nzcv, CONST(1)), CONST(1)));
+		Value *v = TRUNC1(AND(LSHR(nzcv, CONST(0)), CONST(1)));
+		new StoreInst(n, ptr_N, false, bb);
+		new StoreInst(z, ptr_Z, false, bb);
+		new StoreInst(c, ptr_C, false, bb);
+		new StoreInst(v, ptr_V, false, bb);
 	} else {
 		mask = byte_mask & (UserMask | PrivMask | StateMask);
 		LET(SPSR_REG, OR(AND(R(SPSR_REG), COM(CONST(mask))), AND(operand, CONST(mask))));
@@ -2339,8 +2340,10 @@ int DYNCOM_TRANS(orr)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *ret = OR(op2, op1);
 	LET(RD, ret);
 
-	if(SBIT)
+	if(SBIT) {
 		set_condition(cpu, ret, bb, op1, op2);
+		SET_CPSR; /* Temporary */
+	}
 }
 int DYNCOM_TRANS(pkhbt)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(pkhtb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
@@ -2418,7 +2421,11 @@ int DYNCOM_TRANS(sbc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *ret = SUB(op1, op2);
 	LET(RD, ret);
 	if(SBIT) {
-		set_condition(cpu, ret, bb, op2, op1);
+		/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+		/* Z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+		//NOTBORROWFROMSUB(op1,op2,ptr_C);
+		OVERFLOWFROMSUB(op1,op2,ret,ptr_V);
+		//set_condition(cpu, ret, bb, op2, op1);
 		Value *tmp1 = AND(ISNEG(op1), ISPOS(op2));
 		Value *tmp2 = AND(ISNEG(op1), ISPOS(ret));
 		Value *tmp3 = AND(ISPOS(op2), ISPOS(ret));
@@ -2427,6 +2434,8 @@ int DYNCOM_TRANS(sbc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	//	Value *ptr_c = SELECT(ICMP_SGE(op1, op2), res, CONST1(0));
 	//	new StoreInst(ptr_c, ptr_C, false, bb);
 		new StoreInst(res, ptr_C, false, bb);
+	
+		SET_CPSR; /* Temporary */
 	}
 }
 int DYNCOM_TRANS(sel)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
@@ -2567,6 +2576,8 @@ int DYNCOM_TRANS(sub)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 		EQZERO(ret,ptr_Z);
 		NOTBORROWFROMSUB(op1,op2,ptr_C);
 		OVERFLOWFROMSUB(op1,op2,ret,ptr_V);
+		
+		SET_CPSR; /* Temporary */
 #if 0
 		set_condition(cpu, ret, bb, op1, op2);
 		Value *tmp1 = AND(ISNEG(op1), ISPOS(op2));
@@ -2640,10 +2651,15 @@ int DYNCOM_TRANS(teq)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	if(RN == 15)
 		op1 = ADD(op1, CONST(8));
 	Value *ret = XOR(op1,op2);
+	
+	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+	/* Z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+	/* C */ /* Operation carried out in OPERAND */
+	SET_CPSR; /* Temporary */
 
-	set_condition(cpu, ret, bb, op1, op2);
-	Value *z = SELECT(ICMP_EQ(ret, CONST(0)), CONST1(1), CONST1(0));
-	new StoreInst(z, ptr_Z, false, bb);
+	//set_condition(cpu, ret, bb, op1, op2);
+	//Value *z = SELECT(ICMP_EQ(ret, CONST(0)), CONST1(1), CONST1(0));
+	//new StoreInst(z, ptr_Z, false, bb);
 }
 int DYNCOM_TRANS(tst)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
@@ -2652,9 +2668,10 @@ int DYNCOM_TRANS(tst)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *op2 = OPERAND;
 	Value *ret = AND(op1, op2);
 
-	set_condition(cpu, ret, bb, op1, op2);
-	Value *z = SELECT(ICMP_EQ(ret, CONST(0)), CONST1(1), CONST1(0));
-	new StoreInst(z, ptr_Z, false, bb);
+	/* N */ new StoreInst(ICMP_SLT(ret, CONST(0)), ptr_N, bb);
+	/* Z */ new StoreInst(ICMP_EQ(ret, CONST(0)), ptr_Z, bb);
+	/* C */ /* Operation carried out in OPERAND */
+	SET_CPSR; /* Temporary */
 }
 int DYNCOM_TRANS(uadd16)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(uadd8)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
@@ -2905,7 +2922,14 @@ int DYNCOM_TAG(bx)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *ne
 	return instr_size;
 }
 int DYNCOM_TAG(bxj)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
-int DYNCOM_TAG(cdp)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);return instr_size;}
+int DYNCOM_TAG(cdp)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	int instr_size = INSTR_SIZE;
+	printf("in %s instruction is not implementated.\n", __FUNCTION__);
+	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
+	if(instr >> 28 != 0xe)
+		*tag |= TAG_CONDITIONAL;
+	return instr_size;
+}
 int DYNCOM_TAG(clrex)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = INSTR_SIZE;
@@ -3469,8 +3493,22 @@ int DYNCOM_TAG(swi)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *n
 //	*tag |= TAG_STOP;
 	return instr_size;
 }
-int DYNCOM_TAG(swp)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
-int DYNCOM_TAG(swpb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
+int DYNCOM_TAG(swp)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	int instr_size = INSTR_SIZE;
+	printf("in %s instruction is not implementated, %x\n", __FUNCTION__, instr);
+	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
+	if(instr >> 28 != 0xe)
+		*tag |= TAG_CONDITIONAL;
+	return instr_size;
+}
+int DYNCOM_TAG(swpb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	int instr_size = INSTR_SIZE;
+	printf("in %s instruction is not implementated, %x\n", __FUNCTION__, instr);
+	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
+	if(instr >> 28 != 0xe)
+		*tag |= TAG_CONDITIONAL;
+	return instr_size;
+}
 int DYNCOM_TAG(sxtab)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(sxtab16)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(sxtah)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
@@ -3596,7 +3634,7 @@ int DYNCOM_TAG(uxtb16)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t
 int DYNCOM_TAG(uxth)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = INSTR_SIZE;
-	printf("pc is %x in %s instruction is not implementated.\n", pc, __FUNCTION__);
+	printf("in %s instruction is not implementated.\n", __FUNCTION__);
 	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
 	if(instr >> 28 != 0xe)
 		*tag |= TAG_CONDITIONAL;
