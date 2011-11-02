@@ -63,8 +63,11 @@ bool
 is_translated_code(cpu_t *cpu, addr_t addr);
 addr_t find_bb_start(cpu_t *cpu, addr_t addr);
 tag_t get_tag(cpu_t *cpu, addr_t a);
+tag_t check_tag_execution(cpu_t *cpu, addr_t a, uint32_t *counter, uint32_t *entry);
 void clear_tag(cpu_t *cpu, addr_t a);
+void selective_clear_tag(cpu_t *cpu, addr_t a, uint32_t mask);
 void clear_tag_page(cpu_t *cpu, addr_t a);
+void clear_tag_table(cpu_t *cpu);
 void or_tag(cpu_t *cpu, addr_t a, tag_t t);
 void xor_tag(cpu_t *cpu, addr_t a, tag_t t);
 bool is_inside_code_area(cpu_t *cpu, addr_t a);

@@ -299,7 +299,7 @@ static inline int init_fmap_l3(fast_map fmap, addr_t phys_pc)
 	if(fmap[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)] != NULL)
 		return 1;
 	fmap[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)] =
-		(void **)skyeye_mm_zero(sizeof(void **) * HASH_MAP_SIZE_L3);
+		(void **)skyeye_mm_zero(sizeof(void **) * HASH_MAP_SIZE_L3 * 2);
 	if(fmap[HASH_MAP_INDEX_L1(phys_pc)][HASH_MAP_INDEX_L2(phys_pc)] == NULL){
 		skyeye_log(Error_log, __func__, "malloc error\n", __func__);
 		exit(0);
@@ -324,16 +324,16 @@ static inline void clear_fmap(fast_map fmap)
 		if(fmap[i] == NULL) continue;
 		for(j = 0; j < HASH_MAP_SIZE_L2; j++){
 			if(fmap[i][j] == NULL) continue;
-			for(k = 0; k < HASH_MAP_SIZE_L3; k++)
+			for(k = 0; k < HASH_MAP_SIZE_L3 * 2; k++)
 				if(fmap[i][j][k] == NULL) continue;
-				else fmap[i][j][k] == NULL;
+				else fmap[i][j][k] = NULL;
 		}
 	}
 }
 
 inline void clear_cache_item(fast_map fmap, addr_t addr)
 {
-	for (int i = 0; i < 4096; i ++) {
+	for (int i = 0; i < HASH_MAP_SIZE_L3 * 2; i ++) {
 		fmap[HASH_MAP_INDEX_L1(addr)][HASH_MAP_INDEX_L2(addr)][i] = 0;
 	}
 }

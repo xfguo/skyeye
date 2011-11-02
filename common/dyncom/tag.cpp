@@ -29,6 +29,8 @@ using namespace std;
 extern "C" __declspec(dllimport) uint32_t __stdcall GetTempPathA(uint32_t nBufferLength, char *lpBuffer);
 #endif
 
+static uint32_t block_entry;
+
 static const char *
 get_temp_dir()
 {
@@ -83,9 +85,11 @@ init_tag_level3_table(cpu_t *cpu, addr_t addr)
 
 	nitems = TAG_LEVEL3_TABLE_SIZE;
 
-	cpu->dyncom_engine->tag = (tag_t*)skyeye_mm_zero(nitems * sizeof(tag_t));
-	for (i = 0; i < nitems; i++)
+	cpu->dyncom_engine->tag = (tag_t*)skyeye_mm_zero(nitems * sizeof(tag_t) * 2);
+	for (i = 0; i < nitems; i++) {
 		cpu->dyncom_engine->tag[i] = TAG_UNKNOWN;
+		cpu->dyncom_engine->tag[i + TAG_LEVEL3_TABLE_SIZE] = 0;
+	}
 
 	uint32_t level1_offset = TAG_LEVEL1_OFFSET(addr);
 	uint32_t level2_offset = TAG_LEVEL2_OFFSET(addr);
@@ -230,6 +234,13 @@ or_tag(cpu_t *cpu, addr_t a, tag_t t)
 	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
 	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
 	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset] |= t;
+
+	/* If tag is entry, set a counter to null */
+	if ((cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset] & TAG_ENTRY))
+		cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset + TAG_LEVEL3_TABLE_SIZE] = 0;
+	/* Uncomment below if an entry needs to keep its entry point */
+	//else
+	//	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset + TAG_LEVEL3_TABLE_SIZE] = block_entry;
 }
 void
 xor_tag(cpu_t *cpu, addr_t a, tag_t t)
@@ -256,8 +267,29 @@ void clear_tag(cpu_t *cpu, addr_t a)
 	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
 	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
 	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset] = TAG_UNKNOWN;
+	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset + TAG_LEVEL3_TABLE_SIZE] = 0;
 }
-
+/**
+ * @brief Clear specific tags
+ *
+ * @param cpu CPU core structure
+ * @param a address to be tagged
+ * @param mask bits of tags to be cleared (a ~ will be applied)
+ */
+void selective_clear_tag(cpu_t *cpu, addr_t a, uint32_t mask)
+{
+	addr_t nitems, i;
+	/* NEW_PC_NONE is not a real address. Some branch/call address could not be known at translate-time*/
+	if (a == NEW_PC_NONE) {
+		return;
+	}
+	check_tag_memory_integrity(cpu, a);
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(a);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
+	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
+	cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset] &= ~mask;
+	/* Do not erase execution count. */
+}
 void clear_tag_page(cpu_t *cpu, addr_t a)
 {
 	addr_t nitems, i;
@@ -268,10 +300,22 @@ void clear_tag_page(cpu_t *cpu, addr_t a)
 	check_tag_memory_integrity(cpu, a);
 	uint32_t level1_offset = TAG_LEVEL1_OFFSET(a);
 	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
-	for (i = 0; i < 4096; i++) {
+	for (i = 0; i < TAG_LEVEL3_TABLE_SIZE; i++) {
 		/* clear all instructions tag except TAG_ENTRY & TAG_TRANSLATED */
 		cpu->dyncom_engine->tag_table[level1_offset][level2_offset][i] &= TAG_TRANSLATED | TAG_ENTRY;
 	}
+}
+void clear_tag_table(cpu_t *cpu)
+{
+	addr_t i, j, k;
+	for (i = 0; i < TAG_LEVEL1_TABLE_SIZE; i++)
+		if (cpu->dyncom_engine->tag_table[i])
+			for (j = 0; j < TAG_LEVEL2_TABLE_SIZE; j++)
+				if (cpu->dyncom_engine->tag_table[i][j])
+					for (k = 0; k < TAG_LEVEL3_TABLE_SIZE; k++) {
+						cpu->dyncom_engine->tag_table[i][j][k] = TAG_UNKNOWN;
+						cpu->dyncom_engine->tag_table[i][j][k + TAG_LEVEL3_TABLE_SIZE] = 0;
+					}
 }
 /* access functions */
 /**
@@ -295,6 +339,41 @@ get_tag(cpu_t *cpu, addr_t a)
 	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
 	return cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset];
 }
+/**
+ * @brief Get the tag of an address and add one to its execution 
+ *        count
+ *
+ * @param cpu CPU core structure
+ * @param a address 
+ * @param counter pointer to counter 
+ *
+ * @return tag of the address
+ */
+tag_t
+check_tag_execution(cpu_t *cpu, addr_t a, uint32_t *counter, uint32_t *entry)
+{
+	/* NEW_PC_NONE is not a real address. Some branch/call address could not be known at translate-time*/
+	if (a == NEW_PC_NONE) {
+		return TAG_UNKNOWN;
+	}
+	check_tag_memory_integrity(cpu, a);
+	uint32_t level1_offset = TAG_LEVEL1_OFFSET(a);
+	uint32_t level2_offset = TAG_LEVEL2_OFFSET(a);
+	uint32_t level3_offset = TAG_LEVEL3_OFFSET(a);
+	uint32_t tag = cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset];
+	if (tag & TAG_ENTRY) {
+		*counter = cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset + TAG_LEVEL3_TABLE_SIZE]++;
+		return tag;
+	} else if ((tag & TAG_CODE) && (entry == 0)) { /* condition on entry is to avoid infinite recursion */
+		// uncomment if execution counter raises for each basic block instruction executed
+		#if 0
+		*entry = cpu->dyncom_engine->tag_table[level1_offset][level2_offset][level3_offset + TAG_LEVEL3_TABLE_SIZE];
+		check_tag_execution(cpu, *entry, counter, entry);
+		#endif
+	}
+	return tag;
+}
+
 /**
  * @brief Determine an address is code or not
  *
@@ -374,6 +453,9 @@ tag_recursive(cpu_t *cpu, addr_t pc, int level)
 
 		bytes = cpu->f.tag_instr(cpu, pc, &tag, &new_pc, &next_pc);
 
+		/* temporary fix: in case the previous instr at pc had changed,
+		   we remove instr dependant tags. They will be set again anyway */
+		selective_clear_tag(cpu, pc, TAG_BRANCH | TAG_CONDITIONAL | TAG_RET | TAG_STOP | TAG_CONTINUE | TAG_TRAP);
 		or_tag(cpu, pc, tag | TAG_CODE);
 #ifdef OPT_LOCAL_REGISTERS
 #if 0
@@ -496,6 +578,8 @@ tag_start(cpu_t *cpu, addr_t pc)
 		}
 	}
 
+	block_entry = pc;
+	
 	or_tag(cpu, pc, TAG_ENTRY); /* client wants to enter the guest code here */
 
 	tag_recursive(cpu, pc, 0);
