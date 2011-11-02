@@ -57,66 +57,71 @@ arm_dyncom_abort(arm_core_t * state, ARMword vector)
 	case ARMul_ResetV:	/* RESET */
 		break;
 	case ARMul_UndefinedInstrV:	/* Undefined Instruction */
-        state->Reg_undef[1] = state->Reg[15] + 4;
-        state->Spsr[UNDEFBANK] = state->Cpsr;
-        state->Cpsr = state->Cpsr & 0xfffffc40;
-        state->Cpsr |= 0x9b;
-        eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
-        state->Cpsr |= (eebit << 9);
+		state->Reg_undef[1] = state->Reg[15] + 4;
+		state->Spsr[UNDEFBANK] = state->Cpsr;
+		state->Cpsr = state->Cpsr & 0xfffffc40;
+		state->Cpsr |= 0x9b;
+		eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
+		state->Cpsr |= (eebit << 9);
 
-        switch_mode(state, state->Cpsr & 0x1f);
+		switch_mode(state, state->Cpsr & 0x1f);
 		break;
 	case ARMul_SWIV:	/* Software Interrupt */
-            state->Reg_svc[1] = state->Reg[15] + 4;
-            state->Spsr[SVCBANK] = state->Cpsr;
-            state->Cpsr = state->Cpsr & 0xfffffc40;
-            state->Cpsr |= 0x93;
-            eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
-            state->Cpsr |= (eebit << 9);
+		state->Reg_svc[1] = state->Reg[15] + 4;
+		state->Spsr[SVCBANK] = state->Cpsr;
+		state->Cpsr = state->Cpsr & 0xfffffc40;
+		state->Cpsr |= 0x93;
+		eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
+		state->Cpsr |= (eebit << 9);
 
-            switch_mode(state, state->Cpsr & 0x1f);
+		switch_mode(state, state->Cpsr & 0x1f);
 		break;
 	case ARMul_PrefetchAbortV:	/* Prefetch Abort */
-            state->Reg_abort[1] = state->Reg[15] + 4;
-            state->Spsr[ABORTBANK] = state->Cpsr;
-            state->Cpsr = state->Cpsr & 0xfffffc40;
-            state->Cpsr |= 0x97;
-            eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
-            state->Cpsr |= (eebit << 9);
+		state->Reg_abort[1] = state->Reg[15] + 4;
+		state->Spsr[ABORTBANK] = state->Cpsr;
+		state->Cpsr = state->Cpsr & 0xfffffc40;
+		state->Cpsr |= 0x97;
+		eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
+		state->Cpsr |= (eebit << 9);
 
-            switch_mode(state, state->Cpsr & 0x1f);
-            state->Aborted = 0;
-            state->abortSig = 0;
-
+		switch_mode(state, state->Cpsr & 0x1f);
+		state->Aborted = 0;
+		state->abortSig = 0;
 		break;
 	case ARMul_DataAbortV:	/* Data Abort */
-            state->Reg_abort[1] = state->Reg[15] + 8;
-            state->Spsr[ABORTBANK] = state->Cpsr;
-            state->Cpsr = state->Cpsr & 0xfffffc40;
-            state->Cpsr |= 0x97;
-            eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
-            state->Cpsr |= (eebit << 9);
+		state->Reg_abort[1] = state->Reg[15] + 8;
+		//printf("### Dyncom Data Abort pc %x Cpsr %x SpsrC %x Spsr %x ", state->Reg[15], state->Cpsr, state->Spsr_copy, state->Spsr[ABORTBANK]);
+		state->Spsr[ABORTBANK] = state->Cpsr;
+		state->Cpsr = state->Cpsr & 0xfffffc40;
+		state->Cpsr |= 0x97;
+		eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
+		state->Cpsr |= (eebit << 9);
 
-            switch_mode(state, state->Cpsr & 0x1f);
-            state->Aborted = 0;
-            state->abortSig = 0;
+		switch_mode(state, state->Cpsr & 0x1f);
+		state->Aborted = 0;
+		state->abortSig = 0;
+		ASSIGNINT(state->Cpsr & INTBITS);
+		//printf("  ---> Cpsr %x SpsrC %x Spsr %x\n", state->Cpsr, state->Spsr_copy, state->Spsr[ABORTBANK]);
 		break;
 	case ARMul_AddrExceptnV:	/* Address Exception */
-            printf("AddrExceptnV\n");
-            exit(-1);
+		exit(-1);
 		break;
 	case ARMul_IRQV:	/* IRQ */
 		//chy 2003-09-02 the if sentence seems no use
-    {
-                    state->Reg_irq[1] = state->Reg[15] + 4;
-                    printf("in %s R15 is %x\n", __FUNCTION__, state->Reg[15]);
-                    state->Spsr[IRQBANK] = state->Cpsr;
-                    state->Cpsr = state->Cpsr & 0xfffffc40;
-                    state->Cpsr |= 0x92;
-                    eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
-                    state->Cpsr |= (eebit << 9);
-                    switch_mode(state, state->Cpsr & 0x1f);
-    }
+		{
+			state->Reg_irq[1] = state->Reg[15] + 4;
+			//printf("in %s R15 is %x %x\n", __FUNCTION__, state->Reg[15]);
+			state->Spsr[IRQBANK] = state->Cpsr;
+			state->Cpsr = state->Cpsr & 0xfffffc40;
+			state->Cpsr |= 0x92;
+			eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
+			state->Cpsr |= (eebit << 9);
+			switch_mode(state, state->Cpsr & 0x1f);
+			state->NirqSig = HIGH;
+			state->Aborted = 0;
+			ASSIGNINT(state->Cpsr & INTBITS);
+			//printf("Cpsr is %x Flags %x IRQ Spsr is %x \n", state->Cpsr, state->IFFlags, state->Spsr[IRQBANK]);
+		}
 	break;
 	case ARMul_FIQV:	/* FIQ */
 		//chy 2003-09-02 the if sentence seems no use
@@ -144,18 +149,30 @@ static void per_cpu_step(conf_object_t * running_core){
         machine_config_t* mach = get_current_mach();
         ARM_CPU_State* cpu = get_current_cpu();
         cpu_t *cpu_dyncom = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
-	if(is_user_mode(cpu_dyncom)){
-		launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
-		return;
-	}
-	else
-		arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 
+	if (running_mode != PURE_DYNCOM) {
+		uint32_t ret = 0;
+		ret = launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
+		
+		/* in any case, user mode traps and exception are all handled within launc compiled queue */
+		if(is_user_mode(cpu_dyncom))
+			return;
+		else if (running_mode != PURE_DYNCOM)
+			/* if next instruction will be interpreted, ret value is 0. Exceptions are handled inside
+			the interpreter, so we return immediatly */
+			if ((ret == 0) || (running_mode == PURE_INTERPRET))
+				return;
+	} else {
+		arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
+	}
+
+	/* the next part concerns only dyncom */
 	if (core->Reg[15] == 0xc00101a0) {
-            /* undefine float-point instruction in kernel : fmrx */
-            arm_dyncom_abort(core, ARMul_UndefinedInstrV);
+		/* undefine float-point instruction in kernel : fmrx */
+		arm_dyncom_abort(core, ARMul_UndefinedInstrV);
 	}
 	if (core->syscallSig) {
+		printf("In %s, syscallSig %x\n", __FUNCTION__, core->Reg[15]);
 		core->syscallSig = 0;
 		arm_dyncom_abort(core, ARMul_SWIV);
 	}
@@ -168,17 +185,20 @@ static void per_cpu_step(conf_object_t * running_core){
 	}
 	#endif
 	if (core->abortSig) {
+		printf("In %s, abortSig %x %x\n", __FUNCTION__, core->Reg[15], core->Aborted);
 		arm_dyncom_abort(core, core->Aborted);
 	}
 	if (!core->NirqSig) {
 		if (!(core->Cpsr & 0x80)) {
-                     #if SYNC_WITH_INTERPRET
-                     if (cpu_dyncom->icounter > 1951000 && !is_int_in_interpret(cpu_dyncom)) {
-                             return;
-                     }
-                     #endif
-                    arm_dyncom_abort(core, ARMul_IRQV);
-             }
+			//printf("In %s, irqSig %xx\n", __FUNCTION__, core->Reg[15]);
+			//printf("Cpsr not NirqSig %x\n", core->Reg[15]);
+	#if SYNC_WITH_INTERPRET
+			if (cpu_dyncom->icounter > 1951000 && !is_int_in_interpret(cpu_dyncom)) {
+				return;
+			}
+	#endif
+			arm_dyncom_abort(core, ARMul_IRQV);
+		}
 	}
 	mach->mach_io_do_cycle(cpu);
 }

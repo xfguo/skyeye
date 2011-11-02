@@ -365,6 +365,15 @@ uint32_t is_int_in_interpret(cpu_t *cpu)
 	return 0;
 }
 
+#ifdef TIMER_PROFILE
+static cpu_t* gcpu;
+#include <signal.h>
+#include "skyeye_thread.h"
+void printinfo(int signum)
+{
+	cpu_print_statistics(gcpu);
+}
+#endif
 
 static cpu_flags_layout_t arm_flags_layout[4] ={{3,'N',"NFLAG"},{2,'Z',"ZFLAG"},{1,'C',"CFLAG"},{0,'V',"VFLAG"}} ;
 /* physical register for arm archtecture */
@@ -407,11 +416,20 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	info->pc_index_in_gpr = 15;
 
 	cpu->redirection = false;
+	
+#ifdef TIMER_PROFILE
+	gcpu = cpu;
+	signal(SIGUSR1, printinfo);
+	extern void *clock_thread(void*);
+	pthread_t thread;
+	int ret = pthread_create(&thread, NULL, clock_thread, NULL);
+#endif
 
 	//debug
 	cpu_set_flags_debug(cpu, 0
 	//	| CPU_DEBUG_PRINT_IR
 	//	| CPU_DEBUG_LOG
+	//	| CPU_DEBUG_PROFILE
                );
         cpu_set_flags_codegen(cpu, CPU_CODEGEN_TAG_LIMIT 
 				| CPU_CODEGEN_OPTIMIZE
@@ -640,7 +658,6 @@ const char* arm_instr[] = {
 	}
 	uint32_t pc = cpu->f.get_pc(cpu, cpu->rf.grf);
 	uint32_t instr = *((uint32_t *) pc);
-	
 	if (hash_to_instr[pc] == -1)
 	{
 		decode_arm_instr(instr, &idx);
@@ -669,23 +686,96 @@ const char* arm_instr[] = {
 
 #if 0
 	static int flagged = 0;
-	//if (core->NumInstrs < 0x10000)
-	if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0x1a744)
-		flagged = 0;
+	static uint32_t bot_log = -1;
+	static uint32_t top_log = -1;
+	if (bot_log == -1)
+	{
+		sky_pref_t* pref = get_skyeye_pref();
+		bot_log = pref->bot_log;
+		top_log = pref->top_log;
+	}
+
+#if 0
+	uint32_t f6 = 0;
+	if (bus_read(32, 0x71200000, &f6) != -1)
+	{
+		if (f6 != 0)
+		{
+			//asm("int $3");
+			printf("#### f6 is %x at %x\n", f6, core->NumInstrs);
+		}
+	}
+#endif
 	
+#if 1
+	//if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0xc0009788)
+	if ((cpu->f.get_pc(cpu, cpu->rf.grf) == 0xc0009810) && (core->Reg[5] == 0x481))
+	{
+		if (!(get_skyeye_pref()->start_logging))
+			core->NumInstrs = 0xf0000000;
+		printf("JUMPED!\n");
+		//get_skyeye_pref()->start_logging = 1;
+	}
+#endif
+		
+	//if (core->NumInstrs < 0x10000)
+	if ((flagged == 0) && (top_log > 0)) {
+		if (
+		    
+		    //(cpu->f.get_pc(cpu, cpu->rf.grf) == 0xc00255a0) ||
+		    (core->NumInstrs > bot_log) ||
+		    0
+		    )
+		{
+			printf("##### Hit %x at %x\n", cpu->f.get_pc(cpu, cpu->rf.grf), core->NumInstrs);
+			get_skyeye_pref()->start_logging = 1;
+			//core->NumInstrs = bot_log;
+		}
+	}
+	
+#if 0
+	if ( ((flagged == 0) && 
+	    (top_log > 0) && 
+	    (core->NumInstrs > bot_log) &&
+	    1) {
+		flagged = 1;
+		//core->NumInstrs = bot_log;
+	}
+#endif
+
+#if 0
+	if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0x8210)
+	{
+		uint32_t dummy = 0;
+		uint32_t pa = 0;
+		core->mmu.ops.load_instr(core,cpu->f.get_pc(cpu, cpu->rf.grf),&dummy,&pa);
+		uint32_t dummy_tag = get_tag(cpu, pa);
+		printf("~~~~ instruction at %x-%x is %x and get tagged %x\n", cpu->f.get_pc(cpu, cpu->rf.grf), pa, dummy, dummy_tag);
+	}
+#endif
+	if ((flagged == 0) && (get_skyeye_pref()->start_logging == 1))
+		flagged = 1;
+
 	if (flagged)
 	{
-		printf("---|%p|---  %x\n", cpu->f.get_pc(cpu, cpu->rf.grf), core->NumInstrs);
+		if (core->NumInstrs % 0x100 == 0)
+			printf("||||| %x |||||\n", core->NumInstrs);
+		
+		//if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0xc0009810)
+		{
+		printf("---|%p|---\n", cpu->f.get_pc(cpu, cpu->rf.grf));
+		
 		for (idx = 0;idx < 16; idx ++) {
-			//idx = 13;
 			printf("R%02d % 8x\n", idx, core->Reg[idx]);
-			//break;
 		}
 		printf("CPS %08x\n", core->Cpsr);
-	} else {
-		if (core->NumInstrs > 0x400000)
+		}
+		
+		if ( (top_log > 0) && (core->NumInstrs > top_log))
 		{
-			//exit(-1);
+			printf("Exiting\n");
+			sleep(1);
+			exit(-1);
 		}
 	}
 	core->NumInstrs++;
@@ -901,7 +991,7 @@ void switch_mode(arm_core_t *core, uint32_t mode)
 		//printf("mode not changed\n");
 		return;
 	}
-	printf("%d --->>> %d\n", core->Mode, mode);
+	//printf("%d --->>> %d\n", core->Mode, mode);
 	if (mode != USERBANK) {
 		switch (core->Mode) {
 		case USER32MODE:
@@ -940,31 +1030,37 @@ void switch_mode(arm_core_t *core, uint32_t mode)
 		case USER32MODE:
 			core->Reg[13] = core->Reg_usr[0];
 			core->Reg[14] = core->Reg_usr[1];
+			core->Bank = USERBANK;
 			break;
 		case IRQ32MODE:
 			core->Reg[13] = core->Reg_irq[0];
 			core->Reg[14] = core->Reg_irq[1];
 			core->Spsr_copy = core->Spsr[IRQBANK];
+			core->Bank = IRQBANK;
 			break;
 		case SVC32MODE:
 			core->Reg[13] = core->Reg_svc[0];
 			core->Reg[14] = core->Reg_svc[1];
 			core->Spsr_copy = core->Spsr[SVCBANK];
+			core->Bank = SVCBANK;
 			break;
 		case ABORT32MODE:
 			core->Reg[13] = core->Reg_abort[0];
 			core->Reg[14] = core->Reg_abort[1];
 			core->Spsr_copy = core->Spsr[ABORTBANK];
+			core->Bank = ABORTBANK;
 			break;
 		case UNDEF32MODE:
 			core->Reg[13] = core->Reg_undef[0];
 			core->Reg[14] = core->Reg_undef[1];
 			core->Spsr_copy = core->Spsr[UNDEFBANK];
+			core->Bank = UNDEFBANK;
 			break;
 		case FIQ32MODE:
 			core->Reg[13] = core->Reg_firq[0];
 			core->Reg[14] = core->Reg_firq[1];
 			core->Spsr_copy = core->Spsr[FIQBANK];
+			core->Bank = FIQBANK;
 			break;
 
 		}

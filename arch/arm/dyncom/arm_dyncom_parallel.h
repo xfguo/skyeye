@@ -21,7 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define __ARM_DYNCOM_PARALLEL_H__
 #include "arm_dyncom_run.h"
 void init_compiled_queue(cpu_t* cpu);
-void launch_compiled_queue(cpu_t* cpu, uint32_t pc);
+int launch_compiled_queue(cpu_t* cpu, uint32_t pc);
 
 typedef enum{
 	PURE_INTERPRET = 0,
@@ -29,6 +29,8 @@ typedef enum{
 	HYBRID,
 	MAX_RUNNING_MODE,
 }running_mode_t;
+
+extern running_mode_t running_mode;
 
 #endif
 

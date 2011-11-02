@@ -603,9 +603,14 @@ extern ARMword ARMul_LoadInstrS (ARMul_State * state, ARMword address,
 				 ARMword isize);
 extern ARMword ARMul_LoadInstrN (ARMul_State * state, ARMword address,
 				 ARMword isize);
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern ARMword ARMul_ReLoadInstr (ARMul_State * state, ARMword address,
 				  ARMword isize);
-
+#ifdef __cplusplus
+	}
+#endif
 extern ARMword ARMul_LoadWordS (ARMul_State * state, ARMword address);
 extern ARMword ARMul_LoadWordN (ARMul_State * state, ARMword address);
 extern ARMword ARMul_LoadHalfWord (ARMul_State * state, ARMword address);
