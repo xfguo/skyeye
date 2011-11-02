@@ -67,6 +67,11 @@ struct _sky_pref_s{
 	uint32 uart_port;
 
 	struct termios saved_term;
+	
+	bool_t interpret_mode;
+	uint32_t bot_log;
+	uint32_t top_log;
+	uint32_t start_logging;
 };
 typedef struct _sky_pref_s sky_pref_t;
 

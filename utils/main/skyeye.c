@@ -368,6 +368,9 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	bool_t autoboot_mode = False;
 	bool_t user_mode = False;
 	bool_t mmap_access = False;
+	bool_t interpret_mode = False;
+	uint32_t bot_log = 0;
+	uint32_t top_log = 0;
 	int remote_debugmode = 0;
 	endian_t endian = Little_endian;
 	
@@ -388,7 +391,7 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 	//char *exec_file = NULL;
 	int ret = 0;
 	opterr = 0;
-	while ((c = getopt (argc, argv, "be:dc:p:nl:hum")) != -1)
+	while ((c = getopt (argc, argv, "be:dc:p:nl:humig:")) != -1)
 		switch (c) {
 		case 'e':
 			exec_file = optarg;
@@ -431,6 +434,18 @@ int init_option(int argc, char** argv, sky_pref_t* pref){
 			break;
 		case 'm':
 			mmap_access = True;
+			break;
+		case 'i':
+			interpret_mode = True;
+			break;
+		case 'g':
+			{
+				char * atok = ",";
+				char * astr1 = strtok(optarg, atok);
+				char * astr2 = (char *)(optarg + strlen(astr1) + 1);
+				bot_log = strtoul(astr1, NULL, 16);
+				top_log = strtoul(astr2, NULL, 16);
+			}
 			break;
 		case '?':
 			if (isprint (optopt))
@@ -535,6 +550,10 @@ loop_exit:
 	pref->endian = endian;
 	pref->uart_port = uart_port;
 	pref->user_mode_sim = user_mode;
+	pref->interpret_mode = interpret_mode;
+	pref->bot_log = bot_log;
+	pref->top_log = top_log;
+	pref->start_logging = 0;
 	return ret;
 }
 
