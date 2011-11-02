@@ -244,7 +244,7 @@ static fault_t arm1176jzf_s_mmu_read (ARMul_State *state, ARMword va,
 int
 arm1176jzf_s_mmu_init (ARMul_State *state)
 {
-	state->mmu.control = 0x70;
+	state->mmu.control = 0x50078;
 	state->mmu.translation_table_base = 0xDEADC0DE;
 	state->mmu.domain_access_control = 0xDEADC0DE;
 	state->mmu.fault_status = 0;
@@ -610,10 +610,11 @@ arm1176jzf_s_mmu_mrc (ARMul_State *state, ARMword instr, ARMword *value)
 		break;
 	case MMU_CONTROL:
 		/*
-		 * 6:3          should be 1.
-		 * 11:10        should be 0
+		 * 6:3          read as 1
+		 * 10           read as 0
+		 * 18,16	read as 1
 		 * */
-		data = (state->mmu.control | 0x78) & 0xFFFFF3FF;;
+		data = (state->mmu.control | 0x50078) & 0xFFFFFBFF;
 		break;
 	case MMU_TRANSLATION_TABLE_BASE:
 #if 0
@@ -681,8 +682,12 @@ arm1176jzf_s_mmu_mcr (ARMul_State *state, ARMword instr, ARMword value)
 	if (!strncmp (state->cpu->cpu_arch_name, "armv6", 5)) {
 		switch (creg) {
 		case MMU_CONTROL:
-/*              printf("mmu_mcr wrote CONTROL      "); */
-			state->mmu.control = (value | 0x78) & 0xFFFFF3FF;
+		/*
+		 * 6:3          read as 1
+		 * 10           read as 0
+		 * 18,16	read as 1
+		 * */
+			state->mmu.control = (value | 0x50078) & 0xFFFFFBFF;
 			break;
 		case MMU_TRANSLATION_TABLE_BASE:
 			switch (OPC_2) {
