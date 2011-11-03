@@ -150,7 +150,6 @@ static gint callback_expose_event(GtkWidget *widget, GdkEventExpose *event, lcd_
 	guchar fbdata8_2;	// |B1,G1|
 
 	GdkRectangle rect;
-	printf("In %s, not sure\n", __FUNCTION__);
 	SkyEyeLCD_GTK* lcd = dev->gtk_win;	
 
 	if (lcd == NULL) return FALSE;
@@ -575,7 +574,7 @@ static conf_object_t* new_gtk_lcd(char* obj_name)
 	//dev->gtk_win = gtk_win;
 	/* lcd update*/
 	int timer_id;
-	create_thread_scheduler(1000000, Periodic_sched, timer_update, dev->obj, &timer_id);
+	create_thread_scheduler(5000, Periodic_sched, timer_update, dev->obj, &timer_id);
 
 	lcd_control_intf* lcd_ctrl = skyeye_mm_zero(sizeof(lcd_control_intf));
 	lcd_ctrl->conf_obj = dev->obj;
