@@ -5,7 +5,10 @@ common/dcache.c  common/exception.c  common/mips_arch_interface.c  common/multip
 mips_dyncom = dyncom/mips_dyncom_run.cpp dyncom/mips_dyncom_translate.cpp dyncom/mips_dyncom_interface.cpp dyncom/mips_dyncom_dec.cpp dyncom/mips_dyncom_instr_main.cpp dyncom/mips_dyncom_instr_special.cpp dyncom/mips_dyncom_instr_regimm.cpp
 mips_syscall = linux_syscall/mips_syscall.c
 
-libmips_la_SOURCES = $(mips_mach) $(mips_comm) $(mips_dyncom) $(mips_syscall)
+libmips_la_SOURCES = $(mips_mach) $(mips_comm) $(mips_syscall)
+if LLVM_EXIST
+libmips_la_SOURCES += $(mips_dyncom)
+endif
 pkglib_LTLIBRARIES = libmips.la
 
 # we will link the common module with main
