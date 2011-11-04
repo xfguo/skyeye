@@ -786,27 +786,18 @@ Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 }while(0)
 
 #if 1
-/* 0 */
-Value *Data_ope_Reg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+/* index:0 */
+/* register immediate */
+Value *Data_ope_Reg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt, Value *sco)
 {
-	if(!shift_imm){ /* Register */
-		//return R(RM);
+	if (!shift_imm) { /* Register */
 		OPERAND_RETURN_CHECK_PC;
-#if 0
-		if (BITS(25, 27) == 0) {
-			if (RM == 15) {
-				return ADD(ADD(R(RN), R(RM)), CONST(8));
-			} else {
-				return ADD(R(RN), R(RM));
-			}
-		} else {
-			if(RM == 15)		
-				return ADD(R(RM), CONST(8));	
-			else	
-				return R(RM);	
+		/* No changes in SCO */
+	} else {	/* logic shift left by imm */
+		if (sco != NULL)
+		{
+			new StoreInst(ICMP_SLT(SHL(R(RM), CONST(shift_imm-1)), CONST(0)),sco,bb);
 		}
-#endif
-	}else{	/* logic shift left by imm */
 		return SHL(R(RM), CONST(shift_imm));
 	}
 }
@@ -814,47 +805,88 @@ Value *Data_ope_Reg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_
 /* Get date from instruction operand */
 /* index:1 */
 /* Getting data form Logic Shift Left register operand. following arm doc. */
-Value *Data_ope_LogLReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+Value *Data_ope_LogLReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt, Value *sco)
 {
+	if (sco != NULL)
+	{
+		Value *flag = SELECT(ICMP_EQ(shamt, CONST(0)), new LoadInst(ptr_C, "", false, bb), /* Rs[7:0] == 0 */
+				     SELECT(ICMP_ULT(shamt, CONST(32)), ICMP_SLT(SHL(R(RM), SUB(shamt, CONST(1))), CONST(0)), /* Rs[7:0] < 32 */
+					    SELECT(ICMP_EQ(shamt, CONST(32)), TRUNC1(R(RM)), /* Rs[7:0] == 32*/
+						   CONST1(0) /* Rs[7:0] > 32 */
+						   )
+					    )
+				     );
+		new StoreInst(flag, sco, bb);
+	}
 	/* logic shift left by reg ICMP_ULE(shamt, CONST(32)) ?????? */
 	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_UGE(shamt, CONST(32)), CONST(0), SHL(R(RM), shamt)));
 }
 
 /* index:2 */
 /* Getting data form Logic Shift Right immdiate operand. following arm doc. */
-Value *Data_ope_LogRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+Value *Data_ope_LogRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt, Value *sco)
 {
 	/* logic shift right by imm */
-	if(!shift_imm)
-		return CONST(0);
-	else
-		return LSHR(R(RM), CONST(shift_imm));
+	if(!shift_imm) {
+		if (sco != NULL)
+			new StoreInst(ICMP_SLT(R(RM), CONST(0)), sco, bb);
+ 		return CONST(0);
+	} else {
+		if (sco != NULL)
+			new StoreInst(ICMP_SLT(SHL(R(RM), CONST(32 - shift_imm)), CONST(0)), sco, bb);
+ 		return LSHR(R(RM), CONST(shift_imm));
+	}
 }
 
 /* index:3 */
 /* Getting data form Logic Shift Right register operand. following arm doc. */
-Value *Data_ope_LogRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+Value *Data_ope_LogRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt, Value *sco)
 {
+	if (sco != NULL)
+	{
+		Value *flag = SELECT(ICMP_EQ(shamt, CONST(0)), new LoadInst(ptr_C, "", false, bb), /* Rs[7:0] == 0 */
+				     SELECT(ICMP_ULT(shamt, CONST(32)), ICMP_SLT(SHL(R(RM), SUB(CONST(32), shamt)), CONST(0)), /* Rs[7:0] < 32 */
+					    SELECT(ICMP_EQ(shamt, CONST(32)), ICMP_SLT(shamt, CONST(0)), /* Rs[7:0] == 32*/
+						   CONST1(0) /* Rs[7:0] > 32 */
+						   )
+					    )
+				     );
+		new StoreInst(flag, sco, bb);
+	}
 	/* logic shift right by reg*/
 	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_UGE(shamt, CONST(32)), CONST(0), LSHR(R(RM), shamt)));
 }
 
 /* index:4 */
 /* Getting data form Shift Right immdiate operand. following arm doc. */
-Value *Data_ope_AriRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+Value *Data_ope_AriRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt, Value *sco)
 {
-	/* shift right by imm */
-	if(!shift_imm)
-		SELECT(LSHR(R(RM), CONST(31)), CONST(0xffffffff), CONST(0));
-	else
-		return ASHR(R(RM), CONST(shift_imm));
+ 	/* shift right by imm */
+	if(!shift_imm) {
+		if (sco != NULL)
+			new StoreInst(ICMP_SLT(R(RM), CONST(0)), sco, bb);
+		return SELECT(LSHR(R(RM), CONST(31)), CONST(0xffffffff), CONST(0));
+	} else {
+		if (sco != NULL)
+			new StoreInst(ICMP_SLT(SHL(R(RM), CONST(32-shift_imm)), CONST(0)), sco, bb);
+ 		return ASHR(R(RM), CONST(shift_imm));
+	}
 }
 
 /* index:5 */
 /* Getting data form Shift Right register operand. following arm doc. */
-Value *Data_ope_AriRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+Value *Data_ope_AriRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt, Value *sco)
 {
 	/* arth shift right by reg */
+	if (sco != NULL)
+	{
+		Value *flag = SELECT(ICMP_EQ(shamt, CONST(0)), new LoadInst(ptr_C, "", false, bb), /* Rs[7:0] == 0 */
+				     SELECT(ICMP_ULT(shamt, CONST(32)), ICMP_SLT(SHL(R(RM), SUB(CONST(32), shamt)), CONST(0)), /* Rs[7:0] < 32 */
+					    ICMP_SLT(R(RM), CONST(0)) /* Rs[7:0] <= 32 */
+					    )
+				     );
+		new StoreInst(flag, sco, bb);
+	}
 	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM),
 			SELECT(ICMP_ULT(shamt, CONST(32)), ASHR(R(RM), shamt),
 				SELECT(ICMP_EQ(LSHR(R(RM), CONST(31)), CONST(0x80000000)), CONST(0xffffffff), CONST(0))));
@@ -862,66 +894,71 @@ Value *Data_ope_AriRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t sh
 
 /* index:6 */
 /* Getting data form Rotate Shift Right immdiate operand. following arm doc. */
-Value *Data_ope_RotRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+Value *Data_ope_RotRImm(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt, Value *sco)
 {
-	if(!shift_imm){
-		/* Rotate right with extend */
-		return ROTL(OR(SHL(ptr_C, CONST(31)), ASHR(R(RM), CONST(1))), CONST(1));
-	}else{
-		/* Rotate right by imm */
-		return ROTL(R(RM), CONST(32 - shift_imm));
+ 	if(!shift_imm){
+ 		/* Rotate right with extend */
+		Value *ret = ROTL(OR(SHL(ptr_C, CONST(31)), ASHR(R(RM), CONST(1))), CONST(1));
+		if (sco != NULL)
+			new StoreInst(TRUNC1(R(RM)), sco, bb); /* Beware, ptr_C nust be modified after */
+		return ret;
+	} else {
+		if (sco != NULL)
+			new StoreInst(ICMP_SLT(SHL(R(RM), CONST(32 - shift_imm)), CONST(0)), sco, bb);
+ 		/* Rotate right by imm */
+ 		return ROTL(R(RM), CONST(32 - shift_imm));
 	}
 }
 
 /* index:7 */
 /* Getting data form Rotate Shift Right register operand. following arm doc. */
-Value *Data_ope_RotRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt)
+Value *Data_ope_RotRReg(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, uint32_t shift_imm, Value *shamt, Value *sco)
 {
 	Value *sham = AND(R(BITS(8, 11)), CONST(0x1f));
 	/* Rotate right by reg */
+	if (sco != NULL) {
+		Value *flag = SELECT(ICMP_EQ(shamt, CONST(0)), new LoadInst(ptr_C, "", false, bb), /* Rs[7:0] == 0 */
+				     SELECT(ICMP_EQ(sham, CONST(0)), ICMP_SLT(R(RM), CONST(0)), /* Rs[4:0] == 0 */
+					    ICMP_SLT(SHL(R(RM), SUB(CONST(32), sham)), CONST(0)) /* Rs[4:0] > 0 */
+					    )
+				     );
+		new StoreInst(flag, sco, bb);
+	}
 	return SELECT(ICMP_EQ(shamt, CONST(0)), R(RM), SELECT(ICMP_EQ(sham, CONST(0)), R(RM), ROTL(R(RM), SUB(CONST(32), sham))));
 }
 
-Value *(*Data_operand[8])(cpu_t*, uint32_t, BasicBlock *, uint32_t, Value*) = {Data_ope_Reg, Data_ope_LogLReg, Data_ope_LogRImm, Data_ope_LogRReg, Data_ope_AriRImm, Data_ope_AriRReg, Data_ope_RotRImm, Data_ope_RotRReg};
+Value *(*Data_operand[8])(cpu_t*, uint32_t, BasicBlock *, uint32_t, Value*, Value*) = {Data_ope_Reg, Data_ope_LogLReg, Data_ope_LogRImm, Data_ope_LogRReg, Data_ope_AriRImm, Data_ope_AriRReg, Data_ope_RotRImm, Data_ope_RotRReg};
 
 /* Getting data form operand collection. */
-Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb)
+Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, Value *sco)
 {
 	uint32_t shift = BITS(4, 6);
 	uint32_t shift_imm = BITS(7,11);
 	Value *shamt = AND(R(BITS(8,11)), CONST(0xff));
 
-	if(I){
+	if(I) {
 		/* 32-bit immediate */
 		uint32_t immed_8 = instr & 0xFF;
-		int rotate_imm = ((instr >> 8) & 0xF) << 1;
-		/*
-		if(!rotate_imm)
-			new StoreInst(ptr_C, shifter_carry_out, bb);
-		else
-			new StoreInst(AND(ASHR(CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm))),
-							CONST(31)), CONST(1)), shifter_carry_out, bb);
-		*/
-
-		/*Value *shifter_operand = CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm)));
+		int rotate_immx2 = (instr & 0xF00) >> 7; //((instr >> 8) & 0xF) << 1;
+		uint32_t immediate = (immed_8 >> (rotate_immx2)) | (immed_8 << (32 - rotate_immx2));
+			
+		if (sco != NULL)
+		{
+			if(rotate_immx2) {
+				new StoreInst(CONST1(immediate >> 31),sco, bb);
+			}
+			/* No changes in C flag else */
+		}
 		
-		if(rotate_imm)
-			new StoreInst(ICMP_SLT(shifter_operand, CONST(0)) ,ptr_C, bb);*/
-		/* No changes in C flag else */
-		
-		/* Note: the shifter carry out is not always set. Compute it
-		   then set it in trans function instead. */
-		
-		return CONST((immed_8 >> rotate_imm) | (immed_8 << (32 - rotate_imm)));
+		return CONST(immediate);
 	} else if (BITS(4, 11) == 0x6 && BITS(25, 27) == 0) {
 		/*  Rotate right with extend  */
 		Value *rm = LSHR(R(RM), CONST(1));
 		Value *tmp = SELECT(ICMP_EQ(LOAD(ptr_C), CONST1(0)), CONST(0), CONST(0x80000000));
 		return OR(rm, tmp);
-	}
-	else{
+	} else {
 		/* operand with BIT 4 ~ 6 */
-		return (Data_operand[shift])(cpu, instr, bb, shift_imm, shamt);
+		return (Data_operand[shift])(cpu, instr, bb, shift_imm, shamt, sco);
 	}
 }
 #endif

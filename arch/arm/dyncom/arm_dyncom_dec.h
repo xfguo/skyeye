@@ -67,13 +67,13 @@
 /* temp define the using the pc reg need implement a flow */
 #define STORE_CHECK_RD_PC	ADD(R(RD), CONST(8))
 
-#define OPERAND operand(cpu,instr,bb)
+#define OPERAND operand(cpu,instr,bb,NULL)
+#define SCO_OPERAND(sco) operand(cpu,instr,bb,sco)
 #define BOPERAND boperand(instr)
 
 #define CHECK_RN_PC  (RN==15? ADD(R(RN), CONST(8)):R(RN))
 
-Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb);
-//Value *boperand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, bool sub, int32_t offset);
+Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, Value *sco);
 uint32_t boperand(uint32_t instr);
 int set_condition(cpu_t *cpu, Value *ret, BasicBlock *bb, Value *op1, Value *op2);
 Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb);
