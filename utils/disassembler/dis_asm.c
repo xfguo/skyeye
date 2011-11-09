@@ -23,7 +23,7 @@
 /*
  * 01/16/2010   Michael.Kang  <blackfin.kang@gmail.com>
  */
-
+#include <string.h>
 #include <dis-asm.h>
 #include <assert.h>
 #include <libiberty.h>
@@ -307,4 +307,49 @@ void disassemble(generic_address_t addr){
 	printf("0x%x:", addr);
 	disassemble_fn(addr, &disasm_info);
 	printf("\n");
+}
+/* get count for disassemble*/
+int dis_getcount(char *args, uint32_t *count)
+{
+	const char *match_count = "count";
+	char *p = NULL;
+	char *q = NULL;
+
+	q = strstr(args, match_count);
+	if(q != NULL){
+		p = strstr(q + strlen(match_count), "=");
+		if(p != NULL)
+			*count = strtoul((p + 1), NULL, 0);
+		else{
+			printf("Format error!\ndisassemble addr=<parameter> count=<parameter>\n");
+			return -1;
+		}
+	}
+	else
+		return -1;
+
+	return 0;
+}
+
+/* get addr for disassemble*/
+int dis_getaddr(char* args, uint32_t *addr)
+{
+	const char *match_addr = "addr";
+	char *p = NULL;
+	char *q = NULL;
+
+	q = strstr(args, match_addr);
+	if(q != NULL){
+		p = strstr(q + strlen(match_addr), "=");
+		if(p != NULL)
+			*addr = strtoul((p + 1), NULL, 0);
+		else{
+			printf("Format error!\ndisassemble addr=<parameter> count=<parameter>\n");
+			return -1;
+		}
+	}
+	else
+		*addr = strtoul(args, NULL, 0);
+
+	return 0;
 }
