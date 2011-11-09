@@ -23,6 +23,7 @@
  */
 #include <stdlib.h>
 #include "skyeye_uart.h"
+#include "portable/portable.h"
 
 #ifdef __BEOS__
 #include <BeBuild.h>
