@@ -75,18 +75,13 @@ static int exit_status = 0;
 static int disasm_read_memory(bfd_vma memaddr, bfd_byte *myaddr, unsigned int length, struct disassemble_info *info){
 	int ret;
 	int i;
-#if 0
-	for(i = 0; i < length; i++)
-		ret = mem_read(8, memaddr + i, (myaddr + i));
-#endif
+
 	skyeye_config_t *config  = get_current_config();
 	generic_arch_t *arch_instance = get_arch_instance(config->arch->arch_name);
 
 	if(arch_instance->mmu_read != NULL)
 		for( i = 0; i < length; i ++ )
-		{
 			ret = arch_instance->mmu_read(8, memaddr + i, (myaddr+i));
-		}
 	else
 	 	for(i = 0; i < length; i++)
  			ret = mem_read(8, memaddr + i, (myaddr + i));

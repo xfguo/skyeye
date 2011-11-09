@@ -21,8 +21,14 @@
 #include <assert.h>
 #include <string.h>
 #include "armdefs.h"
+/* two header for arm disassemble */
+#include "skyeye_arch.h"
+#include "armcpu.h"
+
 
 extern mmu_ops_t xscale_mmu_ops;
+exception_t arm_mmu_write(short size, generic_address_t addr, uint32_t *value);
+exception_t arm_mmu_read(short size, generic_address_t addr, uint32_t *value);
 #define MMU_OPS (state->mmu.ops)
 ARMword skyeye_cachetype = -1;
 
@@ -79,6 +85,12 @@ mmu_init (ARMul_State * state)
 	};
 	ret = state->mmu.ops.init (state);
 	state->mmu_inited = (ret == 0);
+	/* initialize mmu_read and mmu_write for disassemble */
+	skyeye_config_t *config  = get_current_config();
+	generic_arch_t *arch_instance = get_arch_instance(config->arch->arch_name);
+	arch_instance->mmu_read = arm_mmu_read;
+	arch_instance->mmu_write = arm_mmu_write;
+
 	return ret;
 }
 
@@ -186,4 +198,43 @@ int
 mmu_v2p_dbct (ARMul_State * state, ARMword virt_addr, ARMword * phys_addr)
 {
 	return (MMU_OPS.v2p_dbct (state, virt_addr, phys_addr));
+}
+
+/* dis_mmu_read for disassemble */
+exception_t arm_mmu_read(short size, generic_address_t addr, uint32_t * value)
+{
+	ARMul_State *state;
+	ARM_CPU_State *cpu = get_current_cpu();
+	state = &cpu->core[0];
+	switch(size){
+	case 8:
+		MMU_OPS.read_byte (state, addr, value);
+		break;
+	case 16:
+	case 32:
+		break;
+	default:
+		printf("In %s error size %d Line %d\n", __func__, size, __LINE__);
+		break;
+	}
+	return No_exp;
+}
+/* dis_mmu_write for disassemble */
+exception_t arm_mmu_write(short size, generic_address_t addr, uint32_t *value)
+{
+	ARMul_State *state;
+	ARM_CPU_State *cpu = get_current_cpu();
+		state = &cpu->core[0];
+	switch(size){
+	case 8:
+		MMU_OPS.write_byte (state, addr, value);
+		break;
+	case 16:
+	case 32:
+		break;
+	default:
+		printf("In %s error size %d Line %d\n", __func__, size, __LINE__);
+		break;
+	}
+	return No_exp;
 }
