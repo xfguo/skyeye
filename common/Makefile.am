@@ -48,7 +48,7 @@ else
 endif
 # we will link the common module with main
 #libcommon_la_LDFLAGS = -module
-libcommon_la_LDFLAGS =
+libcommon_la_LDFLAGS = `python-config --libs`
 
 skyeye_module_dir = \"$(prefix)/lib/skyeye\"
 
