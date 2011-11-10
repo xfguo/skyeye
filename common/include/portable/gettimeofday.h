@@ -27,8 +27,9 @@
 
 #include <time.h> /* for gmtime */
 #include <sys/time.h> /* for struct timeval */
+#include "config.h"
 
-#define HAVE_GETTIMEOFDAY
+//#define HAVE_GETTIMEOFDAY
 
 #if defined(__MINGW32__)
 	#include <_mingw.h>
