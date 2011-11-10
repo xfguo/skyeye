@@ -220,9 +220,11 @@ cpu_new(uint32_t flags, uint32_t arch_flags, arch_func_t arch_func)
 
 	debug_func_init(cpu);
 	syscall_func_init(cpu);
+#ifndef __WIN32__
 	if(pthread_rwlock_init(&(cpu->dyncom_engine->rwlock), NULL)){
 		fprintf(stderr, "can not initilize the rwlock\n");
 	}
+#endif
 
 	return cpu;
 }
@@ -329,7 +331,9 @@ void save_addr_in_func(cpu_t *cpu, void *native_code_func)
 #if L3_HASHMAP
 	bbaddr_map &bb_addr = cpu->dyncom_engine->func_bb[cpu->dyncom_engine->cur_func];
 	bbaddr_map::iterator i = bb_addr.begin();
+#ifndef __WIN32__
 	pthread_rwlock_wrlock(&(cpu->dyncom_engine->rwlock));
+#endif
 	for (; i != bb_addr.end(); i++){
 		if(cpu->dyncom_engine->fmap[HASH_MAP_INDEX_L1(i->first)] == NULL)
 			init_fmap_l2(cpu->dyncom_engine->fmap, i->first);
@@ -374,6 +378,7 @@ cpu_translate_function(cpu_t *cpu, addr_t addr)
 
 	/* TRANSLATE! */
 	UPDATE_TIMING(cpu, TIMER_FE, true);
+#ifndef __WIN32__
 	if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP) {
 		bb_start = cpu_translate_singlestep(cpu, bb_ret, bb_trap);
 	} else if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_SINGLESTEP_BB) {
@@ -381,6 +386,10 @@ cpu_translate_function(cpu_t *cpu, addr_t addr)
 	} else {
 		bb_start = cpu_translate_all(cpu, bb_ret, bb_trap, bb_timeout);
 	}
+#else
+	bb_start = cpu_translate_all(cpu, bb_ret, bb_trap, bb_timeout);
+#endif
+
 	UPDATE_TIMING(cpu, TIMER_FE, false);
 
 	/* finish entry basicblock */
