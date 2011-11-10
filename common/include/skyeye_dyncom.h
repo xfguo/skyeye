@@ -31,6 +31,7 @@
 #include "skyeye_platform.h"
 #include "skyeye_types.h"
 #include "dyncom/defines.h"
+#include "portable/portable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
