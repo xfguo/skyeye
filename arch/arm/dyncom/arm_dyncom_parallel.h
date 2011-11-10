@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "arm_dyncom_run.h"
 void init_compiled_queue(cpu_t* cpu);
 int launch_compiled_queue(cpu_t* cpu, uint32_t pc);
+int launch_compiled_queue_dyncom(cpu_t* cpu, uint32_t pc);
 
 typedef enum{
 	PURE_INTERPRET = 0,

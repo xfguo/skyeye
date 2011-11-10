@@ -169,8 +169,8 @@ static void per_cpu_step(conf_object_t * running_core){
 	else 
 	{	
 		uint32_t ret = 0;
-		//ret = launch_compiled_queue_dyncom((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
-		arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
+		ret = launch_compiled_queue_dyncom((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
+		//arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 	}
 
 	/* the next part concerns only dyncom */
