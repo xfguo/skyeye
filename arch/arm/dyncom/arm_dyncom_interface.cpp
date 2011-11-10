@@ -57,6 +57,7 @@ arm_dyncom_abort(arm_core_t * state, ARMword vector)
 	case ARMul_ResetV:	/* RESET */
 		break;
 	case ARMul_UndefinedInstrV:	/* Undefined Instruction */
+		printf("in %s, undefined instruction\n", __FUNCTION__);
 		state->Reg_undef[1] = state->Reg[15] + 4;
 		state->Spsr[UNDEFBANK] = state->Cpsr;
 		state->Cpsr = state->Cpsr & 0xfffffc40;
@@ -65,6 +66,8 @@ arm_dyncom_abort(arm_core_t * state, ARMword vector)
 		state->Cpsr |= (eebit << 9);
 
 		switch_mode(state, state->Cpsr & 0x1f);
+		state->Aborted = 0;
+		state->abortSig = 0;
 		break;
 	case ARMul_SWIV:	/* Software Interrupt */
 		state->Reg_svc[1] = state->Reg[15] + 4;
@@ -110,14 +113,14 @@ arm_dyncom_abort(arm_core_t * state, ARMword vector)
 		//chy 2003-09-02 the if sentence seems no use
 		{
 			state->Reg_irq[1] = state->Reg[15] + 4;
-			//printf("in %s R15 is %x %x\n", __FUNCTION__, state->Reg[15]);
+			//printf("in %s R15 is %x at %x\n", __FUNCTION__, state->Reg[15], state->NumInstrs);
 			state->Spsr[IRQBANK] = state->Cpsr;
 			state->Cpsr = state->Cpsr & 0xfffffc40;
 			state->Cpsr |= 0x92;
 			eebit = (state->CP15[CP15(CP15_CONTROL)] >> 25) & 1;
 			state->Cpsr |= (eebit << 9);
 			switch_mode(state, state->Cpsr & 0x1f);
-			state->NirqSig = HIGH;
+			//state->NirqSig = HIGH;
 			state->Aborted = 0;
 			ASSIGNINT(state->Cpsr & INTBITS);
 			//printf("Cpsr is %x Flags %x IRQ Spsr is %x \n", state->Cpsr, state->IFFlags, state->Spsr[IRQBANK]);
@@ -149,28 +152,28 @@ static void per_cpu_step(conf_object_t * running_core){
         machine_config_t* mach = get_current_mach();
         ARM_CPU_State* cpu = get_current_cpu();
         cpu_t *cpu_dyncom = (cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t");
-
-	if (running_mode != PURE_DYNCOM) {
+	
+	if (running_mode != PURE_DYNCOM)
+	{
 		uint32_t ret = 0;
 		ret = launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
 		
 		/* in any case, user mode traps and exception are all handled within launc compiled queue */
 		if(is_user_mode(cpu_dyncom))
 			return;
-		else if (running_mode != PURE_DYNCOM)
-			/* if next instruction will be interpreted, ret value is 0. Exceptions are handled inside
-			the interpreter, so we return immediatly */
-			if ((ret == 0) || (running_mode == PURE_INTERPRET))
-				return;
-	} else {
+		/* if next instruction will be interpreted, ret value is 0. Exceptions are handled inside
+		   the interpreter, so we return immediatly */
+		else if ((ret == 0) || (running_mode == PURE_INTERPRET))
+			return;
+	} 
+	else 
+	{	
+		uint32_t ret = 0;
+		//ret = launch_compiled_queue_dyncom((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
 		arm_dyncom_run((cpu_t*)get_cast_conf_obj(core->dyncom_cpu, "cpu_t"));
 	}
 
 	/* the next part concerns only dyncom */
-	if (core->Reg[15] == 0xc00101a0) {
-		/* undefine float-point instruction in kernel : fmrx */
-		arm_dyncom_abort(core, ARMul_UndefinedInstrV);
-	}
 	if (core->syscallSig) {
 		printf("In %s, syscallSig %x\n", __FUNCTION__, core->Reg[15]);
 		core->syscallSig = 0;
@@ -185,13 +188,19 @@ static void per_cpu_step(conf_object_t * running_core){
 	}
 	#endif
 	if (core->abortSig) {
-		printf("In %s, abortSig %x %x\n", __FUNCTION__, core->Reg[15], core->Aborted);
+		printf("In %s, abortSig occured at pc %x with signal %x\n", __FUNCTION__, core->Reg[15], core->Aborted);
 		arm_dyncom_abort(core, core->Aborted);
 	}
 	if (!core->NirqSig) {
+		//printf("Trying abort \n");
 		if (!(core->Cpsr & 0x80)) {
-			//printf("In %s, irqSig %xx\n", __FUNCTION__, core->Reg[15]);
+			//printf("In %s, irqSig %x\n", __FUNCTION__, core->Reg[15]);
 			//printf("Cpsr not NirqSig %x\n", core->Reg[15]);
+	#if SYNC_HYBRID
+			if (!is_int_in_interpret(cpu_dyncom))
+				return;
+	#endif
+	
 	#if SYNC_WITH_INTERPRET
 			if (cpu_dyncom->icounter > 1951000 && !is_int_in_interpret(cpu_dyncom)) {
 				return;

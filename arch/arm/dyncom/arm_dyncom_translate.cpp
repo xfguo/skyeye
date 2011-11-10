@@ -16,9 +16,10 @@
 #include "arm_types.h"
 #include "dyncom/tag.h"
 #include "bank_defs.h"
+#include "armdefs.h"
 #include "arm_dyncom_dec.h"
 #include "arm_dyncom_translate.h"
-#include "armdefs.h"
+#include "arm_dyncom_run.h"
 
 #define ptr_N	cpu->ptr_N
 #define ptr_Z	cpu->ptr_Z
@@ -867,10 +868,17 @@ int DYNCOM_TRANS(mrc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 		printf("in %s is not implementation.\n", __FUNCTION__);
 		exit(-1);
 	}
+	#if 0
 	if (instr == 0xeef04a10) {
 		LET(RD, CONST(0x20000000));
 		return 4;
 	}
+	#else
+	if (instr == 0xeef04a10) {
+		return INSTR_SIZE;
+	}
+	// alternative possibility is to trigger a undefined exception
+	#endif
 	
 	Value *data = NULL;
 	
@@ -1040,6 +1048,14 @@ int DYNCOM_TRANS(qsub16)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){
 int DYNCOM_TRANS(qsub8)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(qsubaddx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(rev)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
+int DYNCOM_TRANS(rev16)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
+{
+	Value *op1 = R(RM);
+	Value *tmp = SWAP32(R(RM));
+	Value *ret = OR(SHL(tmp,CONST(16)), LSHR(tmp,CONST(16)));
+	
+	LET(RD,ret);
+}
 int DYNCOM_TRANS(revsh)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(rfe)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(rsb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
@@ -1961,6 +1977,19 @@ int DYNCOM_TAG(qsub16)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t
 int DYNCOM_TAG(qsub8)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(qsubaddx)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(rev)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
+int DYNCOM_TAG(rev16)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	int instr_size = INSTR_SIZE;
+	if ((RD == 15) || (RM == 15)) {
+		printf("in %s instruction is not implementated (Unpredictable).\n", __FUNCTION__);
+		exit(-1);
+	} else {
+		arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
+	}
+	if(instr >> 28 != 0xe)
+		*tag |= TAG_CONDITIONAL;
+	printf("in %s instruction is not implementated.\n", __FUNCTION__);
+	return instr_size;
+}
 int DYNCOM_TAG(revsh)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(rfe)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
 int DYNCOM_TAG(rsb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
@@ -2301,9 +2330,21 @@ int DYNCOM_TAG(uxth)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *
 }
 
 
-
+/* Floating point instructions */
+int DYNCOM_TAG(fmrx)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
+{
+	int instr_size = INSTR_SIZE;
+	printf("\t\tin %s instruction is not implementated.\n", __FUNCTION__);
+	arm_tag_trap(cpu, pc, instr, tag, new_pc, next_pc);
+	return instr_size;
+}
+int DYNCOM_TRANS(fmrx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){
+	printf("\t\tin %s instruction is not implementated.\n", __FUNCTION__);
+	arch_arm_undef(cpu, bb, instr);
+}
 
 const INSTRACT arm_instruction_action[] = {
+	DYNCOM_FILL_ACTION(fmrx),
 	DYNCOM_FILL_ACTION(adc),
 	DYNCOM_FILL_ACTION(add),
 	DYNCOM_FILL_ACTION(and),
@@ -2327,6 +2368,9 @@ const INSTRACT arm_instruction_action[] = {
 	DYNCOM_FILL_ACTION(ldm),
 	DYNCOM_FILL_ACTION(ldm),
 	DYNCOM_FILL_ACTION(sxth),
+	DYNCOM_FILL_ACTION(rev),
+	DYNCOM_FILL_ACTION(rev16),
+	DYNCOM_FILL_ACTION(revsh),
 	DYNCOM_FILL_ACTION(ldr),
 	DYNCOM_FILL_ACTION(uxth),
 	DYNCOM_FILL_ACTION(uxtah),
@@ -2364,8 +2408,6 @@ const INSTRACT arm_instruction_action[] = {
 	DYNCOM_FILL_ACTION(qsub16),
 	DYNCOM_FILL_ACTION(qsub8),
 	DYNCOM_FILL_ACTION(qsubaddx),
-	DYNCOM_FILL_ACTION(rev),
-	DYNCOM_FILL_ACTION(revsh),
 	DYNCOM_FILL_ACTION(rfe),
 	DYNCOM_FILL_ACTION(rsb),
 	DYNCOM_FILL_ACTION(rsc),

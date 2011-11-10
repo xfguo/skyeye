@@ -47,10 +47,15 @@
 void arm_switch_mode(cpu_t *cpu);
 //#define MAX_REGNUM 16
 extern const char* arm_regstr[MAX_REG_NUM];
-enum {
-	ARM_DYNCOM_MCR = 2,
+
+enum{
+	ARM_DYNCOM_CALLOUT_UNDEF = 2,
+	ARM_DYNCOM_MAX_CALLOUT
 };
 
+extern "C" {
+extern void io_do_cycle (void * state);
+}
 
 uint32_t get_end_of_page(uint32 phys_addr){
 	const uint32 page_size = 4 * 1024;
@@ -898,6 +903,64 @@ static void arm_dyncom_syscall(cpu_t* cpu, uint32_t num){
 		core->syscallSig = 1;
 }
 
+/* Undefined instruction handler, set necessary flags */
+void 
+arm_undef_instr(cpu_t *cpu){
+	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
+	printf("\t\tLet us set a flag, signaling an undefined instruction!\n");
+	core->Aborted = ARMul_UndefinedInstrV;
+	core->abortSig = HIGH;
+}
+
+/**
+ * @brief Generate the invoke undef instr exception llvm IR
+ *
+ * @param cpu CPU core structure
+ * @param bb basic block to store llvm IR 
+ * @param instr undefined instruction (unused)
+ */
+void
+arch_arm_undef(cpu_t *cpu, BasicBlock *bb, uint32_t instr)
+{
+	if (cpu->dyncom_engine->ptr_arch_func[ARM_DYNCOM_CALLOUT_UNDEF] == NULL) {
+		printf("in %s Could not find callout\n", __FUNCTION__);
+		return;
+	}
+	Type const *intptr_type = cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX());
+	Constant *v_cpu = ConstantInt::get(intptr_type, (uintptr_t)cpu);
+	Value *v_cpu_ptr = ConstantExpr::getIntToPtr(v_cpu, PointerType::getUnqual(intptr_type));
+	std::vector<Value *> params;
+	params.push_back(v_cpu_ptr);
+	/* When using a custom callout, must put the callout index as argument for dyncom_callout */
+	params.push_back(CONST(ARM_DYNCOM_CALLOUT_UNDEF));
+	//params.push_back(CONST(instr)); // no need for now, the callout func takes no argument
+	CallInst *ret = CallInst::Create(cpu->dyncom_engine->ptr_arch_func[ARM_DYNCOM_CALLOUT_UNDEF], params.begin(), params.end(), "", bb);
+}
+
+/* Undefined instruction handler initialization. Should be called once at init */
+static void 
+arch_arm_undef_init(cpu_t *cpu){
+	//types
+	std::vector<const Type*> type_func_undef_args;
+	PointerType *type_intptr = PointerType::get(cpu->dyncom_engine->exec_engine->getTargetData()->getIntPtrType(_CTX()), 0);
+	const IntegerType *type_i32 = IntegerType::get(_CTX(), 32);
+	type_func_undef_args.push_back(type_intptr);	/* intptr *cpu */
+	type_func_undef_args.push_back(type_i32);	/* unsinged int */
+	FunctionType *type_func_undef_callout = FunctionType::get(
+		Type::getInt32Ty(cpu->dyncom_engine->mod->getContext()),	//return
+		type_func_undef_args,	/* Params */
+		false);		      	/* isVarArg */
+	/* For a custom callout, the dyncom_calloutX functions should be used */
+	Constant *undef_const = cpu->dyncom_engine->mod->getOrInsertFunction("dyncom_callout",	//function name
+		type_func_undef_callout);	//return
+	if(undef_const == NULL)
+		fprintf(stderr, "Error:cannot insert function:undefined_instr_callout.\n");
+	Function *undef_func = cast<Function>(undef_const);
+	undef_func->setCallingConv(CallingConv::C);
+	cpu->dyncom_engine->ptr_arch_func[ARM_DYNCOM_CALLOUT_UNDEF] = undef_func;
+	cpu->dyncom_engine->arch_func[ARM_DYNCOM_CALLOUT_UNDEF] = (void*)arm_undef_instr;
+}
+
 void arm_dyncom_init(arm_core_t* core){
 	cpu_t* cpu = cpu_new(0, 0, arm_arch_func);
 #if __FOLLOW_MODE__
@@ -972,13 +1035,17 @@ void arm_dyncom_init(arm_core_t* core){
 	core->CP15[CP15(CP15_MAIN_ID)] = 0x7b000;
 	//core->CP15[CP15_MAIN_ID + 1] = 0x410FB760;
 	//core->CP15[CP15_MAIN_ID - 1] = 0x410FB760;
-	core->CP15[CP15_CONTROL - CP15_BASE] = 0x00050078;
+	core->CP15[CP15(CP15_CONTROL)] = 0x00050078;
 //	core->CP15[CP15(CP15_CONTROL)] = 0x00000078;
 	core->CP15[CP15(CP15_CACHE_TYPE)] = 0xd172172;
 	core->Cpsr = 0xd3;
 	core->Mode = SVC32MODE;
 
 //	load_symbol_from_sysmap();
+
+	/* undefined instr handler init */
+	arch_arm_undef_init(cpu);
+	
 	init_compiled_queue(cpu);
 	return;
 }
@@ -1113,6 +1180,8 @@ void arm_dyncom_run(cpu_t* cpu){
 #endif
 
 	int rc = cpu_run(cpu);
+	//printf("### Out of jit return %d - %p %p\n", rc, core->Reg[15], core->Reg[15]);
+	
 //	printf("pc %x is not found\n", core->Reg[15]);
 	switch (rc) {
 	case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
@@ -1151,12 +1220,7 @@ void arm_dyncom_run(cpu_t* cpu){
                         else
                                 break;
 	case JIT_RETURN_TRAP:
-		if (core->Reg[15] == 0xc00101a0) {
-			printf("undef instr\n");
-			return;
-		}
 		if (core->syscallSig) {
-			printf("swi inst\n");
 			return;
 		}
 		if (cpu->check_int_flag == 1) {
