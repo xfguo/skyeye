@@ -151,7 +151,7 @@ void sparc_step_once ()
  *  Description:  This function sets the Program Counter
  * =====================================================================================
  */
-static void sparc_set_pc(WORD addr)
+static void sparc_set_pc(generic_address_t addr)
 {
     iu->iu_set_pc(addr);
 }
@@ -162,7 +162,7 @@ static void sparc_set_pc(WORD addr)
  *  Description:  This function returns the Program Counter
  * =====================================================================================
  */
-static WORD sparc_get_pc()
+static generic_address_t sparc_get_pc()
 {
     return (iu->iu_get_pc());
 }
@@ -173,7 +173,7 @@ static WORD sparc_get_pc()
  *  Description:  This function writes the byte 'v' at the give 'addr' address
  * =====================================================================================
  */
-static int sparc_ICE_write_byte (WORD addr, uint8_t v)
+static int sparc_ICE_write_byte (generic_address_t addr, uint8_t v)
 {
 #if 0
     int status;
@@ -193,7 +193,7 @@ static int sparc_ICE_write_byte (WORD addr, uint8_t v)
  *  the byte pointer 'pv'
  * =====================================================================================
  */
-static int sparc_ICE_read_byte(WORD addr, uint8_t *pv)
+static int sparc_ICE_read_byte(generic_address_t addr, uint8_t *pv)
 {
     int status;
 #if 0

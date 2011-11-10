@@ -68,7 +68,7 @@ void cov_init(size_t start_addr, size_t end_addr){
  * flags: 4 means read, 2 means write, 1 means eXecute
  *
  */
-	void cov_prof(int flags,WORD addr){
+	void cov_prof(int flags,generic_address_t addr){
 		if(addr < prof_start || addr >= prof_end)
 			return;	
 		int offset = (addr - prof_start) / 8;

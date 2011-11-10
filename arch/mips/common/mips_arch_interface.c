@@ -455,7 +455,7 @@ mips_get_pc()
 }
 
 static void
-mips_write_byte (WORD addr, uint8_t v)
+mips_write_byte (generic_address_t addr, uint8_t v)
 {
 	/* mips_mem_write_byte (addr, v); */
 }
@@ -502,7 +502,7 @@ mips_parse_cpu(const char* param[])
 *
 * @return
 */
-static int mips_ICE_read_byte(WORD addr, uint8_t *data){
+static int mips_ICE_read_byte(generic_address_t addr, uint8_t *data){
 	mips_mem_read(addr, (UInt32 *)data, 1);
 	return 0;
 }
@@ -515,7 +515,7 @@ static int mips_ICE_read_byte(WORD addr, uint8_t *data){
 *
 * @return
 */
-static int mips_ICE_write_byte(WORD addr, uint8_t data){
+static int mips_ICE_write_byte(generic_address_t addr, uint8_t data){
       	mips_mem_write(addr, &data, 1);  
 	return 0;
 }

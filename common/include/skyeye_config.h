@@ -171,11 +171,11 @@ typedef struct
 	void (*init) ();
 	void (*reset) ();
 	void (*step_once) ();
-	void (*set_pc) (WORD addr);
-	WORD (*get_pc)();
+	void (*set_pc) (generic_address_t addr);
+	generic_address_t (*get_pc)();
 	uint32 (*get_step)();
-	int (*ICE_write_byte) (WORD addr, uint8_t data);
-	int (*ICE_read_byte)(WORD addr, uint8_t *pv);	
+	int (*ICE_write_byte) (generic_address_t addr, uint8_t data);
+	int (*ICE_read_byte)(generic_address_t addr, uint8_t *pv);
 	uint32 (*get_regval_by_id)(int id);
         exception_t (*set_regval_by_id)(int id, uint32 value);
 	uint32 (*get_regnum)();

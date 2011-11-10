@@ -119,11 +119,11 @@ bfin_step_once ()
 		exec_callback();
 }
 static void
-bfin_set_pc (WORD addr)
+bfin_set_pc (generic_address_t addr)
 {
 	PCREG = (bu32) addr;
 }
-static WORD bfin_get_pc(){
+static generic_address_t bfin_get_pc(){
 	return PCREG;
 }
 cpu_config_t bfin_cpu[] = {
@@ -133,13 +133,13 @@ cpu_config_t bfin_cpu[] = {
 };
 //chy 2006-04-15
 static int 
-bfin_ICE_write_byte (WORD addr, uint8_t v)
+bfin_ICE_write_byte (generic_address_t addr, uint8_t v)
 {
 	put_byte (saved_state.memory, addr, (bu8) v);
 	return 0;
 }
 static int
-bfin_ICE_read_byte(WORD addr, uint8_t * pv){
+bfin_ICE_read_byte(generic_address_t addr, uint8_t * pv){
 	*pv = (unsigned char)get_byte(saved_state.memory, addr);
 	return 0;
 }

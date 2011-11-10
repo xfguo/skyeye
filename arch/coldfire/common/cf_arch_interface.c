@@ -133,21 +133,21 @@ coldfire_step_once ()
 		exec_callback();
 	}
 }
-static void coldfire_set_pc(WORD addr){
+static void coldfire_set_pc(generic_address_t addr){
 	memory_core.pc = addr; 
 }
-static WORD coldfire_get_pc(){
-	return (WORD)memory_core.pc;
+static generic_address_t coldfire_get_pc(){
+	return (generic_address_t)memory_core.pc;
 }
 //chy 2006-04-14 maybe changed in the future !!!???
 static int
-coldfire_ICE_write_byte (WORD addr, uint8_t v)
+coldfire_ICE_write_byte (generic_address_t addr, uint8_t v)
 {
 	Memory_StorByte(addr,v);
 	return 0;
 }
 static int 
-coldfire_ICE_read_byte(WORD addr, uint8_t *pv){
+coldfire_ICE_read_byte(generic_address_t addr, uint8_t *pv){
 	unsigned int v;
 	int res;
 	res = Memory_RetrByte(&v, addr);

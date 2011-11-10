@@ -30,8 +30,6 @@
 
 /*default machine word length */
 
-#define WORD uint32_t
-
 #ifndef __BEOS__
 /* To avoid the type conflict with the qemu */
 #ifndef QEMU

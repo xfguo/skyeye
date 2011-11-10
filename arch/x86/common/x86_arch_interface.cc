@@ -199,12 +199,12 @@ x86_step_once ()
 	}
 }
 static void
-x86_set_pc (WORD addr)
+x86_set_pc (generic_address_t addr)
 {
 	//EIP = addr;
 	EIP = 0xFFF0;
 }
-static WORD x86_get_pc(){
+static generic_address_t x86_get_pc(){
 	return EIP;
 }
 cpu_config_t x86_cpu[] = {
@@ -212,12 +212,12 @@ cpu_config_t x86_cpu[] = {
 };
 //chy 2006-04-15
 static int 
-x86_ICE_write_byte (WORD addr, uint8_t v)
+x86_ICE_write_byte (generic_address_t addr, uint8_t v)
 {
 	return 0;
 }
 static int
-x86_ICE_read_byte(WORD addr, uint8_t * pv){
+x86_ICE_read_byte(generic_address_t addr, uint8_t * pv){
 	return 0;
 }
 static int

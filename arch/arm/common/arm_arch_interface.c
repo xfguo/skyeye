@@ -408,23 +408,23 @@ arm_step_once ()
         FLUSHPIPE;
 }
 static void
-arm_set_pc (WORD pc)
+arm_set_pc (generic_address_t pc)
 {
 	ARMul_State *state = get_current_core();
 	state->Reg[15] = pc;
 }
-static WORD
+static generic_address_t
 arm_get_pc(){
 	ARMul_State *state = get_current_core();
-	return (WORD)state->Reg[15];
+	return (generic_address_t)state->Reg[15];
 }
 static int
-arm_ICE_write_byte (WORD addr, uint8_t v)
+arm_ICE_write_byte (generic_address_t addr, uint8_t v)
 {
 	//return (ARMul_ICE_WriteByte (state, (ARMword) addr, (ARMword) v));
 	return bus_write(8, addr, v);
 }
-static int arm_ICE_read_byte (WORD addr, uint8_t *pv){
+static int arm_ICE_read_byte (generic_address_t addr, uint8_t *pv){
 	int ret;
 	//ret = ARMul_ICE_ReadByte (state, (ARMword) addr, &data);
 	//printf("In %s,addr=0x%x,data=0x%x\n", __FUNCTION__, addr, data);
