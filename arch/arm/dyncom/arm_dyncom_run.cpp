@@ -66,11 +66,62 @@ void cpu_set_flags_codegen(cpu_t *cpu, uint32_t f)
 {
         cpu->dyncom_engine->flags_codegen = f;
 }
-static uint32_t int_icounter[] = {1953097, 2082332, 2211567, 2340802, 2470037, 2599272, 2728507, 2857742, 2986977, 3116212, 
-				3245447, 3374682, 3503917, 3633152, 3762387, 3891622, 4020857, 4027664, 4033277, 4063047,
-				4063047, 4149547, 4150163, 4157113, 4279332, 4408567, 4537802, 4667037, 4796272, 4925507,
-				5054755, 5183977, 5313448, 5442447, 5571682, 5622630, 5683942, 5691077, 5698212, 5705347,
-				5707073, 5718725, 5725860, 5732995, 5740130, 5744864, 5781941, 5789076, 5796320, 5803564};
+
+static uint32_t int_icounter[] = {0x707865,0x707d4e,0x70eb3f,0x70ed84,0x72fce1,0x73026f,0x731726,0x733a75,0x746922,0x7661f4,0x785ac6,0x7a5398,0x7c4c6a,0x7e453c,0x803e0e,0x8236e0,
+0x842fb2,0x862884,0x8833aa,0x88390a,0x885256,0x899a88,0x8a1a28,0x8b578a,0x8b6e13,0x8b9783,0x8bd41b,0x8c0e08,0x8c12fa,0x8c2801,0x8e0bcc,0x90049e,
+0x91fd70,0x93f642,0x95ef14,0x97e1f3,0x97e7e6,0x99e0b8,0x9bd996,0x9dd25c,0x9fcb2e,0xa1c400,0xa3bcd2,0xa5b5cc,0xa66b6a,0xa77da5,0xa7ae76,0xa83aca,
+0xa84f21,0xa9a748,0xaba01a,0xabc2d1,0xad9add,0xaf9222,0xb18a90,0xb38362,0xb57c34,0xb776e4,0xb96dd8,0xbb66aa,0xbd5f99,0xbf5853,0xc15120,0xc34aed,
+0xc542c4,0xc73b96,0xc9347a,0xc9ee4b,0xcb30cb,0xcd2644,0xcf2b5a,0xd117b0,0xd31082,0xd50954,0xd70226,0xd8faf8,0xdaf3ca,0xdcecc2,0xdee928,0xe0de40,
+0xe2d712,0xe4cfe4,0xe6c8b6,0xe8c211,0xeaba5a,0xecb32c,0xeeabfe,0xf0a4d0,0xf29da2,0xf49674,0xf68f46,0xf88818,0xfa80ea,0xfc79bc,0xfe728e,0x1006b60,
+0x1026432,0x1045d04,0x1065607,0x1084ea8,0x10a477a,0x10c404c,0x10e391e,0x10fc235,0x11031f0,0x110ff8c,0x1122ac2,0x1142394,0x1160b46,0x1161c66,
+0x1173a73,0x1181538,0x11932d2,0x11941cb,0x119666b,0x119ccc4,0x11a0e43,0x11c06dc,0x11c2228,0x11d1254,0x11dffae,0x11e7ebc,0x11ff880,0x121f152,
+0x123ea24,0x125e2f6,0x127dbc8,0x129d49a,0x12bcd6c,0x12dc63e,0x12fc53c,0x131b7e2,0x133b0b4,0x135a986,0x137a258,0x1399b2a,0x13b93fc,0x13d8cce,
+0x13f85a0,0x1417e72,0x1437744,0x1457016,0x14768e8,0x1496b63,0x14b5a8c,0x14d535e,0x14f4c30,0x1514502,0x1533dd4,0x15536a6,0x1572f78,0x15928a7,
+0x15b211c,0x15d19f1,0x15f12c0,0x1610b92,0x1630cfc,0x164fd36,0x166f608,0x168eeda,0x16ae7ac,0x16ce07e,0x16ed953,0x170d222,0x172caf4,0x174c3c6,
+0x1763232,0x176bc98,0x178b56a,0x17bb619,0x17ca70e,0x17e9fe0,0x18098b2,0x1829184,0x1848a56,0x1868328,0x1887bfa,0x18a74d1,0x18c6dc6,0x18e6670,
+0x1905f6d,0x1925814,0x194513d,0x19649b8,0x198428a,0x19a3b5c,0x19c3603,0x19e2d00,0x1a025d2,0x1a21ea4,0x1a418be,0x1a61048,0x1a8091a,0x1aa01ec,
+0x1abfabe,0x1adf390,0x1afed41,0x1b1e534,0x1b3de06,0x1b5d6d8,0x1b7cfad,0x1b9c87c,0x1bbc14e,0x1bdba20,0x1bfb2f2,0x1c1abc4,0x1c3a496,0x1c59d68,
+0x1c7963a,0x1c98f0c,0x1cb87de,0x1cd80f1,0x1cf7982,0x1d17254,0x1d36b26,0x1d563f8,0x1d75cca,0x1d9559c,0x1db4e6e,0x1dbd00f,0x1dd4740,0x1ddbd00,
+0x1ddd316,0x1de3b98,0x1de482f,0x1df4012,0x1e138e4,0x1e331b6,0x1e52a88,0x1e7235a,0x1e91c2c,0x1eb14fe,0x1ed0dd0,0x1ef06a2,0x1f0ff74,0x1f2f846,
+0x1f4f118,0x1f6e9ea,0x1f8e2bc,0x1fadb8e,0x1fcd460,0x1fecd32,0x200c604,0x202bed6,0x204b7a8,0x206b07a,0x208a94c,0x20aa21e,0x20c9af0,0x20e93c2,
+0x2108c94,0x2128566,0x2147e38,0x216770a,0x2186fdc,0x21a68ae,0x21c6180,0x21e5a52,0x2205324,0x2224bf6,0x22444c8,0x2263d9a,0x228366c,0x22a2f3e,
+0x22c2810,0x22e20e2,0x23019b4,0x2321286,0x2340b58,0x236042a,0x237fcfc,0x239f5ce,0x23beea0,0x23de772,0x23fe044,0x241d916,0x243d1e8,0x245caba,
+0x247c38c,0x249bc5e,0x24bb530,0x24dae02,0x24fa6d4,0x2519fa6,0x2539878,0x255914a,0x2578a1c,0x25982ee,0x25b7bc0,0x25d7492,0x25f6d64,0x2616636,
+0x2635f08,0x263bfcf,0x26557da,0x26750ac,0x269497e,0x26b4250,0x26d3b22,0x26f33f4,0x2712cc6,0x2732598,0x2751e6a,0x277173c,0x279100e,0x27b08e0,
+0x27d01b2,0x27efa84,0x280f356,0x282ec28,0x284e4fa,0x286ddcc,0x288d69e,0x28acf70,0x28cc842,0x28ec114,0x290b9e6,0x292b2b8,
+0x294ab8a,0x296a45c,0x2989d2e,0x29a9600,0x29c8ed2,0x29e87a4,0x2a08076,0x2a27948,0x2a4721a,0x2a66aec,0x2a863be,0x2a93077,
+0x2a94226,0x2aa5c90,0x2ac5562,0x2ae4e34,0x2b04706,0x2b23fd8,0x2b438aa,0x2b6317c,0x2b82a4e,0x2ba2320,0x2bc1bf2,0x2be14c4,
+0x2c00d96,0x2c20668,0x2c3ff3a,0x2c5f80c,0x2c7f0de,0x2c9e9b0,0x2cbe282,0x2cddb54,0x2cfd426,0x2d1ccf8,0x2d3a0de,0x2d3b999,
+0x2d3c5ca,0x2d5d5ae,0x2d5dc70,0x2d7b76e,0x2d9b040,0x2dba912,0x2dd2662,0x2dda1e4,0x2ded1cd,0x2df9c1e,0x2e08b11,0x2e19388,
+0x2e2432b,0x2e38c61,0x2e5852c,0x2e77dfe,0x2e976ee,0x2eb6fa2,0x2ed6874,0x2ef6146,0x2f15a18,0x2f352ea,0x2f54bbc,0x2f7448e,
+0x2f93d60,0x2fb3632,0x2fd2f04,0x2ff27d6,0x30120a8,0x303197a,0x305124c,0x3070b1e,0x309048d,0x30afcc2,0x30cf594,0x30eee66,
+0x310e738,0x312e00a,0x3147a7f,0x314d8dd,0x316d1ae,0x318ca80,0x31ac352,0x31cbc24,0x31eb4f6,0x320adc8,0x322a69a,0x3249f6c,
+0x326983e,0x3289110,0x32a89e2,0x32c84cf,0x32d7602,0x32e7ded,0x3305cb9,0x3307458,0x3326d2a,0x3333eb4,0x3335cb8,0x33465fc,
+0x3365ece,0x33857a0,0x3391135,0x33a507d,0x33c4944,0x33e4216,0x33ed31f,0x3403ae8,0x34233ba,0x3442c8c,0x346255e,0x34703ff,
+0x3481e30,0x34924a7,0x34a1702,0x34b2fa0,0x34c11c5,0x34e08a6,0x34e67d3,0x34ebdca,0x34ed9cc,0x35001d9,0x351316e,0x351687e,
+0x3518fde,0x351fa4a,0x353f31c,0x355ebee,0x357e4c0,0x3588306,0x35899d8,
+0x358b053,0x358b953,0x359dd92,0x35bd664,0x35c3814,0x35ca955,0x35cb2b8,0x35d471a,0x35d69f5,0x35d9292,0x35dcf36,
+0x35ea4ea,0x35f9aae,0x35fc808,0x3609f25,0x3619148,0x361c126,0x3629db9,0x3638fdc,0x363b9ac,0x364a104,0x365a244,
+0x365b27e,0x3669f74,0x367953c,0x367ab50,0x3688ec5,0x369933a,0x369a422,0x36a8cc9,0x36b82d9,0x36b9cf4,0x36c8b7f,
+0x36d8ac8,0x36d95c6,0x36e8a04,0x36f7d67,0x36f8e98,0x3708aa6,0x3717e09,0x371876a,0x3727d0d,0x3737f8d,0x373803c,
+0x3747dd3,0x37574ff,0x375790e,0x3766fce,0x3777583,0x3777bab,0x3787048,0x3796750,0x3796ab2,0x37a713c,0x37b6384,
+0x37b6f51,0x37c6761,0x37d5c56,0x37d6ae7,0x37e71af,0x37f5528,0x37f6bff,0x3806380,0x3814dfa,0x3816da0,0x38264ec,
+0x38349ad,0x38364fe,0x38458d0,0x3853f9e,0x3856579,0x38658dc,0x3873870,0x38756f6,0x3885976,0x3893142,0x389574a,
+0x38a4e9a,0x38b2a14,0x38b5d66,0x38c633f,0x38d22e6,0x38d66c6,0x38e5e44,0x38f1bb8,0x38f67b2,0x3905e92,0x391148a,
+0x3915d42,0x39250a5,0x3930d5c,0x3935d48,0x39450ab,0x3950672,0x3954ea7,0x3965127,0x396ff00,0x3974f19,0x3984621,
+0x398f843,0x3994078,0x39a4699,0x39af0a4,0x39b40ea,0x39c37f2,0x39cec30,0x39d4a96,0x39e41ec,0x39ee248,0x39f3fe2,
+0x3a03345,0x3a0db1a,0x3a1401f,0x3a23382,0x3a2d3ec,0x3a331e4,0x3a43464,0x3a4ccbe,0x3a53238,0x3a62964,0x3a6c590,
+0x3a723b5,0x3a8298e,0x3a8be62,0x3a923e5,0x3aa1b35,0x3aab734,0x3ab24a3,0x3ac1b83,0x3acb006,0x3ad22d3,0x3ae1688,
+0x3aea8d8,0x3af232b,0x3b0168e,0x3b0a1aa,0x3b1148a,0x3b2170a,0x3b29a7c,0x3b32962,0x3b4206a,0x3b4934e,0x3b51ac1,
+0x3b620be,0x3b68c88,0x3b71b0f,0x3b81217,0x3b884f2,0x3b91b8b,0x3ba12b3,0x3ba7dc4,0x3bb10a9,0x3bc049b,0x3bc76f0,
+0x3bd1a74,0x3be0e29,0x3be6f68,0x3bf0c43,0x3c00ec3,0x3c0683a,0x3c10cc8,0x3c2043c,0x3c2610c,0x3c2fe8d,0x3c40466,
+0x3c459de,0x3c4febd,0x3c5f5e9,0x3c652b0,0x3c6ff57,0x3c7f637,0x3c84b82,0x3c8f47b,0x3c9e7de,0x3ca4454,0x3caf481,
+0x3cbe7e4,0x3cc3d26,0x3ccf2b5,0x3cdfc51,0x3ce35f9,0x3cefa43,0x3cff14b,0x3d02eca,0x3d0eba2,0x3d1f419,0x3d2279c,
+0x3d2ee6a,0x3d3e572,0x3d4206e,0x3d4eee6,0x3d5e5ea,0x3d61940,0x3d6e3e0,0x3d7d743,0x3d81419,0x3d8e3ec,0x3d9d74f,
+0x3da0ae4,0x3daea08,0x3dbec88,0x3dc03b6,0x3dcd413,0x3ddfc88,0x3dff55a,0x3e1ee2c,0x3e3e6fe,0x3e5e071,0x3e7d8a2,
+0x3e9d174,0x3ebca46,0x3edc318,0x3efbbea,0x3f1b4bc,0x3f3ad8e,0x3f5a660,0x3f79f35,0x3f99804,0x3fb90d6,0x3fd89a8,
+0x3ff827a,0x4017bec,0x403741e,0x4056d87,0x40765c2,0x4095e94,0x40b579c,0x40d5114,0x40f499a,0x41141dd,0x4133aae,
+0x4153380,0x4172c58,0x4192524,0x41b1ecb,0x41d1703,0x41f1039,0x421086c,0x423013e,0x424fa10};
 
 static int flush_current_page(cpu_t *cpu);
 static int last_idx = 0;
@@ -349,9 +400,17 @@ void load_symbol_from_sysmap()
         }
 }
 
-
+static uint32_t int_allow = 0;
 uint32_t is_int_in_interpret(cpu_t *cpu)
 {
+	#if SYNC_HYBRID
+	if (int_allow)
+	{
+		int_allow = 0;
+		return 1;
+	}
+	return 0;
+	#else
 	static int hit = 0;
 	int curr_idx = last_idx;
 	int length = sizeof(int_icounter) / sizeof(uint32_t);
@@ -368,6 +427,7 @@ uint32_t is_int_in_interpret(cpu_t *cpu)
 		last_idx --;
 	}
 	return 0;
+	#endif
 }
 
 #ifdef TIMER_PROFILE
@@ -623,6 +683,7 @@ static uint32_t arm_debug_func(cpu_t* cpu){
 #endif
 #endif
 #endif
+
 #if 0
 #if __FOLLOW_MODE__
 #if SYNC_WITH_INTERPRET
@@ -637,14 +698,24 @@ static uint32_t arm_debug_func(cpu_t* cpu){
 #endif
 #endif
 
+	
+// Below is Alex logs
 #define BOT_LOG 0
 #define TOP_LOG 0xffff0000
+
+// Instruction type counter, needs DEBUG_ME
 #if 0
-#if DIFF_LOG
-#if SAVE_LOG
 
 const char* arm_instr[] = {
-"adc", "add","and","b,bl","bic","bkpt","blx(1)","blx(2)","bx","bxj","cdp","clrex","clz","cmn","cmp","cps","cpy","eor","ldc","ldm(1)","ldm(2)","ldm(3)","sxth","ldr","uxth","uxtah","ldrb","ldrbt","ldrd","ldrex","ldrexb","ldrh","ldrsb","ldrsh","ldrt","mcr","mcrr","mla","mov","mrc","mrrc","mrs","msr","msr","mul","mvn","orr","pkhbt","pkhtb","pld","qadd","qadd16","qadd8","qaddsubx","qdadd","qdsub","qsub","qsub16","qsub8","qsubaddx","rev","revsh","rfe","rsb","rsc","sadd16","sadd8","saddsubx","sbc","sel","setend","shadd16","shadd8","shaddsubx","shsub16","shsub8","shsubaddx","smla<x><y>","smlad","smlal","smlal<x><y>","smlald","smlaw<y>","smlsd","smlsld","smmla","smmls","smmul","smuad","smul<x><y>","smull","smulw<y>","smusd","srs","ssat","ssat16","ssub16","ssub8","ssubaddx","stc","stm(1)","stm(2)","sxtb","str","uxtb","uxtab","strb","strbt","strd","strex",	"strexb","strh","strt","sub","swi","swp","swpb","sxtab","sxtab16","sxtah","sxtb16","teq","tst","uadd16","uadd8","uaddsubx","uhadd16","uhadd8","uhaddsubx","uhsub16","uhsub8","uhsubaddx","umaal","umlal","umull","uqadd16","uqadd8","uqaddsubx","uqsub16","uqsub8","uqsubaddx","usad8","usada8","usat","usat16","usub16","usub8","usubaddx","uxtab16","uxtb16"
+"adc", "add","and","b,bl","bic","bkpt","blx(1)","blx(2)","bx","bxj","cdp","clrex","clz","cmn","cmp","cps","cpy","eor","ldc","ldm(1)",
+"ldm(2)","ldm(3)","sxth","ldr","uxth","uxtah","ldrb","ldrbt","ldrd","ldrex","ldrexb","ldrh","ldrsb","ldrsh","ldrt","mcr","mcrr","mla",
+"mov","mrc","mrrc","mrs","msr","msr","mul","mvn","orr","pkhbt","pkhtb","pld","qadd","qadd16","qadd8","qaddsubx","qdadd","qdsub","qsub",
+"qsub16","qsub8","qsubaddx","rev","revsh","rfe","rsb","rsc","sadd16","sadd8","saddsubx","sbc","sel","setend","shadd16","shadd8","shaddsubx",
+"shsub16","shsub8","shsubaddx","smla<x><y>","smlad","smlal","smlal<x><y>","smlald","smlaw<y>","smlsd","smlsld","smmla","smmls","smmul",
+"smuad","smul<x><y>","smull","smulw<y>","smusd","srs","ssat","ssat16","ssub16","ssub8","ssubaddx","stc","stm(1)","stm(2)","sxtb","str",
+"uxtb","uxtab","strb","strbt","strd","strex",	"strexb","strh","strt","sub","swi","swp","swpb","sxtab","sxtab16","sxtah","sxtb16","teq",
+"tst","uadd16","uadd8","uaddsubx","uhadd16","uhadd8","uhaddsubx","uhsub16","uhsub8","uhsubaddx","umaal","umlal","umull","uqadd16","uqadd8",
+"uqaddsubx","uqsub16","uqsub8","uqsubaddx","usad8","usada8","usat","usat16","usub16","usub8","usubaddx","uxtab16","uxtb16"
 };
 	
 	static int32_t hash_to_instr [0x150000];
@@ -686,13 +757,13 @@ const char* arm_instr[] = {
 		}
 	}
 #endif
-#endif
-#endif
 
-#if 0
-	static int flagged = 0;
-	static uint32_t bot_log = -1;
-	static uint32_t top_log = -1;
+// General log, needs bot_log and top_log from skyeye_pref
+#if 1
+	// Initialize
+	static int flagged = 0; // indicate if we are logging or not
+	static uint32_t bot_log = -1; // starting icounter for logging
+	static uint32_t top_log = -1; // ending icounter
 	if (bot_log == -1)
 	{
 		sky_pref_t* pref = get_skyeye_pref();
@@ -700,35 +771,9 @@ const char* arm_instr[] = {
 		top_log = pref->top_log;
 	}
 
-#if 0
-	uint32_t f6 = 0;
-	if (bus_read(32, 0x71200000, &f6) != -1)
-	{
-		if (f6 != 0)
-		{
-			//asm("int $3");
-			printf("#### f6 is %x at %x\n", f6, core->NumInstrs);
-		}
-	}
-#endif
-	
-#if 1
-	//if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0xc0009788)
-	if ((cpu->f.get_pc(cpu, cpu->rf.grf) == 0xc0009810) && (core->Reg[5] == 0x481))
-	{
-		if (!(get_skyeye_pref()->start_logging))
-			core->NumInstrs = 0xf0000000;
-		printf("JUMPED!\n");
-		//get_skyeye_pref()->start_logging = 1;
-	}
-#endif
-		
-	//if (core->NumInstrs < 0x10000)
+	// Catch bot_log
 	if ((flagged == 0) && (top_log > 0)) {
-		if (
-		    
-		    //(cpu->f.get_pc(cpu, cpu->rf.grf) == 0xc00255a0) ||
-		    (core->NumInstrs > bot_log) ||
+		if ((core->NumInstrs > bot_log) ||
 		    0
 		    )
 		{
@@ -737,18 +782,9 @@ const char* arm_instr[] = {
 			//core->NumInstrs = bot_log;
 		}
 	}
-	
-#if 0
-	if ( ((flagged == 0) && 
-	    (top_log > 0) && 
-	    (core->NumInstrs > bot_log) &&
-	    1) {
-		flagged = 1;
-		//core->NumInstrs = bot_log;
-	}
-#endif
 
 #if 0
+	// read instruction
 	if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0x8210)
 	{
 		uint32_t dummy = 0;
@@ -758,22 +794,30 @@ const char* arm_instr[] = {
 		printf("~~~~ instruction at %x-%x is %x and get tagged %x\n", cpu->f.get_pc(cpu, cpu->rf.grf), pa, dummy, dummy_tag);
 	}
 #endif
+
+	// Initiate logging via flagged or external triggered logging (start_logging)
 	if ((flagged == 0) && (get_skyeye_pref()->start_logging == 1))
 		flagged = 1;
-
+	
+	// flag used in follow mode (alex version), indicate that we must trigger an interrupt
+	static uint32_t int_flag = 0;
+	
 	if (flagged)
 	{
+		// Record trace in dyncom
+#if 0
 		if (core->NumInstrs % 0x100 == 0)
-			printf("||||| %x |||||\n", core->NumInstrs);
+		//	printf("||||| %x |||||\n", core->NumInstrs);
+			printf("---|%p|--- %x\n", cpu->f.get_pc(cpu, cpu->rf.grf), core->NumInstrs);
+		else
+			printf("---|%p|---\n", cpu->f.get_pc(cpu, cpu->rf.grf));   
 		
 		//if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0xc0009810)
 		{
-		printf("---|%p|---\n", cpu->f.get_pc(cpu, cpu->rf.grf));
-		
 		for (idx = 0;idx < 16; idx ++) {
-			printf("R%02d % 8x\n", idx, core->Reg[idx]);
+			//printf("R%02d % 8x\n", idx, core->Reg[idx]);
 		}
-		printf("CPS %08x\n", core->Cpsr);
+		//printf("CPS %08x\n", core->Cpsr);
 		}
 		
 		if ( (top_log > 0) && (core->NumInstrs > top_log))
@@ -782,109 +826,179 @@ const char* arm_instr[] = {
 			sleep(1);
 			exit(-1);
 		}
+#else
+		// Follow trace in dyncom
+do_int:
+		static FILE* log = NULL;
+		static uint32_t resync = 0;
+		static uint32_t val = 0;
+		uint32_t dummy = 0;
+		uint32_t error = 0;
+		char trash[100];
+		// Initiate log reading
+		if (log == NULL)
+		{
+			log = fopen("/home/yuhe/dev/skyeye-testsuite/dyncom/android_kernel/loge3", "r");
+			//for (val = 0; val < 34; val ++)
+			//	fgets(trash, 100, log);
+			long int pos = bot_log;
+			fseek(log, 264*pos, SEEK_CUR);
+		}
+		core->cycle++;
+		// Exit oj JIT immediately and trigger an interrupt
+		if (int_flag)
+		{
+			if (cpu->f.get_pc(cpu, cpu->rf.grf) != 0xffff0018)
+			{
+				printf("(IRQ) Cycle beginning: we INT at %x at pc %x\n", core->NumInstrs, cpu->f.get_pc(cpu, cpu->rf.grf));
+				core->Reg[15] -= 4;
+				core->NirqSig = 0;
+				int_flag = 0;
+				int_allow = 1;
+				return -1;
+			}
+			else
+			{
+				printf("(IRQ) Cycle beginning: already in INT at %x pc %x\n", core->NumInstrs, cpu->f.get_pc(cpu, cpu->rf.grf));
+				int_flag = 0;
+			}
+		}
+		
+		long int prev = ftell(log);
+		fscanf(log, "---|%x|---\n", &val);
+		if (val != cpu->f.get_pc(cpu, cpu->rf.grf))
+		{
+			printf("(PC) STOPPP at %x, where I read %x instead of %x\n", core->NumInstrs, val, cpu->f.get_pc(cpu, cpu->rf.grf));
+			if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0xffff000c)
+			{
+				printf("(SYNC) Prefetch abort, syncing log and jump one cycle at %x\n", core->NumInstrs);
+				uint32_t k;
+				for (k = 0; k < 19; k++)
+				{
+					fgets(trash, 100, log);
+				}
+				goto do_int;
+			} else /*if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0xffff0010) {
+				printf("(SYNC) Data abort, syncing log and jump one cycle at %x\n", core->NumInstrs);
+				uint32_t k;
+				for (k = 0; k < 19+40; k++)
+				{
+					fgets(trash, 100, log);
+				}
+				goto do_int;
+			} else*/ {
+				error = 1;
+			}
+		}
+		fscanf(log, "CYC %x\n", &val);
+		/*if (val != core->cycle) {
+			printf("(CYC) SYNC at %x, where I read %x instead of %x, pc being %x\n", 
+			       core->NumInstrs, val, core->cycle, cpu->f.get_pc(cpu, cpu->rf.grf));
+			while (core->cycle < val) {
+				core->cycle++;
+				io_do_cycle(cpu);
+			}
+		}*/
+		fscanf(log, "IRQ %x\n", &val);
+		if (val != core->NirqSig) {
+			printf("(IRQ) STOPPP at %x, where I read %x instead of %x, pc being %x\n", 
+			       core->NumInstrs, val, core->NirqSig, cpu->f.get_pc(cpu, cpu->rf.grf));
+			error |= 1 << 2;
+			//core->NirqSig = val;
+			//exit(-1);
+		}
+
+	#if 1
+		for (dummy = 0; dummy < 16; dummy++) {
+			fscanf(log, "R%02d %x\n", &dummy, &val);
+			if (core->Reg[dummy] != val) {
+				printf("(R%02d) STOPPP at %x, where I read %x instead of %x, pc being %x\n", 
+				       dummy, core->NumInstrs, val, core->Reg[dummy], cpu->f.get_pc(cpu, cpu->rf.grf));
+				error |= 1 << (3 + dummy);
+			}
+		}
+	#else
+		fseek(log, 13 * 16, SEEK_CUR);
+	#endif
+	
+		fscanf(log, "CPS %x\n", &val);
+		if (core->Cpsr != val) {
+			printf("(CPSR) STOPPP at %x, where I read %x instead of %x, pc being %x\n", 
+			       core->NumInstrs, val, core->Cpsr, cpu->f.get_pc(cpu, cpu->rf.grf));
+			error |= 1 << (19 + dummy);
+		}
+		
+		// Some output in case there is errors
+		if (error)
+		{
+			#if 0
+			fseek(log, prev - 264, SEEK_SET); 
+			uint32_t j = 0;
+			// print the previous insruction
+			for (j = 0; j < 20; j++)
+			{
+				fgets(trash, 100, log);
+				printf("%s", trash);
+			}
+			// print error lines
+			error |= 1; // force the print of current pc
+			for (j = 0; j < 20; j++)
+			{
+				fgets(trash, 100, log);
+				if (error & 1) {
+					printf(">>> ");
+				}
+				printf("%s", trash);
+				error = error >> 1;
+			}
+			
+			if (cpu->f.get_pc(cpu, cpu->rf.grf) == 0xffff0018)
+				if (core->Reg[4] == 0xc0021a48)
+				{
+					printf("\t\tCorrecting R04\n");
+					core->Reg[4] = 0x20000000;
+				}
+			#endif
+			error = 0;
+		}
+		
+		// Checking next instruction. Is it an interrupt? If yes, set a flag
+		prev = ftell(log);
+		fscanf(log, "---|%x|---\n", &val);
+		fseek(log, prev, SEEK_SET);
+		if (val == 0xffff0018) {
+			int_flag = 1;
+		} else
+			int_flag = 0;
+		
+		if ( (top_log > 0) && (core->NumInstrs > top_log))
+		{
+			printf("Exiting\n");
+			sleep(1);
+			exit(-1);
+		}
+	} else {
+		// used in follow mode, sync interpreter interrupts with dyncom
+		#if SYNC_HYBRID
+		static uint32_t int_index = 0;
+		uint32_t last_value = int_icounter[int_index];
+		int length = sizeof(int_icounter) / sizeof(uint32_t);
+		if (core->NumInstrs >= last_value)
+		{
+			printf("(SYNC) Reached %x\n", core->NumInstrs);
+			int_index++;
+			int_flag = 1;
+			goto do_int;
+		}
+		#endif
+#endif
 	}
+	
+	io_do_cycle(cpu);
 	core->NumInstrs++;
 	
 #endif
-
-#if 0
-#if DIFF_LOG
-#if SAVE_LOG
-	static uint32_t icounter = 0; //cpu->icounter;
-	icounter++;
-	/*if ( (icounter % 0x1000000) == 0)
-		printf("COUNTING: %x\n", icounter);
-	return;*/
-
-	if ( (cpu->icounter >= BOT_LOG) && ((cpu->icounter <= TOP_LOG) || (TOP_LOG <= BOT_LOG) ))
-	{
-		//fprintf(core->state_log, "---|%05x|---IN: \n", cpu->icounter);
-		
-		
-		fprintf(core->state_log, "---|%08x|---PC:%08x\n", icounter, cpu->f.get_pc(cpu, cpu->rf.grf));
-		for (idx = 0;idx < 16; idx ++) {
-			//idx = 13;
-			fprintf(core->state_log, "R%02d:% 8x\n", idx, core->Reg[idx]);
-			//break;
-		}
-		//fprintf(core->state_log, "PSR:%08x\n", core->Cpsr);
-		setbuf(core->state_log, NULL);
-	}
-	if ( (TOP_LOG > BOT_LOG) && (cpu->icounter > TOP_LOG))
-	{
-		printf("End logging\n");
-		exit(-1);
-	}
-
-#else
-	static uint32_t val;
-	static uint32_t icounter = 0;
-	icounter++;
-	static uint32_t readcount = 0;
-        uint32_t pc = cpu->f.get_pc(cpu, cpu->rf.grf);
-
-	static int flag = 0, readflag = 0;
-	if (flag == 0) {
-		flag = 1;
-		char buf [100];
-		int i;
-		for (i = 0; i < 16; i++) {
-			fgets(buf, 100, core->state_log);
-			printf("%s", buf);
-		}
-	}
 	
-	if ( (TOP_LOG > BOT_LOG) && (icounter > TOP_LOG))
-	{
-		printf("End logging\n");
-		exit(-1);
-	}
-	if (readflag == 0)
-	{
-		readflag = 1;
-		fscanf(core->state_log, "---|%08x|---PC:%08x\n", &readcount, &val);
-	}
-	if (readflag == 1)
-	{
-		if (icounter < readcount)
-		{
-			return;
-		}
-	}
-	readflag = 0;
-	
-	//printf("found icounter %d with %x\n", icounter, val);
-
-        if (val != pc) {
-		printf("---|%08x| PC: [Q] %08x - [S] %08x ### PC ERROR\n", readcount, val, pc);
-                exit(-1);
-        }
-
-	uint32_t dummy = 0xff;
-	uint32_t v = 0xff;
-	bool flags = 0;
-	for (idx = 0; idx < 16; idx ++) {
-		fscanf(core->state_log, "R%d: %x\n", &dummy, &v);
-		//printf("found r0 %d with %x\n", dummy, v);
-		if (dummy == idx) {
-			if ((core->Reg[idx] != v))
-			{
-				printf("---|%08x|---PC:%08x --- R%02d: [Q] % 8x - [S] % 8x\n", icounter, pc, idx, v, core->Reg[idx]);
-				//flags = 1;
-			}
-		} else {
-			printf("wrong dummy\n");
-			exit(-1);
-		}
-	}
-	fscanf(core->state_log, "PSR:%0x\n", &dummy, &v);
-	if (flags) {
-		flags = 0;
-		exit(-1);
-	}
-#endif
-#endif
-#endif
 	return 0;
 }
 
