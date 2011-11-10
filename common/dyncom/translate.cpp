@@ -19,6 +19,7 @@
 #include "dyncom/dyncom_llvm.h"
 #include "dyncom/defines.h"
 #include "bank_defs.h"
+#include "portable/portable.h"
 /**
  * @brief translate a single instruction. 
  *
