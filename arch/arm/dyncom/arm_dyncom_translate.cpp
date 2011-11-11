@@ -347,7 +347,8 @@ int arm_tag_branch(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *ne
 #define NOTBORROWFROMSUB(op1,op2,ptr)		(new StoreInst(ICMP_UGE(op1, op2), ptr, false, bb))
 #define OVERFLOWFROMADD(op1,op2,ret,ptr)	(new StoreInst(ICMP_SLT(AND(COM(XOR(op1, op2)), XOR(op1,ret)), CONST(0)), ptr, bb))
 #define OVERFLOWFROMSUB(op1,op2,ret,ptr)	(new StoreInst(ICMP_SLT(AND((XOR(op1, op2)), XOR(op1,ret)), CONST(0)), ptr, bb))
-#define INCOMPLETE printf("in %s:%d, incomplete implementation\n", __FUNCTION__, __LINE__); exit(-1);
+#define INCOMPLETE printf("in %s:%d, incomplete implementation\n", __FUNCTION__, __LINE__); asm("int $3"); exit(-1);
+#define UNPREDICTABLE(pc) printf("in %s:%d, pc %x is unpredictable\n", __FUNCTION__, __LINE__, pc); asm("int $3"); exit(-1);
 
 #define SET_CPSR if(!cpu->is_user_mode) {						\
 			Value *z = SHL(ZEXT32(LOAD(ptr_Z)), CONST(30)); 		\
@@ -574,7 +575,11 @@ int DYNCOM_TRANS(cps)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 		aif = ~aif;
 
 		Value *cpsr_old = R(CPSR_REG);
-		LET(CPSR_REG, OR(AND(cpsr_old, CONST(aif)), CONST(cpsr_val)));
+		Value *user_mode = ICMP_EQ(AND(cpsr_old, CONST(0xffffffe0)), CONST(0));
+		LET(CPSR_REG, SELECT(user_mode,
+				      cpsr_old,
+				      OR(AND(cpsr_old, CONST(aif)), CONST(cpsr_val))
+				      ));
 		//LET(CPSR_REG, CONST(1));
 	}
 	#if 1
@@ -719,8 +724,6 @@ int DYNCOM_TRANS(mcr)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	
 	if (BITS(8, 11) == 0xf) {
 		if(CRn == 0 && OPCODE_2 == 0 && CRm == 0) {
-			//LET(RD, CONST(0x0007b000));
-			//LET(RD, CONST(0x410FB760));
 			LET(CP15_MAIN_ID, R(RD));
 		} else if(CRn == 1 && CRm == 0 && OPCODE_2 == 0) {
 			LET(CP15_CONTROL, R(RD));
@@ -868,45 +871,26 @@ int DYNCOM_TRANS(mrc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 		printf("in %s is not implementation.\n", __FUNCTION__);
 		exit(-1);
 	}
-	#if 0
-	if (instr == 0xeef04a10) {
-		LET(RD, CONST(0x20000000));
-		return 4;
-	}
-	#else
-	if (instr == 0xeef04a10) {
-		return INSTR_SIZE;
-	}
-	// alternative possibility is to trigger a undefined exception
-	#endif
 	
 	Value *data = NULL;
 	
 	if (BITS(8, 11) == 0xf) {
 		if(CRn == 0 && OPCODE_2 == 0 && CRm == 0) {
 			data = R(CP15_MAIN_ID);
-			//LET(RD, R(CP15_MAIN_ID));
-		} else if (CRn == 1 && CRm == 0 && OPCODE_2 == 0) {
-			data = R(CP15_CONTROL);
-			//LET(RD, R(CP15_CONTROL));
-		} else if (CRn == 3 && CRm == 0 && OPCODE_2 == 0) {
-			data = R(CP15_DOMAIN_ACCESS_CONTROL);
-			//LET(RD, R(CP15_DOMAIN_ACCESS_CONTROL));
-		} else if (CRn == 2 && CRm == 0 && OPCODE_2 == 0) {
-			data = R(CP15_TRANSLATION_BASE_TABLE_0);
-			//LET(RD, R(CP15_TRANSLATION_BASE_TABLE_0));
-		} else if (CRn == 5 && CRm == 0 && OPCODE_2 == 0) {
-			data = R(CP15_FAULT_STATUS);
-			//LET(RD, R(CP15_FAULT_STATUS));
-		} else if (CRn == 6 && CRm == 0 && OPCODE_2 == 0) {
-			data = R(CP15_FAULT_ADDRESS);
-			//LET(RD, R(CP15_FAULT_ADDRESS));
 		} else if (CRn == 0 && CRm == 0 && OPCODE_2 == 1) {
 			data = R(CP15_CACHE_TYPE);
-			//LET(RD, R(CP15_CACHE_TYPE));
+		} else if (CRn == 1 && CRm == 0 && OPCODE_2 == 0) {
+			data = R(CP15_CONTROL);
+		} else if (CRn == 2 && CRm == 0 && OPCODE_2 == 0) {
+			data = R(CP15_TRANSLATION_BASE_TABLE_0);
+		} else if (CRn == 3 && CRm == 0 && OPCODE_2 == 0) {
+			data = R(CP15_DOMAIN_ACCESS_CONTROL);
+		} else if (CRn == 5 && CRm == 0 && OPCODE_2 == 0) {
+			data = R(CP15_FAULT_STATUS);
 		} else if (CRn == 5 && CRm == 0 && OPCODE_2 == 1) {
 			data = R(CP15_INSTR_FAULT_STATUS);
-			//LET(RD, R(CP15_INSTR_FAULT_STATUS));
+		} else if (CRn == 6 && CRm == 0 && OPCODE_2 == 0) {
+			data = R(CP15_FAULT_ADDRESS);
 		}
 		else {
 			printf("mrc is not implementated. CRn is %d, CRm is %d, OPCODE_2 is %d\n", CRn, CRm, OPCODE_2);
@@ -934,13 +918,18 @@ int DYNCOM_TRANS(mrc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 int DYNCOM_TRANS(mrrc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){}
 int DYNCOM_TRANS(mrs)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
-	if (BIT(22)) {
-		printf("in %s\n", __FUNCTION__);
-		LET(RD, R(SPSR_REG));
-	} else {
-		SET_CPSR;
-
-		LET(RD, R(CPSR_REG));
+	if (RD != 15) {
+		if (BIT(22)) {
+			//printf("in %s\n", __FUNCTION__);
+			LET(RD, R(SPSR_REG));
+		} else {
+			SET_CPSR; // FIXME a doubt here, as CPSR is modified only in kernel mode
+			LET(RD, R(CPSR_REG));
+		}
+	}
+	else
+	{
+		UNPREDICTABLE(pc);
 	}
 }
 int DYNCOM_TRANS(msr)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
@@ -1651,7 +1640,7 @@ int DYNCOM_TAG(cmp)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *n
 int DYNCOM_TAG(cps)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = INSTR_SIZE;
-	printf("in %s instruction is not implementated.\n", __FUNCTION__);
+	//printf("in %s instruction is not implementated.\n", __FUNCTION__); // UNC
 //	exit(-1);
 	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
 //	arm_tag_stop(cpu, pc, instr, tag, new_pc, next_pc);
@@ -1908,7 +1897,7 @@ int DYNCOM_TAG(mrrc)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *
 int DYNCOM_TAG(mrs)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = INSTR_SIZE;
-	printf("in %s instruction is not implementated.\n", __FUNCTION__);
+	//printf("in %s instruction is not implementated.\n", __FUNCTION__); // UNC
 	//exit(-1);
 	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
 	if(instr >> 28 != 0xe)
