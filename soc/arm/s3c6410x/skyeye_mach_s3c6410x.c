@@ -17,6 +17,14 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+/**
+* @file skyeye_mach_s3c6410x.c
+* @brief The implementation of 6410
+* @author Michael.Kang blackfin.kang@gmail.com
+* @version 78.77
+* @date 2011-11-12
+*/
+
 
 #include <skyeye_config.h>
 #include <skyeye_arch.h>

@@ -17,6 +17,14 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+/**
+* @file s3c6410x.h
+* @brief The definition of s3c6410
+* @author Michael.Kang blackfin.kang@gmail.com
+* @version 78.77
+* @date 2011-11-12
+*/
+
 
 #ifndef __S3C6410_H_
 #define __S3C6410_H_
