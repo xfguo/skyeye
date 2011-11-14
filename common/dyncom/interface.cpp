@@ -388,9 +388,7 @@ cpu_translate_function(cpu_t *cpu, addr_t addr)
 
 	jit_num++;
 	if (cpu->dyncom_engine->flags_debug & CPU_DEBUG_PRINT_IR)
-		if (jit_num > 11761) {
-			cpu->dyncom_engine->mod->dump();
-		}
+		cpu->dyncom_engine->mod->dump();
 
 	/* make sure everything is OK */
 	if (cpu->dyncom_engine->flags_codegen & CPU_CODEGEN_VERIFY)
