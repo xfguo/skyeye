@@ -44,13 +44,13 @@ existing ARM simulator.  */
    held in the high 16-bits.  Passing in two Thumb instructions allows
    easier simulation of the special dual BL instruction.  */
 
-tdstate thumb_translate (arm_processor* cpu, uint32_t instr, uint32_t* ainstr, uint32_t* inst_size)
+tdstate thumb_translate (arm_processor* core, uint32_t instr, uint32_t* ainstr, uint32_t* inst_size)
 {
 	tdstate valid;
 	ARMword next_instr;
 	ARMword tinstr;
 	ARMul_State* state;
-	state = cpu;
+	state = core;
 	tinstr = instr;
 	/* The endian should be judge here */
 	#if 0
@@ -63,7 +63,7 @@ tdstate thumb_translate (arm_processor* cpu, uint32_t instr, uint32_t* ainstr, u
 		tinstr &= 0xFFFF;
 	}
 	#endif
-	if((cpu->translate_pc & 0x3) != 0)
+	if((core->translate_pc & 0x3) != 0)
 		tinstr = instr >> 16;
 	else
 		tinstr &= 0xFFFF;
