@@ -57,6 +57,8 @@ typedef struct _sky_pref_s sky_pref_t;
 #endif
 #include "skyeye_pref.h"
 #include "skyeye_exec_info.h"
+#include "portable/portable.h"
+
 /**
  * A global variable , point to the current archtecture
  */
