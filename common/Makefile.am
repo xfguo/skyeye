@@ -60,7 +60,11 @@ DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_MO
 INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party -I${top_srcdir}/libltdl
 if LLVM_EXIST
 INCLUDES+= `llvm-config --cflags`
+if WIN32
+libcommon_la_LDFLAGS += -Xlinker `llvm-config --libs | sed 's/ / -Xlinker /g'` -L`llvm-config --libdir` -Xlinker /mingw/bin/libbfd-2-18-50-20070907.dll -Xlinker -lstdc++ -Xlinker /lib/libltdlc.a -Xlinker -lkernel32 -Xlinker -lmsys-1.0 -Xlinker -lole32 -Xlinker -lmsvcrt -Xlinker -lmingwex -Xlinker -lpthread -Xlinker -lmoldnamed -Xlinker -limagehlp -Xlinker -lgcc -Xlinker -lpsapi  -Xlinker -lmsys-1.0 -Xliiner -lmoldnamed
+else
 libcommon_la_LDFLAGS += `llvm-config --libs ` -lrt -L`llvm-config --libdir`
+endif #win32
 endif
 
 if LCD
