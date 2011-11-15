@@ -39,7 +39,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "skyeye_dyncom.h"
 #include "dyncom/tag.h"
 #include "dyncom/basicblock.h"
-#include "portable/usleep.h"
+//#include "portable/usleep.h"
 
 #define QUEUE_LENGTH 1024
 static uint32_t compiled_queue[QUEUE_LENGTH];
