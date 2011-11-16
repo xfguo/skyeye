@@ -334,7 +334,7 @@ int com_info(char* arg){
 			int i = 0;
 			uint32 reg_value = 0;
 			//while(arm_regstr[i]){
-			while(arch_instance->get_regname_by_id(i)){
+			while(i <= arch_instance->get_regnum()){
 				reg_value = arch_instance->get_regval_by_id(i);
 				printf("%s\t0x%x\n", arch_instance->get_regname_by_id(i), reg_value);
 				i++;
