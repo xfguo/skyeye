@@ -29,7 +29,7 @@
 #include "debug.h"
 #include "tracers.h"
 #include "sysendian.h"
-#include "io.h"
+#include "skyeye_ppc_io.h"
 #include "ppc_cpu.h"
 #include "ppc_fpu.h"
 #include "ppc_vec.h"
