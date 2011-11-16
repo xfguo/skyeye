@@ -233,8 +233,9 @@ void SIM_start(void){
 		else
 			ret = SKY_load_elf(pref->exec_file, Phys_addr);
 	}
-	
+#ifndef __WIN32__
 	init_symbol_table(pref->exec_file, arch_instance->arch_name);
+#endif
 
 	/* set pc from config */
 	generic_address_t pc = (config->start_address & pref->exec_load_mask)|pref->exec_load_base; 
