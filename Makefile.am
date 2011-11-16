@@ -1,6 +1,6 @@
 
 #SUBDIRS =  arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device/ utils/ arch/sparc/ libltdl common/ soc/arm/
-SUBDIRS =  common/ libltdl/ device/ utils/
+SUBDIRS =  common/ device/ utils/
 
 if BUILD_ARM
 SUBDIRS += arch/arm
@@ -105,10 +105,14 @@ third-party/libiberty/libiberty.a:
 third-party/opcodes/.libs/libopcodes.so:
 	mkdir -p third-party/opcodes/ && cd third-party/opcodes/ && ./../../$(top_srcdir)/third-party/opcodes/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 
+libltdl/.lib/libltdl.a:
+	mkdir -p libltdl/ && cd libltdl/ && ../$(top_srcdir)/libltdl/configure;make;
+
 lib:
 	mkdir -p third-party/libiberty && cd third-party/libiberty && ./../../$(srcdir)/third-party/libiberty/configure --prefix=$(prefix) --enable-shared ;make;
 	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 	mkdir -p third-party/opcodes/ && cd third-party/opcodes/ && ./../../$(top_srcdir)/third-party/opcodes/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
+	mkdir -p libltdl/ && cd libltdl/ && ../$(top_srcdir)/libltdl/configure;make;
 #cd $(top_srcdir)/third-party/bfd/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 #cd $(top_srcdir)/third-party/opcodes/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 #cd $(top_srcdir)/third-party/readline/ && ./configure --prefix=$(prefix) --enable-shared;make;
@@ -116,6 +120,7 @@ build_lib:
 	cd $(top_builddir)/third-party/libiberty && make;
 	cd $(top_builddir)/third-party/bfd/ && make;
 	cd $(top_builddir)third-party/opcodes/ && make;
+	cd $(top_builddir)/libltdl/ && make;
 install_lib:
 	cd $(top_builddir)/third-party/libiberty && make install
 	cd $(top_builddir)/third-party/bfd/ && make install
@@ -125,11 +130,13 @@ clean_lib:
 	cd $(top_builddir)/third-party/libiberty && make distclean
 	cd $(top_builddir)/third-party/bfd/ && make distclean
 	cd $(top_builddir)/third-party/opcodes/ && make distclean
+	cd $(top_builddir)/libltdl/ && make distclean;
 install-data-hook:
 	rm -f -r $(prefix)/testsuite && mkdir $(prefix)/testsuite
 if WIN32
 	mkdir -p $(prefix)/testsuite/arm_hello && mkdir -p $(prefix)/bin
-	cp -a $(top_srcdir)/common/.libs/libcommon-0.dll $(prefix)/lib/skyeye/
+	cp -a $(top_builddir)/common/.libs/libcommon-0.dll $(prefix)/lib/skyeye/
+	cp -a $(top_builddir)/common/.libs/libcommon-0.dll $(prefix)/bin/
 endif
 	cp -a $(top_srcdir)/testsuite/arm_hello $(prefix)/testsuite/arm_hello/
 	cp -a $(top_srcdir)/utils/pycli/*.py $(prefix)/bin/
