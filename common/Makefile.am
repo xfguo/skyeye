@@ -35,26 +35,29 @@ include_HEADERS = ./include/sim_control.h ./include/skyeye_callback.h \
 
 libcommon_la_SOURCES = $(common_module) $(common_misc) $(common_breakpoint) $(common_ctrl) $(common_portable) $(common_preference) $(common_core) $(common_conf_parser) $(common_log) $(common_cli) $(common_mm) $(common_mach) $(common_device) $(common_memory) $(common_loader) $(common_callback) $(common_profile) $(common_checkpoint)
 
-libcommon_la_LIBADD = -L$(top_builddir)/third-party/bfd/.libs/ -lbfd -L$(top_builddir)/third-party/libiberty/pic -liberty @LIBLTDL@ @LIBADD_DL@
+libcommon_la_LIBADD =
 
 if LLVM_EXIST
 libcommon_la_SOURCES += $(common_dyncom)
 endif
 
-
+libcommon_la_LDFLAGS =
 if WIN32
+libcommon_la_LDFLAGS += -no-undefined -shared -Xlinker /mingw/bin/libbfd-2-18-50-20070907.dll -Xlinker /lib/libltdlc.a -Xlinker -lkernel32 -Xlinker -lmsvcrt -Xlinker -lgw32c -Xlinker -lkernel32 -Xlinker -lmsys-1.0 -Xlinker --export-all-symbol
 else
 #libcommon_la_LIBADD += -L$(top_builddir)/third-party/readline/
+libcommon_la_LIBADD += -L$(top_builddir)/third-party/bfd/.libs/ -lbfd -L$(top_builddir)/third-party/libiberty/pic -liberty -L${top_builddir}/libltdl/.libs -lltdl
+libcommon_la_LDFLAGS += `python-config --libs`
 endif
 # we will link the common module with main
 #libcommon_la_LDFLAGS = -module
-libcommon_la_LDFLAGS = `python-config --libs`
 
 skyeye_module_dir = \"$(prefix)/lib/skyeye\"
 
 DEFS = -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 -DSKYEYE_MODULE_DIR=$(skyeye_module_dir) @COMMON_CFLAGS@
 
-INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party @INCLTDL@
+#INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party @INCLTDL@
+INCLUDES =  @COMMON_INCLUDES@ -I$(top_srcdir)/third-party/include/ -I$(top_srcdir)/third-party/bfd/ -I$(top_builddir)/third-party/bfd/ -I$(top_srcdir)/third-party -I${top_srcdir}/libltdl
 if LLVM_EXIST
 INCLUDES+= `llvm-config --cflags`
 libcommon_la_LDFLAGS += `llvm-config --libs ` -lrt -L`llvm-config --libdir`
