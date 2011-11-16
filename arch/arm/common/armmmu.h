@@ -194,6 +194,8 @@ typedef struct mmu_state_t
 	ARMword fault_address;
 	ARMword last_domain;
 	ARMword process_id;
+	ARMword context_id;
+	ARMword thread_uro_id;
 	ARMword cache_locked_down;
 	ARMword tlb_locked_down;
 //chy 2003-08-24 for xscale
