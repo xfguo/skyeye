@@ -164,7 +164,7 @@ do_load_file_option (skyeye_option_t * this_option, int num_params,
 		if (!strncmp ("filename", name, strlen (name))) {
 			strcpy(filename_initrd, value);
 		}
-		else if (!strncmp ("initrd_start", name, strlen (name))) {
+		else if (!strncmp ("start", name, strlen (name))) {
 			sscanf (value, "%x", &initrd_start);
 		}
 		else
