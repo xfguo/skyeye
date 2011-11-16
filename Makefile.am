@@ -36,6 +36,11 @@ if BUILD_X86
 SUBDIRS += arch/x86
 endif
 
+if BUILD_DEFAULT
+SUBDIRS += arch/ppc arch/arm soc/arm
+default_targets=arm, ppc
+endif
+
 if BUILD_ALL
 SUBDIRS += arch/arm/ soc/arm arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ arch/sparc
 endif

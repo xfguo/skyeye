@@ -102,10 +102,10 @@ AC_ARG_ENABLE([targets],
     sparc)ENABLE_TARGETS=sparc;;
     x86)ENABLE_TARGETS=x86;;
     all)ENABLE_TARGETS=all;;
-    yes)ENABLE_TARGETS=all;;
-    *)AC_MSG_ERROR(bad value ${ENABLE_TARGETS} for --enable-targets);;
+    yes)ENABLE_TARGETS=default_arch;;
+    *)AC_MSG_ERROR([bad value ${ENABLE_TARGETS} for --enable-targets]);;
      esac],
-    ENABLE_TARGETS=all)
+    ENABLE_TARGETS=default_arch)
 
 
 AM_CONDITIONAL([BUILD_ARM], [test "${ENABLE_TARGETS}" = "arm"])
@@ -116,9 +116,11 @@ AM_CONDITIONAL([BUILD_PPC], [test "${ENABLE_TARGETS}" = "ppc"])
 AM_CONDITIONAL([BUILD_SPARC], [test "${ENABLE_TARGETS}" = "sparc"])
 AM_CONDITIONAL([BUILD_X86], [test "${ENABLE_TARGETS}" = "x86"])
 AM_CONDITIONAL([BUILD_ALL], [test "${ENABLE_TARGETS}" = "all"])
-
-
-
+AM_CONDITIONAL([BUILD_DEFAULT], [test "${ENABLE_TARGETS}" = "default_arch"])
+if test "x${ENABLE_TARGETS}" = "xdefault_arch" ; then
+    DEFAULT_TARGET_1="arm"
+    DEFAULT_TARGET_2="ppc"
+fi
 
 # check LCD
 LCD_CFLAGS=
@@ -326,7 +328,15 @@ if test ["${ENABLE_TARGETS}" = "all"] ;then
     AC_CONFIG_FILES(arch/x86/Makefile)
     AC_CONFIG_FILES(arch/sparc/Makefile)
 else
-    AC_CONFIG_FILES(arch/${ENABLE_TARGETS}/Makefile)
+    if test "x${ENABLE_TARGETS}" = "xdefault_arch" ; then
+        AC_CONFIG_FILES(arch/${DEFAULT_TARGET_1}/Makefile)
+        AC_CONFIG_FILES(arch/${DEFAULT_TARGET_2}/Makefile)
+        #AC_MSG_ERROR([???? value ${ENABLE_TARGETS} for --enable-targets])
+        #AC_MSG_WARN([???? value ${DEFAULT_TARGET_1} for --enable-targets])
+    else
+        #AC_MSG_ERROR([!!! value ${ENABLE_TARGETS} for --enable-targets])
+        AC_CONFIG_FILES(arch/${ENABLE_TARGETS}/Makefile)
+    fi
 fi
 AC_OUTPUT 
 
