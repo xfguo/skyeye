@@ -560,8 +560,15 @@ static uint32 arm_get_regval_by_id(int id){
 	else
         	return state->Reg[id];
 }
-static uint32 arm_get_regnum(){
-	return MAX_REG_NUM;
+
+/**
+* @brief Only return the number of regular register
+*
+* @return the number of regular register
+*/
+static uint32 arm_get_gpr_regnum(){
+	return CPSR_REG;
+	//return MAX_REG_NUM;
 }
 static exception_t arm_set_register_by_id(int id, uint32 value){
 	ARMul_State *state = get_current_core();
@@ -604,7 +611,7 @@ init_arm_arch ()
 	arm_arch.get_regval_by_id = arm_get_regval_by_id;
 	arm_arch.get_regname_by_id = arm_get_regname_by_id;
 	arm_arch.set_regval_by_id = arm_set_register_by_id;
-	arm_arch.get_regnum = arm_get_regnum;
+	arm_arch.get_regnum = arm_get_gpr_regnum;
 	arm_arch.signal = arm_signal;
 
 	register_arch (&arm_arch);
