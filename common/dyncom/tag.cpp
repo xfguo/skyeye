@@ -24,11 +24,6 @@ using namespace std;
  * code memory, but have one tag per instruction location.
  */
 
-#ifdef _WIN32
-#define MAX_PATH 260
-extern "C" __declspec(dllimport) uint32_t __stdcall GetTempPathA(uint32_t nBufferLength, char *lpBuffer);
-#endif
-
 static uint32_t block_entry;
 
 static const char *
