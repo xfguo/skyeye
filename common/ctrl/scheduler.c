@@ -35,6 +35,7 @@
 #include "sim_control.h"
 #include "skyeye_lock.h"
 #include "skyeye_mm.h"
+#include "portable/portable.h"
 
 //#define DEBUG
 #include "skyeye_log.h"

@@ -22,7 +22,7 @@
  */
 
 #include <windows.h>
-#include "utils/portable/usleep.h"
+#include "portable/usleep.h"
 
 int usleep(unsigned long usec)
 {

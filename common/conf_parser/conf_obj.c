@@ -38,6 +38,7 @@
 #include <search.h>
 #include "skyeye_mm.h"
 #include "skyeye_log.h"
+#include "portable/portable.h"
 
 /**
 * @brief the data saved to hash table

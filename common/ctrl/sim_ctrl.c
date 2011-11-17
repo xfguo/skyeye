@@ -39,6 +39,7 @@
 #include "skyeye_symbol.h"
 #include "skyeye_log.h"
 #include "skyeye_cli.h"
+#include "portable/portable.h"
 /* FIXME, we should get it from prefix varaible after ./configure */
 #ifndef SKYEYE_MODULE_DIR
 const char* default_lib_dir = "/opt/skyeye/lib/skyeye/";

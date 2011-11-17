@@ -27,6 +27,7 @@
 #include "ppc_tools.h"
 #include "tracers.h"
 #include "sysendian.h"
+#include "portable/portable.h"
 
 #include <stdio.h>
 #include <stdarg.h>

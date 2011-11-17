@@ -26,6 +26,7 @@
 #include "ppc_fpu.h"
 #include "ppc_tools.h"
 #include "tracers.h"
+#include "portable/portable.h"
 // .121
 
 #define PPC_FPR_TYPE2(a,b) (((a)<<8)|(b))

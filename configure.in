@@ -44,7 +44,9 @@ AC_PREFIX_DEFAULT([/opt/skyeye])
 # according to host type, we can select different macro
 dbct=false
 case $host in
-  i[[3456]]86-*-linux*)
+  *linux*)
+# FIXME: Replace `main' with a function in `-liberty':
+	AC_CHECK_LIB([iberty], [main])
     #dbct=true
     ;;
   *-*-mingw32*)
@@ -164,7 +166,7 @@ AC_SUBST(LCD_LIBS)
 # FIXME: Replace `main' with a function in `-lc':
 AC_CHECK_LIB([c], [main])
 # FIXME: Replace `main' with a function in `-liberty':
-AC_CHECK_LIB([iberty], [main])
+#AC_CHECK_LIB([iberty], [main])
 # FIXME: Replace `main' with a function in `-lintl':
 AC_CHECK_LIB([intl], [main])
 # FIXME: Replace `main' with a function in `-lm':
@@ -233,7 +235,7 @@ dnl else it disables shared libraries somehow.  The values from this macro
 dnl are written to ltdlconf.h.
 dnl AC_LIB_LTDL
 LT_CONFIG_LTDL_DIR([libltdl])
-LTDL_INIT
+#LTDL_INIT
 
 
 AC_PATH_XTRA

@@ -1,9 +1,10 @@
 
 #SUBDIRS =  arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ device/ utils/ arch/sparc/ libltdl common/ soc/arm/
-SUBDIRS =  device/ utils/  libltdl common/ soc/arm/
+SUBDIRS =  common/ libltdl/ device/ utils/
 
 if BUILD_ARM
 SUBDIRS += arch/arm
+SUBDIRS += soc/arm
 endif
 
 if BUILD_BFIN
@@ -36,7 +37,7 @@ SUBDIRS += arch/x86
 endif
 
 if BUILD_ALL
-SUBDIRS += arch/arm/ arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ arch/sparc
+SUBDIRS += arch/arm/ soc/arm arch/bfin arch/coldfire arch/mips arch/ppc/ arch/x86/ arch/sparc
 endif
 
 DIST_SUBDIRS = $(SUBDIRS)
@@ -68,12 +69,19 @@ INCLUDES = @COMMON_INCLUDES@ -Ithird-party/bfd/
 DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0 @COMMON_CFLAGS@ 
 AM_CFLAGS = -W -Wall -Wstrict-prototypes -Wmissing-prototypes 
 ACLOCAL_AMFLAGS=-I m4
-bin_PROGRAMS = uart_instance mknandflashdump prof_convert skyeye
 
+bin_PROGRAMS = skyeye
 skyeye_SOURCES = utils/main/skyeye.c
+if WIN32
+uart_instance_SOURCES =
+mknandflashdump_SOURCES =
+prof_convert_SOURCES =
+else
+bin_PROGRAMS += uart_instance mknandflashdump prof_convert
 uart_instance_SOURCES = utils/uart_console/uart_console.c
 mknandflashdump_SOURCES = utils/nandflash_dump/mknandflashdump.c
 prof_convert_SOURCES = utils/code_cov/prof_convert.c
+endif
 if LCD
 #skyeye_LDADD += @LCD_LIBS@
 endif
@@ -114,6 +122,10 @@ clean_lib:
 	cd $(top_builddir)/third-party/opcodes/ && make distclean
 install-data-hook:
 	rm -f -r $(prefix)/testsuite && mkdir $(prefix)/testsuite
+if WIN32
+	mkdir -p $(prefix)/testsuite/arm_hello && mkdir -p $(prefix)/bin
+	cp -a $(top_srcdir)/common/.libs/libcommon-0.dll $(prefix)/lib/skyeye/
+endif
 	cp -a $(top_srcdir)/testsuite/arm_hello $(prefix)/testsuite/arm_hello/
 	cp -a $(top_srcdir)/utils/pycli/*.py $(prefix)/bin/
 #	rm -f -r $(prefix)/conf && mkdir $(prefix)/conf

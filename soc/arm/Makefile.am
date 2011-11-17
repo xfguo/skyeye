@@ -79,6 +79,30 @@ libimx9238_la_LDFLAGS = -module
 libs3c4510b_la_SOURCES = $(s3c4510b)
 libs3c4510b_la_LDFLAGS = -module
 
+if WIN32
+WIN32_LD_COMMON = -no-undefined -shared -Xlinker -L../../common/.libs/ -Xlinker -lcommon -Xlinker --export-all-symbol
+libs3c2410_la_LDFLAGS += $(WIN32_LD_COMMON)
+libs3c6410_la_LDFLAGS += $(WIN32_LD_COMMON)
+libat91rm92_la_LDFLAGS += $(WIN32_LD_COMMON)
+libat91_la_LDFLAGS += $(WIN32_LD_COMMON)
+libcs89712_la_LDFLAGS += $(WIN32_LD_COMMON)
+libep9312_la_LDFLAGS += $(WIN32_LD_COMMON)
+libep7312_la_LDFLAGS += $(WIN32_LD_COMMON)
+libs3c2440_la_LDFLAGS += $(WIN32_LD_COMMON)
+libsa1100_la_LDFLAGS += $(WIN32_LD_COMMON)
+libpxa270_la_LDFLAGS += $(WIN32_LD_COMMON)
+libpxa250_la_LDFLAGS += $(WIN32_LD_COMMON)
+libs3c3410x_la_LDFLAGS += $(WIN32_LD_COMMON)
+libns9750_la_LDFLAGS += $(WIN32_LD_COMMON)
+libsharp_la_LDFLAGS += $(WIN32_LD_COMMON)
+libomap5912_la_LDFLAGS += $(WIN32_LD_COMMON)
+liblpc2210_la_LDFLAGS += $(WIN32_LD_COMMON)
+liblh79520_la_LDFLAGS += $(WIN32_LD_COMMON)
+libps7500_la_LDFLAGS +=  $(WIN32_LD_COMMON)
+libimx9238_la_LDFLAGS += $(WIN32_LD_COMMON)
+libs3c4510b_la_LDFLAGS += $(WIN32_LD_COMMON)
+endif
+
 pkglib_LTLIBRARIES = libs3c6410.la libs3c2410.la libat91rm92.la libat91.la libcs89712.la \
 libep9312.la libep7312.la libs3c2440.la libsa1100.la libpxa270.la libpxa250.la libs3c3410x.la \
 libns9750.la libsharp.la  libomap5912.la liblpc2210.la liblh79520.la libps7500.la libimx9238.la \

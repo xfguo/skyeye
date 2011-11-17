@@ -34,12 +34,17 @@
 #include <sys/mman.h>		//mmap
 #include <sys/ioctl.h>
 #include <sys/times.h>
-#include <linux/unistd.h>			//exit_group
 #ifndef __USE_LARGEFILE64
 #define __USE_LARGEFILE64		/* When use 64 bit large file need define it! for stat64*/
 #endif
 #include <fcntl.h>
 #include <sys/stat.h>
+#include "portable/portable.h"
+#ifdef __WIN32__
+#include <sys/unistd.h>
+#else
+#include <linux/unistd.h>          //exit_group
+#endif
 
 extern void ppc_dyncom_stop(e500_core_t* core);
 struct ppc_stat64{

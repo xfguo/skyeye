@@ -16,6 +16,9 @@ endif
 pkglib_LTLIBRARIES = libppc.la
 # we will link the common module with main
 libppc_la_LDFLAGS = -module
+if WIN32
+libppc_la_LDFLAGS += -no-undefined -shared -module  -Xlinker -L../../common/.libs/ -Xlinker -lcommon -Xlinker -lmsys-1.0 -Xlinker -lmsvcrt -Xlinker -lmsys-1.0 -Xlinker -lkernel32 -Xlinker -lole32 -Xlinker -lkernel32 -Xlinker -lgdi32 -Xlinker -luuid -Xlinker -luser32  -Xlinker -lshell32 -Xlinker --export-all-symbol
+endif
 #DEFS = -DMODET -g -O2 -D_FILE_OFFSET_BITS=64 -DSTANDALONE -DDEFAULT_INLINE=0
 DEFS = @COMMON_CFLAGS@
 if LLVM_EXIST

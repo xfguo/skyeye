@@ -34,6 +34,7 @@ fun, and definign VAILDATE will define SWI 1 to enter SVC mode, and SWI
 #include <sys/utsname.h>
 #include <sys/times.h>
 #include "skyeye_pref.h" /* temporary */
+#include "portable/portable.h"
 #ifndef __USE_LARGEFILE64
 #define __USE_LARGEFILE64               /* When use 64 bit large file need define it! for stat64*/
 #endif

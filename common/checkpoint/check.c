@@ -41,6 +41,7 @@
 #include "skyeye_mm.h"
 #include "skyeye_log.h"
 #include "bank_defs.h"
+#include "portable/portable.h"
 
 /**
 * @brief the data of checkpoint

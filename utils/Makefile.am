@@ -36,13 +36,22 @@ libshutdown_la_SOURCES = $(utils_shutdown)
 libshutdown_la_LDFLAGS = -module
 
 libdisasm_la_SOURCES = $(utils_disassembler)
-libdisasm_la_LDFLAGS = -module -L./$(top_builddir)/third-party/opcodes/.libs/ -L./$(top_builddir)/third-party/bfd/.libs/ -L./$(top_builddir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
+libdisasm_la_LDFLAGS = -module
 
 libos_supp_la_SOURCES = $(utils_os)
 libos_supp_la_LDFLAGS = -module
 
 libpycli_la_SOURCES = $(utils_pycli) 
 libpycli_la_LDFLAGS = -module `python-config --libs`
+
+if WIN32
+libgdbserver_la_LDFLAGS += -no-undefined -shared -Xlinker -L../common/.libs/ -Xlinker -lcommon -Xlinker --export-all-symbol
+libbus_log_la_LDFLAGS += -no-undefined -shared -Xlinker -L../common/.libs/ -Xlinker -lcommon --export-all-symbol
+libdisasm_la_LDFLAGS += -no-undefined -shared -Xlinker -lopcodes -Xlinker -lopcodes -Xlinker -liberty -Xlinker /mingw/bin/libbfd-2-18-50-20070907.dll  -Xlinker -L../common/.libs/ -Xlinker -lcommon
+libos_supp_la_LDFLAGS += -no-undefined -Xlinker -L../common/.libs/ -Xlinker -lcommon
+else
+libdisasm_la_LDFLAGS += -L./$(top_builddir)/third-party/opcodes/.libs/ -L./$(top_builddir)/third-party/bfd/.libs/ -L./$(top_builddir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
+endif
 
 pkglib_LTLIBRARIES = libcodecov.la libgdbserver.la libdisasm.la liblog.la libpmon.la libbus_log.la libshutdown.la libos_supp.la libpycli.la
 #pkglib_LTLIBRARIES = libutils.la libgdbserver.la

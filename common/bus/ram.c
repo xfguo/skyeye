@@ -33,6 +33,7 @@
 #include "skyeye_pref.h"
 #include "skyeye_swapendian.h"
 #include "skyeye_mm.h"
+#include "portable/portable.h"
 #include "skyeye_log.h"
 
 /* All the memory including rom and dram */

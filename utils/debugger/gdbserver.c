@@ -118,7 +118,7 @@ remote_open (char *name)
 #ifndef __MINGW32__
 	if ((tmp_desc = socket (PF_INET, SOCK_STREAM, 0)) < 0) perror ("Can't open socket");
 #else
-	+   struct WSAData {
+	struct WSAData {
 		WORD wVersion;
 		char szSystemStatus[100+1];
 		unsigned short iMaxSockets;

@@ -10,6 +10,7 @@
 #include "skyeye_exec.h"
 #include "skyeye_obj.h"
 #include "skyeye_cell.h"
+#include "portable/portable.h"
 
 /* flag to enable performence monitor function. */
 static int enable_pmon_flag;

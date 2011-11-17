@@ -31,17 +31,19 @@
 #include "skyeye_mm.h"
 #include "skyeye_log.h"
 #include "skyeye_module.h"
+#include "portable/define.h"
 #if 0
 mmi_bool_t   mmi_register_instance_creator (const char * modname, mmi_instance_creator fn){
 	printf("mmi_instance_creator is registered.\n");
 	return mmi_true;
 }
 #endif
-
+#if 0
 /* on *nix platform, the suffix of shared library is so. */
 const char* Default_libsuffix = ".so";
 /* we will not load the prefix with the following string */
 const char* Reserved_libprefix = "libcommon";
+#endif
 
 /**
 * @brief the default directory splitter

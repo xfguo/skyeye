@@ -30,6 +30,7 @@
 #include "skyeye_mm.h"
 #include "skyeye_log.h"
 #include "symbol.h"
+#include "portable/portable.h"
 
 /*
  * FIXME: GNU hash table isn't exist everywhere!!!

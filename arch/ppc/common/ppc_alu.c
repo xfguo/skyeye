@@ -30,6 +30,7 @@
 #include "ppc_opc.h"
 #include "ppc_tools.h"
 #include "ppc_mmu.h"
+#include "portable/portable.h"
 
 static inline uint32 ppc_mask(int MB, int ME)
 {

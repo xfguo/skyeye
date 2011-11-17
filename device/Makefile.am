@@ -70,6 +70,10 @@ libts_la_LDFLAGS = -module
 libpci_la_SOURCES = $(dev_pci)
 libpci_la_LDFLAGS = -module
 
+if WIN32
+libuart_la_LDFLAGS +=  -no-undefined -shared -module -Xlinker -L../common/.libs/ -Xlinker -lcommon -Xlinker --export-all-symbol
+endif
+
 pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la liblcd_s3c6410.la libsdhci_s3c6410.la
 
 if GTK_LCD

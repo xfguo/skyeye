@@ -32,6 +32,7 @@
 #include "skyeye_arch.h"
 #include "skyeye_command.h"
 #include "skyeye_callback.h"
+#include "portable/portable.h"
 #define COV_ON 1
 #define COV_OFF 0
 #define COV_START 2
