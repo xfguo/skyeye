@@ -30,7 +30,7 @@
 #include "skyeye_uart.h"
 
 #include "portable/gettimeofday.h"
-#include "portable/usleep.h"
+//#include "portable/usleep.h"
 
 struct uart_converter
 {

@@ -22,6 +22,7 @@
  */
 
 #include "skyeye_lcd.h"
+#include "portable/portable.h"
 
 #undef WORD
 #include <windows.h>

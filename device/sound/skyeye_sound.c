@@ -26,6 +26,7 @@
 #include "skyeye_options.h"
 #include "skyeye.h"
 #include "skyeye_sound.h"
+#include "portable/portable.h"
 
 static int
 do_sound_option (skyeye_option_t * this_option, int num_params,

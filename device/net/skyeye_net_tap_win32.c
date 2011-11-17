@@ -30,6 +30,7 @@
 /* modified by Anthony Lee 2007.1.6 : for SkyEye to work on MinGW/CygWin */
 
 #include "skyeye_net.h"
+#include "portable/portable.h"
 #undef WORD
 #undef byte
 

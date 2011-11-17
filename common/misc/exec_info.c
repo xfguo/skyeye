@@ -30,11 +30,12 @@
 
 #include "skyeye_pref.h"
 #include "skyeye_exec_info.h"
+#include "portable/portable.h"
 #include <elf.h>
 #include <stdlib.h>
+//#include <time.h>
 
 /* Note: most content ported from qemu */
-
 sky_exec_info_t* get_skyeye_exec_info()
 {
 	sky_pref_t *pref = get_skyeye_pref();
@@ -282,12 +283,12 @@ uint32_t set_tables(uint32_t sp, char * user_argv, char* user_envp, Elf32_Ehdr* 
 	PUSH_STACK(0);
 
 	/* Auxiliary vector */
-	PUSH_AUXV(AT_CLKTCK, sysconf(_SC_CLK_TCK));
+	PUSH_AUXV(AT_CLKTCK, 0);
 	PUSH_AUXV(AT_HWCAP, 0); /* FIXME missing */
-	PUSH_AUXV(AT_EGID, getegid());
-	PUSH_AUXV(AT_GID, getgid());
-	PUSH_AUXV(AT_EUID, geteuid());
-	PUSH_AUXV(AT_UID, getuid());
+	PUSH_AUXV(AT_EGID, 0);
+	PUSH_AUXV(AT_GID, 0);
+	PUSH_AUXV(AT_EUID, 0);
+	PUSH_AUXV(AT_UID, 0);
 	PUSH_AUXV(AT_ENTRY, info->entry);
 	PUSH_AUXV(AT_FLAGS, 0);
 	PUSH_AUXV(AT_BASE, 0); /* FIXME missing */

@@ -5,9 +5,11 @@
 #ifdef __WIN32__
 #include <search.h>
 #include <sys/unistd.h>
+#include <stdlib.h>
 typedef unsigned int uint;
 #define __THROW
 #define UIO_MAXIOV 1024
+#define F_GETFD	1
 int mkdir (const char *_path, unsigned int mode);
 struct _ENTRY;
 struct hsearch_data
@@ -24,6 +26,7 @@ extern ENTRY *hsearch (ENTRY __item, ACTION __action) __THROW;
 extern int hcreate (size_t __nel) __THROW;
 extern void hdestroy (void) __THROW;
 extern void bzero (void *__s, size_t __n);
+extern int fcntl(int fd, int cmd, ...);
 extern int setitimer(int which, const struct itimerval *new_value,
 				struct itimerval *old_value);
 _CRTIMP int __cdecl __MINGW_NOTHROW _fstat64 (int, struct __stat64*);

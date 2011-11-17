@@ -24,6 +24,7 @@
  *			walimis <wlm@student.dlut.edu.cn>
  */
 
+#include "portable/portable.h"
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>

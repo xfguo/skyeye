@@ -33,6 +33,7 @@
 #include "skyeye_options.h"
 #include "skyeye.h"
 #include "skyeye_net.h"
+#include "portable/portable.h"
 
 #define MAC_ADDR	"\0skyey"
 
