@@ -2027,7 +2027,7 @@ int DYNCOM_TRANS(ldrd)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 #endif
 	int instr_size = INSTR_SIZE;
 	printf("in %s instruction is not implementated.\n", __FUNCTION__);
-	exit(-1);
+	//exit(-1);
 	return instr_size;
 }
 int DYNCOM_TRANS(ldrex)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
@@ -3057,9 +3057,9 @@ int DYNCOM_TAG(ldrbt)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t 
 int DYNCOM_TAG(ldrd)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = INSTR_SIZE;
-	printf("pc is %x\n", pc);
+	//printf("pc is %x\n", pc);
 	printf("in %s instruction is not implementated.\n", __FUNCTION__);
-	exit(-1);
+	//exit(-1);
 	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
 	*tag |= TAG_MEMORY;
 	if(instr >> 28 != 0xe)
@@ -3408,7 +3408,15 @@ int DYNCOM_TAG(strb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *
 	return instr_size;
 }
 int DYNCOM_TAG(strbt)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
-int DYNCOM_TAG(strd)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){int instr_size = INSTR_SIZE;printf("in %s instruction is not implementated.\n", __FUNCTION__);exit(-1);return instr_size;}
+int DYNCOM_TAG(strd)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc){
+	int instr_size = INSTR_SIZE;
+	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
+	*tag |= TAG_MEMORY;
+	if(instr >> 28 != 0xe)
+		*tag |= TAG_CONDITIONAL;
+	printf("in %s instruction is not implementated.\n", __FUNCTION__);
+	return instr_size;
+}
 int DYNCOM_TAG(strex)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = INSTR_SIZE;
