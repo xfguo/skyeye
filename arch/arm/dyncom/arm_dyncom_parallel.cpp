@@ -38,7 +38,7 @@ using namespace std;
 #define QUEUE_LENGTH 0x6000
 /* Monothread: threshold compilation only
    Multithread: threshold compilation or Polling compilation (cpu intensive) */
-#define MULTI_THREAD 0
+#define MULTI_THREAD 1
 #define LIFO 0
 static uint32_t compiled_queue[QUEUE_LENGTH]; /* list of tagged addresses */
 static stack<uint32_t> compile_stack; /* stack of untranslated addresses */
