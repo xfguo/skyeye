@@ -46,16 +46,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 static void
 arm_reset_state ()
 {
-	int i;
-	ARMul_State *state;
-
-	ARM_CPU_State *cpu = get_current_cpu();
-	for(i = 0; i < cpu->core_num; i++){
-		state = &cpu->core[i];
-		ARMul_Reset (state);
-		state->NextInstr = PRIMEPIPE;
-		state->Emulate = 3;
-	}
 }
 
 #if 1
@@ -272,8 +262,6 @@ static bool arm_cpu_init()
 
 	cpu->boot_core_id = 0;
 
-	ARMul_EmulateInit(); /* Needed by the interpreter */
-	
 	return true;
 }
 

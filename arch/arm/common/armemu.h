@@ -434,10 +434,12 @@ extern ARMword isize;
 #define WRITEDESTB(d)				\
   do						\
     {						\
-      if (DESTReg == 15)			\
+      if (DESTReg == 15){			\
 	WriteR15Branch (state, d);		\
-      else					\
+      }						\
+      else{					\
 	DEST = d;				\
+      }						\
     }						\
   while (0)
 
@@ -517,8 +519,15 @@ tdstate;
 extern unsigned ARMul_NthReg (ARMword, unsigned);
 extern int AddOverflow (ARMword, ARMword, ARMword);
 extern int SubOverflow (ARMword, ARMword, ARMword);
+/* Prototypes for exported functions.  */
+#ifdef __cplusplus
+ extern "C" {
+#endif
 extern ARMword ARMul_Emulate26 (ARMul_State *);
 extern ARMword ARMul_Emulate32 (ARMul_State *);
+#ifdef __cplusplus
+ }
+#endif
 extern unsigned IntPending (ARMul_State *);
 extern void ARMul_CPSRAltered (ARMul_State *);
 extern void ARMul_R15Altered (ARMul_State *);
@@ -577,5 +586,6 @@ extern unsigned DSPCDP5 (ARMul_State *, unsigned, ARMword);
 extern unsigned DSPMCR6 (ARMul_State *, unsigned, ARMword, ARMword);
 extern unsigned DSPMRC6 (ARMul_State *, unsigned, ARMword, ARMword *);
 extern unsigned DSPCDP6 (ARMul_State *, unsigned, ARMword);
+
 
 #endif

@@ -538,13 +538,17 @@ typedef ARMul_State arm_core_t;
 /***************************************************************************\
 *                  Definitons of things in the emulator                     *
 \***************************************************************************/
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern void ARMul_EmulateInit (void);
-extern ARMul_State *ARMul_NewState (ARMul_State * state);
 extern void ARMul_Reset (ARMul_State * state);
+#ifdef __cplusplus
+	}
+#endif
+extern ARMul_State *ARMul_NewState (ARMul_State * state);
 extern ARMword ARMul_DoProg (ARMul_State * state);
 extern ARMword ARMul_DoInstr (ARMul_State * state);
-
 /***************************************************************************\
 *                Definitons of things for event handling                    *
 \***************************************************************************/

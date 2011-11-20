@@ -39,6 +39,7 @@ fun, and definign VAILDATE will define SWI 1 to enter SVC mode, and SWI
 #endif
 #include <fcntl.h>
 #include <sys/stat.h>
+#include "skyeye_internal.h"
 
 #ifndef O_RDONLY
 #define O_RDONLY 0
@@ -297,6 +298,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 
 	case SWI_ExitGroup:
 	case SWI_Exit:
+		destroy_threads();
 		exit(0);
 		return TRUE;
 
