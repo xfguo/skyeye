@@ -40,9 +40,10 @@ using namespace std;
    Multithread: threshold compilation or Polling compilation (cpu intensive) */
 #define MULTI_THREAD 1
 #define LIFO 0
-static uint32_t compiled_queue[QUEUE_LENGTH]; /* list of tagged addresses */
-static stack<uint32_t> compile_stack; /* stack of untranslated addresses */
-static pthread_rwlock_t compiled_queue_rwlock;
+static uint32_t compiled_queue[QUEUE_LENGTH]; /* list of tagged addresses. Note: is not a shared resource */
+static stack<uint32_t> compile_stack; /* stack of untranslated addresses. Note: is a shared resource */
+static pthread_rwlock_t compile_stack_rwlock;
+static pthread_rwlock_t translation_rwlock;
 static uint32_t translated_block = 0; /* translated block count, for block threshold */
 static void* compiled_worker(void* cpu);
 static void push_compiled_work(cpu_t* cpu, uint32_t pc);
@@ -81,10 +82,12 @@ void init_compiled_queue(cpu_t* cpu){
 	}
 	printf("Current running mode: %s\n", running_mode_str[running_mode]);
 	if (running_mode == HYBRID){
-		if(pthread_rwlock_init(&compiled_queue_rwlock, NULL)){
+		if(pthread_rwlock_init(&compile_stack_rwlock, NULL)){
 			fprintf(stderr, "can not initilize the rwlock\n");
 		}
-
+		if(pthread_rwlock_init(&translation_rwlock, NULL)){
+			fprintf(stderr, "can not initilize the rwlock\n");
+		}
 		/* Create a thread to compile IR to native code */
 #if MULTI_THREAD
 		pthread_t id;
@@ -261,28 +264,28 @@ int launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		uint32_t index;
 		if (translated_block > 0x200)
 		{
-			pthread_rwlock_wrlock(&compiled_queue_rwlock);
+			pthread_rwlock_wrlock(&translation_rwlock);
 			clear_cache(cpu, hash_map);
 			printf(" (Multithread) Cleaning translated blocks ----- \n");
 			while (!compile_stack.empty())
 			{
 				compile_stack.pop();
 			}
-			pthread_rwlock_unlock(&compiled_queue_rwlock);
+			pthread_rwlock_unlock(&translation_rwlock);
 			return 0;
 		}
 
 		for (index = 0; index < cpu->dyncom_engine->cur_tagging_pos; index++)
 		{
 			if(compiled_queue[index] == core->phys_pc) {
-				pthread_rwlock_wrlock(&compiled_queue_rwlock);
+				pthread_rwlock_wrlock(&compile_stack_rwlock);
 				//if (compile_stack.empty() || compile_stack.top() != index)
 				{
 				//	printf("### Pushing to compile %x for %x idx %x\n", entry, core->phys_pc, index);
 					compile_stack.push(core->phys_pc);
 					compile_stack.push(index);
 				}
-				pthread_rwlock_unlock(&compiled_queue_rwlock);
+				pthread_rwlock_unlock(&compile_stack_rwlock);
 				compiled_queue[index] = -1;
 				//printf("Planning to translate block n*%x at pc %x phys %x\n", cpu->dyncom_engine->functions, pc, core->phys_pc);
 				break;
@@ -295,28 +298,28 @@ int launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		uint32_t index;
 		if (translated_block > 0x400)
 		{
-			pthread_rwlock_wrlock(&compiled_queue_rwlock);
+			pthread_rwlock_wrlock(&translation_rwlock);
 			clear_cache(cpu, hash_map);
 			printf(" (LIFO) Cleaning translated blocks ----- \n");
 			while (!compile_stack.empty())
 			{
 				compile_stack.pop();
 			}
-			pthread_rwlock_unlock(&compiled_queue_rwlock);
+			pthread_rwlock_unlock(&translation_rwlock);
 			return 0;
 		}
 
 		for (index = 0; index < cpu->dyncom_engine->cur_tagging_pos; index++)
 		{
 			if(compiled_queue[index] == core->phys_pc) {
-				pthread_rwlock_wrlock(&compiled_queue_rwlock);
+				pthread_rwlock_wrlock(&compile_stack_rwlock);
 				if (compile_stack.empty() || compile_stack.top() != index)
 				{
-				//	printf("### Pushing to compile %x for %x idx %x\n", entry, core->phys_pc, index);
+					//printf("### Pushing to compile %x for %x idx %x\n", entry, core->phys_pc, index);
 					compile_stack.push(core->phys_pc);
 					compile_stack.push(index);
 				}
-				pthread_rwlock_unlock(&compiled_queue_rwlock);
+				pthread_rwlock_unlock(&compile_stack_rwlock);
 				//compiled_queue[index] = -1;
 				//printf("Planning to translate block n*%x at pc %x phys %x\n", cpu->dyncom_engine->functions, pc, core->phys_pc);
 				break;
@@ -341,7 +344,7 @@ int launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 			//printf("Ready! In %p %p Type %d \n", pc, core->phys_pc, core->NextInstr);
 
 		/* synchronize flags between dyncom and interpreter */
-		UPDATE_TIMING(cpu, TIMER_SWITCH, true);
+		//UPDATE_TIMING(cpu, TIMER_SWITCH, true);
 		//printf("In Cpsr %x N %x Z %x C %x V %x -> ", core->Cpsr, core->NFlag, core->ZFlag, core->CFlag, core->VFlag);
 		core->Cpsr = core->Cpsr & 0xfffffff;
 		core->Cpsr |= core->NFlag << 31;
@@ -427,15 +430,14 @@ int launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 		} else if (core->NextInstr == NONSEQ){
 			core->Reg[15] -= 4;
 		}
-		UPDATE_TIMING(cpu, TIMER_SWITCH, false);
-
+		//UPDATE_TIMING(cpu, TIMER_SWITCH, false);
 		int rc = JIT_RETURN_NOERR;
 		if (is_user_mode(cpu))
 			rc = um_cpu_run(cpu);
 		else
 			rc = cpu_run(cpu);
-
-		UPDATE_TIMING(cpu, TIMER_SWITCH, true);
+		
+		//UPDATE_TIMING(cpu, TIMER_SWITCH, true);
 		core->NFlag = ((core->Cpsr & 0x80000000) != 0);
 		core->ZFlag = ((core->Cpsr & 0x40000000) != 0);
 		core->CFlag = ((core->Cpsr & 0x20000000) != 0);
@@ -507,7 +509,7 @@ int launch_compiled_queue(cpu_t* cpu, uint32_t pc){
 			core->RegBank[FIQBANK][14] = core->Reg_firq[1];
 		}
 
-		UPDATE_TIMING(cpu, TIMER_SWITCH, false);
+		//UPDATE_TIMING(cpu, TIMER_SWITCH, false);
 		
 		if (is_user_mode(cpu)) {
 			core->phys_pc = core->Reg[15];
@@ -792,16 +794,18 @@ static void* compiled_worker(void* argp){
 	for(;;){
 try_compile:
 		while(1){
+			pthread_rwlock_wrlock(&translation_rwlock);
 			uint32_t compiled_addr = 0xFFFFFFFF;
-			pthread_rwlock_rdlock(&compiled_queue_rwlock);
+			pthread_rwlock_rdlock(&compile_stack_rwlock);
 			if (!compile_stack.empty()) {
 				pos_to_translate = compile_stack.top();
 				compile_stack.pop();
 				compiled_addr = compile_stack.top();
 				compile_stack.pop();
 			}
-			pthread_rwlock_unlock(&compiled_queue_rwlock);
+			pthread_rwlock_unlock(&compile_stack_rwlock);
 			if(compiled_addr == 0xFFFFFFFF) {
+				pthread_rwlock_unlock(&translation_rwlock);
 				break;
 			}
 			//printf("In %s, pc=0x%x\n", __FUNCTION__, compiled_queue[compiling_pos]);
@@ -811,9 +815,7 @@ try_compile:
 			//printf("#### %x GET \n", compiled_addr);
 			fast_map hash_map = cpu->dyncom_engine->fmap;
 			void* pfunc;
-			
-			//pthread_rwlock_rdlock(&(cpu->dyncom_engine->rwlock));
-			pthread_rwlock_wrlock(&compiled_queue_rwlock);
+
 			PFUNC(compiled_addr);
 			if(pfunc == NULL){
 				cpu->dyncom_engine->functions = pos_to_translate;
@@ -821,11 +823,7 @@ try_compile:
 				translated_block += 1;
 				//printf("##### (Hybrid) Translated %p %x\n", compiled_addr, pos_to_translate);
 			}
-			pthread_rwlock_unlock(&compiled_queue_rwlock);
-			
-			//if(pthread_rwlock_unlock(&(cpu->dyncom_engine->rwlock))){
-			//	fprintf(stderr, "In %s, unlock error\n", __FUNCTION__);
-			//}
+			pthread_rwlock_unlock(&translation_rwlock);
 		}
 		usleep(2);
 	}
