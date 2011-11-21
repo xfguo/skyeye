@@ -123,21 +123,40 @@ do_deprecated_option (skyeye_option_t * this_option, int num_params,
 }
 
 /**
-* @brief the filename of linux initrd image
+* @brief load an file to the given address
 */
-static char filename_initrd[MAX_PARAM_NAME];
+typedef struct{
+	char filename[MAX_PARAM_NAME];
+	uint32_t start;
+}load_file_t;
 
 /**
-* @brief the start address of initrd
+* @brief define skyeye.conf only can load MAX_FILES_COUNT files. 
 */
-static uint32_t initrd_start;
+#define MAX_FILES_COUNT 32
 
 /**
-* @brief load an initrd image file to the given address
+* @brief collect files which need to load. 
+* file which file need to load.
+* load_file_num which the last index of the struct.
 */
-static void load_initrd(void)
+typedef struct{
+	load_file_t file[MAX_FILES_COUNT]; 
+	int load_file_num;
+}load_files_t;
+
+static load_files_t load_files_list = {{{"",0}},0};
+
+/**
+* @brief load file to the given address
+*/
+static void load_files(void)
 {
-	load_file(filename_initrd, initrd_start);
+	int i;
+	for (i = 0;i < load_files_list.load_file_num;i ++)
+	{
+		load_file(load_files_list.file[i].filename, load_files_list.file[i].start);
+	}
 }
 
 /**
@@ -162,17 +181,20 @@ do_load_file_option (skyeye_option_t * this_option, int num_params,
 				("Error: sound has wrong parameter \"%s\".\n",
 				 name);
 		if (!strncmp ("filename", name, strlen (name))) {
-			strcpy(filename_initrd, value);
+			strcpy(load_files_list.file[load_files_list.load_file_num].filename, value);
 		}
 		else if (!strncmp ("start", name, strlen (name))) {
-			sscanf (value, "%x", &initrd_start);
+			sscanf (value, "%x", &load_files_list.file[load_files_list.load_file_num].start);
 		}
 		else
-                        SKYEYE_ERR ("Error: Unknown load_file option  \"%s\"\n", params[i]);
+			SKYEYE_ERR ("Error: Unknown load_file option  \"%s\"\n", params[i]);
 	}
-	register_callback(load_initrd, Bootmach_callback);
+	/*We just register only one callback for load_files*/
+	if (load_files_list.load_file_num == 0)
+		register_callback(load_files, Bootmach_callback);
 	/* FIXME, we should update load_base and load_mask to preference of SkyEye */
 	fprintf(stderr, "%s not finished.\n", __FUNCTION__);
+	load_files_list.load_file_num ++;
 	//printf("Your elf file will be load to: base address=0x%x,mask=0x%x\n", load_base, load_mask);
 	return 0;
 }
