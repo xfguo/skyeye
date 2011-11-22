@@ -2279,6 +2279,7 @@ ARM_INST_PTR INTERPRETER_TRANSLATE(rev)(unsigned int inst, int index)
 
 	return inst_base;
 }
+ARM_INST_PTR INTERPRETER_TRANSLATE(rev16)(unsigned int inst, int index){printf("in func %s\n", __FUNCTION__);exit(-1);}
 ARM_INST_PTR INTERPRETER_TRANSLATE(revsh)(unsigned int inst, int index){printf("in func %s\n", __FUNCTION__);exit(-1);}
 ARM_INST_PTR INTERPRETER_TRANSLATE(rfe)(unsigned int inst, int index){printf("in func %s\n", __FUNCTION__);exit(-1);}
 ARM_INST_PTR INTERPRETER_TRANSLATE(rsb)(unsigned int inst, int index)
@@ -2798,6 +2799,7 @@ const transop_fp_t arm_instruction_trans[] = {
 	INTERPRETER_TRANSLATE(uxth),
 	INTERPRETER_TRANSLATE(uxtah),
 	INTERPRETER_TRANSLATE(rev),
+	INTERPRETER_TRANSLATE(rev16),
 	INTERPRETER_TRANSLATE(revsh),
 	INTERPRETER_TRANSLATE(ldrbt),
 	INTERPRETER_TRANSLATE(ldrt),
@@ -3748,7 +3750,7 @@ void InterpreterMainLoop(cpu_t *core)
 	void *InstLabel[] = {
 		&&ADC_INST,&&ADD_INST,&&AND_INST,&&BBL_INST,&&BIC_INST,&&BKPT_INST,&&BLX_INST,&&BLX_INST,&&BX_INST,
 		&&BXJ_INST,&&CDP_INST,&&CLREX_INST,&&CLZ_INST,&&CMN_INST,&&CMP_INST,&&CPS_INST,&&CPY_INST,&&EOR_INST,
-		&&LDC_INST,&&LDM_INST,&&LDM_INST,&&LDM_INST,&&SXTH_INST,&&UXTH_INST,&&UXTAH_INST,&&REV_INST,&&REVSH_INST,
+		&&LDC_INST,&&LDM_INST,&&LDM_INST,&&LDM_INST,&&SXTH_INST,&&UXTH_INST,&&UXTAH_INST,&&REV_INST,&&REV16_INST,&&REVSH_INST,
 		&&LDRBT_INST,&&LDRT_INST,&&LDR_INST,&&PLD_INST,&&LDRB_INST,&&LDRD_INST,&&LDREX_INST,&&LDREXB_INST,&&LDRH_INST,
 		&&LDRSB_INST,&&LDRSH_INST,&&MCR_INST,&&MCRR_INST,&&MLA_INST,&&MOV_INST,&&MRC_INST,&&MRRC_INST,&&MRS_INST,
 		&&MSR_INST,&&MSR_INST,&&MUL_INST,&&MVN_INST,&&ORR_INST,&&PKHBT_INST,&&PKHTB_INST,&&QADD_INST,&&QADD16_INST,
@@ -4846,6 +4848,7 @@ void InterpreterMainLoop(cpu_t *core)
 		FETCH_INST;
 		GOTO_NEXT_INST;
 	}
+	REV16_INST:
 	REVSH_INST:
 	RFE_INST:
 	RSB_INST:
