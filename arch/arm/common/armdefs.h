@@ -233,6 +233,10 @@ struct ARMul_State
 	ARMdword Accumulator;
 
 	ARMword NFlag, ZFlag, CFlag, VFlag, IFFlags;	/* dummy flags for speed */
+        unsigned long long int icounter;
+        unsigned int shifter_carry_out;
+        ARMword translate_pc;
+
 	/* add armv6 flags dyf:2010-08-09 */
 	ARMword GEFlag, EFlag, AFlag, QFlags;
 	//chy:2003-08-19, used in arm v5e|xscale
