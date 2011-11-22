@@ -199,6 +199,216 @@ fault_t get_phys_addr(cpu_t *cpu, addr_t virt_addr, addr_t *phys_addr, uint32_t 
 	return fault;
 }
 
+fault_t check_address_validity(arm_core_t *core, addr_t virt_addr, addr_t *phys_addr, uint32_t rw)
+{
+	fault_t fault = NO_FAULT;
+	int ap, sop;
+	if ((CP15REG(CP15_CONTROL) & 1) == 0) {
+		/* MMU or MPU disabled. */
+		*phys_addr = virt_addr;
+//		return NO_FAULT;
+	} else {
+		fault = dyncom_mmu_translate(core, virt_addr, phys_addr, &ap, &sop);
+		if (fault) {
+			printf("fault:%d\n", fault);
+			printf("virt_addr:0x%08x\n", virt_addr);
+			printf("icounter:%lld\n", core->icounter);
+			return fault;
+		}
+		/* no tlb, only check permission */
+		if (!dyncom_check_perms(core, ap, rw)) {
+			if (sop == 0) {
+				return SECTION_PERMISSION_FAULT;
+			} else {
+				return SUBPAGE_PERMISSION_FAULT;
+			}
+		}
+	}
+	return fault;
+}
+
+fault_t interpreter_fetch(cpu_t *cpu, addr_t virt_addr, uint32_t &value, uint32_t size)
+{
+	addr_t phys_addr = 0;
+	fault_t fault = NO_FAULT;
+#if 1
+	if (cpu->is_user_mode) {
+		phys_addr = virt_addr;
+	} else {
+		fault = get_phys_addr(cpu, virt_addr, &phys_addr, size, 1);
+	}
+
+	if (fault) {
+		printf("fetch inst exception.\n");
+		printf("virt_addr:0x%08x\n", virt_addr);
+//		exit(-1);
+		return fault;
+	}
+#endif
+
+	if (size == 8)
+		bus_read(8, phys_addr | (virt_addr & 3), &value);
+	else if (size == 16)
+		bus_read(16, phys_addr | (virt_addr & 3), &value);
+	else
+		bus_read(32, phys_addr, &value);
+	#if 0
+	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
+	if (core->Reg[15] == 0xc01225d8) {
+		printf("------------------------------------\n");
+		printf("icounter   is %lld\n", core->icounter);
+		printf("phys_addr  is %x\n", phys_addr);
+		printf("value      is %x\n", value);
+		printf("size       is %d\n", size);
+		printf("pc         is %x\n", core->Reg[15]);
+//		exit(-1);
+	}
+	if (virt_addr == 0xffff0200) {
+		printf("phys_addr : %x\n", phys_addr);
+		printf("value     : %x\n", value);
+		exit(-1);
+	}
+	#endif
+	return fault;
+}
+
+fault_t interpreter_read_memory(cpu_t *cpu, addr_t virt_addr, addr_t phys_addr, uint32_t &value, uint32_t size)
+{
+	fault_t fault = NO_FAULT;
+#if 0
+	if (cpu->is_user_mode) {
+		phys_addr = virt_addr;
+	} else {
+		fault = get_phys_addr(cpu, virt_addr, &phys_addr, size, 1);
+	}
+
+	if (fault) return fault;
+#endif
+	if (size == 8)
+		bus_read(8, phys_addr | (virt_addr & 3), &value);
+	else if (size == 16)
+		bus_read(16, phys_addr | (virt_addr & 3), &value);
+	else
+		bus_read(32, phys_addr, &value);
+#if 0
+	if (cpu->icounter == 4149571 || cpu->icounter == 5705376 || cpu->icounter == 5781965 || cpu->icounter == 7598893
+	    || cpu->icounter == 7844811 || cpu->icounter == 8012434 || cpu->icounter == 12160365 || cpu->icounter == 19370686 || cpu->icounter == 19511535
+	    || cpu->icounter == 56078607 || cpu->icounter == 56572308 || cpu->icounter == 59931102 || cpu->icounter == 61497190 || cpu->icounter == 61766672
+	    || cpu->icounter == 191073541 || cpu->icounter == 191384481 || cpu->icounter == 196265895 || cpu->icounter == 202478273 || cpu->icounter == 202878010
+	    || cpu->icounter == 203029447 || cpu->icounter == 206010172 || cpu->icounter == 206140964 || cpu->icounter == 236624036 || cpu->icounter == 236755045
+	    || cpu->icounter == 236883917 || cpu->icounter == 237014284 || cpu->icounter == 237143288 || cpu->icounter == 237274828 || cpu->icounter == 237408580
+	    || cpu->icounter == 248090679 || cpu->icounter == 248081379) {
+		if (phys_addr == 0x71200000) {
+			value = 0;
+		}
+	}
+	if (cpu->icounter == 20406671) {
+		if (phys_addr == 0x71200008) {
+			value = 0;
+		}
+	}
+	if ((cpu->icounter == 20363304 && phys_addr == 0x7f006040) ||
+	    (cpu->icounter == 20363311 && phys_addr == 0x7f006040)) {
+		value = 0x2b3;
+	}
+	if ((cpu->icounter == 20384989 && phys_addr == 0x7f006040)) {
+		value = 0x1de;
+	}
+	if ((cpu->icounter == 20406670 && phys_addr == 0x7f006040)) {
+		value = 0x10a;
+	}
+	if (cpu->icounter == 5705371 || cpu->icounter == 5832564) {
+		if (phys_addr == 0x71200000) {
+			value = 0x10000000;
+		}
+	}
+#endif
+#if 0
+	if ((cpu->icounter == 20363310) ||
+	    (cpu->icounter == 20363317)) {
+		value = 0x2b3;
+	}
+#endif
+#if 0
+//	if (core->Reg[15] == 0xc000be6c) {
+//	if (virt_addr == 0xffff0200) {
+	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
+	if (core->icounter >= (202871000 - 1)) {
+		printf("[MEMORY READ]\n");
+		printf("phys_addr is %x\n", phys_addr);
+		printf("value     is %x\n", value);
+		printf("size      is %d\n", size);
+		printf("pc        is %x\n", core->Reg[15]);
+		exit(-1);
+	}
+#endif
+	#if 0
+	if (core->Reg[15] == 0xc01225d8 && ((core->icounter == 179227) || (core->icounter == 179589))) {
+		value = 0xffff;
+	}
+	#endif
+	#if 0
+	if (core->Reg[15] == 0x500083b0 && core->icounter == 44) {
+		value = 0;
+	}
+	#endif
+	#if 0
+//	if (core->Reg[15] == 0xc01225d8) {
+	if (core->Reg[15] == 0x500083b0) {
+		printf("------------------------------------\n");
+		printf("icounter   is %lld\n", core->icounter);
+		printf("phys_addr  is %x\n", phys_addr);
+		printf("value      is %x\n", value);
+		printf("size       is %d\n", size);
+		printf("pc         is %x\n", core->Reg[15]);
+//		exit(-1);
+	}
+	#endif
+	return fault;
+}
+
+fault_t interpreter_write_memory(cpu_t *cpu, addr_t virt_addr, addr_t phys_addr, uint32_t value, uint32_t size)
+{
+	fault_t fault = NO_FAULT;
+	#if 0
+	if (cpu->is_user_mode) 
+		phys_addr = virt_addr;
+	else
+		fault = get_phys_addr(cpu, virt_addr, &phys_addr, size, 0);
+
+	if (NO_FAULT != fault) {
+		return fault;
+	}
+
+	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
+	#endif
+	#if 0
+//	if (virt_addr == 0xc0235fa4) {
+	if (phys_addr == 0x509cb400) {
+		printf("[MEMORY WRITE]\n");
+		printf("icounter  is %lld\n", core->icounter);
+		printf("phys_addr is %x\n", phys_addr);
+		printf("value     is %x\n", value);
+		printf("size      is %d\n", size);
+		printf("pc        is %x\n", core->Reg[15]);
+//		exit(-1);
+	}
+	#endif
+	if (size == 8)
+		bus_write(8, phys_addr | (virt_addr & 3), value);
+	else if (size == 16)
+		bus_write(16, phys_addr | (virt_addr & 3), value);
+	else
+		bus_write(32, phys_addr, value);
+
+	return fault;
+	#if 0
+	if (is_translated_code(cpu, phys_addr)) {
+		//clear native code when code section was written.
+		addr_t addr = find_bb_start(cpu, phys_addr);
+	}
+	#endif
+}
 
 static uint32_t arch_arm_read_memory(cpu_t *cpu, addr_t virt_addr, uint32_t size)
 {
