@@ -45,10 +45,11 @@ libpycli_la_SOURCES = $(utils_pycli)
 libpycli_la_LDFLAGS = -module `python-config --libs`
 
 if WIN32
-libgdbserver_la_LDFLAGS += -no-undefined -shared -Xlinker -L../common/.libs/ -Xlinker -lcommon -Xlinker --export-all-symbol
-libbus_log_la_LDFLAGS += -no-undefined -shared -Xlinker -L../common/.libs/ -Xlinker -lcommon --export-all-symbol
-libdisasm_la_LDFLAGS += -no-undefined -shared -Xlinker -lopcodes -Xlinker -lopcodes -Xlinker -liberty -Xlinker /mingw/bin/libbfd-2-18-50-20070907.dll  -Xlinker -L../common/.libs/ -Xlinker -lcommon
-libos_supp_la_LDFLAGS += -no-undefined -Xlinker -L../common/.libs/ -Xlinker -lcommon
+WIN32_LD_COMMON = -no-undefined -shared -Xlinker -L../common/.libs/ -L/mingw/lib -Xlinker -lcommon -Xlinker --export-all-symbol
+libgdbserver_la_LDFLAGS += $(WIN32_LD_COMMON)
+libbus_log_la_LDFLAGS += $(WIN32_LD_COMMON)
+libdisasm_la_LDFLAGS += $(WIN32_LD_COMMON) -Xlinker -lopcodes -Xlinker -lopcodes -Xlinker -liberty -Xlinker /mingw/bin/libbfd-2-18-50-20070907.dll
+libos_supp_la_LDFLAGS += $(WIN32_LD_COMMON)
 else
 libdisasm_la_LDFLAGS += -L./$(top_builddir)/third-party/opcodes/.libs/ -L./$(top_builddir)/third-party/bfd/.libs/ -L./$(top_builddir)/third-party/libiberty/pic/ -lopcodes -lbfd -liberty
 endif

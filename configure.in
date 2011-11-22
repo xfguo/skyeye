@@ -40,6 +40,7 @@ AC_PROG_CPP
 #LT_INIT([win32-dll])
 
 AC_PREFIX_DEFAULT([/opt/skyeye])
+AM_CONDITIONAL([LINUX], [test x$host = *linux*])
 
 # according to host type, we can select different macro
 dbct=false

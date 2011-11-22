@@ -73,7 +73,7 @@ libpci_la_LDFLAGS = -module
 pkglib_LTLIBRARIES = libuart.la libuart_16550.la libflash.la libnandflash.la libsound.la liblcd.la libnet.la libts.la libpci.la
 
 if WIN32
-libuart_la_LDFLAGS +=  -no-undefined -shared -module -Xlinker -L../common/.libs/ -Xlinker -lcommon -Xlinker --export-all-symbol
+libuart_la_LDFLAGS +=  -no-undefined -shared -module -Xlinker -L../common/.libs/ -L/mingw/lib -Xlinker -lcommon -Xlinker --export-all-symbol
 else
 pkglib_LTLIBRARIES += liblcd_s3c6410.la libsdhci_s3c6410.la
 endif

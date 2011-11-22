@@ -90,7 +90,9 @@ endif
 if LCD
 #skyeye_LDADD += @LCD_LIBS@
 endif
+if LINUX
 all:third-party/libiberty/libiberty.a third-party/bfd/.libs/libbfd.so third-party/opcodes/.libs/libopcodes.so
+endif
 
 skyeye_gui:
 	cd gui/qt4_src && rm -f skyeye_gui && make

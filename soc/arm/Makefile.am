@@ -80,7 +80,7 @@ libs3c4510b_la_SOURCES = $(s3c4510b)
 libs3c4510b_la_LDFLAGS = -module
 
 if WIN32
-WIN32_LD_COMMON = -no-undefined -shared -Xlinker -L../../common/.libs/ -Xlinker -lcommon -Xlinker --export-all-symbol
+WIN32_LD_COMMON = -no-undefined -shared -Xlinker -L../../common/.libs/ -L/mingw/lib -Xlinker -lcommon -Xlinker --export-all-symbol
 libs3c2410_la_LDFLAGS += $(WIN32_LD_COMMON)
 libs3c6410_la_LDFLAGS += $(WIN32_LD_COMMON)
 libat91rm92_la_LDFLAGS += $(WIN32_LD_COMMON)
