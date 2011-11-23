@@ -65,13 +65,13 @@
 #define LHSReg 0
 
 /* temp define the using the pc reg need implement a flow */
-#define STORE_CHECK_RD_PC	ADD(R(RD), CONST(8))
+#define STORE_CHECK_RD_PC	ADD(R(RD), CONST(INSTR_SIZE * 2))
 
 #define OPERAND operand(cpu,instr,bb,NULL)
 #define SCO_OPERAND(sco) operand(cpu,instr,bb,sco)
 #define BOPERAND boperand(instr)
 
-#define CHECK_RN_PC  (RN==15? ADD(R(RN), CONST(8)):R(RN))
+#define CHECK_RN_PC  (RN==15? ADD(R(RN), CONST(INSTR_SIZE * 2)):R(RN))
 
 Value *operand(cpu_t *cpu,  uint32_t instr, BasicBlock *bb, Value *sco);
 uint32_t boperand(uint32_t instr);
