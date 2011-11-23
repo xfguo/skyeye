@@ -259,7 +259,13 @@ void LoadM(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 	for( i = 0; i < 16; i ++ ){
 		if(BIT(i)){
 			ret = arch_read_memory(cpu, bb, Addr, 0, 32);
-			LET(i, ret);
+			if(i == R15){
+				STORE(TRUNC1(AND(ret, CONST(1))), ptr_T);
+				LET(i, AND(ret, CONST(~0x1)));
+			}
+			else
+				LET(i, ret);
+
 			Addr = ADD(Addr, CONST(4));
 		}
 	}
@@ -336,9 +342,11 @@ void LoadStore(cpu_t *cpu, uint32_t instr, BasicBlock *bb, Value *addr)
 #define CHECK_REG15() \
 	do{ \
 		if(RN == 15) \
-			Addr = ADD(Addr, CONST(8)); \
+			Addr = ADD(Addr, CONST(INSTR_SIZE * 2)); \
 	}while(0)
 
+
+#define CHECK_READ_REG15(RN) ((RN == 15)? (ADD(AND(R(RN), CONST(~0x3)), CONST(INSTR_SIZE * 2))):R(RN))
 
 // FIXME set_condition added by yukewei
 // if S = 1 set CPSR zncv bit
@@ -366,11 +374,11 @@ Value *WOrUBGetAddrImmOffset(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 {
 	Value *Addr;
 	if(LSUBIT)
-		Addr =  ADD(R(RN), CONST(OFFSET12));
+		Addr =  ADD(CHECK_READ_REG15(RN), CONST(OFFSET12));
 	else
-		Addr =  SUB(R(RN), CONST(OFFSET12));
+		Addr =  SUB(CHECK_READ_REG15(RN), CONST(OFFSET12));
 
-	CHECK_REG15();
+	//CHECK_REG15();
 	return Addr;
 }
 
@@ -418,11 +426,11 @@ Value *WOrUBGetAddrScaledRegOffset(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 	}
 
 	if(LSUBIT)
-		Addr = ADD(R(RN), index);
+		Addr = ADD(CHECK_READ_REG15(RN), index);
 	else
-		Addr = SUB(R(RN), index);
+		Addr = SUB(CHECK_READ_REG15(RN), index);
 
-	CHECK_REG15();
+	//CHECK_REG15();
 	return Addr;
 }
 
