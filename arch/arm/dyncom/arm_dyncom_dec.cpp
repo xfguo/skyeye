@@ -1367,7 +1367,11 @@ const ISEITEM arm_exclusion_code[] = {
         {"usub8",       0,      ARMV6, 0},         
         {"usubaddx",    0,      ARMV6, 0},         
         {"uxtab16",     0,      ARMV6, 0},         
-        {"uxtb16",      0,      ARMV6, 0}         
+        {"uxtb16",      0,      ARMV6, 0},
+        {"bl_1_thumb",      0,      INVALID, 0},/* should be table[-4] */         
+        {"bl_2_thumb",      0,      INVALID, 0}, /* should be located at the end of the table[-3] */
+	{"blx_1_thumb",      0,      INVALID, 0}, /* should be located at table[-2] */
+        {"invalid",      0,      INVALID, 0}         
 };
 
 

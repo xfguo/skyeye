@@ -96,6 +96,7 @@ struct instruction_set_encoding_item {
 typedef struct instruction_set_encoding_item ISEITEM;
 
 enum ARMVER {
+	INVALID = 0,
         ARMALL,
         ARMV4,
         ARMV4T,

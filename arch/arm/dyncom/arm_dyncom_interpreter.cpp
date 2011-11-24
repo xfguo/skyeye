@@ -7,6 +7,7 @@ using namespace std;
 #include "armdefs.h"
 #include "armmmu.h"
 #include "bank_defs.h"
+#include "arm_dyncom_thumb.h"
 
 #define CHECK_RS 	if(RS == 15) rs += 8
 #define CHECK_RM 	if(RM == 15) rm += 8
@@ -955,6 +956,16 @@ typedef struct _uxtb_inst {
 	unsigned int Rm;
 	unsigned int rotate;
 } uxtb_inst;
+
+typedef struct _bl_1_thumb {
+	unsigned int imm;
+}bl_1_thumb;
+typedef struct _bl_2_thumb {
+	unsigned int imm;
+}bl_2_thumb;
+typedef struct _blx_1_thumb {
+	unsigned int imm;
+}blx_1_thumb;
 
 typedef arm_inst * ARM_INST_PTR;
 
@@ -2753,6 +2764,42 @@ ARM_INST_PTR INTERPRETER_TRANSLATE(umull)(unsigned int inst, int index)
 		inst_base->load_r15 = 1;
 	return inst_base;
 }
+
+ARM_INST_PTR INTERPRETER_TRANSLATE(bl_1_thumb)(unsigned int tinst, int index)
+{
+	arm_inst *inst_base = (arm_inst *)AllocBuffer(sizeof(arm_inst) + sizeof(bl_1_thumb));
+	bl_1_thumb *inst_cream = (bl_1_thumb *)inst_base->component;
+
+	inst_cream->imm = (((tinst & 0x07FF) << 12) | ((tinst & (1 << 10)) ? 0xFF800000 : 0));
+	//printf("In %s, tinst=0x%x, imm=0x%x\n", __FUNCTION__, tinst, inst_cream->imm);
+
+	inst_base->idx	 = index;
+	inst_base->br	 = NON_BRANCH;
+	return inst_base;
+}
+ARM_INST_PTR INTERPRETER_TRANSLATE(bl_2_thumb)(unsigned int tinst, int index)
+{
+	arm_inst *inst_base = (arm_inst *)AllocBuffer(sizeof(arm_inst) + sizeof(bl_2_thumb));
+	bl_2_thumb *inst_cream = (bl_2_thumb *)inst_base->component;
+
+	inst_cream->imm = (tinst & 0x07FF) << 1;
+	//printf("In %s, tinst=0x%x, imm=0x%x\n", __FUNCTION__, tinst, inst_cream->imm);
+	inst_base->idx = index;
+	inst_base->br	 = DIRECT_BRANCH;
+	return inst_base;
+}
+ARM_INST_PTR INTERPRETER_TRANSLATE(blx_1_thumb)(unsigned int tinst, int index)
+{
+	arm_inst *inst_base = (arm_inst *)AllocBuffer(sizeof(arm_inst) + sizeof(blx_1_thumb));
+	blx_1_thumb *inst_cream = (blx_1_thumb *)inst_base->component;
+
+	inst_cream->imm = (tinst & 0x07FF) << 1;
+	//printf("In %s, tinst=0x%x, imm=0x%x\n", __FUNCTION__, tinst, inst_cream->imm);
+	inst_base->idx	 = index;
+	inst_base->br	 = DIRECT_BRANCH;
+	return inst_base;
+}
+
 ARM_INST_PTR INTERPRETER_TRANSLATE(uqadd16)(unsigned int inst, int index){printf("in func %s\n", __FUNCTION__);exit(-1);}
 ARM_INST_PTR INTERPRETER_TRANSLATE(uqadd8)(unsigned int inst, int index){printf("in func %s\n", __FUNCTION__);exit(-1);}
 ARM_INST_PTR INTERPRETER_TRANSLATE(uqaddsubx)(unsigned int inst, int index){printf("in func %s\n", __FUNCTION__);exit(-1);}
@@ -2923,7 +2970,11 @@ const transop_fp_t arm_instruction_trans[] = {
 	INTERPRETER_TRANSLATE(usub8),
 	INTERPRETER_TRANSLATE(usubaddx),
 	INTERPRETER_TRANSLATE(uxtab16),
-	INTERPRETER_TRANSLATE(uxtb16)
+	INTERPRETER_TRANSLATE(uxtb16),
+	/* All the thumb instructions should be placed the end of table */
+	INTERPRETER_TRANSLATE(bl_1_thumb), 
+	INTERPRETER_TRANSLATE(bl_2_thumb),
+	INTERPRETER_TRANSLATE(blx_1_thumb)
 };
 
 typedef map<unsigned int, int> bb_map;
@@ -2972,6 +3023,52 @@ enum {
 	FETCH_SUCCESS,
 	FETCH_FAILURE
 };
+static tdstate decode_thumb_instr(arm_processor *cpu, uint32_t inst, uint32_t *arm_inst, uint32_t* inst_size, ARM_INST_PTR* ptr_inst_base){
+	/* Check if in Thumb mode.  */
+	tdstate ret;
+	ret = thumb_translate (cpu, inst, arm_inst, inst_size);
+	if(ret == t_branch){
+		/* FIXME, endian should be judged */
+		uint32 tinstr;
+		if((cpu->translate_pc & 0x3) != 0)
+			tinstr = inst >> 16;
+		else
+			tinstr = inst & 0xFFFF;
+
+		//tinstr = inst & 0xFFFF;
+		//printf("In %s t_branch, inst=0x%x, tinst=0x%x\n", __FUNCTION__, inst, tinstr);
+		int inst_index;
+		/* table_length */
+		int table_length = sizeof(arm_instruction_trans) / sizeof(transop_fp_t);
+
+		switch((tinstr & 0xF800) >> 11){
+		/* we will translate the thumb instruction directly here */
+		case 8:
+		case 29:
+			/* For BLX 1 thumb instruction*/
+			inst_index = table_length - 1;
+			//printf("In %s, tinstr=0x%x, blx 1 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			*ptr_inst_base = arm_instruction_trans[inst_index](tinstr, inst_index);
+			break;
+		case 30:
+			/* For BL 1 thumb instruction*/
+			inst_index = table_length - 3;
+			//printf("In %s, tinstr=0x%x, bl 1 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			*ptr_inst_base = arm_instruction_trans[inst_index](tinstr, inst_index);
+			break;
+		case 31:
+			/* For BL 2 thumb instruction*/
+			inst_index = table_length - 2;
+			//printf("In %s, tinstr=0x%x, bl 2 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			*ptr_inst_base = arm_instruction_trans[inst_index](tinstr, inst_index);
+			break;
+		default:
+			ret = t_undefined;
+			break;
+		}
+	}
+	return ret;
+}
 
 int FetchInst(cpu_t *core, unsigned int &inst)
 {
@@ -3015,7 +3112,7 @@ int InterpreterTranslate(cpu_t *core, int &bb_start)
 	/* Save start addr of basicblock in CreamCache */
 	arm_processor *cpu = (arm_processor *)get_cast_conf_obj(core->cpu_data, "arm_core_t");
 	ARM_INST_PTR inst_base = NULL;
-	unsigned int inst;
+	unsigned int inst, inst_size = 4;
 	int idx;
 	int ret = NON_BRANCH;
 	/* (R15 - 8) ? */
@@ -3027,6 +3124,19 @@ int InterpreterTranslate(cpu_t *core, int &bb_start)
 		if (ret == FETCH_FAILURE) {
 			return FETCH_EXCEPTION;
 		}
+		/* If we are in thumb instruction, we will translate one thumb to one corresponding arm instruction */
+		if (cpu->TFlag){
+			uint32_t arm_inst;
+			tdstate state;
+			state = decode_thumb_instr(cpu, inst, &arm_inst, &inst_size, &inst_base);
+			//printf("In thumb state, arm_inst=0x%x, inst_size=0x%x, pc=0x%x\n", arm_inst, inst_size, cpu->translate_pc);
+			/* we have translated the branch instruction of thumb in thumb decoder */
+			if(state == t_branch){
+				goto translated;
+			}
+			inst = arm_inst;
+		}
+
 		ret = decode_arm_instr(inst, &idx);
 		if (ret == DECODE_FAILURE) {
 			printf("[info] : Decode failure.\tPC : [0x%x]\tInstruction : [%x]\n", cpu->translate_pc, inst);
@@ -3036,7 +3146,8 @@ int InterpreterTranslate(cpu_t *core, int &bb_start)
 		inst_base = arm_instruction_trans[idx](inst, idx);
 //		printf("translated @ %x INST : %x\n", cpu->translate_pc, inst);
 //		printf("inst size is %d\n", InstLength[idx]);
-		cpu->translate_pc += 4;
+translated:
+		cpu->translate_pc += inst_size;
 
 		if ((cpu->translate_pc & 0xfff) == 0) {
 			inst_base->br = END_OF_PAGE;
@@ -3682,6 +3793,11 @@ static bool InAPrivilegedMode(arm_core_t *core)
 {
 	return (core->Mode != USER32MODE);
 }
+/* FIXME, we temporarily think thumb instruction is always 16 bit */
+static inline uint32 GET_INST_SIZE(arm_core_t* cpu){
+	return cpu->TFlag? 2 : 4;
+}
+
 						#if 0                                                              
 						if (cpu->icounter > 12170500) {                                    
 							printf("%s\n", arm_instruction[inst_base->idx].name);      
@@ -3765,7 +3881,7 @@ void InterpreterMainLoop(cpu_t *core)
 		&&UADD16_INST,&&UADD8_INST,&&UADDSUBX_INST,&&UHADD16_INST,&&UHADD8_INST,&&UHADDSUBX_INST,&&UHSUB16_INST,&&UHSUB8_INST,
 		&&UHSUBADDX_INST,&&UMAAL_INST,&&UMLAL_INST,&&UMULL_INST,&&UQADD16_INST,&&UQADD8_INST,&&UQADDSUBX_INST,&&UQSUB16_INST,
 		&&UQSUB8_INST,&&UQSUBADDX_INST,&&USAD8_INST,&&USADA8_INST,&&USAT_INST,&&USAT16_INST,&&USUB16_INST,&&USUB8_INST,
-		&&USUBADDX_INST,&&UXTAB16_INST,&&UXTB16_INST,&&DISPATCH,&&INIT_INST_LENGTH,&&END
+		&&USUBADDX_INST,&&UXTAB16_INST,&&UXTB16_INST,&&BL_1_THUMB, &&BL_2_THUMB, &&BLX_1_THUMB, &&DISPATCH,&&INIT_INST_LENGTH,&&END
 	};
 
 	int ptr;
@@ -3829,7 +3945,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(adc_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -3862,7 +3978,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (inst_cream->Rd == 15) {
 			goto DISPATCH;
 		}
@@ -3899,7 +4015,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(and_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -3915,7 +4031,7 @@ void InterpreterMainLoop(cpu_t *core)
 			SET_PC;
 			goto DISPATCH;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		goto DISPATCH;
 	}
 	BIC_INST:
@@ -3942,7 +4058,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (inst_cream->Rd == 15) {
 			goto DISPATCH;
 		}
@@ -3958,14 +4074,16 @@ void InterpreterMainLoop(cpu_t *core)
 		if ((inst_base->cond == 0xe) || CondPassed(cpu, inst_base->cond)) {
 			unsigned int inst = inst_cream->inst;
 			if (BITS(inst, 20, 27) == 0x12 && BITS(inst, 4, 7) == 0x3) {
-				LINK_RTN_ADDR;
+				//LINK_RTN_ADDR;
+				cpu->Reg[14] = (cpu->Reg[15] + 4) ;
 				cpu->Reg[15] = cpu->Reg[BITS(inst, 0, 3)] & 0xfffffffe;
+				cpu->TFlag = cpu->Reg[BITS(inst, 0, 3)] & 0x1;
 			} else {
 				DEBUG_MSG;
 			}
 			goto DISPATCH;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		goto DISPATCH;
 	}
 	BX_INST:
@@ -3974,9 +4092,10 @@ void InterpreterMainLoop(cpu_t *core)
 		bx_inst *inst_cream = (bx_inst *)inst_base->component;
 		if ((inst_base->cond == 0xe) || CondPassed(cpu, inst_base->cond)) {
 			cpu->Reg[15] = RM & 0xfffffffe;
+			cpu->TFlag = cpu->Reg[inst_cream->Rm] & 0x1;
 			goto DISPATCH;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 //		INC_PC(sizeof(bx_inst));
 		goto DISPATCH;
 	}
@@ -3986,7 +4105,7 @@ void InterpreterMainLoop(cpu_t *core)
 	{
 		INC_ICOUNTER;
 		/* NOT IMPL */
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(clrex_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -3998,7 +4117,7 @@ void InterpreterMainLoop(cpu_t *core)
 		if ((inst_base->cond == 0xe) || CondPassed(cpu, inst_base->cond)) {
 			RD = clz(RM);
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(clz_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4017,7 +4136,7 @@ void InterpreterMainLoop(cpu_t *core)
 			UPDATE_CFLAG(dst, lop, rop);
 			UPDATE_VFLAG((int)dst, (int)lop, (int)rop);
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(cmn_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4042,7 +4161,7 @@ void InterpreterMainLoop(cpu_t *core)
 			UPDATE_VFLAG_OVERFLOW_FROM(dst, lop, rop);
 //			UPDATE_VFLAG_WITH_NOT(dst, lop, rop);
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(cmp_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4074,7 +4193,7 @@ void InterpreterMainLoop(cpu_t *core)
 			cpu->Cpsr = (cpu->Cpsr & 0xffffffe0) | inst_cream->mode;
 			switch_mode(cpu, inst_cream->mode);
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(cps_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4095,7 +4214,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 		}
 //		printf("cpy inst %x\n", cpu->Reg[15]);
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (inst_cream->Rd == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(mov_inst));
@@ -4128,7 +4247,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(eor_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4137,7 +4256,7 @@ void InterpreterMainLoop(cpu_t *core)
 	{
 		INC_ICOUNTER;
 		/* NOT IMPL */
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(ldc_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4201,6 +4320,12 @@ void InterpreterMainLoop(cpu_t *core)
 						if (fault) {
 							goto MMU_EXCEPTION;
 						}
+						/* For armv5t, should enter thumb when bits[0] is non-zero. */
+						if(i == 15 && (ret & 0x1)){
+							cpu->TFlag = 1;
+							ret &= 0xFFFFFFFE;
+						}
+
 						cpu->Reg[i] = ret;
 						addr += 4;
 						phys_addr += 4;
@@ -4219,7 +4344,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BIT(inst_cream->inst, 15)) {
 			goto DISPATCH;
 		}
@@ -4240,7 +4365,7 @@ void InterpreterMainLoop(cpu_t *core)
 			}
 			RD = operand2;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(sxth_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4260,10 +4385,16 @@ void InterpreterMainLoop(cpu_t *core)
 			}
 			cpu->Reg[BITS(inst_cream->inst, 12, 15)] = value;
 			if (BITS(inst_cream->inst, 12, 15) == 15) {
+				/* For armv5t, should enter thumb when bits[0] is non-zero. */
+				if(value & 0x1){
+					cpu->TFlag = 1;	
+					cpu->Reg[15] &= 0xFFFFFFFE;
+				}
+
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4279,7 +4410,7 @@ void InterpreterMainLoop(cpu_t *core)
 						& 0xffff;
 			RD = operand2;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(uxth_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4293,7 +4424,7 @@ void InterpreterMainLoop(cpu_t *core)
 						& 0xffff;
 			RD = RN + operand2;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(uxtah_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4314,7 +4445,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4343,7 +4474,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4368,7 +4499,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4392,7 +4523,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4420,7 +4551,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4447,7 +4578,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4473,7 +4604,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4502,7 +4633,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -4548,7 +4679,7 @@ void InterpreterMainLoop(cpu_t *core)
 				}
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(mcr_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4571,7 +4702,7 @@ void InterpreterMainLoop(cpu_t *core)
 			if (inst_cream->Rd == 15)
 				goto DISPATCH;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (inst_cream->Rd == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(mla_inst));
@@ -4604,7 +4735,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 //				return;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (inst_cream->Rd == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(mov_inst));
@@ -4660,7 +4791,7 @@ void InterpreterMainLoop(cpu_t *core)
 				}
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(mrc_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4682,7 +4813,7 @@ void InterpreterMainLoop(cpu_t *core)
 				RD = cpu->Cpsr;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(mrs_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4725,7 +4856,7 @@ void InterpreterMainLoop(cpu_t *core)
 				cpu->Spsr_copy = (cpu->Spsr_copy & ~mask) | (operand & mask);
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(msr_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4744,7 +4875,7 @@ void InterpreterMainLoop(cpu_t *core)
 			if (inst_cream->Rd == 15)
 				goto DISPATCH;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (inst_cream->Rd == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(mul_inst));
@@ -4772,7 +4903,7 @@ void InterpreterMainLoop(cpu_t *core)
 			if (inst_cream->Rd == 15)
 				goto DISPATCH;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (inst_cream->Rd == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(mvn_inst));
@@ -4805,7 +4936,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (inst_cream->Rd == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(orr_inst));
@@ -4818,7 +4949,7 @@ void InterpreterMainLoop(cpu_t *core)
 	{
 		INC_ICOUNTER;
 		/* NOT IMPL */
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(stc_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4843,7 +4974,7 @@ void InterpreterMainLoop(cpu_t *core)
 				(((RM >> 16) & 0xff) << 8) |
 				((RM >> 24) & 0xff);
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(rev_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4876,7 +5007,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(rsb_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4908,7 +5039,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(rsc_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4943,7 +5074,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(sbc_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -4974,7 +5105,7 @@ void InterpreterMainLoop(cpu_t *core)
 			cpu->NFlag = BIT(RDHI, 31);
 			cpu->ZFlag = (RDHI == 0 && RDLO == 0);
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(umlal_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5006,7 +5137,7 @@ void InterpreterMainLoop(cpu_t *core)
 				cpu->ZFlag = (RDHI == 0 && RDLO == 0);
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(umull_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5023,7 +5154,7 @@ void InterpreterMainLoop(cpu_t *core)
 	{
 		INC_ICOUNTER;
 		/* NOT IMPL */
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(stc_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5101,7 +5232,7 @@ void InterpreterMainLoop(cpu_t *core)
 				}
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(ldst_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5118,7 +5249,7 @@ void InterpreterMainLoop(cpu_t *core)
 				operand2 &= 0xff;
 			RD = operand2;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(sxtb_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5135,7 +5266,7 @@ void InterpreterMainLoop(cpu_t *core)
 			fault = interpreter_write_memory(core, addr, phys_addr, value, 32);
 			if (fault) goto MMU_EXCEPTION;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(ldst_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5149,7 +5280,7 @@ void InterpreterMainLoop(cpu_t *core)
 						& 0xff;
 			RD = operand2;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(uxtb_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5167,7 +5298,7 @@ void InterpreterMainLoop(cpu_t *core)
 			fault = interpreter_write_memory(core, addr, phys_addr, value, 8);
 			if (fault) goto MMU_EXCEPTION;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -5186,7 +5317,7 @@ void InterpreterMainLoop(cpu_t *core)
 			fault = interpreter_write_memory(core, addr, phys_addr, value, 8);
 			if (fault) goto MMU_EXCEPTION;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -5209,7 +5340,7 @@ void InterpreterMainLoop(cpu_t *core)
 			fault = interpreter_write_memory(core, addr + 4, phys_addr + 4, value, 32);
 			if (fault) goto MMU_EXCEPTION;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -5230,7 +5361,7 @@ void InterpreterMainLoop(cpu_t *core)
 			if (fault) goto MMU_EXCEPTION;
 			cpu->Reg[BITS(inst_cream->inst, 12, 15)] = 0;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -5251,7 +5382,7 @@ void InterpreterMainLoop(cpu_t *core)
 			if (fault) goto MMU_EXCEPTION;
 			cpu->Reg[BITS(inst_cream->inst, 12, 15)] = 0;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -5270,7 +5401,7 @@ void InterpreterMainLoop(cpu_t *core)
 			fault = interpreter_write_memory(core, addr, phys_addr, value, 16);
 			if (fault) goto MMU_EXCEPTION;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -5289,7 +5420,7 @@ void InterpreterMainLoop(cpu_t *core)
 			fault = interpreter_write_memory(core, addr, phys_addr, value, 32);
 			if (fault) goto MMU_EXCEPTION;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		if (BITS(inst_cream->inst, 12, 15) == 15)
 			goto DISPATCH;
 		INC_PC(sizeof(ldst_inst));
@@ -5326,7 +5457,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto DISPATCH;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(sub_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5343,7 +5474,7 @@ void InterpreterMainLoop(cpu_t *core)
 				goto END;
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(swi_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5367,7 +5498,7 @@ void InterpreterMainLoop(cpu_t *core)
 			UPDATE_ZFLAG(dst);
 			UPDATE_CFLAG_WITH_SC;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(teq_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5385,7 +5516,7 @@ void InterpreterMainLoop(cpu_t *core)
 			UPDATE_ZFLAG(dst);
 			UPDATE_CFLAG_WITH_SC;
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(tst_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5416,7 +5547,7 @@ void InterpreterMainLoop(cpu_t *core)
 			cpu->NFlag = BIT(RDHI, 31);
 			cpu->ZFlag = (RDHI == 0 && RDLO == 0);
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(umlal_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
@@ -5438,11 +5569,45 @@ void InterpreterMainLoop(cpu_t *core)
 				cpu->ZFlag = (RDHI == 0 && RDLO == 0);
 			}
 		}
-		cpu->Reg[15] += 4;
+		cpu->Reg[15] += GET_INST_SIZE(cpu);
 		INC_PC(sizeof(umull_inst));
 		FETCH_INST;
 		GOTO_NEXT_INST;
 	}
+	BL_1_THUMB:
+	{
+		bl_1_thumb *inst_cream = (bl_1_thumb *)inst_base->component;
+		cpu->Reg[14] = cpu->Reg[15] + 4 + inst_cream->imm;
+		cpu->Reg[15] += 2;
+		//printf(" BL_1_THUMB: imm=0x%x, r14=0x%x, r15=0x%x\n", inst_cream->imm, cpu->Reg[14], cpu->Reg[15]);
+		INC_PC(sizeof(bl_1_thumb));
+		FETCH_INST;
+		GOTO_NEXT_INST;
+	}
+	BL_2_THUMB:
+	{
+		bl_2_thumb *inst_cream = (bl_2_thumb *)inst_base->component;
+		int tmp = ((cpu->Reg[15] + 2) | 1);
+		cpu->Reg[15] =
+			(cpu->Reg[14] + inst_cream->imm);
+		cpu->Reg[14] = tmp;
+		//printf(" BL_2_THUMB: imm=0x%x, r14=0x%x, r15=0x%x\n", inst_cream->imm, cpu->Reg[14], cpu->Reg[15]);
+		goto DISPATCH;
+	}
+	BLX_1_THUMB:
+	{	/* BLX 1 for armv5t and above */
+		uint32 tmp = cpu->Reg[15];
+		blx_1_thumb *inst_cream = (blx_1_thumb *)inst_base->component;
+		cpu->Reg[15] = (cpu->Reg[14] + inst_cream->imm) & 0xFFFFFFFC;
+		//printf("In BLX_1_THUMB, BLX(1),imm=0x%x,r14=0x%x, \n", inst_cream->imm, cpu->Reg[14]);
+		cpu->Reg[14] = ((tmp + 2) | 1);
+		//(state->Reg[14] + ((tinstr & 0x07FF) << 1)) & 0xFFFFFFFC;
+		/* switch to arm state from thumb state */
+		cpu->TFlag = 0;
+		printf("In BLX_1_THUMB, BLX(1),imm=0x%x,r15=0x%x, \n", inst_cream->imm, cpu->Reg[15]);
+		goto DISPATCH;
+	}
+
 	UQADD16_INST:
 	UQADD8_INST:
 	UQADDSUBX_INST:
