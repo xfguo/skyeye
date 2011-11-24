@@ -25,11 +25,20 @@
 #ifndef __ARM_DYNCOM_THUMB_H__
 #define __ARM_DYNCOM_THUMB_H__
 #include "armdefs.h"
-#include <armemu.h>
+//#include <armemu.h>
 #include <dyncom_types.h>
-typedef arm_core_t arm_processor;
+//typedef arm_core_t arm_processor;
+/* Copied from armemu.h */
+/* Thumb support.  */
+typedef enum
+{
+	t_undefined,		/* Undefined Thumb instruction.  */
+	t_decoded,		/* Instruction decoded to ARM equivalent.  */
+	t_branch		/* Thumb branch (already processed).  */
+}tdstate;
+
 tdstate
-thumb_translate (arm_processor *cpu, uint32_t instr, uint32_t* ainstr, uint32_t* inst_size);
+thumb_translate (arm_core_t *cpu, uint32_t instr, uint32_t* ainstr, uint32_t* inst_size);
 static inline uint32 get_thumb_instr(uint32 instr, addr_t pc){
 	uint32 tinstr;
 	if((pc & 0x3) != 0)

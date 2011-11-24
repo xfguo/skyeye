@@ -35,7 +35,7 @@ existing ARM simulator.  */
 #endif
 #endif
 
-#include "armemu.h"
+//#include "armemu.h"
 #include "armos.h"
 #include "arm_dyncom_thumb.h"
 
@@ -44,7 +44,7 @@ existing ARM simulator.  */
    held in the high 16-bits.  Passing in two Thumb instructions allows
    easier simulation of the special dual BL instruction.  */
 
-tdstate thumb_translate (arm_processor* core, uint32_t instr, uint32_t* ainstr, uint32_t* inst_size)
+tdstate thumb_translate (arm_core_t* core, uint32_t instr, uint32_t* ainstr, uint32_t* inst_size)
 {
 	tdstate valid;
 	ARMword next_instr;
@@ -477,7 +477,7 @@ tdstate thumb_translate (arm_processor* core, uint32_t instr, uint32_t* ainstr, 
 					    | ((tinstr & (1 << 10)) ?
 					       0xFFFFF800 : 0)));
 		#endif
-		FLUSHPIPE;
+		//FLUSHPIPE;
 		valid = t_branch;
 		break;
 	case 29:
