@@ -526,12 +526,12 @@ int DYNCOM_TRANS(blx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 {
 	if (BITS(20, 27) == 0x12 && BITS(4, 7) == 0x3) {
 		if (cpu->is_user_mode)
-			LET(14, CONST(pc + 4));
+			LET(14, CONST((pc + INSTR_SIZE) | 0x1));
 		else
-			LET(14, ADD(R(15),CONST(4)));
+			LET(14, OR(ADD(R(15),CONST(INSTR_SIZE)), CONST(0x1)));
 		LET(15, AND(R(RM), CONST(0xFFFFFFFE)));
 		/* Set thumb bit*/	
-		STORE(CONST(1), ptr_T);	
+		STORE(TRUNC1(AND(R(RM), CONST(0x1))), ptr_T);	
 
 		SET_NEW_PAGE;
 	} else {
