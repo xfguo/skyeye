@@ -8,6 +8,7 @@
 #include "dyncom/tag.h"
 
 #include "arm_dyncom_dec.h"
+#include "arm_dyncom_translate.h"
 
 using namespace llvm;
 #if 0

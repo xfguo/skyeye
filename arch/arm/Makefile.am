@@ -3,7 +3,7 @@ arm_mmu = common/mmu/arm7100_mmu.c common/mmu/arm920t_mmu.c common/mmu/arm926ejs
 arm_dbct = dbct/arm2x86.c dbct/arm2x86_coproc.c dbct/arm2x86_dp.c dbct/arm2x86_mem.c dbct/arm2x86_movl.c dbct/arm2x86_mul.c dbct/arm2x86_other.c dbct/arm2x86_psr.c dbct/arm2x86_shift.c dbct/arm2x86_test.c dbct/tb.c 
 arm_mach = \
 mach/skyeye_mach_lpc.c
-arm_dyncom = dyncom/arm_dyncom_interface.cpp dyncom/arm_disasm.cpp dyncom/arm_dyncom_translate.cpp dyncom/arm_dyncom_run.cpp dyncom/arm_dyncom_dec.cpp dyncom/arm_dyncom_mmu.cpp dyncom/arm_dyncom_parallel.cpp dyncom/arm_dyncom_interpreter.cpp
+arm_dyncom = dyncom/arm_dyncom_interface.cpp dyncom/arm_disasm.cpp dyncom/arm_dyncom_translate.cpp dyncom/arm_dyncom_run.cpp dyncom/arm_dyncom_dec.cpp dyncom/arm_dyncom_mmu.cpp dyncom/arm_dyncom_parallel.cpp dyncom/arm_dyncom_interpreter.cpp dyncom/arm_dyncom_thumb.cpp
 libarm_la_SOURCES = $(arm_comm) $(arm_mmu) $(arm_mach)
 
 if LLVM_EXIST
