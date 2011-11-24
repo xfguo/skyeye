@@ -24,12 +24,6 @@
 #include "arm_dyncom_thumb.h"
 #include "skyeye_instr_length.h"
 
-#define ptr_N	cpu->ptr_N
-#define ptr_Z	cpu->ptr_Z
-#define ptr_C	cpu->ptr_C
-#define ptr_V	cpu->ptr_V
-#define ptr_I 	cpu->ptr_I
-#define ptr_T   cpu->ptr_T
 using namespace llvm;
 
 int arm_tag_continue(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);

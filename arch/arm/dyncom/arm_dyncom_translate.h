@@ -1,6 +1,9 @@
 #ifndef __ARM_TRANS__
 #define __ARM_TRANS__
 #include "skyeye_dyncom.h"
+#include "skyeye_obj.h"
+#include "armdefs.h"
+//#include "armemu.h"
 
 #include "arm_regformat.h"
 int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
@@ -18,5 +21,12 @@ extern decoder_cache dc_map;
 * @brief The thumb bit location at the cpsr
 */
 const int THUMB_BIT = 5;
+static int get_instr_size(cpu_t* cpu){
+	arm_core_t* core = (arm_core_t*)(cpu->cpu_data->obj);
+	return (core->Cpsr & (1 << THUMB_BIT))?2:4;
+}
+#ifndef INSTR_SIZE
+#define INSTR_SIZE get_instr_size(cpu)
+#endif
 
 #endif

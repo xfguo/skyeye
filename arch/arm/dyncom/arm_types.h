@@ -37,3 +37,11 @@ typedef struct {
 	Value* ptr_V;
 	Value* ptr_I;
 } ccarm_t;
+
+#define ptr_N	cpu->ptr_N
+#define ptr_Z	cpu->ptr_Z
+#define ptr_C	cpu->ptr_C
+#define ptr_V	cpu->ptr_V
+#define ptr_I 	cpu->ptr_I
+#define ptr_T   cpu->ptr_T
+
