@@ -20,12 +20,16 @@
 #include "arm_dyncom_dec.h"
 #include "arm_dyncom_translate.h"
 #include "arm_dyncom_run.h"
+//#include "armemu.h"
+#include "arm_dyncom_thumb.h"
+#include "skyeye_instr_length.h"
 
 #define ptr_N	cpu->ptr_N
 #define ptr_Z	cpu->ptr_Z
 #define ptr_C	cpu->ptr_C
 #define ptr_V	cpu->ptr_V
 #define ptr_I 	cpu->ptr_I
+#define ptr_T   cpu->ptr_T
 using namespace llvm;
 
 int arm_tag_continue(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc);
@@ -127,6 +131,7 @@ struct instruction_action {
 	cond_fp_t cond_func;
 };
 typedef struct instruction_action INSTRACT;
+static tdstate decode_dyncom_thumb_instr(arm_core_t *core, uint32_t inst, uint32_t *arm_inst, addr_t pc, int* index);
 
 #define ADU_VER 0
 
@@ -142,15 +147,46 @@ Value * arch_arm_translate_cond(cpu_t *cpu, addr_t pc, BasicBlock *bb)
 	return arm_instruction_action[index].cond_func(cpu, instr, bb);
 }
 
+/**
+* @brief Distinguish 32bit thumb instruction from arm 32 bit instruction
+*
+* @param inst an instruction
+*
+* @return true or false
+*/
+static inline int is_thumb32_inst(uint32 inst){
+	int op;
+	op = 0xf8000000 & inst;
+	return ((op == 0x1d) || (op = 0x1e) || (op = 0x1f));
+}
+
 #define BIT(n) ((instr >> (n)) & 1)
 #define BITS(a,b) ((instr >> (a)) & ((1 << (1+(b)-(a)))-1))
 int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t *next_pc) {
+	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
         int instr_size = INSTR_SIZE;
         uint32_t instr;
 	bus_read(32, pc, &instr);
 	int index = -1;
 	int ret = DECODE_FAILURE;
-	ret = decode_arm_instr(instr, &index);
+	tdstate current_state = t_undefined;
+	if(core->Cpsr & (1 << THUMB_BIT)){
+		/* Get the corresponding arm instruction for thumb instruction */
+		uint32 arm_inst;
+
+		current_state = decode_dyncom_thumb_instr(core, instr, &arm_inst, pc, &index);
+		printf("In %s, thumb instruction , index=%d\n", __FUNCTION__, index);
+		instr = arm_inst;
+		instr_size = 2;
+		/* for branch and state change instruction, we have already get the index from thumb decoder */
+		if(current_state != t_branch){
+			ret = decode_arm_instr(instr, &index);
+		}
+	}
+	else{
+		ret = decode_arm_instr(instr, &index);
+	}
+
 	if (ret == DECODE_SUCCESS) {
 		arch_arm_insert_instr_category(pc, index);
 		arm_instruction_action[index].tag_func(cpu, pc, instr, tag, new_pc, next_pc);
@@ -168,10 +204,11 @@ int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t
 
 int arch_arm_translate_instr(cpu_t *cpu, addr_t pc, BasicBlock *bb) {
 	int instr_size = INSTR_SIZE;
-	uint32_t instr;
-	if(bus_read(32, pc, &instr)){
-		printf("Warning, could not read instr at %p\n", pc);
-	}
+	uint32_t instr = 0xFFFFFFFF;
+	if(bus_read(32, pc, &instr) != 0){
+		/* instruction read error handler here */
+ 	}
+
 	int index = arch_arm_get_instr_category(pc);
 	arm_instruction_action[index].translate_func(cpu, instr, bb, pc);
 #if DEBUG_FLAGS	
@@ -499,6 +536,9 @@ int DYNCOM_TRANS(blx)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 		else
 			LET(14, ADD(R(15),CONST(4)));
 		LET(15, AND(R(RM), CONST(0xFFFFFFFE)));
+		/* Set thumb bit*/	
+		STORE(CONST(1), ptr_T);	
+
 		SET_NEW_PAGE;
 	} else {
 		printf("in %s\n", __FUNCTION__);
@@ -1517,6 +1557,33 @@ int DYNCOM_TRANS(uxth)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *tmp2 = AND(tmp1, CONST(0xffff));
 	LET(RD, tmp2);
 }
+
+int DYNCOM_TRANS(bl_1_thumb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){
+	uint32 tinstr = get_thumb_instr(instr, pc);
+	uint32 imm = (((tinstr & 0x07FF) << 12) | ((tinstr & (1 << 10)) ? 0xFF800000 : 0));
+	LET(14, ADD(ADD(R(15), CONST(4)), CONST(imm)));
+	/* return the instruction size */
+	return Byte_2;
+}
+int DYNCOM_TRANS(bl_2_thumb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){
+	uint32 tinstr = get_thumb_instr(instr, pc);
+	uint32 imm = (tinstr & 0x07FF) << 1;
+	LET(15, ADD(R(14), CONST(imm)));
+	LET(14, CONST((pc + 2) | 1));
+	/* Clear thumb bit */
+	STORE(CONST(0), ptr_T);	
+
+	return Byte_2;
+}
+int DYNCOM_TRANS(blx_1_thumb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){
+	uint32 tinstr = get_thumb_instr(instr, pc);
+	uint32 imm = (tinstr & 0x07FF) << 1;
+	LET(15, AND(ADD(R(14), CONST(imm)), CONST(~0x3)));
+	LET(14, CONST((pc + 2) | 1));
+	/* Clear thumb bit */
+	STORE(CONST(0), ptr_T);	
+	return Byte_2;
+}
 //end of translation
 int DYNCOM_TAG(adc)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
@@ -1589,6 +1656,9 @@ int DYNCOM_TAG(blx)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *n
 	arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
 	if(!is_user_mode(cpu))
 		*new_pc = NEW_PC_NONE;
+	/* Thumb mode should be enter */
+	*new_pc = NEW_PC_NONE;
+
 	if(instr >> 28 != 0xe)
 		*tag |= TAG_CONDITIONAL;
 // for kernel
@@ -2382,7 +2452,32 @@ int DYNCOM_TAG(uxth)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *
 	return instr_size;
 }
 
+int DYNCOM_TAG(bl_1_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
+{
+	int instr_size = 2;
+	printf("pc is %x in %s instruction is not implementated.\n", pc, __FUNCTION__);
+	arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
+	return instr_size;
+}
+int DYNCOM_TAG(bl_2_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
+{
+	int instr_size = 2;
+	arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
+	*tag |= TAG_STOP;
+ 
+	printf("pc is %x in %s instruction is not implementated.\n", pc, __FUNCTION__);
+	return instr_size;
+}
+int DYNCOM_TAG(blx_1_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
+{
+	int instr_size = 2;
+	arm_tag_branch(cpu, pc, instr, tag, new_pc, next_pc);
+	*tag |= TAG_STOP;
 
+
+	printf("pc is %x in %s instruction is not implementated.\n", pc, __FUNCTION__);
+	return instr_size;
+}
 /* Floating point instructions */
 int DYNCOM_TAG(fmrx)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
@@ -2547,6 +2642,64 @@ const INSTRACT arm_instruction_action[] = {
 	DYNCOM_FILL_ACTION(usub8),
 	DYNCOM_FILL_ACTION(usubaddx),
 	DYNCOM_FILL_ACTION(uxtab16),
-	DYNCOM_FILL_ACTION(uxtb16)
+	DYNCOM_FILL_ACTION(uxtb16),
+	DYNCOM_FILL_ACTION(bl_1_thumb),
+	DYNCOM_FILL_ACTION(bl_2_thumb),
+	DYNCOM_FILL_ACTION(blx_1_thumb)
+
 };
+/**
+* @brief Translate the thumb instruction to arm instruction
+*
+* @param cpu
+* @param inst
+* @param arm_inst
+* @param inst_size
+* @param br
+*
+* @return 
+*/
+static tdstate decode_dyncom_thumb_instr(arm_core_t *core, uint32_t inst, uint32_t *arm_inst, addr_t pc, int* index){
+	/* Check if in Thumb mode.  */
+	tdstate ret;
+	uint32 inst_size;
+	/* set translate_pc for thumb_translate function */
+	core->translate_pc = pc;
+	ret = thumb_translate (core, inst, arm_inst, &inst_size);
+	/* For BL thumb instruction, should set its index directly */
+	if(ret == t_branch){
+		/* FIXME, endian should be judged */
+		uint32 tinstr;
+		tinstr = get_thumb_instr(inst, pc);
+
+		//tinstr = inst & 0xFFFF;
+		//printf("In %s t_branch, inst=0x%x, tinst=0x%x\n", __FUNCTION__, inst, tinstr);
+		int inst_index;
+		/* table_length */
+		int table_length = sizeof(arm_instruction_action) / sizeof(struct instruction_action);
+
+		switch((tinstr & 0xF800) >> 11){
+		/* we will translate the thumb instruction directly here */
+		case 29:
+			/* For BLX 1 thumb instruction*/
+			*index = table_length - 1;
+			printf("In %s, tinstr=0x%x, blx 1 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			break;
+		case 30:
+			/* For BL 1 thumb instruction*/
+			*index = table_length - 3;
+			printf("In %s, tinstr=0x%x, bl 1 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			break;
+		case 31:
+			/* For BL 2 thumb instruction*/
+			*index = table_length - 2;
+			printf("In %s, tinstr=0x%x, bl 2 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			break;
+		default:
+			ret = t_undefined;
+			break;
+		}
+	}
+	return ret;
+}
 
