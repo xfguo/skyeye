@@ -13,4 +13,10 @@ void arch_arm_flus_instr_category();
 typedef std::map<addr_t, int> decoder_cache;
 extern decoder_cache dc_map;
 
+
+/**
+* @brief The thumb bit location at the cpsr
+*/
+const int THUMB_BIT = 5;
+
 #endif

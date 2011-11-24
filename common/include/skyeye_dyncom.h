@@ -171,7 +171,8 @@ enum {
 	CPU_FLAGTYPE_OVERFLOW = 'V',
 	CPU_FLAGTYPE_NEGATIVE = 'N',
 	CPU_FLAGTYPE_PARITY = 'P',
-	CPU_FLAGTYPE_ZERO = 'Z'
+	CPU_FLAGTYPE_ZERO = 'Z',
+	CPU_FLAGTYPE_THUMB = 'T'
 };
 
 typedef struct cpu_flags_layout {
@@ -475,6 +476,7 @@ typedef struct cpu {
 	Value *ptr_V;
 	Value *ptr_Z;
 	Value *ptr_C;
+	Value *ptr_T;
 
 	uint64_t timer_total[TIMER_COUNT];
 	uint64_t timer_start[TIMER_COUNT];

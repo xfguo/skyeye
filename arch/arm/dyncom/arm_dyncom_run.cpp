@@ -459,7 +459,7 @@ void printinfo(int signum)
 }
 #endif
 
-static cpu_flags_layout_t arm_flags_layout[4] ={{3,'N',"NFLAG"},{2,'Z',"ZFLAG"},{1,'C',"CFLAG"},{0,'V',"VFLAG"}} ;
+static cpu_flags_layout_t arm_flags_layout[5] ={{4, 'T', "TFLAG"}, {3,'N',"NFLAG"},{2,'Z',"ZFLAG"},{1,'C',"CFLAG"},{0,'V',"VFLAG"}} ;
 /* physical register for arm archtecture */
 static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 {
@@ -494,7 +494,9 @@ static void arch_arm_init(cpu_t *cpu, cpu_archinfo_t *info, cpu_archrf_t *rf)
 	info->register_count[CPU_REG_SPR] = 0;
 	info->register_size[CPU_REG_SPR] = 32;
 	info->psr_size = 32;
-	info->flags_count = 4;
+	/* The flag count */
+	info->flags_count = 5;
+
 	info->flags_layout = arm_flags_layout;
 	/* Indicate the pc index for OPT_LOCAL_REGISTERS */
 	info->pc_index_in_gpr = 15;
@@ -564,21 +566,27 @@ static void arch_arm_emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 	Value *z = TRUNC1(AND(LSHR(nzcv, CONST(2)), CONST(1)));
 	Value *c = TRUNC1(AND(LSHR(nzcv, CONST(1)), CONST(1)));
 	Value *v = TRUNC1(AND(LSHR(nzcv, CONST(0)), CONST(1)));
+	Value *t = TRUNC1(LSHR(AND(LOAD(cpu->ptr_gpr[16]), CONST(1 << THUMB_BIT)), CONST(THUMB_BIT)));
 	new StoreInst(n, cpu->ptr_N, false, bb);
 	new StoreInst(z, cpu->ptr_Z, false, bb);
 	new StoreInst(c, cpu->ptr_C, false, bb);
 	new StoreInst(v, cpu->ptr_V, false, bb);
+	new StoreInst(t, cpu->ptr_T, false, bb);
 }
 
 static void arch_arm_spill_reg_state(cpu_t *cpu, BasicBlock *bb)
 {
-		/* Save N Z C V */
+		/* Save N Z C V T */
 	Value *z = SHL(ZEXT32(LOAD(cpu->ptr_Z)), CONST(30));
 	Value *n = SHL(ZEXT32(LOAD(cpu->ptr_N)), CONST(31));
 	Value *c = SHL(ZEXT32(LOAD(cpu->ptr_C)), CONST(29));
 	Value *v = SHL(ZEXT32(LOAD(cpu->ptr_V)), CONST(28));
+	Value *t = SHL(ZEXT32(LOAD(cpu->ptr_T)), CONST(THUMB_BIT));
 	Value *nzcv = OR(OR(OR(z, n), c), v);
-	Value *cpsr = OR(AND(LOAD(cpu->ptr_gpr[16]), CONST(0xfffffff)), nzcv);
+	Value *cpsr = OR(AND(LOAD(cpu->ptr_gpr[16]), CONST(0x0fffffff)), nzcv);
+	/* restore the T bit for arm */
+
+	cpsr = OR(AND(cpsr, CONST(~(1 <<THUMB_BIT))), t);
 	new StoreInst(cpsr, cpu->ptr_gpr[16], false, bb);
 }
 
@@ -1320,7 +1328,7 @@ void arm_dyncom_run(cpu_t* cpu){
 	case JIT_RETURN_NOERR: /* JIT code wants us to end execution */
 	case JIT_RETURN_TIMEOUT:
                         break;
-                case JIT_RETURN_SINGLESTEP:
+	case JIT_RETURN_SINGLESTEP:
 	case JIT_RETURN_FUNCNOTFOUND:
 //			printf("pc %x is not found\n", core->Reg[15]);
 //			printf("phys_pc is %x\n", core->phys_pc);

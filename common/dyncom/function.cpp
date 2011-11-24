@@ -301,6 +301,12 @@ emit_decode_reg(cpu_t *cpu, BasicBlock *bb)
 				case CPU_FLAGTYPE_CARRY:
 					cpu->ptr_C = f;
 					break;
+				case CPU_FLAGTYPE_THUMB:
+					cpu->ptr_T = f;
+					break;
+				default:
+					printf("In %s, no flag for %d\n", __FUNCTION__, flags_layout[i].type);
+					break;
 			}
 		}
 
