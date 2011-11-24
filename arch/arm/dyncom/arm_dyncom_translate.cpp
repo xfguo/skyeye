@@ -1552,6 +1552,16 @@ int DYNCOM_TRANS(uxth)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	LET(RD, tmp2);
 }
 
+int DYNCOM_TRANS(b_cond_thumb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){
+	uint32 tinstr = get_thumb_instr(instr, pc);
+	uint32 imm = ((tinstr & 0x03FF) << 1) | ((tinstr & (1 << 10)) ? 0xFF800000 : 0);
+	printf("In %s, pc=0x%x, imm=0x%x, instr=0x%x, tinstr=0x%x\n", __FUNCTION__, pc, imm, instr, tinstr);
+	//LET(14, ADD(ADD(R(15), CONST(4)), CONST(imm)));
+	LET(15, ADD(R(15), CONST(4 + imm)));
+	/* return the instruction size */
+	return Byte_2;
+}
+
 int DYNCOM_TRANS(bl_1_thumb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){
 	uint32 tinstr = get_thumb_instr(instr, pc);
 	uint32 imm = (((tinstr & 0x07FF) << 12) | ((tinstr & (1 << 10)) ? 0xFF800000 : 0));
@@ -2446,6 +2456,17 @@ int DYNCOM_TAG(uxth)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *
 	return instr_size;
 }
 
+int DYNCOM_TAG(b_cond_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
+{
+	int instr_size = 2;
+	printf("pc is %x in %s instruction is not implementated.\n", pc, __FUNCTION__);
+	*tag = TAG_CONTINUE;
+	*tag |= TAG_BRANCH;
+	*tag |= TAG_CONDITIONAL;
+	*next_pc = pc + INSTR_SIZE;
+	return instr_size;
+}
+
 int DYNCOM_TAG(bl_1_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = 2;
@@ -2637,6 +2658,9 @@ const INSTRACT arm_instruction_action[] = {
 	DYNCOM_FILL_ACTION(usubaddx),
 	DYNCOM_FILL_ACTION(uxtab16),
 	DYNCOM_FILL_ACTION(uxtb16),
+
+	/* The thumb instruction here */	
+	DYNCOM_FILL_ACTION(b_cond_thumb),
 	DYNCOM_FILL_ACTION(bl_1_thumb),
 	DYNCOM_FILL_ACTION(bl_2_thumb),
 	DYNCOM_FILL_ACTION(blx_1_thumb)
@@ -2674,6 +2698,15 @@ static tdstate decode_dyncom_thumb_instr(arm_core_t *core, uint32_t inst, uint32
 
 		switch((tinstr & 0xF800) >> 11){
 		/* we will translate the thumb instruction directly here */
+		case 26:
+		case 27:
+			if (((tinstr & 0x0F00) != 0x0E00) && ((tinstr & 0x0F00) != 0x0F00)){
+				uint32 cond = (tinstr & 0x0F00) >> 8;
+				*index = table_length - 4;
+			}
+			else{
+			/* something wrong */
+			}
 		case 29:
 			/* For BLX 1 thumb instruction*/
 			*index = table_length - 1;
