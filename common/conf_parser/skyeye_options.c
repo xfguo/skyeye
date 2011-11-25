@@ -118,6 +118,7 @@ skyeye_option_init (skyeye_config_t * config)
 	register_option("cpu", do_deprecated_option, "Do not need to provide cpu option any more.\n");
 	register_option("load_addr", do_load_addr_option, "Set load base address and mask value for elf file loading.\n");
 	register_option("load_file", do_load_file_option, "Set load base address and size value for initrd file loading.\n");
+	register_option("log", do_log_option, "Set load base address and size value for initrd file loading.\n");
 }
 
 /**
