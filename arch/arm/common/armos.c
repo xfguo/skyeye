@@ -256,6 +256,11 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 	ARMword addr, temp;
 
 	switch (number) {
+	case SWI_Syscall:
+		if (state->Reg[7] != 0) 
+			return ARMul_OSHandleSWI(state, state->Reg[7]);
+		else
+			return FALSE;
 	case SWI_Read:
 		SWIread (state, state->Reg[0], state->Reg[1], state->Reg[2]);
 		return TRUE;
@@ -487,6 +492,13 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 
 			state->Reg[0] = ret;
 			return TRUE;
+		}
+	case SWI_Set_tls:
+		{
+			//printf("syscall set_tls unimplemented\n");
+			state->mmu.thread_uro_id = state->Reg[0];
+			state->Reg[0] = 0;
+			return FALSE;
 		}
 #if 0
 	case SWI_Clock:

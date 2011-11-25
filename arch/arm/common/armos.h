@@ -41,6 +41,7 @@ static char mmap_mem_read(short size, int addr, uint32_t * value);
 *                               SWI numbers                                 *
 \***************************************************************************/
 
+#define SWI_Syscall                0x0
 #define SWI_Exit                   0x1
 #define SWI_Read                   0x3
 #define SWI_Write                  0x4
@@ -76,6 +77,7 @@ static char mmap_mem_read(short size, int addr, uint32_t * value);
 #define SWI_Uname		   0x7a
 #define SWI_Fcntl                  0xdd 
 #define SWI_Fstat64  		   0xc5
+#define SWI_Set_tls                0xf0005
 
 #define SWI_Breakpoint             0x180000	/* see gdb's tm-arm.h */
 
