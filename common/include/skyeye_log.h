@@ -1,6 +1,7 @@
 #ifndef __SKYEYE_LOG_H__
 #define __SKYEYE_LOG_H__
 #include "skyeye_types.h"
+#include "skyeye_options.h"
 #include <stdio.h>
 #include <assert.h>
 #ifdef __cplusplus
@@ -13,11 +14,13 @@
 #define DBG(fmt, ...) do { } while (0)
 #endif
 typedef enum{
-	Info_log = 0,
-	Debug_log,
-	Warnning_log,
-	Error_log,
-	Critical_log
+	Quiet_log = 0, /* Only output the necessary information for the user */
+	Info_log , /* Some addtional information to see how about the system */
+	Debug_log, /* Debug information for programmer */
+	Warnning_log, /* Something warnning information, maybe something wrong */
+	Error_log, /* Something really error, but maybe still work or can be recover */
+	Critical_log, /* Can not recover and the system should be terminated immediately */
+	MAX_LOG_LEVEL
 }log_level_t;
 
 typedef enum {
@@ -62,6 +65,11 @@ void skyeye_log(log_level_t log_level, const char* func_name, char* format,...);
 char* get_front_message();
 
 char* get_exp_str(exception_t exp);
+
+int
+do_log_option (skyeye_option_t * this_option, int num_params,
+	       const char *params[]);
+
 #ifdef __cplusplus
 }
 #endif

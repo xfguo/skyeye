@@ -47,6 +47,12 @@ char* get_front_message(){
 	return Front_message;
 }
 
+
+/**
+* @brief By default, only warnning and some error displayed
+*/
+static log_level_t current_log_level = Quiet_log;
+
 /**
 * @brief the handler for log option
 *
@@ -61,81 +67,28 @@ do_log_option (skyeye_option_t * this_option, int num_params,
 	       const char *params[])
 {
 	char name[MAX_PARAM_NAME], value[MAX_PARAM_NAME];
-	int i, fd, logon, memlogon;
-	unsigned long long start, end, length;
-#if 0
-	/*2004-08-09 chy init skyeye_config.log */
-	skyeye_config.log.log_fd = 0;
-	skyeye_config.log.logon = 0;
-	skyeye_config.log.memlogon = 0;
-	skyeye_config.log.start = 0;
-	skyeye_config.log.end = 0;
-	skyeye_config.log.length = 0;
-
+	log_level_t level = current_log_level;
+	int i;
 	for (i = 0; i < num_params; i++) {
-		if (split_param (params[i], name, value) < 0)
+		if (split_param (params[i], name, value) < 0){
 			SKYEYE_ERR
 				("log_info: Error: log has wrong parameter \"%s\".\n",
 				 name);
-		if (!strncmp ("logon", name, strlen (name))) {
-			sscanf (value, "%d", &logon);
-			if (logon != 0 && logon != 1)
+			continue;
+		}
+		if (!strncmp ("level", name, strlen (name))) {
+			sscanf (value, "%d", &level);
+			printf("In %s, set log level %d\n", __FUNCTION__, level);
+			if (level < Quiet_log || level >= MAX_LOG_LEVEL){
 				SKYEYE_ERR
-					("log_info: Error logon value %d\n",
-					 logon);
-			if (logon == 1) {
-				SKYEYE_INFO ("log_info: log is on.\n");
+					("log_info: Error log level %d\n",
+					 level);
 			}
-			else {
-				SKYEYE_INFO ("log_info: log is off.\n");
-			}
-			skyeye_config.log.logon = logon;
+			else
+				current_log_level = level;
+			break;
 		}
-		else if (!strncmp ("memlogon", name, strlen (name))) {
-			sscanf (value, "%d", &memlogon);
-			if (memlogon != 0 && memlogon != 1)
-				SKYEYE_ERR
-					("log_info: Error logon value %d\n",
-					 memlogon);
-			if (memlogon == 1) {
-				SKYEYE_INFO ("log_info: memory klog is on.\n");
-			}
-			else {
-				SKYEYE_INFO ("log_info: memory log is off.\n");
-			}
-			skyeye_config.log.memlogon = memlogon;
-		}
-		else if (!strncmp ("logfile", name, strlen (name))) {
-			if ((skyeye_logfd = fopen (value, "w+")) == NULL) {
-				//SKYEYE_DBG("SkyEye Error when open log file %s\n", value);
-				perror ("SkyEye: Error when open log file:  ");
-				skyeye_exit (-1);
-			}
-			skyeye_config.log.log_fd = skyeye_logfd;
-			SKYEYE_INFO ("log_info:log file is %s, fd is 0x%x\n",
-				     value, skyeye_logfd);
-		}
-		else if (!strncmp ("start", name, strlen (name))) {
-			start = strtoul (value, NULL, 0);
-			skyeye_config.log.start = start;
-			SKYEYE_INFO ("log_info: log start clock %llu\n",
-				     start);
-		}
-		else if (!strncmp ("end", name, strlen (name))) {
-			end = strtoul (value, NULL, 0);
-			skyeye_config.log.end = end;
-			SKYEYE_INFO ("log_info: log end clock %llu\n", end);
-		}
-		else if (!strncmp ("length", name, strlen (name))) {
-			sscanf (value, "%llu", &length);
-			skyeye_config.log.length = length;
-			SKYEYE_INFO ("log_info: log instr length %llu\n",
-				     length);
-		}
-		else
-			SKYEYE_ERR ("Error: Unknown cpu name \"%s\"\n", params[0]);
 	}
-#endif
 	return 0;
 }
 
@@ -169,6 +122,14 @@ char* get_exp_str(exception_t exp){
 	return exp_str[exp];
 }
 
+void skyeye_info(char* format, ...){
+	va_list args;
+	va_start(args, format);
+	skyeye_log(Info_log, NULL, format, args);
+	va_end(args);
+	return;
+}
+
 /**
 * @brief log function of skyeye
 *
@@ -187,7 +148,13 @@ void skyeye_log(log_level_t log_level,const char* func_name, char* format, ...){
 	if(log_level >= Error_log)
 		fprintf(stderr, "In %s, %s\n", func_name, buf);
 	else{
-		printf("In %s, %s\n", func_name, buf);
+		if(current_log_level == Quiet_log){
+			/* output nothing */
+		}
+		else if(log_level >= current_log_level)
+			printf("In %s, %s\n", func_name, buf);
+		else
+			;/* output nothing */
 	}
 }
 
@@ -247,4 +214,3 @@ void skyeye_printf_in_color(COLOR_TYPE type, char *format, ...)
 		break;
 	}
 }
-
