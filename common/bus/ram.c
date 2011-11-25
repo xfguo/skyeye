@@ -33,6 +33,7 @@
 #include "skyeye_pref.h"
 #include "skyeye_swapendian.h"
 #include "skyeye_mm.h"
+#include "skyeye_log.h"
 
 /* All the memory including rom and dram */
 
@@ -531,7 +532,7 @@ unsigned long get_dma_addr(unsigned long guest_addr){
         /* checking for direct mmap access in user mode */
 	if(get_skyeye_exec_info()->mmap_access)
 	{
-		printf("In %s, guest_addr=0x%lx, \n", __FUNCTION__, (unsigned long) guest_addr);
+		skyeye_log(Debug_log, __FUNCTION__, "guest_addr=0x%lx.\n", (unsigned long) guest_addr);
 		return guest_addr;
 	}
 
@@ -544,7 +545,7 @@ unsigned long get_dma_addr(unsigned long guest_addr){
 	}
 	
 	host_addr = &global_memory.rom[global_mbp - memmap->mem_banks][(guest_addr - global_mbp->addr) >> 2];
-        printf("In %s, host_addr=0x%llx, \n", __FUNCTION__, (unsigned long)host_addr);
+	skyeye_log(Debug_log, __FUNCTION__, "host_addr=0x%lx.\n", (unsigned long) host_addr);
         return (unsigned long)host_addr;
 }
 

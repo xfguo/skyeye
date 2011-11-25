@@ -238,7 +238,7 @@ void start_all_thread(){
 		 * Before start a thread, check the data
 		 */
                 if((pthread_pool[i].state != Blank_state) && (pthread_pool[i].priv_data != NULL)){
-			printf("In %s, the thread %d is set to running\n", __FUNCTION__, i);
+			skyeye_log(Debug_log, __FUNCTION__, "the thread %d is set to running\n", i);
 			pthread_pool[i].state = Running_state;
 		}
 	}

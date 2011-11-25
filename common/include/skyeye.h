@@ -31,6 +31,7 @@
 #ifdef __APPLE__
 #include <libkern/OSByteOrder.h>
 #endif
+#include <skyeye_log.h>
 
 #define SKYEYE_DEBUG 0
 #if SKYEYE_DEBUG
@@ -39,7 +40,7 @@
 #define SKYEYE_DBG(msg...)
 #endif
 
-#define SKYEYE_INFO(msg...)		fprintf(stderr, ##msg);
+#define SKYEYE_INFO(msg...)		skyeye_log(Info_log, __FUNCTION__, ##msg);
 #define SKYEYE_ERR(msg...)		fprintf(stderr, ##msg);
 #define SKYEYE_WARNING(msg...)	fprintf(stderr, ##msg);
 #if 0
