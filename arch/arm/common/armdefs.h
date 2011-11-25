@@ -41,7 +41,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 //AJ2D--------------------------------------------------------------------------
-#if 1
+#if 0
 #if 0
 #define DIFF_STATE 1
 #define __FOLLOW_MODE__ 0

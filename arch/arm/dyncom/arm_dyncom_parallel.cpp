@@ -80,7 +80,7 @@ void init_compiled_queue(cpu_t* cpu){
 	if (get_skyeye_pref()->interpret_mode) {
 		running_mode = PURE_INTERPRET;
 	}
-	printf("Current running mode: %s\n", running_mode_str[running_mode]);
+	skyeye_log(Info_log, __FUNCTION__, "Current running mode: %s\n", running_mode_str[running_mode]);
 	if (running_mode == HYBRID){
 		if(pthread_rwlock_init(&compile_stack_rwlock, NULL)){
 			fprintf(stderr, "can not initilize the rwlock\n");

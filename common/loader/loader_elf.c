@@ -304,8 +304,7 @@ load_exec (const char *file, addr_type_t addr_type)
 
 	//big_endian = bfd_big_endian(tmp_bfd);
 
-	printf ("exec file \"%s\"'s format is %s.\n", file,
-		tmp_bfd->xvec->name);
+	skyeye_log(Info_log, __FUNCTION__, "exec file \"%s\"'s format is %s.\n", file, tmp_bfd->xvec->name);
 	
 	/* trying a direct mmap access, where user application
 	   will be mapped to 0x8000 of skyeye memory space. */

@@ -28,6 +28,7 @@
 #include <search.h>
 #include "skyeye_symbol.h"
 #include "skyeye_mm.h"
+#include "skyeye_log.h"
 #include "symbol.h"
 
 /*
@@ -73,7 +74,7 @@ void init_symbol_table(char* filename, char* arch_name)
 
 	if (!bfd_check_format(abfd, bfd_object)) {
 		bfd_close(abfd);
-		printf("In %s, wrong bfd format\n", __FUNCTION__) ;
+		skyeye_log(Debug_log, __FUNCTION__, "wrong bfd format\n");
 		return;
 		//exit(0);
 	}

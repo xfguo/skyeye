@@ -47,31 +47,31 @@ mmu_init (ARMul_State * state)
 	switch (state->cpu->cpu_val & state->cpu->cpu_mask) {
 	case SA1100:
 	case SA1110:
-		fprintf (stderr, "SKYEYE: use sa11xx mmu ops\n");
+		SKYEYE_INFO("SKYEYE: use sa11xx mmu ops\n");
 		state->mmu.ops = sa_mmu_ops;
 		break;
 	case PXA250:
 	case PXA270:		//xscale
-		fprintf (stderr, "SKYEYE: use xscale mmu ops\n");
+		SKYEYE_INFO ("SKYEYE: use xscale mmu ops\n");
 		state->mmu.ops = xscale_mmu_ops;
 		break;
 	case 0x41807200:	//arm720t
 	case 0x41007700:	//arm7tdmi
 	case 0x41007100:	//arm7100
-		fprintf (stderr, "SKYEYE: use arm7100 mmu ops\n");
+		SKYEYE_INFO ( "SKYEYE: use arm7100 mmu ops\n");
 		state->mmu.ops = arm7100_mmu_ops;
 		break;
 	case 0x41009200:
-		fprintf (stderr, "SKYEYE: use arm920t mmu ops\n");
+		SKYEYE_INFO ("SKYEYE: use arm920t mmu ops\n");
 		state->mmu.ops = arm920t_mmu_ops;
 		break;
 	case 0x41069260:
-		fprintf (stderr, "SKYEYE: use arm926ejs mmu ops\n");
+		SKYEYE_INFO ("SKYEYE: use arm926ejs mmu ops\n");
 		state->mmu.ops = arm926ejs_mmu_ops;
 		break;
 	/* case 0x560f5810: */
 	case 0x0007b000:
-		fprintf (stderr, "SKYEYE: use arm11jzf-s mmu ops\n");
+		SKYEYE_INFO ("SKYEYE: use arm11jzf-s mmu ops\n");
 		state->mmu.ops = arm1176jzf_s_mmu_ops;
 		break;
 

@@ -193,7 +193,6 @@ do_load_file_option (skyeye_option_t * this_option, int num_params,
 	if (load_files_list.load_file_num == 0)
 		register_callback(load_files, Bootmach_callback);
 	/* FIXME, we should update load_base and load_mask to preference of SkyEye */
-	fprintf(stderr, "%s not finished.\n", __FUNCTION__);
 	load_files_list.load_file_num ++;
 	//printf("Your elf file will be load to: base address=0x%x,mask=0x%x\n", load_base, load_mask);
 	return 0;

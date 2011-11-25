@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include "skyeye_types.h"
 #include "skyeye_obj.h"
-#define DEBUG
+//#define DEBUG
 #include "skyeye_log.h"
 
 exception_t SKY_register_interface(void* intf_obj, const char* objname, const char* iface_name){
