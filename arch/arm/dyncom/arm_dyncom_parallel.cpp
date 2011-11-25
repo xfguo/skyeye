@@ -29,7 +29,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "stat.h"
 #include "dyncom/tag.h"
 #include "dyncom/basicblock.h"
-#include "portable/usleep.h"
 #include "bank_defs.h"
 
 #include <stack>

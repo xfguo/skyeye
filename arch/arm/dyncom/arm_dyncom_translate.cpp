@@ -1179,7 +1179,7 @@ int DYNCOM_TRANS(smlal)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *tmp2 = ZEXT64(R(RM));
 	Value *result = MUL(tmp1, tmp2);
 	Value *result_lo = TRUNC32(AND(result, CONST64(0xffffffff)));
-	Value *result_hi = TRUNC32(LSHR(AND(result, CONST64(0xffffffff00000000)), CONST64(32)));
+	Value *result_hi = TRUNC32(LSHR(result, CONST64(32)));
 	Value *rdlo = ADD(result_lo, R(RDLo));
 	Value *carry = SELECT(ICMP_ULT(rdlo, result_lo), CONST(1), CONST(0));
 	LET(RDLo, rdlo);
@@ -1441,7 +1441,7 @@ int DYNCOM_TRANS(umlal)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 	Value *tmp2 = ZEXT64(R(RM));
 	Value *result = MUL(tmp1, tmp2);
 	Value *result_lo = TRUNC32(AND(result, CONST64(0xffffffff)));
-	Value *result_hi = TRUNC32(LSHR(AND(result, CONST64(0xffffffff00000000)), CONST64(32)));
+	Value *result_hi = TRUNC32(LSHR(result, CONST64(32)));
 	Value *rdlo = ADD(result_lo, R(RDLo));
 	Value *carry = SELECT(ICMP_ULT(rdlo, result_lo), CONST(1), CONST(0));
 	LET(RDLo, rdlo);
