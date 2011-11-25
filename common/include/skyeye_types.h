@@ -107,13 +107,6 @@ typedef enum{
 	Unknown_exp
 }exception_t;
 
-typedef enum{
-	Debug_log = 0,
-	Info_log,
-	Warnning_log,
-	Error_log,
-	Critical_log
-}log_level_t;
 
 typedef enum{
 	Generic_exp = 0,

@@ -12,6 +12,13 @@
 #else
 #define DBG(fmt, ...) do { } while (0)
 #endif
+typedef enum{
+	Info_log = 0,
+	Debug_log,
+	Warnning_log,
+	Error_log,
+	Critical_log
+}log_level_t;
 
 typedef enum {
 	RED,
