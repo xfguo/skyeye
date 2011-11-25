@@ -78,7 +78,6 @@ do_log_option (skyeye_option_t * this_option, int num_params,
 		}
 		if (!strncmp ("level", name, strlen (name))) {
 			sscanf (value, "%d", &level);
-			printf("In %s, set log level %d\n", __FUNCTION__, level);
 			if (level < Quiet_log || level >= MAX_LOG_LEVEL){
 				SKYEYE_ERR
 					("log_info: Error log level %d\n",
@@ -152,7 +151,10 @@ void skyeye_log(log_level_t log_level,const char* func_name, char* format, ...){
 			/* output nothing */
 		}
 		else if(log_level >= current_log_level)
-			printf("In %s, %s\n", func_name, buf);
+			if(log_level == Info_log)
+				printf("INFO: %s\n", buf);
+			else
+				printf("DEBUG:[func %s], %s\n", func_name, buf);
 		else
 			;/* output nothing */
 	}
