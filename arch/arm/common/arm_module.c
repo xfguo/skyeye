@@ -27,6 +27,7 @@
 #include "skyeye_options.h"
 #include "armdefs.h"
 #include <stdlib.h>
+#include <skyeye_log.h>
 const char* skyeye_module = "arm";
 extern void init_arm_arch();
 extern void init_arm_dyncom ();
@@ -41,10 +42,10 @@ void module_init(){
 	/* register the arm core to the common library */
 	init_arm_arch ();
 #ifdef LLVM_EXIST
-	printf("LLVM EXIST \n");
+	skyeye_log(Debug_log, __FUNCTION__, "LLVM exist and dyncom registered.\n");
 	init_arm_dyncom ();
 #else
-	printf("LLVM NOT EXIST \n");
+	skyeye_log(Debug_log, __FUNCTION__, "LLVM not exist and dyncom not available.\n");
 #endif
 	/*
 	 * register all the supported mach to the common library.

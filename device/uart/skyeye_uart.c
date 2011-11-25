@@ -184,7 +184,7 @@ int skyeye_uart_setup(struct uart_option *uart_opt)
 	memcpy(&uart_dev->desc_out[0], &uart_opt->desc_out[0], MAX_STR_NAME);
 	memcpy(&uart_dev->converter[0], &uart_opt->converter[0], MAX_STR_NAME);
 
-	printf("uart_mod:%d, desc_in:%s, desc_out:%s, converter:%s\n",
+	SKYEYE_INFO("uart_mod:%d, desc_in:%s, desc_out:%s, converter:%s\n",
 	       uart_dev->mod, uart_dev->desc_in, uart_dev->desc_out, uart_dev->converter);
 
 	switch (uart_dev->mod) {

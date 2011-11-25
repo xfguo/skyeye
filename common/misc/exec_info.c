@@ -313,7 +313,7 @@ void exec_stack_init()
 	uintptr_t sp = stack_top;
 
 	/* --------------------------------------------------------------------- */
-	printf("exec_info: Copying string in user mode stack from %08x\n", sp);
+	skyeye_log(Debug_log, __FUNCTION__, "exec_info: Copying string in user mode stack from %08x\n", sp);
 
 	sp = fill_envp(sp);
 	char* user_envp = (char *) sp;
@@ -349,6 +349,6 @@ void exec_stack_init()
 
 	/* set the initial sp at start */
 	info->initial_sp = sp;
-	printf("exec_info: initial sp at %08x\n", info->initial_sp);
+	skyeye_log(Debug_log, __FUNCTION__, "exec_info: initial sp at %08x\n", info->initial_sp);
 }
 

@@ -3,6 +3,7 @@
 
 #include "skyeye_mach.h"
 #include "skyeye_module.h"
+#include "skyeye_log.h"
 
 const char *skyeye_module = "ppc";
 
@@ -14,10 +15,10 @@ void module_init()
 {
 	init_ppc_arch();
 #ifdef LLVM_EXIST
-	printf("LLVM EXIST\n");
+	skyeye_log(Debug_log, __FUNCTION__, "LLVM exist and dyncom registered.\n");
 	init_ppc_dyncom();
 #else
-	printf("LLVM NOT EXIST\n");
+	skyeye_log(Debug_log, __FUNCTION__, "LLVM not exist and dyncom not available.\n");
 #endif
 	/*
 	 * register all the supported mach to the common library.
