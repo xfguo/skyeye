@@ -18,7 +18,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
  * 10/2011 rewritten by Alexis He <ahe.krosk@gmail.com> 
  */
 #include "armdefs.h"
-#include "armemu.h"
+//#include "armemu.h"
 #include "arm_dyncom_parallel.h"
 #include "arm_dyncom_mmu.h"
 
@@ -33,6 +33,26 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <stack>
 using namespace std;
+#ifndef __ARMEMU_H__
+#define __ARMEMU_H__
+/* Different ways to start the next instruction.  */
+#define SEQ           0
+#define NONSEQ        1
+#define PCINCEDSEQ    2
+#define PCINCEDNONSEQ 3
+#define PRIMEPIPE     4
+#define RESUME        8
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern ARMword ARMul_Emulate32 (ARMul_State *);
+#ifdef __cplusplus
+}
+#endif
+
+#define INTBITS (0xc0L)
+#endif
 
 #define QUEUE_LENGTH 0x6000
 /* Monothread: threshold compilation only
@@ -50,8 +70,8 @@ static void push_compiled_work(cpu_t* cpu, uint32_t pc);
  * Three running mode: PURE_INTERPRET, PURE_DYNCOM, HYBRID
  */
 //running_mode_t running_mode = PURE_INTERPRET;
-//running_mode_t running_mode = PURE_DYNCOM;
-running_mode_t running_mode = HYBRID;
+running_mode_t running_mode = PURE_DYNCOM;
+//running_mode_t running_mode = HYBRID;
 static char* running_mode_str[] = {
 	"pure interpret running",
 	"pure dyncom running",
