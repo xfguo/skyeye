@@ -1131,6 +1131,10 @@ void arm_dyncom_init(arm_core_t* core){
 	} else {
 		cpu->dyncom_engine->code_end = 0x100000;
 		cpu->dyncom_engine->code_entry = 0x80d0;
+		/* The user mode code section from android kernel */
+		cpu->dyncom_engine->code1_start = 0xFFFF0000;
+		cpu->dyncom_engine->code1_end = 0xFFFF0000 + 0x1000;
+
 	}
 
 	cpu->switch_mode = arm_switch_mode;

@@ -208,7 +208,8 @@ addr_t find_bb_start(cpu_t *cpu, addr_t addr)
 bool
 is_inside_code_area(cpu_t *cpu, addr_t a)
 {
-	return a >= cpu->dyncom_engine->code_start && a < cpu->dyncom_engine->code_end;
+	//return (a >= cpu->dyncom_engine->code_start && a < cpu->dyncom_engine->code_end) | (a >= cpu->dyncom_engine->code1_start && a < a < cpu->dyncom_engine->code1_end);
+	return (a >= cpu->dyncom_engine->code_start && a < cpu->dyncom_engine->code_end) | (a >= cpu->dyncom_engine->code1_start && a < cpu->dyncom_engine->code1_end);
 }
 /**
  * @brief Give a tag to an address

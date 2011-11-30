@@ -374,6 +374,9 @@ typedef struct dyncom_engine{
 
 	addr_t code_start;
 	addr_t code_end;
+	addr_t code1_start;
+	addr_t code1_end;
+
 	addr_t code_entry;
 	addr_t tag_start;
 	addr_t tag_end;
