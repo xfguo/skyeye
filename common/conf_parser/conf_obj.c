@@ -38,6 +38,7 @@
 #include <search.h>
 #include "skyeye_mm.h"
 #include "skyeye_log.h"
+#include "skyeye_map.h"
 #include "portable/portable.h"
 
 /**
@@ -59,6 +60,7 @@ void init_conf_obj(){
 	hcreate_r(max_conf_obj, conf_tab);
 }
 
+#if 0
 /**
 * @brief place an object to the hash table
 *
@@ -98,6 +100,7 @@ void* get_conf_obj(char* objname){
 		return retval->data;
 	}
 }
+#endif
 #define TYPE_CASTING(conf_obj, type_string) (##type_string##)get_cast_conf_obj(conf_obj, type_string)
 
 /**

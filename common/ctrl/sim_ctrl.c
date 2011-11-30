@@ -138,7 +138,7 @@ void SIM_init(){
 	init_bp();
 
 	/* the management of named object */
-	init_conf_obj();
+	//init_conf_obj();
 
 	/*
 	 * initialization of breakpoint, that depends on callback module.
@@ -327,6 +327,7 @@ bool_t SIM_is_running(){
 /**
 * @brief destructor of the simulator
 */
+extern void skyeye_erase_map(void);
 void SIM_fini(){
 	sky_pref_t *pref = get_skyeye_pref();
 	//pthread_cancel();
@@ -340,6 +341,7 @@ void SIM_fini(){
 	/* unload all the module */
 	SKY_unload_all_modules();
 	/* free the memory */
+	skyeye_erase_map();
 	printf("exit.\n");
 
 	/* restore the environment */
