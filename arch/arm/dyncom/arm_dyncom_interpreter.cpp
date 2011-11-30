@@ -3627,7 +3627,9 @@ uint32_t am_diff(cpu_t *cpu)
 			if (last_pc == 0xffff0018) {
 				LOG_IN_CLR(RED, "SYNC WITH IRQ...\n");
 				cpu->check_int_flag = 1;
+#if __FOLLOW_MODE__
 				update_int_array(cpu, core->icounter);
+#endif
 //				core->Reg[15] -= 4;
 //				last_pc = pc;
 //				core->Reg[15] = 0xffff0018;
