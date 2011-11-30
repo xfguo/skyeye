@@ -164,6 +164,7 @@ SWIopen (ARMul_State * state, ARMword name, ARMword SWIflags)
 	assert(SWIflags< (sizeof(translate_open_mode)/ sizeof(translate_open_mode[0])));
 	/* Now we need to decode the Demon open mode */
 	flags = translate_open_mode[SWIflags];
+	flags = SWIflags;
 
 	/* Filename ":tt" is special: it denotes stdin/out */
 	if (strcmp (dummy, ":tt") == 0) {
