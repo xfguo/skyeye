@@ -789,7 +789,7 @@ Value *GetAddr(cpu_t *cpu, uint32_t instr, BasicBlock *bb)
 
 #define OPERAND_RETURN_CHECK_PC  do{  \
 	if(RM == 15)		\
-		return ADD(R(RM), CONST(8));	\
+		return ADD(R(RM), CONST(INSTR_SIZE * 2));	\
 	else	\
 		return R(RM);	\
 }while(0)
