@@ -287,14 +287,17 @@ Value *
 thumb_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb) {
 	/**/
 	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
-	printf("In %s, instr=0x%x, cond=0x%x, R15=0x%x\n", __FUNCTION__, instr, (instr) >> 20, core->Reg[15]);
-	uint32_t tinstr = instr & 0xFFFF;
-	if(tinstr != 0xd){
+	uint32_t tinstr;
+	tinstr = instr & 0xFFFF;
+	printf("In %s, instr=0x%x, tinstr=0x%x,\n", __FUNCTION__, instr, (tinstr));
+	if(((tinstr & 0xf000) >> 12) != 0xd){
 		/* Not a conditional instruction */
 		skyeye_log(Debug_log, __FUNCTION__, "decode error\n");
 		//exit(-1);
 		tinstr = instr >> 16;
 	}
+	printf("In %s, tinstr=0x%x, cond=0x%x\n", __FUNCTION__, tinstr, ((tinstr) >> 8) & 0xf);
+	//exit(-1);
 	switch (((tinstr) >> 8) & 0xf) {
 		case 0x0: /* EQ */
 			return LOAD(ptr_Z);
