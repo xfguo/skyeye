@@ -28,10 +28,21 @@ typedef enum{
 	PURE_INTERPRET = 0,
 	PURE_DYNCOM,
 	HYBRID,
+	FAST_INTERPRET,
 	MAX_RUNNING_MODE,
 }running_mode_t;
 
 extern running_mode_t running_mode;
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+int
+do_mode_option (skyeye_option_t * this_option, int num_params,
+	       const char *params[]);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

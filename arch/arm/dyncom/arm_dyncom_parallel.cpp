@@ -76,6 +76,7 @@ static char* running_mode_str[] = {
 	"pure interpret running",
 	"pure dyncom running",
 	"hybrid running",
+	"fast interpret running",
 	NULL
 };
 
@@ -93,6 +94,44 @@ static char* running_mode_str[] = {
 #define PFUNC(pc)					\
 	pfunc = (void*) hash_map[pc & 0x1fffff];
 #endif
+
+/**
+* @brief the handler for log option
+*
+* @param this_option
+* @param num_params
+* @param params[]
+*
+* @return 
+*/
+int
+do_mode_option (skyeye_option_t * this_option, int num_params,
+	       const char *params[])
+{
+	char name[MAX_PARAM_NAME], value[MAX_PARAM_NAME];
+	running_mode_t mode = running_mode;
+	int i;
+	for (i = 0; i < num_params; i++) {
+		if (split_param (params[i], name, value) < 0){
+			SKYEYE_ERR
+				("log_info: Error: log has wrong parameter \"%s\".\n",
+				 name);
+			continue;
+		}
+		if (!strncmp ("mode", name, strlen (name))) {
+			sscanf (value, "%d", &mode);
+			if (mode < PURE_INTERPRET || mode >= MAX_RUNNING_MODE){
+				SKYEYE_ERR
+					("log_info: Error log level %d\n",
+					 mode);
+			}
+			else
+				running_mode = mode;
+			break;
+		}
+	}
+	return 0;
+}
 
 void init_compiled_queue(cpu_t* cpu){
 	memset(&compiled_queue[0], 0xff, sizeof(uint32_t) * QUEUE_LENGTH);

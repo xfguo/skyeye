@@ -37,6 +37,9 @@ extern ARMul_State* state;
 extern int
 do_cpu_option (skyeye_option_t * this_option, int num_params,
                 const char *params[]);
+extern int
+do_mode_option (skyeye_option_t * this_option, int num_params,
+                const char *params[]);
 
 void module_init(){
 	/* register the arm core to the common library */
@@ -58,6 +61,8 @@ void module_init(){
 
 	if(register_option("cpu", do_cpu_option, "Processor option for arm architecture.") != No_exp)
                 fprintf(stderr,"Can not register cpu option\n");
+	register_option("run", do_mode_option, "Indicate the different running mode, such as dyncom, hybrid etc.\n");
+
 }
 void module_fini(){
 	//ARMul_DeleteState(state);
