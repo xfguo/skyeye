@@ -23,6 +23,8 @@
 //#include "armemu.h"
 #include "arm_dyncom_thumb.h"
 #include "skyeye_instr_length.h"
+#define DEBUG
+#include <skyeye_log.h>
 
 using namespace llvm;
 #define ptr_N	cpu->ptr_N
@@ -175,7 +177,7 @@ int arch_arm_tag_instr(cpu_t *cpu, addr_t pc, tag_t *tag, addr_t *new_pc, addr_t
 		uint32 arm_inst;
 
 		current_state = decode_dyncom_thumb_instr(core, instr, &arm_inst, pc, &index);
-		printf("In %s, thumb instruction , index=%d\n", __FUNCTION__, index);
+		DBG("In %s, thumb instruction , index=%d\n", __FUNCTION__, index);
 		instr = arm_inst;
 		instr_size = 2;
 		/* for branch and state change instruction, we have already get the index from thumb decoder */
@@ -289,14 +291,14 @@ thumb_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb) {
 	arm_core_t* core = (arm_core_t*)get_cast_conf_obj(cpu->cpu_data, "arm_core_t");
 	uint32_t tinstr;
 	tinstr = instr & 0xFFFF;
-	printf("In %s, instr=0x%x, tinstr=0x%x,\n", __FUNCTION__, instr, (tinstr));
+	DBG("In %s, instr=0x%x, tinstr=0x%x,\n", __FUNCTION__, instr, (tinstr));
 	if(((tinstr & 0xf000) >> 12) != 0xd){
 		/* Not a conditional instruction */
 		skyeye_log(Debug_log, __FUNCTION__, "decode error\n");
 		//exit(-1);
 		tinstr = instr >> 16;
 	}
-	printf("In %s, tinstr=0x%x, cond=0x%x\n", __FUNCTION__, tinstr, ((tinstr) >> 8) & 0xf);
+	DBG("In %s, tinstr=0x%x, cond=0x%x\n", __FUNCTION__, tinstr, ((tinstr) >> 8) & 0xf);
 	//exit(-1);
 	switch (((tinstr) >> 8) & 0xf) {
 		case 0x0: /* EQ */
@@ -1635,7 +1637,7 @@ int DYNCOM_TRANS(uxth)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 int DYNCOM_TRANS(b_2_thumb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc){
 	uint32 tinstr = get_thumb_instr(instr, pc);
 	sint32 imm =((tinstr & 0x3FF) << 1) | ((tinstr & (1 << 10)) ? 0xFFFFF800 : 0);
-	printf("In %s, pc=0x%x, imm=0x%x, instr=0x%x, tinstr=0x%x\n", __FUNCTION__, pc, imm, instr, tinstr);
+	DBG("In %s, pc=0x%x, imm=0x%x, instr=0x%x, tinstr=0x%x\n", __FUNCTION__, pc, imm, instr, tinstr);
 	//LET(14, ADD(ADD(R(15), CONST(4)), CONST(imm)));
 	LET(15, ADD(R(15), CONST(4 + imm)));
 	/* return the instruction size */
@@ -1646,7 +1648,7 @@ int DYNCOM_TRANS(b_cond_thumb)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_
 	uint32 tinstr = get_thumb_instr(instr, pc);
 	sint32 imm = (((tinstr & 0x7F) << 1) | ((tinstr & (1 << 7)) ?	0xFFFFFF00 : 0));
 
-	printf("In %s, pc=0x%x, imm=0x%x, instr=0x%x, tinstr=0x%x\n", __FUNCTION__, pc, imm, instr, tinstr);
+	DBG("In %s, pc=0x%x, imm=0x%x, instr=0x%x, tinstr=0x%x\n", __FUNCTION__, pc, imm, instr, tinstr);
 	//LET(14, ADD(ADD(R(15), CONST(4)), CONST(imm)));
 	LET(15, ADD(R(15), CONST(4 + imm)));
 	/* return the instruction size */
@@ -2553,12 +2555,12 @@ int DYNCOM_TAG(b_2_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, add
 	*tag = TAG_CONTINUE;
 	*tag |= TAG_BRANCH;
 	sint32 imm =((tinstr & 0x3FF) << 1) | ((tinstr & (1 << 10)) ? 0xFFFFF800 : 0);
-	printf("In %s, tinstr=0x%x, imm=0x%x\n", __FUNCTION__, tinstr, imm);
+	DBG("In %s, tinstr=0x%x, imm=0x%x\n", __FUNCTION__, tinstr, imm);
 	/* FIXME, should optimize a definite address */
         //*new_pc = NEW_PC_NONE;
 	*new_pc = pc + imm +4;
 	*next_pc = pc + INSTR_SIZE;
-	printf("pc is %x in %s instruction, new_pc=0x%x.\n", pc, __FUNCTION__, *new_pc);
+	DBG("pc is %x in %s instruction, new_pc=0x%x.\n", pc, __FUNCTION__, *new_pc);
 	return instr_size;
 }
 
@@ -2570,19 +2572,17 @@ int DYNCOM_TAG(b_cond_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, 
 	*tag |= TAG_BRANCH;
 	*tag |= TAG_CONDITIONAL;
 	sint32 imm = (((tinstr & 0x7F) << 1) | ((tinstr & (1 << 7))?0xFFFFFF00 : 0));
-	printf("In %s, tinstr=0x%x, imm=0x%x\n", __FUNCTION__, tinstr, imm);
+	DBG("In %s, tinstr=0x%x, imm=0x%x\n", __FUNCTION__, tinstr, imm);
 	/* FIXME, should optimize a definite address */
         //*new_pc = NEW_PC_NONE;
 	*new_pc = pc + imm +4;
 	*next_pc = pc + INSTR_SIZE;
-	printf("pc is %x in %s instruction, new_pc=0x%x.\n", pc, __FUNCTION__, *new_pc);
 	return instr_size;
 }
 
 int DYNCOM_TAG(bl_1_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
 {
 	int instr_size = 2;
-	printf("pc is %x in %s instruction is not implementated.\n", pc, __FUNCTION__);
 	//arm_tag_continue(cpu, pc, instr, tag, new_pc, next_pc);
 	*tag = TAG_CONTINUE;
 	*next_pc = pc + INSTR_SIZE;
@@ -2596,7 +2596,6 @@ int DYNCOM_TAG(bl_2_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, ad
 	*new_pc = NEW_PC_NONE;
 	*next_pc = pc + INSTR_SIZE;
  
-	printf("pc is %x in %s instruction is not implementated.\n", pc, __FUNCTION__);
 	return instr_size;
 }
 int DYNCOM_TAG(blx_1_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, addr_t *new_pc, addr_t *next_pc)
@@ -2607,7 +2606,6 @@ int DYNCOM_TAG(blx_1_thumb)(cpu_t *cpu, addr_t pc, uint32_t instr, tag_t *tag, a
 	*next_pc = pc + INSTR_SIZE;
 	*tag |= TAG_BRANCH;
 
-	printf("pc is %x in %s instruction is not implementated.\n", pc, __FUNCTION__);
 	*tag |= TAG_STOP;
 	return instr_size;
 }
@@ -2837,17 +2835,17 @@ static tdstate decode_dyncom_thumb_instr(arm_core_t *core, uint32_t inst, uint32
 		case 29:
 			/* For BLX 1 thumb instruction*/
 			*index = table_length - 1;
-			printf("In %s, tinstr=0x%x, blx 1 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			//printf("In %s, tinstr=0x%x, blx 1 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
 			break;
 		case 30:
 			/* For BL 1 thumb instruction*/
 			*index = table_length - 3;
-			printf("In %s, tinstr=0x%x, bl 1 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			//printf("In %s, tinstr=0x%x, bl 1 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
 			break;
 		case 31:
 			/* For BL 2 thumb instruction*/
 			*index = table_length - 2;
-			printf("In %s, tinstr=0x%x, bl 2 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
+			//printf("In %s, tinstr=0x%x, bl 2 thumb index=%d\n", __FUNCTION__, tinstr, inst_index);
 			break;
 		default:
 			ret = t_undefined;
