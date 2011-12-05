@@ -84,6 +84,7 @@ extern int _fisatty (FILE *);
 #include "armos.h"
 #include "armemu.h"
 #include "skyeye_swapendian.h"
+#include "skyeye_command.h"
 #ifndef NOOS
 #ifndef VALIDATE
 /* #ifndef ASIM */
@@ -305,8 +306,8 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 
 	case SWI_ExitGroup:
 	case SWI_Exit:
-		destroy_threads();
-		exit(0);
+		/* quit here */
+		run_command("quit");
 		return TRUE;
 
 	case SWI_Times:{
