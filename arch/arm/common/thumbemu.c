@@ -30,6 +30,7 @@ existing ARM simulator.  */
 #include "armdefs.h"
 #include "armemu.h"
 #include "armos.h"
+#include <skyeye_log.h>
 
 /* Decode a 16bit Thumb instruction.  The instruction is in the low
    16-bits of the tinstr field, with the following Thumb instruction
@@ -465,7 +466,7 @@ ARMul_ThumbDecode (state, pc, tinstr, ainstr)
 				(state->Reg[14] + ((tinstr & 0x07FF) << 1)) & 0xFFFFFFFC;
 			state->Reg[14] = (tmp | 1);
 			CLEART;
-			printf("In %s, After  BLX(1),LR=0x%x,PC=0x%x, offset=0x%x\n", __FUNCTION__, state->Reg[14], state->Reg[15], (tinstr &0x7FF) << 1);
+			DBG("In %s, After  BLX(1),LR=0x%x,PC=0x%x, offset=0x%x\n", __FUNCTION__, state->Reg[14], state->Reg[15], (tinstr &0x7FF) << 1);
 			valid = t_branch;
 			FLUSHPIPE;
 		}

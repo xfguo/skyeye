@@ -293,10 +293,12 @@ thumb_translate_cond(cpu_t *cpu, uint32_t instr, BasicBlock *bb) {
 	tinstr = instr & 0xFFFF;
 	DBG("In %s, instr=0x%x, tinstr=0x%x,\n", __FUNCTION__, instr, (tinstr));
 	if(((tinstr & 0xf000) >> 12) != 0xd){
-		/* Not a conditional instruction */
-		skyeye_log(Debug_log, __FUNCTION__, "decode error\n");
 		//exit(-1);
 		tinstr = instr >> 16;
+		if(((tinstr & 0xf000) >> 12) != 0xd)
+			/* Not a conditional instruction */
+			skyeye_log(Debug_log, __FUNCTION__, "decode error\n");
+
 	}
 	DBG("In %s, tinstr=0x%x, cond=0x%x\n", __FUNCTION__, tinstr, ((tinstr) >> 8) & 0xf);
 	//exit(-1);
