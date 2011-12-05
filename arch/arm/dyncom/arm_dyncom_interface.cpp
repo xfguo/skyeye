@@ -166,8 +166,13 @@ static void per_cpu_step(conf_object_t * running_core){
 	if (running_mode != PURE_DYNCOM)
 	{
 		uint32_t ret = 0;
-		ret = launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
-		
+		if(running_mode == FAST_INTERPRET){
+			extern void InterpreterMainLoop(cpu_t *core);
+			InterpreterMainLoop((cpu_t*)(core->dyncom_cpu->obj));
+		}
+		else{
+			ret = launch_compiled_queue((cpu_t*)(core->dyncom_cpu->obj), core->Reg[15]);
+		}
 		/* in any case, user mode traps and exception are all handled within launc compiled queue */
 		if(is_user_mode(cpu_dyncom))
 			return;
