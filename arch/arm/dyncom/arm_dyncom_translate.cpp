@@ -962,6 +962,8 @@ int DYNCOM_TRANS(mrc)(cpu_t *cpu, uint32_t instr, BasicBlock *bb, addr_t pc)
 			data = R(CP15_INSTR_FAULT_STATUS);
 		} else if (CRn == 6 && CRm == 0 && OPCODE_2 == 0) {
 			data = R(CP15_FAULT_ADDRESS);
+		} else if (CRn == 13 && CRm == 0 && OPCODE_2 == 3) {
+			data = R(CP15_THREAD_URO);
 		}
 		else {
 			printf("mrc is not implementated. CRn is %d, CRm is %d, OPCODE_2 is %d\n", CRn, CRm, OPCODE_2);

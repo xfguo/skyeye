@@ -500,6 +500,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 		{
 			//printf("syscall set_tls unimplemented\n");
 			state->mmu.thread_uro_id = state->Reg[0];
+			state->CP15[CP15_THREAD_URO] = state->Reg[0];
 			state->Reg[0] = 0;
 			return FALSE;
 		}
