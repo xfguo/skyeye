@@ -2737,7 +2737,9 @@ static tdstate decode_dyncom_thumb_instr(arm_core_t *core, uint32_t inst, uint32
 			}
 			else{
 			/* something wrong */
+				printf("In %s, thumb decoder error\n", __FUNCTION__);
 			}
+			break;
 		case 29:
 			/* For BLX 1 thumb instruction*/
 			*index = table_length - 1;
