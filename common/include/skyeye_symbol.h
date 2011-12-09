@@ -3,6 +3,7 @@
 #include "skyeye_types.h"
 void init_symbol_table(char* filename, char* arch_name);
 char *get_sym(generic_address_t address);
+generic_address_t get_addr(char func_name[128]);
 
 /**
 * @brief Get the target name defined in bfd library
