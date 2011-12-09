@@ -28,29 +28,66 @@
 #include <search.h>
 #include "skyeye_symbol.h"
 #include "skyeye_mm.h"
-#include "skyeye_log.h"
 #include "symbol.h"
-#include "portable/portable.h"
 
-/*
- * FIXME: GNU hash table isn't exist everywhere!!!
- */
+#define _GNU_SOURCE     /* Expose declaration of tdestroy() */
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
-static char itoa_tab[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'} ;
+
 static long storage_needed = 0;
 static asymbol **symbol_table = NULL;
 static unsigned long number_of_symbols = 0, kernel_number = 0;
 
 /**************************************************************************
   This function read the symbol list and store into a table
-  It then generates a hash table based on the value of function symbol
-  and the data is the pointer to struct funcsym defined in armsym.h
-
-  The GNU hash table is used.
+  It then generates a tree based on the value of function symbol
 **************************************************************************/
-/***************
- * added by ksh
- ***************/ 
+
+void *root = NULL;
+
+int
+compare_address(const void *pa, const void *pb)
+{
+
+   if (((SYM_FUNC *) pa)->address == ((SYM_FUNC *) pb)->address)
+   {
+	   return 0;
+   }
+   else if (((SYM_FUNC *) pa)->address > ((SYM_FUNC *) pb)->address)
+   {
+	   return 1;
+   }
+   return -1;
+}
+
+int
+compare_function(const void *pa, const void *pb)
+{
+   return strcmp(((SYM_FUNC *) pa)->name,((SYM_FUNC *) pb)->name); 
+}
+
+void
+action(const void *nodep, const VISIT which, const int depth)
+{
+   SYM_FUNC *datap;
+
+   switch (which) {
+   case preorder:
+	   datap = *(SYM_FUNC **) nodep;
+	   break;
+   case postorder:
+	   datap = *(SYM_FUNC **) nodep;
+	   break;
+   case endorder:
+	   datap = *(SYM_FUNC **) nodep;
+	   break;
+   case leaf:
+	   datap = *(SYM_FUNC **) nodep;
+	   break;
+   }
+}
 
 /**
 * @brief  initialization of a symbol table
@@ -60,12 +97,12 @@ static unsigned long number_of_symbols = 0, kernel_number = 0;
 */
 void init_symbol_table(char* filename, char* arch_name)
 {
-  long i,j, digit;
-  ENTRY newentry, *oldentry;
-  SYM_FUNC *symp;
-  asymbol *symptr;
-  int key;
-  bfd *abfd;
+	long i,j, digit;
+	SYM_FUNC **val;
+	SYM_FUNC *symp;
+	asymbol *symptr;
+	generic_address_t address;
+	bfd *abfd;
 
 	if(!filename){
 		fprintf(stderr, "Can not get correct kernel filename!Maybe your skyeye.conf have something wrong!\n");
@@ -75,7 +112,7 @@ void init_symbol_table(char* filename, char* arch_name)
 
 	if (!bfd_check_format(abfd, bfd_object)) {
 		bfd_close(abfd);
-		skyeye_log(Debug_log, __FUNCTION__, "wrong bfd format\n");
+		printf("In %s, wrong bfd format\n", __FUNCTION__) ;
 		return;
 		//exit(0);
 	}
@@ -101,58 +138,42 @@ void init_symbol_table(char* filename, char* arch_name)
 		exit(0);
 	}
 
-	if (!hcreate(number_of_symbols << 1)) {
-		printf("Not enough memory for hash table\n");
-		exit(0);
-	}
 	for (i = 0; i < number_of_symbols; i++) {
 		symptr = symbol_table[i] ;
-		key = symptr->value + symptr->section->vma; // adjust for section address
+		address = symptr->value + symptr->section->vma; // adjust for section address
 
-    if (((i<kernel_number) && (symbol_table[i]->flags == 0x01)) || // <tktan> BUG200105172154, BUG200106022219 
-	((i<kernel_number) && (symbol_table[i]->flags == 0x02)) || // <tktan> BUG200204051654
-	(symbol_table[i]->flags & 0x10)) { // Is a function symbol
-      // printf("%x %8x %s\n", symbol_table[i]->flags, key, symbol_table[i]->name);
+		/*I don't know why there are "$a" and "$d" in symbol table. I just remove them here.*/
+		if (strcmp(symbol_table[i]->name,"$a") == 0 || strcmp(symbol_table[i]->name,"$d") == 0 )
+			continue;
+		if (((i<kernel_number) && (symbol_table[i]->flags == 0x01)) || // <tktan> BUG200105172154, BUG200106022219 
+		((i<kernel_number) && (symbol_table[i]->flags == 0x02)) || // <tktan> BUG200204051654
+		(symbol_table[i]->flags & 0x10)) { // Is a function symbol
+		  // printf("%x %8x %s\n", symbol_table[i]->flags, key, symbol_table[i]->name);
 
-      // ***********************************************************
-      // This is converting the function symbol value to char string
-      // and use it as a key in the GNU hash table
-      // ********************************************************
-      newentry.key = (char *) skyeye_mm_zero(9);
-      for (j=0;j<8;j++) {
-        newentry.key[j] = itoa_tab[((key) >> (j << 2)) & 0xf] ;
-      }
-      newentry.key[8] = 0 ;
+		 // *************************************************
+		  // This is allocating memory for a struct funcsym
+		  // *************************************************
+			symp = (SYM_FUNC *) skyeye_mm_zero(sizeof(SYM_FUNC));
+			strcpy(symp->name,symbol_table[i]->name);
+			symp->address = address;
+			symp->total_cycle = 0;
+			symp->total_energy = 0;
+			symp->instances = 0;
 
-      // *************************************************
-      // This is allocating memory for a struct funcsym
-      // *************************************************
-      symp = (SYM_FUNC *) skyeye_mm_zero(sizeof(SYM_FUNC));
-      newentry.data = (char *) symp; 
-      symp->name = (char *) symbol_table[i]->name ;
-      symp->total_cycle = 0;
-      symp->total_energy = 0;
-      symp->instances = 0;
+			val = (SYM_FUNC **)tsearch((void *) symp, &root, compare_function);
+			val = (SYM_FUNC **)tsearch((void *) symp, &root, compare_address);
+			strcpy((*val)->name,symp->name);
+			if (val == NULL)
+			   exit(EXIT_FAILURE);
+			else if (compare_function((void *)(*(SYM_FUNC **) val),(void *)symp) != 0)
+			   free(symp);
+		}
+	}
 
-      // ***********************************************
-      // Insert into hash table
-      // *******************************************
-      /* <tktan> BUG200106022219 */
-      oldentry = hsearch(newentry, FIND) ;
-      if (oldentry) { // was entered
-        // printf("Duplicate Symbol: %x %s\n", key, symp->name);
-        oldentry->data = (char *) symp ;	
-      } else if (!hsearch(newentry, ENTER)) { 
-        printf("Insufficient memory\n");
-        exit(0) ;
-      }
-    }
-  }
-
-  return;
+	return;
 }
 /***************************************************************
-  This function get check the hash table for an entry
+  This function get check the tree for an node
   If it exists, the corresponding pointer to the SYM_FUNC will
   be returned
 *************************************************************/
@@ -166,29 +187,52 @@ void init_symbol_table(char* filename, char* arch_name)
 */
 char *get_sym(generic_address_t address)
 {
-	int j ;
-	ENTRY entry, *ep;
-	char text[9] ;
-	SYM_FUNC *symp;
+	SYM_FUNC **symp;
+	SYM_FUNC *node;
 
-	//printf("GetSym %x\n", address);
+//	printf("GetSym %x\n", address);
 	/*
 	 * If storage_needed is zero, means symbol table is not initialized.
 	 */
 	if(storage_needed == 0)
 		return NULL;
-	//assert(!symbol_table);
-	entry.key = text ;
-	for (j=0;j<8;j++) {
-		entry.key[j] = itoa_tab[(address >> (j << 2)) & 0xf] ;
-	}
-	entry.key[8] = 0 ;
-	/*a bug need to fixed */
-	ep = hsearch(entry, FIND) ;
 
-	if (ep != 0) {
-		symp = (SYM_FUNC *) ep->data;
-		return(symp->name);
-	} else
-		return(NULL);
+    node = (SYM_FUNC *) skyeye_mm_zero(sizeof(SYM_FUNC));
+	node->address = address;
+    symp = (SYM_FUNC **)tfind((void *) node, &root, compare_address);
+	if(symp != NULL)
+		return (*symp)->name;
+	free(node);
+	return NULL;
+}
+
+/**
+* @brief get the address of a given function
+*
+* @param function name
+*
+* @return 
+*/
+generic_address_t get_addr(char func_name[128])
+{
+	SYM_FUNC **symp;
+	SYM_FUNC *node;
+
+	/*
+	 * If storage_needed is zero, means symbol table is not initialized.
+	 */
+	if(storage_needed == 0)
+		return NULL;
+
+    node = (SYM_FUNC *) skyeye_mm_zero(sizeof(SYM_FUNC));
+	if (node == NULL)
+		exit(-1);
+	strcpy(node->name,func_name);
+    symp = (SYM_FUNC **)tfind((void *) node, &root, compare_function);
+	if(symp != NULL)
+	{
+		return (*symp)->address;
+	}
+	free(node);
+	return 0x0;
 }
