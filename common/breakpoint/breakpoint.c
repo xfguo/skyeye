@@ -33,6 +33,7 @@
 #include "skyeye_callback.h"
 #include "skyeye_command.h"
 #include "sim_control.h"
+#include "skyeye_symbol.h"
 
 //const int max_bp_number = 255;
 
@@ -223,8 +224,7 @@ int com_break(char*arg){
 	if(arg == NULL && *arg == '\0'){
 		generic_arch_t* arch_instance = get_arch_instance(NULL);
 		addr = arch_instance->get_pc();
-	}
-	else{
+	}else if(*(arg) == '0' && *(arg +1) == 'x'){// the arg is address
 		errno = 0;
 		addr = strtoul(arg, endptr, 16);
 		/*
@@ -244,13 +244,21 @@ int com_break(char*arg){
 			return 1;
 		}
 		#endif
+	}else{ // the arg is a function name 
+		// get the address by the function name
+		addr = get_addr(arg);	
+		if (addr == 0x0)
+		{
+			printf("no such function\n");
+			return 1;
+		}
 	}
 	exception_t exp = skyeye_insert_bp(SIM_access_execute, SIM_Break_Virtual, addr);
 	if(exp != No_exp){
 		printf("Can not insert breakpoint at address 0x%x",addr);
 		return 1;
 	}
-	printf("Insert breakpoint at address 0x%x successfully.\n", addr);
+	printf("Insert breakpoint at address 0x%x function %s successfully.\n", addr,get_sym(addr));
 	return 0;
 }
 
@@ -261,12 +269,12 @@ int com_break(char*arg){
 */
 int com_list_bp(){
 	int i = 0;
-	char* format = "%d\t0x%x\t%d\n";
-	printf("%s\t%s\t%s\n", "ID", "Address","Hits");
+	char* format = "%d\t%s\t0x%x\t%d\n";
+	printf("%s\t%s\t%s\t\t%s\n", "ID", "Function","Address","Hits");
 	while(i < MAX_BP_NUMBER){
 		breakpoint_t* bp = &breakpoint_mgt.breakpoint[i];
 		if(bp->id != 0)	
-			printf(format, bp->id, bp->address, bp->hits);	
+			printf(format, bp->id,get_sym(bp->address), bp->address, bp->hits);	
 		i++;
 	}
 }
@@ -283,8 +291,7 @@ int com_delete_bp(char*arg){
 	int id;
 	if(arg == NULL && *arg == '\0'){
 		return;
-	}
-	else{
+	}else{
 		errno = 0;
 		id = strtoul(arg, endptr, 10);
 		/*
