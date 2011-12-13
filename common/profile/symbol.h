@@ -24,7 +24,9 @@
 
 #include "skyeye_types.h"
 struct sym_func {
-  char *name;
+  char name[128];
+  generic_address_t address; // the address at which this function starts
+  int key;
   long long total_energy; // for all instances
   long long total_cycle; // for all instances
   int instances; // number of instances
