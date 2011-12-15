@@ -95,38 +95,38 @@ all:third-party/libiberty/libiberty.a third-party/bfd/.libs/libbfd.so third-part
 endif
 
 skyeye_gui:
-	cd gui/qt4_src && rm -f skyeye_gui && make
+	cd gui/qt4_src && rm -f skyeye_gui && $(MAKE)
 	cp -f gui/qt4_src/skyeye-gui $(prefix)/bin/
 
 third-party/bfd/.libs/libbfd.so:
-	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
+	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;$(MAKE);
 
 third-party/libiberty/libiberty.a:
-	mkdir -p third-party/libiberty && cd third-party/libiberty && ./../../$(srcdir)/third-party/libiberty/configure --prefix=$(prefix) --enable-shared ;make;
+	mkdir -p third-party/libiberty && cd third-party/libiberty && ./../../$(srcdir)/third-party/libiberty/configure --prefix=$(prefix) --enable-shared ;$(MAKE);
 
 third-party/opcodes/.libs/libopcodes.so:
-	mkdir -p third-party/opcodes/ && cd third-party/opcodes/ && ./../../$(top_srcdir)/third-party/opcodes/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
+	mkdir -p third-party/opcodes/ && cd third-party/opcodes/ && ./../../$(top_srcdir)/third-party/opcodes/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;$(MAKE);
 
 libltdl/.lib/libltdl.a:
-	mkdir -p libltdl/ && cd libltdl/ && ../$(top_srcdir)/libltdl/configure;make;
+	mkdir -p libltdl/ && cd libltdl/ && ../$(top_srcdir)/libltdl/configure;$(MAKE);
 
 lib:
-	mkdir -p third-party/libiberty && cd third-party/libiberty && ./../../$(srcdir)/third-party/libiberty/configure --prefix=$(prefix) --enable-shared ;make;
-	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
-	mkdir -p third-party/opcodes/ && cd third-party/opcodes/ && ./../../$(top_srcdir)/third-party/opcodes/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
-	mkdir -p libltdl/ && cd libltdl/ && ../$(top_srcdir)/libltdl/configure;make;
+	mkdir -p third-party/libiberty && cd third-party/libiberty && ./../../$(srcdir)/third-party/libiberty/configure --prefix=$(prefix) --enable-shared ;$(MAKE);
+	mkdir -p third-party/bfd/ && cd third-party/bfd/ && ./../../$(top_srcdir)/third-party/bfd/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;$(MAKE);
+	mkdir -p third-party/opcodes/ && cd third-party/opcodes/ && ./../../$(top_srcdir)/third-party/opcodes/configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;$(MAKE);
+	mkdir -p libltdl/ && cd libltdl/ && ../$(top_srcdir)/libltdl/configure;$(MAKE);
 #cd $(top_srcdir)/third-party/bfd/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 #cd $(top_srcdir)/third-party/opcodes/ && ./configure --prefix=$(prefix) --disable-werror --enable-shared --enable-targets=all;make;
 #cd $(top_srcdir)/third-party/readline/ && ./configure --prefix=$(prefix) --enable-shared;make;
 build_lib:
-	cd $(top_builddir)/third-party/libiberty && make;
-	cd $(top_builddir)/third-party/bfd/ && make;
-	cd $(top_builddir)third-party/opcodes/ && make;
+	cd $(top_builddir)/third-party/libiberty && $(MAKE);
+	cd $(top_builddir)/third-party/bfd/ && $(MAKE);
+	cd $(top_builddir)third-party/opcodes/ && $(MAKE);
 	cd $(top_builddir)/libltdl/ && make;
 install_lib:
-	cd $(top_builddir)/third-party/libiberty && make install
-	cd $(top_builddir)/third-party/bfd/ && make install
-	cd $(top_builddir)/third-party/opcodes/ && make install
+	cd $(top_builddir)/third-party/libiberty && $(MAKE) install
+	cd $(top_builddir)/third-party/bfd/ && $(MAKE) install
+	cd $(top_builddir)/third-party/opcodes/ && $(MAKE) install
 
 clean_lib:
 	cd $(top_builddir)/third-party/libiberty && make distclean
