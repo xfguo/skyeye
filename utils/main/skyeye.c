@@ -30,6 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <Python.h>
 
 // Anthony Lee 2006-08-22 : for Win32API
 #ifdef __MINGW32__
@@ -598,6 +599,13 @@ main (int argc, char **argv)
 		exit(0);
 	else
 		SIM_init();
+
+#if 1
+        Py_Initialize();
+        Py_Finalize();
+#endif
+
+
 	/* Do anything you want to do , or just deadloop here. */
 	while(1)
 		sleep(1);
