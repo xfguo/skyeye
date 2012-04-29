@@ -23,4 +23,4 @@ DEFS += -DLLVM_EXIST
 endif
 
 #noinst_LIBRARIES =      libppc.a
-INCLUDES = -I$(top_srcdir)/common -I$(top_srcdir)/dyncom/ -I$(top_srcdir)/arch/ppc/common -I$(top_srcdir)/arch/ppc/linux_syscall `/usr/local/bin/llvm-config --cflags` -I$(top_srcdir)/utils/debugger @COMMON_INCLUDES@
+INCLUDES = -I$(top_srcdir)/common -I$(top_srcdir)/dyncom/ -I$(top_srcdir)/arch/ppc/common -I$(top_srcdir)/arch/ppc/linux_syscall `llvm-config --cflags` -I$(top_srcdir)/utils/debugger @COMMON_INCLUDES@
